@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"os"
@@ -10,21 +9,8 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
+	"gitHub.***REMOVED***/monsoon/onos/types"
 )
-
-// Endpoints is a custom flag Var representing a list of transport endpoints
-type Endpoints []string
-
-// String returns the string representation of a endpoints var.
-func (n *Endpoints) String() string {
-	return fmt.Sprintf("%s", *n)
-}
-
-// Set appends the endpoint to the endpoints list.
-func (n *Endpoints) Set(endpoint string) error {
-	*n = append(*n, endpoint)
-	return nil
-}
 
 func defaultConfigDir() string {
 	if runtime.GOOS == "windows" {
@@ -38,23 +24,14 @@ var (
 	configFile        = ""
 	defaultConfigFile = path.Join(defaultConfigDir(), "onos.cfg")
 	printVersion      bool
-	endpoints         Endpoints
+	endpoints         types.Endpoints
 	clientCa          string
 	clientCert        string
 	clientKey         string
 	configDir         = defaultConfigDir()
-	config            Config // holds the global confd config.
+	config            types.Config // holds the global confd config.
 	transportBackend  string
 )
-
-type Config struct {
-	Endpoints  []string `toml:"endpoints"`
-	ClientCa   string   `toml:"client-cakeys"`
-	ClientCert string   `toml:"client-cert"`
-	ClientKey  string   `toml:"client-key"`
-	ConfigDir  string   `toml:"config-dir"`
-	Transport  string   `toml:"transport"`
-}
 
 func init() {
 	flag.BoolVar(&printVersion, "version", false, "print version and exit")
@@ -64,16 +41,17 @@ func init() {
 	flag.StringVar(&clientCert, "client-cert", "", "the client cert")
 	flag.StringVar(&clientKey, "client-key", "", "the client key")
 	flag.StringVar(&configDir, "config-dir", defaultConfigDir(), "the onos conf directory")
-	flag.StringVar(&configFile, "config-file", defaultConfigFile, "the onos config file")
+	flag.StringVar(&configFile, "config-file", "", "the onos config file")
 	log.SetLevel(log.DebugLevel)
 }
 
 func initConfig() error {
 	// Set defaults.
-	config = Config{
+	config = types.Config{
 		ConfigDir: defaultConfigDir(),
 		Transport: "mqtt",
 	}
+	log.Debug(configFile)
 	if configFile == "" {
 		if _, err := os.Stat(defaultConfigFile); !os.IsNotExist(err) {
 			configFile = defaultConfigFile

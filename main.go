@@ -23,7 +23,7 @@ func main() {
 		log.Fatal("Configuration error: ", err.Error())
 	}
 
-	transport, err := transport.New()
+	transport, err := transport.New(config)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -37,6 +37,7 @@ func main() {
 	//setup signal handlers
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	log.Debug("Waiting for something to happen...")
 	for {
 		select {
 		case err := <-errChan:
