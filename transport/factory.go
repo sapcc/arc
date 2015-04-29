@@ -10,14 +10,7 @@ type Transport interface {
 	Connect()
 	Disconnect()
 	Publish(types.Message)
-	Subscribe()
-}
-
-type Message struct {
-	RequestId string
-	Agent     string
-	Action    string
-	Payload   string
+	Subscribe(func(types.Message))
 }
 
 func New(config types.Config) (Transport, error) {

@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"gitHub.***REMOVED***/monsoon/onos/transport"
+	"gitHub.***REMOVED***/monsoon/onos/types"
 )
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	errChan := make(chan error, 10)
 
 	transport.Connect()
+	transport.Subscribe(func(types.Message) {})
 
 	//setup signal handlers
 	signalChan := make(chan os.Signal, 1)

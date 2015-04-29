@@ -1,17 +1,18 @@
 package mqtt
 
 import (
+	"encoding/json"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
-	//logrus "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/onos/types"
 	"log"
 	"os"
 )
 
 type MQTTClient struct {
-	client *MQTT.Client
+	client   *MQTT.Client
 	identity string
-	project string
+	project  string
 }
 
 func New(config types.Config) (*MQTTClient, error) {
@@ -23,6 +24,7 @@ func New(config types.Config) (*MQTTClient, error) {
 
 	opts := MQTT.NewClientOptions()
 	for _, endpoint := range config.Endpoints {
+		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
 	}
 	opts.SetCleanSession(true)
@@ -31,17 +33,37 @@ func New(config types.Config) (*MQTTClient, error) {
 }
 
 func (c *MQTTClient) Connect() {
+	logrus.Info("Connecting to MQTT broker")
 	if token := c.client.Connect(); token.Wait() && token.Error() != nil {
 	}
 }
 
 func (c *MQTTClient) Disconnect() {
-	c.Disconnect()
+	c.client.Disconnect(1000)
 }
 
-func (c *MQTTClient) Subscribe( callback func(types.Message)) {
-	c.client.Subscribe('test', 
+func (c *MQTTClient) Subscribe(callback func(types.Message)) {
+
+	messageHandler := func(mClient *MQTT.Client, mMessage MQTT.Message) {
+		msg, err := parseMessage(mMessage)
+		if err != nil {
+			logrus.Warnf("Discarding invalid message on topic %s:%s\n", mMessage.Topic(), err)
+			return
+		}
+		logrus.Infof("Received message with requestId %s\n", msg.RequestId)
+		callback(msg)
+	}
+	c.client.Subscribe("test", 0, messageHandler)
 }
 
 func (c *MQTTClient) Publish(msg types.Message) {
+}
+
+// privte
+
+func parseMessage(msg MQTT.Message) (types.Message, error) {
+	var m types.Message
+	err := json.Unmarshal(msg.Payload(), m)
+	return m, err
+
 }
