@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/onos/types"
+	"gitHub.***REMOVED***/monsoon/onos/onos"
 	"log"
 	"os"
 )
@@ -15,7 +15,7 @@ type MQTTClient struct {
 	project  string
 }
 
-func New(config types.Config) (*MQTTClient, error) {
+func New(config onos.Config) (*MQTTClient, error) {
 
 	MQTT.CRITICAL = log.New(os.Stdout, "MQTT CRITICAL", log.LstdFlags)
 	MQTT.ERROR = log.New(os.Stdout, "MQTT ERROR", log.LstdFlags)
@@ -42,7 +42,7 @@ func (c *MQTTClient) Disconnect() {
 	c.client.Disconnect(1000)
 }
 
-func (c *MQTTClient) Subscribe(callback func(types.Message)) {
+func (c *MQTTClient) Subscribe(callback func(onos.Message)) {
 
 	messageHandler := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		msg, err := parseMessage(mMessage)
@@ -56,14 +56,13 @@ func (c *MQTTClient) Subscribe(callback func(types.Message)) {
 	c.client.Subscribe("test", 0, messageHandler)
 }
 
-func (c *MQTTClient) Publish(msg types.Message) {
+func (c *MQTTClient) Publish(msg onos.Message) {
 }
 
-// privte
+// private
 
-func parseMessage(msg MQTT.Message) (types.Message, error) {
-	var m types.Message
-	err := json.Unmarshal(msg.Payload(), m)
+func parseMessage(msg MQTT.Message) (onos.Message, error) {
+	var m onos.Message
+	err := json.Unmarshal(msg.Payload(), &m)
 	return m, err
-
 }

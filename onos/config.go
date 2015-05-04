@@ -1,4 +1,4 @@
-package types
+package onos
 
 type Config struct {
 	Endpoints  []string `toml:"endpoints"`

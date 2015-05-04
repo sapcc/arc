@@ -1,4 +1,4 @@
-package types
+package onos
 
 type Message struct {
 	Version   int

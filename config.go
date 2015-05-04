@@ -9,7 +9,7 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/onos/types"
+	"gitHub.***REMOVED***/monsoon/onos/onos"
 )
 
 func defaultConfigDir() string {
@@ -24,12 +24,12 @@ var (
 	configFile        = ""
 	defaultConfigFile = path.Join(defaultConfigDir(), "onos.cfg")
 	printVersion      bool
-	endpoints         types.Endpoints
+	endpoints         onos.Endpoints
 	clientCa          string
 	clientCert        string
 	clientKey         string
 	configDir         = defaultConfigDir()
-	config            types.Config // holds the global confd config.
+	config            onos.Config // holds the global confd config.
 	transportBackend  string
 )
 
@@ -47,7 +47,7 @@ func init() {
 
 func initConfig() error {
 	// Set defaults.
-	config = types.Config{
+	config = onos.Config{
 		ConfigDir: defaultConfigDir(),
 		Transport: "mqtt",
 	}

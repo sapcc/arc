@@ -8,8 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "gitHub.***REMOVED***/monsoon/onos/agents/rpc"
+	"gitHub.***REMOVED***/monsoon/onos/onos"
 	"gitHub.***REMOVED***/monsoon/onos/transport"
-	"gitHub.***REMOVED***/monsoon/onos/types"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	errChan := make(chan error, 10)
 
 	transport.Connect()
-	transport.Subscribe(func(types.Message) {})
+	transport.Subscribe(func(onos.Message) {})
 
 	//setup signal handlers
 	signalChan := make(chan os.Signal, 1)
