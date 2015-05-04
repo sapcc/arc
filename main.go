@@ -30,9 +30,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	//stopChan := make(chan bool)
 	doneChan := make(chan bool)
-	errChan := make(chan error, 10)
 
 	transport.Connect()
 	transport.Subscribe(func(onos.Message) {})
@@ -43,8 +41,6 @@ func main() {
 	log.Debug("Waiting for something to happen...")
 	for {
 		select {
-		case err := <-errChan:
-			log.Error(err.Error())
 		case s := <-signalChan:
 			log.Info(fmt.Sprintf("Captured %v. Exiting...", s))
 			close(doneChan)

@@ -13,9 +13,11 @@ func init() {
 func (a *RpcAgent) Enabled() bool {
 	return true
 }
+
 func (a *RpcAgent) Enable() error {
 	return nil
 }
+
 func (a *RpcAgent) Disable() error {
 	return nil
 }

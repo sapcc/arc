@@ -50,7 +50,7 @@ func (c *MQTTClient) Subscribe(callback func(onos.Message)) {
 			logrus.Warnf("Discarding invalid message on topic %s:%s\n", mMessage.Topic(), err)
 			return
 		}
-		logrus.Infof("Received message with requestId %s\n", msg.RequestId)
+		logrus.Infof("Received message with requestID %s\n", msg.RequestID)
 		callback(msg)
 	}
 	c.client.Subscribe("test", 0, messageHandler)

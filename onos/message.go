@@ -2,7 +2,8 @@ package onos
 
 type Message struct {
 	Version   int
-	RequestId string
+	Sender    string
+	RequestID string
 	Type      string
 	Agent     string
 	Action    string
