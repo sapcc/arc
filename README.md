@@ -11,7 +11,8 @@ To run a local mosquitto broker run the following docker container
 to build and start the agent run:
 
     go build -o onos-agent .
-    ./onos-agent -endpoint=tcp://(boot2docker ip):1883
+    ./onos-agent -endpoint=tcp://$(boot2docker ip):1883 #when using bash
+    ./onos-agent -endpoint=tcp://(boot2docker ip):1883 #when using fish
     
 To submit messages to the MQTT broker you can reuse the mosquitto image from above:
 
