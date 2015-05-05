@@ -9,4 +9,5 @@ type Config struct {
 	Transport  string   `toml:"transport"`
 	Identity   string   `toml:"ideentity"`
 	Project    string   `toml:"project"`
+	LogLevel   string   `toml:"log-level"`
 }

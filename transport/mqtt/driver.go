@@ -6,7 +6,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/onos/onos"
 	"log"
-	"os"
 )
 
 type MQTTClient struct {
@@ -16,11 +15,25 @@ type MQTTClient struct {
 }
 
 func New(config onos.Config) (*MQTTClient, error) {
-
-	MQTT.CRITICAL = log.New(os.Stdout, "MQTT CRITICAL", log.LstdFlags)
-	MQTT.ERROR = log.New(os.Stdout, "MQTT ERROR", log.LstdFlags)
-	MQTT.WARN = log.New(os.Stdout, "MQTT INFO", log.LstdFlags)
-	MQTT.DEBUG = log.New(os.Stdout, "MQTT DEBUG", log.LstdFlags)
+	stdLogger := logrus.StandardLogger()
+	logger := logrus.New()
+	logger.Out = stdLogger.Out
+	logger.Formatter = stdLogger.Formatter
+	logger.Level = logrus.InfoLevel
+	// We should really close this writer at some point
+	w := logger.Writer()
+	if logrus.GetLevel() >= logrus.FatalLevel {
+		MQTT.CRITICAL = log.New(w, "MQTT CRITICAL ", 0)
+	}
+	if logrus.GetLevel() >= logrus.ErrorLevel {
+		MQTT.ERROR = log.New(w, "MQTT ERROR ", 0)
+	}
+	if logrus.GetLevel() >= logrus.InfoLevel {
+		MQTT.WARN = log.New(w, "MQTT INFO ", 0)
+	}
+	if logrus.GetLevel() >= logrus.DebugLevel {
+		MQTT.DEBUG = log.New(w, "MQTT DEBUG ", 0)
+	}
 
 	opts := MQTT.NewClientOptions()
 	for _, endpoint := range config.Endpoints {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"os"
@@ -31,6 +32,7 @@ var (
 	configDir         = defaultConfigDir()
 	config            onos.Config // holds the global confd config.
 	transportBackend  string
+	logLevel          = "info"
 )
 
 func init() {
@@ -42,7 +44,7 @@ func init() {
 	flag.StringVar(&clientKey, "client-key", "", "the client key")
 	flag.StringVar(&configDir, "config-dir", defaultConfigDir(), "the onos conf directory")
 	flag.StringVar(&configFile, "config-file", "", "the onos config file")
-	log.SetLevel(log.DebugLevel)
+	flag.StringVar(&logLevel, "log-level", "info", "log level: debug, info, warn, error, fatal")
 }
 
 func initConfig() error {
@@ -50,6 +52,7 @@ func initConfig() error {
 	config = onos.Config{
 		ConfigDir: defaultConfigDir(),
 		Transport: "mqtt",
+		LogLevel:  "info",
 	}
 	log.Debug(configFile)
 	if configFile == "" {
@@ -74,9 +77,13 @@ func initConfig() error {
 	// Update config from commandline flags.
 	processFlags()
 
-	log.Debug("config dir: ", config.ConfigDir)
-	log.Debug("transport: ", config.Transport)
-	log.Debug("endpoints: ", config.Endpoints)
+	lvl, err := log.ParseLevel(config.LogLevel)
+	if err != nil {
+		return fmt.Errorf("Invalid log level %s", config.LogLevel)
+	}
+	log.Infof("Setting log level to %d\n", lvl)
+	log.Infof("Setting log level to %s\n", logLevel)
+	log.SetLevel(lvl)
 
 	return nil
 }
@@ -101,5 +108,7 @@ func setConfigFromFlag(f *flag.Flag) {
 		config.Endpoints = endpoints
 	case "transport":
 		config.Transport = transportBackend
+	case "log-level":
+		config.LogLevel = logLevel
 	}
 }
