@@ -10,7 +10,7 @@ type Transport interface {
 	Connect()
 	Disconnect()
 	Publish(onos.Message)
-	Subscribe(func(onos.Message))
+	Subscribe() <-chan *onos.Message
 }
 
 func New(config onos.Config) (Transport, error) {

@@ -42,18 +42,18 @@ func (c *MQTTClient) Disconnect() {
 	c.client.Disconnect(1000)
 }
 
-func (c *MQTTClient) Subscribe(callback func(onos.Message)) {
-
-	messageHandler := func(mClient *MQTT.Client, mMessage MQTT.Message) {
+func (c *MQTTClient) Subscribe() <-chan *onos.Message {
+	msgChan := make(chan *onos.Message)
+	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		msg, err := parseMessage(mMessage)
 		if err != nil {
 			logrus.Warnf("Discarding invalid message on topic %s:%s\n", mMessage.Topic(), err)
 			return
 		}
-		logrus.Infof("Received message with requestID %s\n", msg.RequestID)
-		callback(msg)
+		msgChan <- &msg
 	}
-	c.client.Subscribe("test", 0, messageHandler)
+	c.client.Subscribe("test", 0, messageCallback)
+	return msgChan
 }
 
 func (c *MQTTClient) Publish(msg onos.Message) {

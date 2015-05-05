@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	_ "gitHub.***REMOVED***/monsoon/onos/agents/rpc"
-	"gitHub.***REMOVED***/monsoon/onos/onos"
+	"gitHub.***REMOVED***/monsoon/onos/server"
 	"gitHub.***REMOVED***/monsoon/onos/transport"
 )
 
@@ -32,8 +32,8 @@ func main() {
 
 	doneChan := make(chan bool)
 
-	transport.Connect()
-	transport.Subscribe(func(onos.Message) {})
+	server := server.New(doneChan, transport)
+	go server.Run()
 
 	//setup signal handlers
 	signalChan := make(chan os.Signal, 1)
@@ -43,7 +43,7 @@ func main() {
 		select {
 		case s := <-signalChan:
 			log.Info(fmt.Sprintf("Captured %v. Exiting...", s))
-			close(doneChan)
+			server.Stop()
 		case <-doneChan:
 			os.Exit(0)
 		}

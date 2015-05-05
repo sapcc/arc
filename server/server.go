@@ -1,6 +1,7 @@
 package server
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/onos/onos"
 	"gitHub.***REMOVED***/monsoon/onos/transport"
 )
@@ -11,35 +12,41 @@ type Server interface {
 }
 
 type server struct {
-	stopChan  <-chan bool
+	stopChan  chan bool
 	doneChan  chan<- bool
 	transport transport.Transport
 }
 
-func New(stopChan <-chan bool, doneChan chan<- bool, transport transport.Transport) Server {
+func New(doneChan chan<- bool, transport transport.Transport) Server {
+	stopChan := make(chan bool)
 	return &server{stopChan, doneChan, transport}
 }
 
 func (s *server) Run() {
 	defer close(s.doneChan)
 
-	messageHandler := func(msg onos.Message) {
-	}
-
 	s.transport.Connect()
-	s.transport.Subscribe(messageHandler)
+	msgChan := s.transport.Subscribe()
 
 	for {
 		select {
 		case <-s.stopChan:
-			break
+			log.Debug("Server received stop signal")
+			s.transport.Disconnect()
+			return
+		case msg := <-msgChan:
+			dispatchMessage(msg)
 		}
 	}
-
-	s.transport.Disconnect()
 
 }
 
 func (s *server) Stop() {
+	log.Info("Stopping Server")
 	close(s.stopChan)
+}
+
+func dispatchMessage(m *onos.Message) {
+	log.Infof("Received message with requestID %s for agent %s\n", m.RequestID, m.Agent)
+
 }
