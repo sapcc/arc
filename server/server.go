@@ -1,9 +1,12 @@
 package server
 
 import (
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/onos/onos"
 	"gitHub.***REMOVED***/monsoon/onos/transport"
+	"golang.org/x/net/context"
 )
 
 type Server interface {
@@ -12,30 +15,37 @@ type Server interface {
 }
 
 type server struct {
-	stopChan  chan bool
-	doneChan  chan<- bool
-	transport transport.Transport
+	stopChan    chan bool
+	doneChan    chan<- bool
+	transport   transport.Transport
+	activeJobs  map[string]func()
+	rootContext context.Context
+	cancel      func()
 }
 
 func New(doneChan chan<- bool, transport transport.Transport) Server {
 	stopChan := make(chan bool)
-	return &server{stopChan, doneChan, transport}
+	activeJobs := make(map[string]func())
+	return &server{stopChan, doneChan, transport, activeJobs, nil, nil}
 }
 
 func (s *server) Run() {
 	defer close(s.doneChan)
 
 	s.transport.Connect()
-	msgChan := s.transport.Subscribe()
+	incomingChan := s.transport.Subscribe()
+
+	s.rootContext, s.cancel = context.WithCancel(context.Background())
+	done := s.rootContext.Done()
 
 	for {
 		select {
-		case <-s.stopChan:
+		case <-done:
 			log.Debug("Server received stop signal")
 			s.transport.Disconnect()
 			return
-		case msg := <-msgChan:
-			dispatchMessage(msg)
+		case msg := <-incomingChan:
+			go s.handleJob(msg)
 		}
 	}
 
@@ -43,10 +53,19 @@ func (s *server) Run() {
 
 func (s *server) Stop() {
 	log.Info("Stopping Server")
-	close(s.stopChan)
+	s.cancel()
 }
 
-func dispatchMessage(m *onos.Message) {
-	log.Infof("Received message with requestID %s for agent %s\n", m.RequestID, m.Agent)
+func (s *server) handleJob(msg *onos.Message) {
+	log.Infof("Dispatching message with requestID %s to agent %s\n", msg.RequestID, msg.Agent)
+	jobContext, _ := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
 
+	outChan := make(chan *onos.Message)
+	go onos.ExecuteAction(jobContext, msg, outChan)
+
+	for m := range outChan {
+		log.Infof("Publishing %s\n", m)
+		s.transport.Publish(m)
+	}
+	log.Infof("Job %s completed\n", msg.RequestID)
 }

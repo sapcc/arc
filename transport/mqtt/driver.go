@@ -69,7 +69,8 @@ func (c *MQTTClient) Subscribe() <-chan *onos.Message {
 	return msgChan
 }
 
-func (c *MQTTClient) Publish(msg onos.Message) {
+func (c *MQTTClient) Publish(msg *onos.Message) {
+	logrus.Debug("Publishing %s\n", msg)
 }
 
 // private

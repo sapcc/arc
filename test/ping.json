@@ -4,5 +4,6 @@
   "requestid": "133B0939-76F4-4C9B-99AB-7A6A873E8C9E",
   "agent":"rpc",
   "action": "ping",
-  "payload": "ping"
+  "payload": "ping",
+  "timeout": 1
 }

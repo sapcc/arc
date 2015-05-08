@@ -26,6 +26,10 @@
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.4-16-g38a6ff9",
 			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a8c61998a557a37435f719980da368469c10bfed"
 		}
 	]
 }
