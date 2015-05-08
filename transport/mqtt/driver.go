@@ -55,8 +55,8 @@ func (c *MQTTClient) Disconnect() {
 	c.client.Disconnect(1000)
 }
 
-func (c *MQTTClient) Subscribe() <-chan *onos.Message {
-	msgChan := make(chan *onos.Message)
+func (c *MQTTClient) Subscribe() <-chan *onos.Request {
+	msgChan := make(chan *onos.Request)
 	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		msg, err := parseMessage(mMessage)
 		if err != nil {
@@ -69,14 +69,22 @@ func (c *MQTTClient) Subscribe() <-chan *onos.Message {
 	return msgChan
 }
 
-func (c *MQTTClient) Publish(msg *onos.Message) {
-	logrus.Debug("Publishing %s\n", msg)
+func (c *MQTTClient) Request(msg *onos.Request) {
+	logrus.Debug("Publishing request %s\n", msg)
+}
+
+func (c *MQTTClient) Reply(msg *onos.Reply) {
+	logrus.Debug("Publishing reply %s\n", msg)
+}
+
+func (c *MQTTClient) SubscribeJob(requestId string) <-chan *onos.Reply {
+	return make(chan *onos.Reply)
 }
 
 // private
 
-func parseMessage(msg MQTT.Message) (onos.Message, error) {
-	var m onos.Message
+func parseMessage(msg MQTT.Message) (onos.Request, error) {
+	var m onos.Request
 	err := json.Unmarshal(msg.Payload(), &m)
 	return m, err
 }

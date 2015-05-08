@@ -28,7 +28,7 @@ func RegisterAgent(name string, actions []string, agent Agent) {
 	agentRegistry[name] = &agentInfo{agent, actionMap}
 }
 
-func ExecuteAction(ctx context.Context, request *Message, out chan<- *Message) {
+func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 	defer close(out)
 	agt := agentRegistry[request.Agent]
 	if agt == nil {

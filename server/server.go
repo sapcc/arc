@@ -56,16 +56,16 @@ func (s *server) Stop() {
 	s.cancel()
 }
 
-func (s *server) handleJob(msg *onos.Message) {
+func (s *server) handleJob(msg *onos.Request) {
 	log.Infof("Dispatching message with requestID %s to agent %s\n", msg.RequestID, msg.Agent)
 	jobContext, _ := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
 
-	outChan := make(chan *onos.Message)
+	outChan := make(chan *onos.Reply)
 	go onos.ExecuteAction(jobContext, msg, outChan)
 
 	for m := range outChan {
 		log.Infof("Publishing %s\n", m)
-		s.transport.Publish(m)
+		s.transport.Reply(m)
 	}
 	log.Infof("Job %s completed\n", msg.RequestID)
 }

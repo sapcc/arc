@@ -1,9 +1,10 @@
 package onos
 
-type Message struct {
+type Request struct {
 	Version   int
 	Sender    string
 	RequestID string
+	To        string
 	Type      string
 	Timeout   uint64
 	Agent     string
@@ -11,9 +12,21 @@ type Message struct {
 	Payload   string
 }
 
-func CreateReply(request *Message, payload string) *Message {
+type Reply struct {
+	Version   int
+	Sender    string
+	RequestID string
+	Type      string
+	Agent     string
+	Action    string
+	State     string
+	Final     bool
+	Payload   string
+}
 
-	return &reply{
+func CreateReply(request *Request, payload string) *Reply {
+
+	return &Reply{
 		Version: 1,
 		Type:    "reply",
 		Agent:   request.Agent,
