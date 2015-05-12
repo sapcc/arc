@@ -64,7 +64,6 @@ func (s *server) handleJob(msg *onos.Request) {
 	go onos.ExecuteAction(jobContext, msg, outChan)
 
 	for m := range outChan {
-		log.Infof("Publishing %s\n", m)
 		s.transport.Reply(m)
 	}
 	log.Infof("Job %s completed\n", msg.RequestID)
