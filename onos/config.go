@@ -1,13 +1,13 @@
 package onos
 
 type Config struct {
-	Endpoints  []string `toml:"endpoints"`
-	ClientCa   string   `toml:"client-cakeys"`
-	ClientCert string   `toml:"client-cert"`
-	ClientKey  string   `toml:"client-key"`
-	ConfigDir  string   `toml:"config-dir"`
-	Transport  string   `toml:"transport"`
-	Identity   string   `toml:"ideentity"`
-	Project    string   `toml:"project"`
-	LogLevel   string   `toml:"log-level"`
+	Endpoints  []string
+	ClientCa   string
+	ClientCert string
+	ClientKey  string
+	ConfigDir  string
+	Transport  string
+	Identity   string
+	Project    string
+	LogLevel   string
 }

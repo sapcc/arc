@@ -18,14 +18,17 @@
 			"Rev": "1d6536402dac4b2528bc23f08ecc318c295c320a"
 		},
 		{
-			"ImportPath": "github.com/BurntSushi/toml",
-			"Comment": "v0.1.0-16-gf706d00",
-			"Rev": "f706d00e3de6abe700c994cdd545a1a4915af060"
-		},
-		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.4-16-g38a6ff9",
 			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
+		},
+		{
+			"ImportPath": "github.com/rakyll/globalconf",
+			"Rev": "415abc325023f1a00cd2d9fa512e0e71745791a2"
+		},
+		{
+			"ImportPath": "github.com/rakyll/goini",
+			"Rev": "907cca0f578a5316fb864ec6992dc3d9730ec58c"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

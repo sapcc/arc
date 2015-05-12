@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
@@ -14,15 +13,13 @@ import (
 )
 
 func main() {
-	flag.Parse()
-	if printVersion {
-		fmt.Printf("Onos %s\n", Version)
-		os.Exit(0)
-	}
-
 	err := initConfig()
 	if err != nil {
 		log.Fatal("Configuration error: ", err.Error())
+	}
+	if printVersion {
+		fmt.Printf("Onos %s\n", Version)
+		os.Exit(0)
 	}
 
 	transport, err := transport.New(config)
