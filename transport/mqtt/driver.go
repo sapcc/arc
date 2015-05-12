@@ -2,10 +2,12 @@ package mqtt
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
+
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/onos/onos"
-	"log"
 )
 
 type MQTTClient struct {
@@ -74,7 +76,14 @@ func (c *MQTTClient) Request(msg *onos.Request) {
 }
 
 func (c *MQTTClient) Reply(msg *onos.Reply) {
-	logrus.Debug("Publishing reply %s\n", msg)
+	var topic = fmt.Sprintf("reply/%s", msg.RequestID)
+	logrus.Debugf("Publishing reply %s\n to %s", msg, topic)
+	j, err := msg.ToJSON()
+	if err != nil {
+		logrus.Errorf("Error serializing Reply to JSON: %s", err)
+	} else {
+		c.client.Publish(topic, 0, false, j)
+	}
 }
 
 func (c *MQTTClient) SubscribeJob(requestId string) <-chan *onos.Reply {
