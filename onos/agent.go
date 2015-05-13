@@ -1,7 +1,11 @@
 package onos
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
+	"reflect"
+	"regexp"
+	"strings"
 )
 
 var (
@@ -12,19 +16,35 @@ type Agent interface {
 	Enabled() bool
 	Enable() error
 	Disable() error
-	Execute(ctx context.Context, action string, payload string) (string, error)
 }
+
+type AgentAction func(context.Context, string) (string, error)
 
 type agentInfo struct {
 	agent   Agent
-	actions map[string]bool
+	actions map[string]func(context.Context, string) (string, error)
 }
 
-func RegisterAgent(name string, actions []string, agent Agent) {
-	actionMap := make(map[string]bool)
-	for _, a := range actions {
-		actionMap[a] = true
+func RegisterAgent(name string, agent Agent) {
+
+	agentType := reflect.TypeOf(agent)
+	actionMap := make(map[string]func(context.Context, string) (string, error))
+
+	re := regexp.MustCompile("^([A-Z].*)Action$")
+
+	for i := 0; i < agentType.NumMethod(); i++ {
+		method := agentType.Method(i)
+		if match := re.FindStringSubmatch(method.Name); match != nil {
+			action := strings.ToLower(match[1])
+			actionFunction, ok := reflect.ValueOf(agent).MethodByName(method.Name).Interface().(func(context.Context, string) (string, error))
+			if ok {
+				actionMap[action] = actionFunction
+			} else {
+				log.Warnf("Ignoring %s.%s, invalid function signature.", name, method.Name)
+			}
+		}
 	}
+
 	agentRegistry[name] = &agentInfo{agent, actionMap}
 }
 
@@ -44,11 +64,15 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 		return
 	}
 
-	result, err := agt.agent.Execute(ctx, request.Action, request.Payload)
+	result, err := agt.execute(ctx, request.Action, request.Payload)
 	if err != nil {
 		out <- CreateReply(request, err.Error())
 	} else {
 		out <- CreateReply(request, result)
 	}
 
+}
+
+func (a *agentInfo) execute(ctx context.Context, action, payload string) (string, error) {
+	return a.actions[action](ctx, payload)
 }

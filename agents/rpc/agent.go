@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -13,7 +12,7 @@ import (
 type RpcAgent struct{}
 
 func init() {
-	onos.RegisterAgent("rpc", []string{"ping", "sleep"}, new(RpcAgent))
+	onos.RegisterAgent("rpc", new(RpcAgent))
 }
 
 func (a *RpcAgent) Enabled() bool {
@@ -28,23 +27,13 @@ func (a *RpcAgent) Disable() error {
 	return nil
 }
 
-func (a *RpcAgent) Execute(ctx context.Context, action string, payload string) (string, error) {
-	switch action {
-	case "ping":
-		return a.ping(ctx, payload)
-	case "sleep":
-		return a.sleep(ctx, payload)
-	}
-	return "", errors.New("Unknown Action")
-}
-
 //private
 
-func (a *RpcAgent) ping(ctx context.Context, payload string) (string, error) {
+func (a *RpcAgent) PingAction(ctx context.Context, payload string) (string, error) {
 	return "pong", nil
 }
 
-func (a *RpcAgent) sleep(ctx context.Context, payload string) (string, error) {
+func (a *RpcAgent) SleepAction(ctx context.Context, payload string) (string, error) {
 
 	wait, err := strconv.Atoi(payload)
 	if err != nil {
