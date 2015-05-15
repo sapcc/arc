@@ -1,48 +1,86 @@
 package main
 
 import (
-	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
-	"os/signal"
-	"syscall"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 
 	_ "gitHub.***REMOVED***/monsoon/onos/agents/rpc"
-	"gitHub.***REMOVED***/monsoon/onos/server"
-	"gitHub.***REMOVED***/monsoon/onos/transport"
 )
 
 func main() {
-	err := initConfig()
-	if err != nil {
-		log.Fatal("Configuration error: ", err.Error())
-	}
-	if printVersion {
-		fmt.Printf("Onos %s\n", Version)
-		os.Exit(0)
+
+	//If we have a config file load it
+	if configFile := configFile(); configFile != "" {
+		loadConfigFile(configFile)
 	}
 
-	transport, err := transport.New(config)
-	if err != nil {
-		log.Fatal(err.Error())
+	app := cli.NewApp()
+
+	app.Name = appName
+	app.Usage = "Remote job execution galore"
+	app.Version = Version
+
+	app.Flags = []cli.Flag{
+		//config-file is only here for the generated help, it is actually handled above
+		//so the the settings from the file are set as env vars before app.Run(...) is called
+		cli.StringFlag{
+			Name:   "config-file,c",
+			Usage:  "load config file",
+			Value:  defaultConfigFile,
+			EnvVar: envPrefix + "CONFIGFILE",
+		},
+		cli.StringFlag{
+			Name:   "transport,t",
+			Usage:  "transport backend driver",
+			Value:  "mqtt",
+			EnvVar: envPrefix + "TRANSPORT",
+		},
+		cli.StringSliceFlag{
+			Name:   "endpoint,e",
+			Usage:  "endpoint url(s) for selected transport",
+			EnvVar: envPrefix + "ENDPOINT",
+			Value:  new(cli.StringSlice),
+		},
+		cli.StringFlag{
+			Name:   "tls-ca-cert",
+			Usage:  "CA to verify transport endpoints",
+			EnvVar: envPrefix + "TLS_CLIENT_CA",
+		},
+		cli.StringFlag{
+			Name:   "tls-client-cert",
+			Usage:  "Client cert to use for TLS",
+			EnvVar: envPrefix + "TLS_CLIENT_CERT",
+		},
+		cli.StringFlag{
+			Name:   "tls-client-key",
+			Usage:  "Private key used in client TLS auth",
+			EnvVar: envPrefix + "TLS_CLIENT_KEY",
+		},
+		cli.StringFlag{
+			Name:   "log-level,l",
+			Usage:  "log level",
+			EnvVar: envPrefix + "LOG_LEVEL",
+			Value:  "info",
+		},
 	}
 
-	doneChan := make(chan bool)
+	app.Commands = Commands
 
-	server := server.New(doneChan, transport)
-	go server.Run()
-
-	//setup signal handlers
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	log.Debug("Waiting for something to happen...")
-	for {
-		select {
-		case s := <-signalChan:
-			log.Info(fmt.Sprintf("Captured %v. Exiting...", s))
-			server.Stop()
-		case <-doneChan:
-			os.Exit(0)
+	app.Before = func(c *cli.Context) error {
+		config.Endpoints = c.GlobalStringSlice("endpoint")
+		config.Transport = c.GlobalString("transport")
+		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
+		if err != nil {
+			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
+			return err
 		}
+		config.LogLevel = c.GlobalString("log-level")
+		log.SetLevel(lvl)
+		return nil
 	}
+
+	app.Run(os.Args)
+
 }

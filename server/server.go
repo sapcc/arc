@@ -10,29 +10,29 @@ import (
 )
 
 type Server interface {
-	Run()
+	Run(done chan<- bool)
 	Stop()
 }
 
 type server struct {
 	stopChan    chan bool
-	doneChan    chan<- bool
 	transport   transport.Transport
 	activeJobs  map[string]func()
 	rootContext context.Context
 	cancel      func()
 }
 
-func New(doneChan chan<- bool, transport transport.Transport) Server {
+func New(transport transport.Transport) Server {
 	stopChan := make(chan bool)
 	activeJobs := make(map[string]func())
-	return &server{stopChan, doneChan, transport, activeJobs, nil, nil}
+	return &server{stopChan, transport, activeJobs, nil, nil}
 }
 
-func (s *server) Run() {
-	defer close(s.doneChan)
+func (s *server) Run(doneChan chan<- bool) {
+	defer close(doneChan)
 
 	s.transport.Connect()
+	defer s.transport.Disconnect()
 	incomingChan := s.transport.Subscribe()
 
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
@@ -41,8 +41,7 @@ func (s *server) Run() {
 	for {
 		select {
 		case <-done:
-			log.Debug("Server received stop signal")
-			s.transport.Disconnect()
+			log.Debug("Server was stopped")
 			return
 		case msg := <-incomingChan:
 			go s.handleJob(msg)

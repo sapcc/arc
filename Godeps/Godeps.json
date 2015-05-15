@@ -1,6 +1,6 @@
 {
 	"ImportPath": "gitHub.***REMOVED***/monsoon/onos",
-	"GoVersion": "go1.4",
+	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/go-uuid/uuid",
@@ -23,12 +23,14 @@
 			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
 		},
 		{
-			"ImportPath": "github.com/rakyll/globalconf",
-			"Rev": "415abc325023f1a00cd2d9fa512e0e71745791a2"
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-66-g6086d79",
+			"Rev": "6086d7927ec35315964d9fea46df6c04e6d697c1"
 		},
 		{
-			"ImportPath": "github.com/rakyll/goini",
-			"Rev": "907cca0f578a5316fb864ec6992dc3d9730ec58c"
+			"ImportPath": "github.com/joho/godotenv",
+			"Comment": "v1-6-gf658182",
+			"Rev": "f6581828bb37238bc1ce8e561d9e4050630a304d"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

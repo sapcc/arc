@@ -1,38 +1,33 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"testing"
 )
 
 var (
-	configFileEnvName = envPrefix + "CONFIG_FILE"
+	configFileEnvName = envPrefix + "CONFIGFILE"
 )
 
 func TestConfigFileViaCommandLine(t *testing.T) {
-	ResetForTesting(nil)
+	defer resetEnv()
 	os.Setenv(configFileEnvName, "FromEnvShouldBeIgnored")
 	os.Args = append(os.Args, "--config-file=FromArg")
 
-	initConfig()
-
-	if configFile != "FromArg" {
+	if configFile() != "FromArg" {
 		t.Errorf("%s != FromArg", configFile)
 	}
 }
 
 func TestConfigFileFromEnv(t *testing.T) {
-	ResetForTesting(nil)
+	defer resetEnv()
 	os.Setenv(configFileEnvName, "FromEnv")
-	initConfig()
-	if configFile != "FromEnv" {
+	if configFile() != "FromEnv" {
 		t.Errorf("%s != 'FromEnv'", configFile)
 	}
 }
 
-func ResetForTesting(usage func()) {
-	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	flag.Usage = usage
+func resetEnv() {
 	os.Args = []string{os.Args[0]}
+	os.Unsetenv(configFileEnvName)
 }

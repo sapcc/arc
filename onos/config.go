@@ -5,7 +5,6 @@ type Config struct {
 	ClientCa   string
 	ClientCert string
 	ClientKey  string
-	ConfigDir  string
 	Transport  string
 	Identity   string
 	Project    string

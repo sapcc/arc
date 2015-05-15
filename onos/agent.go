@@ -1,11 +1,12 @@
 package onos
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"golang.org/x/net/context"
 	"reflect"
 	"regexp"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
 var (
