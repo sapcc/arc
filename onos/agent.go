@@ -23,13 +23,13 @@ type AgentAction func(context.Context, string) (string, error)
 
 type agentInfo struct {
 	agent   Agent
-	actions map[string]func(context.Context, string) (string, error)
+	actions map[string]AgentAction
 }
 
 func RegisterAgent(name string, agent Agent) {
 
 	agentType := reflect.TypeOf(agent)
-	actionMap := make(map[string]func(context.Context, string) (string, error))
+	actionMap := make(map[string]AgentAction)
 
 	re := regexp.MustCompile("^([A-Z].*)Action$")
 
@@ -65,7 +65,7 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 		return
 	}
 
-	result, err := agt.execute(ctx, request.Action, request.Payload)
+	result, err := agt.executeAction(ctx, request.Action, request.Payload)
 	if err != nil {
 		out <- CreateReply(request, err.Error())
 	} else {
@@ -74,6 +74,6 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 
 }
 
-func (a *agentInfo) execute(ctx context.Context, action, payload string) (string, error) {
+func (a *agentInfo) executeAction(ctx context.Context, action, payload string) (string, error) {
 	return a.actions[action](ctx, payload)
 }
