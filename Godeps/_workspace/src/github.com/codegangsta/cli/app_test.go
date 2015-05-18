@@ -1,9 +1,12 @@
 package cli_test
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/codegangsta/cli"
@@ -21,6 +24,9 @@ func ExampleApp() {
 	app.Action = func(c *cli.Context) {
 		fmt.Printf("Hello %v\n", c.String("name"))
 	}
+	app.Author = "Harrison"
+	app.Email = "harrison@lolwut.com"
+	app.Authors = []cli.Author{cli.Author{Name: "Oliver Allen", Email: "oliver@toyshop.com"}}
 	app.Run(os.Args)
 	// Output:
 	// Hello Jeremy
@@ -34,13 +40,13 @@ func ExampleAppSubcommand() {
 	app.Commands = []cli.Command{
 		{
 			Name:        "hello",
-			ShortName:   "hi",
+			Aliases:     []string{"hi"},
 			Usage:       "use it to see a description",
 			Description: "This is how we describe hello the function",
 			Subcommands: []cli.Command{
 				{
 					Name:        "english",
-					ShortName:   "en",
+					Aliases:     []string{"en"},
 					Usage:       "sends a greeting in english",
 					Description: "greets someone in english",
 					Flags: []cli.Flag{
@@ -75,7 +81,7 @@ func ExampleAppHelp() {
 	app.Commands = []cli.Command{
 		{
 			Name:        "describeit",
-			ShortName:   "d",
+			Aliases:     []string{"d"},
 			Usage:       "use it to see a description",
 			Description: "This is how we describe describeit the function",
 			Action: func(c *cli.Context) {
@@ -105,7 +111,7 @@ func ExampleAppBashComplete() {
 	app.Commands = []cli.Command{
 		{
 			Name:        "describeit",
-			ShortName:   "d",
+			Aliases:     []string{"d"},
 			Usage:       "use it to see a description",
 			Description: "This is how we describe describeit the function",
 			Action: func(c *cli.Context) {
@@ -159,8 +165,8 @@ var commandAppTests = []struct {
 
 func TestApp_Command(t *testing.T) {
 	app := cli.NewApp()
-	fooCommand := cli.Command{Name: "foobar", ShortName: "f"}
-	batCommand := cli.Command{Name: "batbaz", ShortName: "b"}
+	fooCommand := cli.Command{Name: "foobar", Aliases: []string{"f"}}
+	batCommand := cli.Command{Name: "batbaz", Aliases: []string{"b"}}
 	app.Commands = []cli.Command{
 		fooCommand,
 		batCommand,
@@ -446,6 +452,71 @@ func TestApp_BeforeFunc(t *testing.T) {
 
 }
 
+func TestApp_AfterFunc(t *testing.T) {
+	afterRun, subcommandRun := false, false
+	afterError := fmt.Errorf("fail")
+	var err error
+
+	app := cli.NewApp()
+
+	app.After = func(c *cli.Context) error {
+		afterRun = true
+		s := c.String("opt")
+		if s == "fail" {
+			return afterError
+		}
+
+		return nil
+	}
+
+	app.Commands = []cli.Command{
+		cli.Command{
+			Name: "sub",
+			Action: func(c *cli.Context) {
+				subcommandRun = true
+			},
+		},
+	}
+
+	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "opt"},
+	}
+
+	// run with the After() func succeeding
+	err = app.Run([]string{"command", "--opt", "succeed", "sub"})
+
+	if err != nil {
+		t.Fatalf("Run error: %s", err)
+	}
+
+	if afterRun == false {
+		t.Errorf("After() not executed when expected")
+	}
+
+	if subcommandRun == false {
+		t.Errorf("Subcommand not executed when expected")
+	}
+
+	// reset
+	afterRun, subcommandRun = false, false
+
+	// run with the Before() func failing
+	err = app.Run([]string{"command", "--opt", "fail", "sub"})
+
+	// should be the same error produced by the Before func
+	if err != afterError {
+		t.Errorf("Run error expected, but not received")
+	}
+
+	if afterRun == false {
+		t.Errorf("After() not executed when expected")
+	}
+
+	if subcommandRun == false {
+		t.Errorf("Subcommand not executed when expected")
+	}
+}
+
 func TestAppNoHelpFlag(t *testing.T) {
 	oldFlag := cli.HelpFlag
 	defer func() {
@@ -469,7 +540,7 @@ func TestAppHelpPrinter(t *testing.T) {
 	}()
 
 	var wasCalled = false
-	cli.HelpPrinter = func(template string, data interface{}) {
+	cli.HelpPrinter = func(w io.Writer, template string, data interface{}) {
 		wasCalled = true
 	}
 
@@ -551,4 +622,58 @@ func TestGlobalFlagsInSubcommands(t *testing.T) {
 	app.Run([]string{"command", "-d", "foo", "bar"})
 
 	expect(t, subcommandRun, true)
+}
+
+func TestApp_Run_CommandWithSubcommandHasHelpTopic(t *testing.T) {
+	var subcommandHelpTopics = [][]string{
+		{"command", "foo", "--help"},
+		{"command", "foo", "-h"},
+		{"command", "foo", "help"},
+	}
+
+	for _, flagSet := range subcommandHelpTopics {
+		t.Logf("==> checking with flags %v", flagSet)
+
+		app := cli.NewApp()
+		buf := new(bytes.Buffer)
+		app.Writer = buf
+
+		subCmdBar := cli.Command{
+			Name:  "bar",
+			Usage: "does bar things",
+		}
+		subCmdBaz := cli.Command{
+			Name:  "baz",
+			Usage: "does baz things",
+		}
+		cmd := cli.Command{
+			Name:        "foo",
+			Description: "descriptive wall of text about how it does foo things",
+			Subcommands: []cli.Command{subCmdBar, subCmdBaz},
+		}
+
+		app.Commands = []cli.Command{cmd}
+		err := app.Run(flagSet)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		output := buf.String()
+		t.Logf("output: %q\n", buf.Bytes())
+
+		if strings.Contains(output, "No help topic for") {
+			t.Errorf("expect a help topic, got none: \n%q", output)
+		}
+
+		for _, shouldContain := range []string{
+			cmd.Name, cmd.Description,
+			subCmdBar.Name, subCmdBar.Usage,
+			subCmdBaz.Name, subCmdBaz.Usage,
+		} {
+			if !strings.Contains(output, shouldContain) {
+				t.Errorf("want help to contain %q, did not: \n%q", shouldContain, output)
+			}
+		}
+	}
 }

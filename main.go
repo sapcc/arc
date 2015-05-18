@@ -19,6 +19,16 @@ func main() {
 	app := cli.NewApp()
 
 	app.Name = appName
+	app.Authors = []cli.Author{
+		{
+			Name:  "Fabian Ruff",
+			Email: "fabian.ruff@sap.com",
+		},
+		{
+			Name:  "Arturo Reuschenbach Puncernau",
+			Email: "a.reuschenbach.puncernau@sap.com",
+		},
+	}
 	app.Usage = "Remote job execution galore"
 	app.Version = Version
 
