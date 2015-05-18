@@ -7,7 +7,7 @@ import (
 
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/onos/onos"
+	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
 type MQTTClient struct {
@@ -16,7 +16,7 @@ type MQTTClient struct {
 	project  string
 }
 
-func New(config onos.Config) (*MQTTClient, error) {
+func New(config arc.Config) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
 	logger := logrus.New()
 	logger.Out = stdLogger.Out
@@ -57,8 +57,8 @@ func (c *MQTTClient) Disconnect() {
 	c.client.Disconnect(1000)
 }
 
-func (c *MQTTClient) Subscribe() <-chan *onos.Request {
-	msgChan := make(chan *onos.Request)
+func (c *MQTTClient) Subscribe() <-chan *arc.Request {
+	msgChan := make(chan *arc.Request)
 	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		msg, err := parseMessage(mMessage)
 		if err != nil {
@@ -71,11 +71,11 @@ func (c *MQTTClient) Subscribe() <-chan *onos.Request {
 	return msgChan
 }
 
-func (c *MQTTClient) Request(msg *onos.Request) {
+func (c *MQTTClient) Request(msg *arc.Request) {
 	logrus.Debug("Publishing request %s\n", msg)
 }
 
-func (c *MQTTClient) Reply(msg *onos.Reply) {
+func (c *MQTTClient) Reply(msg *arc.Reply) {
 	var topic = fmt.Sprintf("reply/%s", msg.RequestID)
 	logrus.Debugf("Publishing reply %s\n to %s", msg, topic)
 	j, err := msg.ToJSON()
@@ -86,14 +86,14 @@ func (c *MQTTClient) Reply(msg *onos.Reply) {
 	}
 }
 
-func (c *MQTTClient) SubscribeJob(requestId string) <-chan *onos.Reply {
-	return make(chan *onos.Reply)
+func (c *MQTTClient) SubscribeJob(requestId string) <-chan *arc.Reply {
+	return make(chan *arc.Reply)
 }
 
 // private
 
-func parseMessage(msg MQTT.Message) (onos.Request, error) {
-	var m onos.Request
+func parseMessage(msg MQTT.Message) (arc.Request, error) {
+	var m arc.Request
 	err := json.Unmarshal(msg.Payload(), &m)
 	return m, err
 }

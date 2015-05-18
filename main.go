@@ -6,7 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
-	_ "gitHub.***REMOVED***/monsoon/onos/agents/rpc"
+	_ "gitHub.***REMOVED***/monsoon/arc/agents/rpc"
 )
 
 func main() {

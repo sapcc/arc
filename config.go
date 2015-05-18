@@ -9,9 +9,9 @@ import (
 	"runtime"
 	"strings"
 
-	"gitHub.***REMOVED***/monsoon/onos/onos"
-
 	"github.com/joho/godotenv"
+
+	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
 func defaultConfigDir() string {
@@ -26,7 +26,7 @@ var (
 	appName           = "arc"
 	envPrefix         = "ARC_"
 	defaultConfigFile = path.Join(defaultConfigDir(), appName+".cfg")
-	config            onos.Config
+	config            arc.Config
 )
 
 //returns the path to the config file we want to load

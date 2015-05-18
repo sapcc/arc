@@ -5,14 +5,15 @@ import (
 	"strconv"
 	"time"
 
-	"gitHub.***REMOVED***/monsoon/onos/onos"
 	"golang.org/x/net/context"
+
+	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
 type RpcAgent struct{}
 
 func init() {
-	onos.RegisterAgent("rpc", new(RpcAgent))
+	arc.RegisterAgent("rpc", new(RpcAgent))
 }
 
 func (a *RpcAgent) Enabled() bool {

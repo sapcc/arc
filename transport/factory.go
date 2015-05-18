@@ -2,20 +2,21 @@ package transport
 
 import (
 	"errors"
-	"gitHub.***REMOVED***/monsoon/onos/onos"
-	"gitHub.***REMOVED***/monsoon/onos/transport/mqtt"
+
+	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/transport/mqtt"
 )
 
 type Transport interface {
 	Connect()
 	Disconnect()
-	Request(*onos.Request)
-	Reply(*onos.Reply)
-	Subscribe() <-chan *onos.Request
-	SubscribeJob(requestId string) <-chan *onos.Reply
+	Request(*arc.Request)
+	Reply(*arc.Reply)
+	Subscribe() <-chan *arc.Request
+	SubscribeJob(requestId string) <-chan *arc.Reply
 }
 
-func New(config onos.Config) (Transport, error) {
+func New(config arc.Config) (Transport, error) {
 	switch config.Transport {
 	case "mqtt":
 		return mqtt.New(config)

@@ -4,9 +4,10 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/onos/onos"
-	"gitHub.***REMOVED***/monsoon/onos/transport"
 	"golang.org/x/net/context"
+
+	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/transport"
 )
 
 type Server interface {
@@ -55,12 +56,12 @@ func (s *server) Stop() {
 	s.cancel()
 }
 
-func (s *server) handleJob(msg *onos.Request) {
+func (s *server) handleJob(msg *arc.Request) {
 	log.Infof("Dispatching message with requestID %s to agent %s\n", msg.RequestID, msg.Agent)
 	jobContext, _ := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
 
-	outChan := make(chan *onos.Reply)
-	go onos.ExecuteAction(jobContext, msg, outChan)
+	outChan := make(chan *arc.Reply)
+	go arc.ExecuteAction(jobContext, msg, outChan)
 
 	for m := range outChan {
 		s.transport.Reply(m)

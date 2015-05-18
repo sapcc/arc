@@ -10,8 +10,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
-	"gitHub.***REMOVED***/monsoon/onos/server"
-	"gitHub.***REMOVED***/monsoon/onos/transport"
+	"gitHub.***REMOVED***/monsoon/arc/server"
+	"gitHub.***REMOVED***/monsoon/arc/transport"
 )
 
 var Commands = []cli.Command{

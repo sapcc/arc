@@ -1,4 +1,4 @@
-package onos
+package arc
 
 type Config struct {
 	Endpoints  []string
