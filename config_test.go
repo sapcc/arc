@@ -12,18 +12,21 @@ var (
 func TestConfigFileViaCommandLine(t *testing.T) {
 	defer resetEnv()
 	os.Setenv(configFileEnvName, "FromEnvShouldBeIgnored")
-	os.Args = append(os.Args, "--config-file=FromArg")
+	os.Args = []string{os.Args[0], "-config-file=FromArg"}
 
-	if configFile() != "FromArg" {
-		t.Errorf("%s != FromArg", configFile)
+	c := configFile()
+
+	if c != "FromArg" {
+		t.Errorf("%s != FromArg", c)
 	}
 }
 
 func TestConfigFileFromEnv(t *testing.T) {
 	defer resetEnv()
 	os.Setenv(configFileEnvName, "FromEnv")
+	c := configFile()
 	if configFile() != "FromEnv" {
-		t.Errorf("%s != 'FromEnv'", configFile)
+		t.Errorf("%s != 'FromEnv'", c)
 	}
 }
 
