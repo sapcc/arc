@@ -1,0 +1,15 @@
+#!/bin/bash
+PROJECT_ROOT=$(cd "${0%/*}" && echo "$PWD")
+ORG_PATH="gitHub.***REMOVED***/monsoon"
+REPO_PATH="${ORG_PATH}/arc"
+
+if [ ! -h $PROJECT_ROOT/.gopath/src/${REPO_PATH} ]; then
+	mkdir -p $PROJECT_ROOT/.gopath/src/${ORG_PATH}
+	ln -s ../../../.. $PROJECT_ROOT/.gopath/src/${REPO_PATH} || exit 255
+fi
+
+export GOPATH=$PROJECT_ROOT/.gopath:$PROJECT_ROOT/Godeps/_workspace
+
+mkdir -p $PROJECT_ROOT/bin
+go build -o $PROJECT_ROOT/bin/arc $REPO_PATH 
+
