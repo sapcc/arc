@@ -1,10 +1,9 @@
-package test
+package arc
 
 import (
 	"fmt"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"testing"
 	"strings"
+	"testing"
 )
 
 var validJson = `{
@@ -19,9 +18,9 @@ var validJson = `{
 }`
 
 var typeValidation = []string{
-    `{"version":"version",}`,
+	`{"version":"version",}`,
 	`{"sender":987654321,}`,
-    `{"request_id":123,}`,
+	`{"request_id":123,}`,
 	`{"to":123,}`,
 	`{"timeout":"timeout",}`,
 	`{"agent":12345,}`,
@@ -29,20 +28,20 @@ var typeValidation = []string{
 	`{"payload":12345,}`,
 }
 
-func TestParseRequestValidJson(t *testing.T) {	
+func TestParseRequestValidJson(t *testing.T) {
 	data := []byte(validJson)
-	request, err := arc.ParseRequest(&data)
+	request, err := ParseRequest(&data)
 	if request == nil {
 		t.Error("Expected request not nil, got ", request)
 	}
 	if err != nil {
 		t.Error("Expected get one error, got ", err)
-	}	
+	}
 }
 
-func TestParseRequestMalformedJson(t *testing.T) {	
+func TestParseRequestMalformedJson(t *testing.T) {
 	data := []byte("some text instead of JSON")
-	request, err := arc.ParseRequest(&data)
+	request, err := ParseRequest(&data)
 	if request != nil {
 		t.Error("Expected request nil, got ", request)
 	}
@@ -51,10 +50,10 @@ func TestParseRequestMalformedJson(t *testing.T) {
 	}
 }
 
-func TestParseRequestTypeValidation(t *testing.T) {		
+func TestParseRequestTypeValidation(t *testing.T) {
 	for _, str := range typeValidation {
 		data := []byte(str)
-		request, err := arc.ParseRequest(&data)
+		request, err := ParseRequest(&data)
 		if request != nil {
 			t.Error("Expected request nil, got ", request)
 		}
@@ -69,25 +68,25 @@ func TestParseRequestAttrValidation(t *testing.T) {
 	// remove {}
 	str = strings.Replace(str, "{", "", -1)
 	str = strings.Replace(str, "}", "", -1)
-	
+
 	// create arrays removing each time a different attribute
 	res := strings.Split(str, ",")
-    for i := range res {
-		n := make([]string, len(res[:i])+len(res[i+1:])) 		
+	for i := range res {
+		n := make([]string, len(res[:i])+len(res[i+1:]))
 		copy(n[:], res[:i])
 		copy(n[len(res[:i]):], res[i+1:])
-		
+
 		// build a json from the string arrays
 		jsonString := fmt.Sprint("{", strings.Join(n, ","), "}")
-		data := []byte(jsonString)		
-		
+		data := []byte(jsonString)
+
 		//test errors
-		request, err := arc.ParseRequest(&data)
+		request, err := ParseRequest(&data)
 		if request != nil {
 			t.Error("Expected request nil, got ", request)
 		}
 		if err == nil {
 			t.Error("Expected get one error, got ", err)
 		}
-     }
+	}
 }
