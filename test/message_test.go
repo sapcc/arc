@@ -2,10 +2,8 @@ package test
 
 import (
 	"fmt"
-	"gitHub.***REMOVED***/monsoon/onos/onos"
+	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"testing"
-	"encoding/json"
-	"errors"
 	"strings"
 )
 
@@ -33,7 +31,7 @@ var typeValidation = []string{
 
 func TestParseRequestValidJson(t *testing.T) {	
 	data := []byte(validJson)
-	request, err := parseRequest(&data)
+	request, err := arc.ParseRequest(&data)
 	if request == nil {
 		t.Error("Expected request not nil, got ", request)
 	}
@@ -44,7 +42,7 @@ func TestParseRequestValidJson(t *testing.T) {
 
 func TestParseRequestMalformedJson(t *testing.T) {	
 	data := []byte("some text instead of JSON")
-	request, err := parseRequest(&data)
+	request, err := arc.ParseRequest(&data)
 	if request != nil {
 		t.Error("Expected request nil, got ", request)
 	}
@@ -56,7 +54,7 @@ func TestParseRequestMalformedJson(t *testing.T) {
 func TestParseRequestTypeValidation(t *testing.T) {		
 	for _, str := range typeValidation {
 		data := []byte(str)
-		request, err := parseRequest(&data)
+		request, err := arc.ParseRequest(&data)
 		if request != nil {
 			t.Error("Expected request nil, got ", request)
 		}
@@ -84,7 +82,7 @@ func TestParseRequestAttrValidation(t *testing.T) {
 		data := []byte(jsonString)		
 		
 		//test errors
-		request, err := parseRequest(&data)
+		request, err := arc.ParseRequest(&data)
 		if request != nil {
 			t.Error("Expected request nil, got ", request)
 		}
@@ -92,66 +90,4 @@ func TestParseRequestAttrValidation(t *testing.T) {
 			t.Error("Expected get one error, got ", err)
 		}
      }
-}
-
-// private
-
-func parseRequest(data *[]byte) (request *onos.Request, err error) {
-	// unmarshal    
-	err = json.Unmarshal(*data, &request)
-	if err != nil {		
-		request = nil
-		return
-	}
-	
-	// check all attr are given	
-	if request.Version == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'Version' is missing or has no valid value. Got ", request.Version))
-		request = nil
-		return
-	}
-	
-	if len(request.Sender) == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'Sender' is missing or empty. Got ", request.Sender))
-		request = nil
-		return
-	}
-	
-	if len(request.To) == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'To' is missing or empty. Got ", request.To))
-		request = nil
-		return
-	}
-	
-	if len(request.RequestID) == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'RequestID' is missing or empty. Got ", request.RequestID))
-		request = nil
-		return
-	}
-	
-	if request.Timeout == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'Timeout' is missing or has no valid value. Got ", request.Timeout))
-		request = nil
-		return
-	}
-	
-	if len(request.Agent) == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'Agent' is missing or empty. Got ", request.Agent))
-		request = nil
-		return
-	}
-	
-	if len(request.Action) == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'Action' is missing or empty. Got ", request.Action))
-		request = nil
-		return
-	}
-	
-	if len(request.Payload) == 0 {
-		err = errors.New(fmt.Sprint("Attribute 'Payload' is missing or empty. Got ", request.Payload))
-		request = nil
-		return
-	}
-	
-	return
 }

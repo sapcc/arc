@@ -2,6 +2,8 @@ package arc
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"	
 )
 
 type Request struct {
@@ -50,4 +52,64 @@ func CreateReply(request *Request, payload string) *Reply {
 		RequestID: request.RequestID,
 	}
 
+}
+
+func ParseRequest(data *[]byte) (request *Request, err error) {
+	// unmarshal    
+	err = json.Unmarshal(*data, &request)
+	if err != nil {		
+		request = nil
+		return
+	}
+	
+	// validation
+	if request.Version == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'Version' is missing or has no valid value. Got ", request.Version))
+		request = nil
+		return
+	}
+	
+	if len(request.Sender) == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'Sender' is missing or empty. Got ", request.Sender))
+		request = nil
+		return
+	}
+	
+	if len(request.To) == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'To' is missing or empty. Got ", request.To))
+		request = nil
+		return
+	}
+	
+	if len(request.RequestID) == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'RequestID' is missing or empty. Got ", request.RequestID))
+		request = nil
+		return
+	}
+	
+	if request.Timeout == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'Timeout' is missing or has no valid value. Got ", request.Timeout))
+		request = nil
+		return
+	}
+	
+	if len(request.Agent) == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'Agent' is missing or empty. Got ", request.Agent))
+		request = nil
+		return
+	}
+	
+	if len(request.Action) == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'Action' is missing or empty. Got ", request.Action))
+		request = nil
+		return
+	}
+	
+	if len(request.Payload) == 0 {
+		err = errors.New(fmt.Sprint("Attribute 'Payload' is missing or empty. Got ", request.Payload))
+		request = nil
+		return
+	}
+	
+	return
 }
