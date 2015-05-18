@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -60,12 +59,13 @@ func (c *MQTTClient) Disconnect() {
 func (c *MQTTClient) Subscribe() <-chan *arc.Request {
 	msgChan := make(chan *arc.Request)
 	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
-		msg, err := parseMessage(mMessage)
+		payload := mMessage.Payload()
+		msg, err := arc.ParseRequest(&payload)
 		if err != nil {
 			logrus.Warnf("Discarding invalid message on topic %s:%s\n", mMessage.Topic(), err)
 			return
 		}
-		msgChan <- &msg
+		msgChan <- msg
 	}
 	c.client.Subscribe("test", 0, messageCallback)
 	return msgChan
@@ -88,12 +88,4 @@ func (c *MQTTClient) Reply(msg *arc.Reply) {
 
 func (c *MQTTClient) SubscribeJob(requestId string) <-chan *arc.Reply {
 	return make(chan *arc.Reply)
-}
-
-// private
-
-func parseMessage(msg MQTT.Message) (arc.Request, error) {
-	var m arc.Request
-	err := json.Unmarshal(msg.Payload(), &m)
-	return m, err
 }
