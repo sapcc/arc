@@ -1,24 +1,35 @@
-GOPATH:=$(CURDIR)/.gopath/:$(CURDIR)/Godeps/_workspace
+GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
 ORG_PATH:=gitHub.***REMOVED***/monsoon
 REPO_PATH:=$(ORG_PATH)/arc
+BUILD_DIR:=bin
+BINARY:=$(BUILD_DIR)/arc
 
-bin:
-	mkdir bin
+.PHONY: help 
+help:
+	@echo
+	@echo "Available targets:"
+	@echo "  * build   - build the binary, output to $(BINARY)"
+	@echo "  * test    - run all tests"
+	@echo "  * gopath  - print custom GOPATH external use" 
+
 .PHONY: build
-build: gopath bin
-	go build -o bin/arc $(REPO_PATH)
+build: setup
+	@mkdir -p $(BUILD_DIR)
+	go build -o $(BINARY) $(REPO_PATH)
 
 .PHONY: test
-test: gopath
+test: setup
 	go test $(REPO_PATH) -v
 
-.PHONY: gopath
-gopath: .gopath/$(REPO_PATH)
+.PHONY: gopath 
+gopath: setup
+	@echo $(GOPATH)
 
-.PHONY: env
-env: gopath
-	echo GOPATH=$(GOPATH)
+.PHONY: setup
+setup: .gopath/src/$(REPO_PATH)
 
-.gopath/$(REPO_PATH):
-	mkdir -p .gopath/$(ORG_PATH)
-	ln -s ../../../.. .gopath/$(REPO_PATH)
+#file targets below
+
+.gopath/src/$(REPO_PATH):
+	mkdir -p .gopath/src/$(ORG_PATH)
+	ln -s ../../../.. .gopath/src/$(REPO_PATH)
