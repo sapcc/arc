@@ -16,19 +16,11 @@ func init() {
 	arc.RegisterAgent("rpc", new(RpcAgent))
 }
 
-func (a *RpcAgent) Enabled() bool {
-	return true
-}
+func (a *RpcAgent) Enabled() bool { return true }
 
-func (a *RpcAgent) Enable() error {
-	return nil
-}
+func (a *RpcAgent) Enable() error { return nil }
 
-func (a *RpcAgent) Disable() error {
-	return nil
-}
-
-//private
+func (a *RpcAgent) Disable() error { return nil }
 
 func (a *RpcAgent) PingAction(ctx context.Context, payload string) (string, error) {
 	return "pong", nil
