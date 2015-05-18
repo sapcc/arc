@@ -19,7 +19,7 @@ build: setup
 
 .PHONY: test
 test: setup
-	go test $(REPO_PATH) ./... -v
+	go test ./... -v
 
 .PHONY: gopath 
 gopath: setup
