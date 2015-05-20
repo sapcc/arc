@@ -57,7 +57,7 @@ func (s *server) Stop() {
 }
 
 func (s *server) handleJob(msg *arc.Request) {
-	log.Infof("Dispatching message with requestID %s to agent %s\n", msg.RequestID, msg.Agent)
+	log.Infof("Dispatching message with requestID %s to agent %s", msg.RequestID, msg.Agent)
 	jobContext, _ := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
 
 	outChan := make(chan *arc.Reply)
@@ -66,5 +66,5 @@ func (s *server) handleJob(msg *arc.Request) {
 	for m := range outChan {
 		s.transport.Reply(m)
 	}
-	log.Infof("Job %s completed\n", msg.RequestID)
+	log.Infof("Job %s completed", msg.RequestID)
 }
