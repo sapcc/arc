@@ -8,12 +8,12 @@ import (
 )
 
 type Transport interface {
-	Connect()
+	Connect() error
 	Disconnect()
-	Request(*arc.Request)
-	Reply(*arc.Reply)
-	Subscribe() <-chan *arc.Request
-	SubscribeJob(requestId string) <-chan *arc.Reply
+	Request(msg *arc.Request)
+	Reply(msg *arc.Reply)
+	Subscribe(identity string) (messages <-chan *arc.Request, cancel func())
+	SubscribeJob(requestId string) (messages <-chan *arc.Reply, cancel func())
 }
 
 func New(config arc.Config) (Transport, error) {

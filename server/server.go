@@ -34,7 +34,7 @@ func (s *server) Run(doneChan chan<- bool) {
 
 	s.transport.Connect()
 	defer s.transport.Disconnect()
-	incomingChan := s.transport.Subscribe()
+	incomingChan, cancelSubscription := s.transport.Subscribe("test")
 
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
 	done := s.rootContext.Done()
@@ -43,6 +43,7 @@ func (s *server) Run(doneChan chan<- bool) {
 		select {
 		case <-done:
 			log.Debug("Server was stopped")
+			cancelSubscription()
 			return
 		case msg := <-incomingChan:
 			go s.handleJob(msg)
