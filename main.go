@@ -74,6 +74,23 @@ func main() {
 			EnvVar: envPrefix + "LOG_LEVEL",
 			Value:  "info",
 		},
+		cli.BoolFlag{
+			Name:   "no-auto-update",
+			Usage:  "Specifies if the server should NO trigger auto updates",
+			EnvVar: envPrefix + "NO_AUTO_UPDATE",
+		},		
+		cli.IntFlag{
+			Name:   "update-interval",
+			Usage:  "Time update interval in seconds",
+			EnvVar: envPrefix + "UPDATE_INTERVAL",
+			Value:  21600,
+		},
+		cli.StringFlag{
+			Name:   "update-uri",
+			Usage:  "Update server uri",
+			EnvVar: envPrefix + "UPDATE_URI",
+			Value:  "http://localhost:3000/updates",
+		},
 	}
 
 	app.Commands = Commands
