@@ -9,9 +9,20 @@ import (
 	"golang.org/x/net/context"
 )
 
+type registry struct {
+	agents map[string]*agentInfo
+}
+
 var (
-	agentRegistry = make(map[string]*agentInfo)
+	agentRegistry = &registry{agents: make(map[string]*agentInfo)}
 )
+
+type agentAction func(context.Context, string, func(string)) (string, error)
+
+type agentInfo struct {
+	agent   Agent
+	actions map[string]agentAction
+}
 
 type Agent interface {
 	Enabled() bool
@@ -19,17 +30,20 @@ type Agent interface {
 	Disable() error
 }
 
-type AgentAction func(context.Context, string) (string, error)
+type Registry interface {
+	HasAction(agent string, action string) bool
+	Agents() []string
+	Actions(agent string) []string
+}
 
-type agentInfo struct {
-	agent   Agent
-	actions map[string]AgentAction
+func AgentRegistry() Registry {
+	return agentRegistry
 }
 
 func RegisterAgent(name string, agent Agent) {
 
 	agentType := reflect.TypeOf(agent)
-	actionMap := make(map[string]AgentAction)
+	actionMap := make(map[string]agentAction)
 
 	re := regexp.MustCompile("^([A-Z].*)Action$")
 
@@ -37,7 +51,7 @@ func RegisterAgent(name string, agent Agent) {
 		method := agentType.Method(i)
 		if match := re.FindStringSubmatch(method.Name); match != nil {
 			action := strings.ToLower(match[1])
-			actionFunction, ok := reflect.ValueOf(agent).MethodByName(method.Name).Interface().(func(context.Context, string) (string, error))
+			actionFunction, ok := reflect.ValueOf(agent).MethodByName(method.Name).Interface().(func(context.Context, string, func(string)) (string, error))
 			if ok {
 				actionMap[action] = actionFunction
 			} else {
@@ -46,12 +60,12 @@ func RegisterAgent(name string, agent Agent) {
 		}
 	}
 
-	agentRegistry[name] = &agentInfo{agent, actionMap}
+	agentRegistry.agents[name] = &agentInfo{agent, actionMap}
 }
 
 func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 	defer close(out)
-	agt := agentRegistry[request.Agent]
+	agt := agentRegistry.agents[request.Agent]
 	if agt == nil {
 		out <- CreateReply(request, Failed, "Agent not found")
 		return
@@ -64,8 +78,11 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 		out <- CreateReply(request, Failed, "Action not found")
 		return
 	}
+	hearbeat := func(payload string) {
+		out <- CreateReply(request, Executing, payload)
+	}
 
-	result, err := agt.executeAction(ctx, request.Action, request.Payload)
+	result, err := agt.executeAction(ctx, request.Action, request.Payload, hearbeat)
 	if err != nil {
 		out <- CreateReply(request, Failed, err.Error())
 	} else {
@@ -74,6 +91,35 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 
 }
 
-func (a *agentInfo) executeAction(ctx context.Context, action, payload string) (string, error) {
-	return a.actions[action](ctx, payload)
+func (a *agentInfo) executeAction(ctx context.Context, action, payload string, hearbeat func(string)) (string, error) {
+	return a.actions[action](ctx, payload, hearbeat)
+}
+
+func (r *registry) Agents() []string {
+
+	agents := make([]string, 0, len(r.agents))
+	for i, _ := range r.agents {
+		agents = append(agents, i)
+	}
+	return agents
+
+}
+
+func (r *registry) Actions(agent string) []string {
+	if agt, found := r.agents[agent]; found {
+		actions := make([]string, 0, len(agt.actions))
+		for i, _ := range agt.actions {
+			actions = append(actions, i)
+		}
+		return actions
+	}
+	return nil
+}
+
+func (r *registry) HasAction(agent string, action string) bool {
+	if a := r.agents[agent]; a != nil {
+		_, found := a.actions[action]
+		return found
+	}
+	return false
 }

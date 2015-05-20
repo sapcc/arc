@@ -8,9 +8,9 @@ import (
 	"golang.org/x/net/context"
 )
 
-type key int
+type contextKey int
 
-const jobIDKey key = 0
+const jobIDKey contextKey = 0
 
 func NewJobContext(ctx context.Context, jobID string) context.Context {
 	return context.WithValue(ctx, jobIDKey, jobID)

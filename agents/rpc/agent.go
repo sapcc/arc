@@ -10,28 +10,29 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-type RpcAgent struct{}
+type rpcAgent struct{}
 
 func init() {
-	arc.RegisterAgent("rpc", new(RpcAgent))
+	arc.RegisterAgent("rpc", new(rpcAgent))
 }
 
-func (a *RpcAgent) Enabled() bool { return true }
+func (a *rpcAgent) Enabled() bool { return true }
 
-func (a *RpcAgent) Enable() error { return nil }
+func (a *rpcAgent) Enable() error { return nil }
 
-func (a *RpcAgent) Disable() error { return nil }
+func (a *rpcAgent) Disable() error { return nil }
 
-func (a *RpcAgent) PingAction(ctx context.Context, payload string) (string, error) {
+func (a *rpcAgent) PingAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
 	return "pong", nil
 }
 
-func (a *RpcAgent) SleepAction(ctx context.Context, payload string) (string, error) {
+func (a *rpcAgent) SleepAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
 
 	wait, err := strconv.Atoi(payload)
 	if err != nil {
 		return "", err
 	}
+	heartbeat("")
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
