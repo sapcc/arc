@@ -13,8 +13,7 @@ var validJson = `{
 	"to":"somewhere",
 	"timeout":1,
 	"agent":"rpc",
-	"action": "ping",
-	"payload": "ping"
+	"action": "ping"
 }`
 
 var typeValidation = []string{

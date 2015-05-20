@@ -53,23 +53,23 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 	defer close(out)
 	agt := agentRegistry[request.Agent]
 	if agt == nil {
-		out <- CreateReply(request, "Agent not found")
+		out <- CreateReply(request, Failed, "Agent not found")
 		return
 	}
 	if agt.agent.Enabled() == false {
-		out <- CreateReply(request, "Agent not enabled")
+		out <- CreateReply(request, Failed, "Agent not enabled")
 		return
 	}
 	if _, exists := agt.actions[request.Action]; !exists {
-		out <- CreateReply(request, "Action not found")
+		out <- CreateReply(request, Failed, "Action not found")
 		return
 	}
 
 	result, err := agt.executeAction(ctx, request.Action, request.Payload)
 	if err != nil {
-		out <- CreateReply(request, err.Error())
+		out <- CreateReply(request, Failed, err.Error())
 	} else {
-		out <- CreateReply(request, result)
+		out <- CreateReply(request, Complete, result)
 	}
 
 }
