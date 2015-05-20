@@ -8,9 +8,10 @@ BINARY:=$(BUILD_DIR)/arc
 help:
 	@echo
 	@echo "Available targets:"
-	@echo "  * build   - build the binary, output to $(BINARY)"
-	@echo "  * test    - run all tests"
-	@echo "  * gopath  - print custom GOPATH external use" 
+	@echo "  * build       - build the binary, output to $(BINARY)"
+	@echo "  * test        - run all tests"
+	@echo "  * gopath      - print custom GOPATH external use" 
+	@echo "  * build-deps  - build and cache dependencies (speeds up make build)" 
 
 .PHONY: build
 build: setup
@@ -27,6 +28,10 @@ gopath: setup
 
 .PHONY: setup
 setup: .gopath/src/$(REPO_PATH)
+
+.PHONY: install-deps
+install-deps:
+	jq -r .Deps[].ImportPath < Godeps/Godeps.json |xargs -L1 go install
 
 #file targets below
 
