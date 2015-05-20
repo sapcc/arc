@@ -1,5 +1,5 @@
 {
-	"ImportPath": "gitHub.***REMOVED***/monsoon/onos",
+	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
 	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
@@ -28,9 +28,21 @@
 			"Rev": "942282e931e8286aa802a30b01fa7e16befb50f3"
 		},
 		{
+			"ImportPath": "github.com/inconshreveable/go-update",
+			"Rev": "68f5725818189545231c1fd8694793d45f2fc529"
+		},
+		{
 			"ImportPath": "github.com/joho/godotenv",
 			"Comment": "v1-6-gf658182",
 			"Rev": "f6581828bb37238bc1ce8e561d9e4050630a304d"
+		},
+		{
+			"ImportPath": "github.com/kardianos/osext",
+			"Rev": "8fef92e41e22a70e700a96b29f066cda30ea24ef"
+		},
+		{
+			"ImportPath": "github.com/kr/binarydist",
+			"Rev": "9955b0ab8708602d411341e55fffd7e0700f86bd"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
