@@ -13,6 +13,7 @@ type Updater struct {
 }
 
 /**
+ * Basic options to initialize the struct
  * options["version"] = if version is 0, it will be set to 1 (check.go)
  * options["appName"] = identifier of the application to update
  * options["updateUri"] = update server uri
@@ -45,15 +46,27 @@ func (u *Updater) Update(tickChan *time.Ticker) error {
 	log.Infof("Updated version '%s' for app '%s' available ", r.Version, u.params.AppId)
 
 	// apply the update
-	err, _ = r.Update()
+	err = applyUpdate(r)
+	if err != nil {
+		return err
+	}
+
+	// Stop the ticker to not apply another update until the app is restarted	
+	tickChan.Stop()
+
+	return nil
+}
+
+// private
+
+var applyUpdate = apply_update
+func apply_update(r *check.Result) error {
+	err, _ := r.Update()
 	if err != nil {
 		log.Errorf("Failed to update: %v\n", err)
 		return err
-	}
+	}	
 	log.Infof("Updated to version %s!\n", r.Version)
-
-	// Stop the ticker to not apply another update until the app is restarted
-	tickChan.Stop()
-
+	
 	return nil
 }
