@@ -1,0 +1,6 @@
+.vagrant/
+bin/
+chef/
+.gopath/
+.git/
+tmp/

@@ -1,0 +1,38 @@
+SITE
+  remote: http://shelf.***REMOVED***:8080
+  specs:
+    build-essential (2.2.3)
+    chef_handler (1.1.8)
+    dmg (2.2.2)
+    git (4.2.2)
+      build-essential (>= 0.0.0)
+      dmg (>= 0.0.0)
+      windows (>= 0.0.0)
+      yum-epel (>= 0.0.0)
+    sap-proxy (1.5.0)
+      windows (>= 0.0.0)
+    vim (1.1.2)
+    vim-windows (0.1.0)
+      windows (>= 0.0.0)
+    windows (1.37.0)
+      chef_handler (>= 0.0.0)
+    yum (3.6.0)
+    yum-epel (0.6.0)
+      yum (~> 3.0)
+
+GIT
+  remote: https://github.com/databus23/dotfiles-cookbook.git
+  ref: master
+  sha: ecc3d33fea330488d9d4e9e6befa50254e701341
+  specs:
+    dotfiles-fabus (0.1.0)
+      git (>= 0.0.0)
+      vim (>= 0.0.0)
+      vim-windows (>= 0.0.0)
+      windows (>= 0.0.0)
+
+DEPENDENCIES
+  dotfiles-fabus (>= 0)
+  sap-proxy (>= 0)
+  vim-windows (>= 0)
+
