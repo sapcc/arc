@@ -31,7 +31,7 @@ func main() {
 		},
 	}
 	app.Usage = "Remote job execution galore"
-	app.Version = Version
+	app.Version = Version + "(" + GITCOMMIT + ")"
 
 	app.Flags = []cli.Flag{
 		//config-file is only here for the generated help, it is actually handled above
@@ -79,7 +79,7 @@ func main() {
 			Name:   "no-auto-update",
 			Usage:  "Specifies if the server should NO trigger auto updates",
 			EnvVar: envPrefix + "NO_AUTO_UPDATE",
-		},		
+		},
 		cli.IntFlag{
 			Name:   "update-interval",
 			Usage:  "Time update interval in seconds",
