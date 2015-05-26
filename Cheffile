@@ -1,5 +1,5 @@
 site 'http://shelf.***REMOVED***:8080'
 
-cookbook 'vim-windows'
+#cookbook 'vim-windows'
 cookbook 'sap-proxy'
-cookbook 'dotfiles-fabus', :git => 'https://github.com/databus23/dotfiles-cookbook.git'
+#cookbook 'dotfiles-fabus', :git => 'https://github.com/databus23/dotfiles-cookbook.git'
