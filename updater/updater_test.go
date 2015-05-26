@@ -28,6 +28,9 @@ func TestUpdaterNewSuccess(t *testing.T) {
 	if up.params.AppVersion != validOptions["version"] {
 		t.Error("Expected upater attribute 'AppVersion' set to", validOptions["version"], ", got ", up.params.AppVersion)
 	}
+	if len(up.params.OS) == 0 {
+		t.Error("Expected upater attribute 'OS' to be set, got ", up.params.OS)
+	}
 }
 
 func TestUpdaterUpdateNotAvailable(t *testing.T) {

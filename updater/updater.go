@@ -2,6 +2,7 @@ package updater
 
 import (
 	"time"
+	"runtime"
 	log "github.com/Sirupsen/logrus"
 	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
@@ -24,6 +25,7 @@ func New(options map[string]string) *Updater {
 		params: check.Params{
 			AppVersion: options["version"],
 			AppId:      options["appName"],
+			OS: runtime.GOOS,
 		},
 		updateUri: options["updateUri"],
 	}
