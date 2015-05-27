@@ -3,7 +3,6 @@ package execute
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -29,14 +28,34 @@ func (a *executeAgent) CommandAction(ctx context.Context, payload string, heartb
 		return "", fmt.Errorf("Invalid payload. Command should by a string or array.")
 	}
 
-	path, err := exec.LookPath(command[0])
+	process := arc.NewSubprocess(command[0], command[1:]...)
+
+	output, err := process.Start()
 	if err != nil {
-		return "", fmt.Errorf("Command %s not found.", command[0])
+		return "", err
 	}
+	//send empty heartbeat so that the caller knows the command is executing
+	heartbeat("")
 
-	exec.Command(command[0], command[1:]...)
-
-	return path, nil
+	for {
+		select {
+		case <-ctx.Done():
+			//The context was cancelled, stop the process
+			process.Kill()
+		case <-process.Done():
+			//drain the output channel before quitting
+			for {
+				select {
+				case line := <-output:
+					heartbeat(line)
+				default:
+					return "", process.Error()
+				}
+			}
+		case line := <-output:
+			heartbeat(line)
+		}
+	}
 
 }
 
