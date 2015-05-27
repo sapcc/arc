@@ -1,7 +1,6 @@
 package arc
 
 import (
-	"syscall"
 	"testing"
 	"time"
 )
@@ -30,7 +29,10 @@ func TestSubprocess(t *testing.T) {
 		t.Error("Unexpected output: ", output)
 	}
 	<-sub.Done()
-	if !sub.ProcessState().Exited() {
+	if sub.Error() != nil {
+		t.Error("Process didn't terminate cleanly")
+	}
+	if !sub.Exited() {
 		t.Error("Process didn't exit")
 	}
 }
@@ -49,10 +51,11 @@ func TestKillSubprocess(t *testing.T) {
 	sub.Kill()
 	select {
 	case <-sub.Done():
-		pstate := sub.ProcessState().Sys().(syscall.WaitStatus)
-		//strangley a signaled proccess on linux is not "Exited()" wtf
-		if !(pstate.Exited() || pstate.Signaled()) {
+		if !sub.Exited() {
 			t.Error("Process did not exit")
+		}
+		if sub.Error() == nil {
+			t.Error("Process should not have exited cleanly")
 		}
 	case <-time.After(500 * time.Millisecond):
 		t.Error("process didn't terminate")

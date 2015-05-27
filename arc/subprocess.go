@@ -6,17 +6,19 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 type Subprocess struct {
-	Command []string
-	cmd     *exec.Cmd
-	outPipe io.ReadCloser
-	errPipe io.ReadCloser
-	done    chan struct{}
-	outChan chan string
+	Command   []string
+	cmd       *exec.Cmd
+	outPipe   io.ReadCloser
+	errPipe   io.ReadCloser
+	done      chan struct{}
+	outChan   chan string
+	exitError error
 }
 
 func NewSubprocess(command string, args ...string) *Subprocess {
@@ -58,12 +60,22 @@ func (s *Subprocess) Done() <-chan struct{} {
 	return s.done
 }
 
+func (s *Subprocess) Exited() bool {
+	pstate := s.ProcessState().Sys().(syscall.WaitStatus)
+	//strangley a signaled proccess on linux is not "Exited()" wtf
+	return pstate.Exited() || pstate.Signaled()
+}
+
+func (s *Subprocess) Error() error {
+	return s.exitError
+}
+
 func (s *Subprocess) ProcessState() *os.ProcessState {
 	return s.cmd.ProcessState
 }
 
 func (s *Subprocess) waitForExit() {
-	s.cmd.Wait()
+	s.exitError = s.cmd.Wait()
 	log.Debugf("Subprocess exited")
 	if s.done != nil {
 		close(s.done)
