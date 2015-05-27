@@ -13,6 +13,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION = "2") do |config|
       chef.add_recipe "sap-proxy::default"
       chef.add_recipe "golang::default"
     end
+
+    sub_packages = Dir.glob("./**/*.go").reject {|p|p =~ /Godep/}.map {|p| File.dirname(p) }.uniq 
+    config.vm.provision :shell, inline: "cd C:\\vagrant; go test -v #{sub_packages.join(" ")}"
   end
 
 end

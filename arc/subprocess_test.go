@@ -30,6 +30,9 @@ func TestSubprocess(t *testing.T) {
 		t.Error("Unexpected output: ", output)
 	}
 	<-sub.Done()
+	if !sub.ProcessState().Exited() {
+		t.Error("Process didn't exit")
+	}
 }
 
 func TestKillSubprocess(t *testing.T) {
@@ -41,14 +44,15 @@ func TestKillSubprocess(t *testing.T) {
 		t.Errorf("Error starting process", err)
 	}
 
-	//five the process some time to start
+	//give the process some time to start
 	time.Sleep(50 * time.Millisecond)
 	sub.Kill()
 	select {
 	case <-sub.Done():
-		t.Errorf(sub.ProcessState().Sys().(syscall.WaitStatus))
-		if !sub.ProcessState().Exited() {
-			t.Error("Process did not exit", sub.ProcessState().Sys().(syscall.WaitStatus).Signaled())
+		pstate := sub.ProcessState().Sys().(syscall.WaitStatus)
+		//strangley a signaled proccess on linux is not "Exited()" wtf
+		if !(pstate.Exited() || pstate.Signaled()) {
+			t.Error("Process did not exit")
 		}
 	case <-time.After(500 * time.Millisecond):
 		t.Error("process didn't terminate")

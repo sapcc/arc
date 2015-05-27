@@ -5,6 +5,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type Subprocess struct {
@@ -17,7 +20,6 @@ type Subprocess struct {
 }
 
 func NewSubprocess(command string, args ...string) *Subprocess {
-
 	return &Subprocess{Command: append([]string{command}, args...)}
 }
 
@@ -38,6 +40,7 @@ func (s *Subprocess) Start() (<-chan string, error) {
 	if err := s.cmd.Start(); err != nil {
 		return nil, err
 	}
+	log.Debugf("Started subprocess %s", strings.Join(s.Command, " "))
 	s.outChan = make(chan string, 10)
 
 	go s.scan(s.outPipe)
@@ -55,16 +58,13 @@ func (s *Subprocess) Done() <-chan struct{} {
 	return s.done
 }
 
-func (s *Subprocess) Kill() {
-	s.cmd.Process.Kill()
-}
-
 func (s *Subprocess) ProcessState() *os.ProcessState {
 	return s.cmd.ProcessState
 }
 
 func (s *Subprocess) waitForExit() {
 	s.cmd.Wait()
+	log.Debugf("Subprocess exited")
 	if s.done != nil {
 		close(s.done)
 	}

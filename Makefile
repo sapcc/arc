@@ -13,6 +13,7 @@ help:
 	@echo "Available targets:"
 	@echo "  * build        - build the binary, output to $(BINARY)"
 	@echo "  * test         - run all tests"
+	@echo "  * test-win     - run tests on windows (requires running vagrant vm)"
 	@echo "  * gopath       - print custom GOPATH external use" 
 	@echo "  * install-deps - build and cache dependencies (speeds up make build)" 
 	@echo "  * cross        - cross compile for darwin, windows, linux (requires docker)" 
@@ -25,6 +26,10 @@ build: setup
 .PHONY: test
 test: setup
 	go test ./... -v
+
+.PHONY: test-win
+test-win: 
+	vagrant provision --provision-with shell
 
 .PHONY: gopath 
 gopath: setup
