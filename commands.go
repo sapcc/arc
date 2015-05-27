@@ -165,7 +165,7 @@ func cmdExecute(c *cli.Context) {
 				return
 			}
 
-		case <-time.After(time.Duration(c.Int("timeout")) * time.Second):
+		case <-time.After(time.Duration(c.Int("timeout")+2) * time.Second):
 			log.Warnf("Timeout waiting for job %s\n", request.RequestID)
 			return
 		}
