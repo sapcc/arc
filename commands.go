@@ -58,7 +58,6 @@ var Commands = []cli.Command{
 }
 
 func cmdServer(c *cli.Context) {
-	doneChan := make(chan bool)
 
 	// Ticker containing a channel that will send the time with a period
 	tickChan := time.NewTicker(time.Second * time.Duration(c.GlobalInt("update-interval")))
@@ -75,16 +74,21 @@ func cmdServer(c *cli.Context) {
 	}
 	server := server.New(tp)
 
-	go server.Run(doneChan)
+	go server.Run()
 
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	gracefulChan := make(chan os.Signal, 1)
+	shutdownChan := make(chan os.Signal, 1)
+	signal.Notify(gracefulChan, syscall.SIGTERM)
+	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGQUIT)
 	for {
 		select {
-		case s := <-signalChan:
-			log.Info(fmt.Sprintf("Captured %v. Exiting...", s))
+		case s := <-shutdownChan:
+			log.Infof("Captured %v.", s)
 			server.Stop()
-		case <-doneChan:
+		case s := <-gracefulChan:
+			log.Infof("Captured %v.", s)
+			server.GracefulShutdown()
+		case <-server.Done():
 			os.Exit(0)
 		case <-tickChan.C:
 			if !c.GlobalBool("no-auto-update") {

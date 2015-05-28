@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -11,26 +13,50 @@ import (
 )
 
 type Server interface {
-	Run(done chan<- bool)
+	Run()
 	Stop()
+	GracefulShutdown()
+	Done() <-chan struct{}
 }
 
 type server struct {
-	stopChan    chan bool
+	doneChan    chan struct{}
 	transport   transport.Transport
 	activeJobs  map[string]func()
+	jobsMutex   sync.Mutex
 	rootContext context.Context
 	cancel      func()
+	wg          sync.WaitGroup
 }
 
 func New(transport transport.Transport) Server {
-	stopChan := make(chan bool)
-	activeJobs := make(map[string]func())
-	return &server{stopChan, transport, activeJobs, nil, nil}
+	return &server{
+		doneChan:   make(chan struct{}),
+		transport:  transport,
+		activeJobs: make(map[string]func()),
+	}
 }
 
-func (s *server) Run(doneChan chan<- bool) {
-	defer close(doneChan)
+func (s *server) Done() <-chan struct{} {
+	return s.doneChan
+}
+
+func (s *server) GracefulShutdown() {
+	s.jobsMutex.Lock()
+	runningJobs := len(s.activeJobs)
+	s.jobsMutex.Unlock()
+	log.Infof("Graceful shutdown triggered. Waiting for %d jobs to finish processing.", runningJobs)
+	go func() {
+		s.wg.Wait()
+		log.Info("No jobs pending, shutting down")
+		s.Stop()
+	}()
+}
+
+func (s *server) Run() {
+	log.Infof("Starting server. Pid %d", os.Getpid())
+	defer log.Info("Server stopped")
+	defer close(s.doneChan)
 
 	s.transport.Connect()
 	defer s.transport.Disconnect()
@@ -43,7 +69,6 @@ func (s *server) Run(doneChan chan<- bool) {
 	for {
 		select {
 		case <-done:
-			log.Debug("Server was stopped")
 			return
 		case msg := <-incomingChan:
 			go s.handleJob(msg)
@@ -59,7 +84,20 @@ func (s *server) Stop() {
 
 func (s *server) handleJob(msg *arc.Request) {
 	log.Infof("Dispatching message with requestID %s to agent %s", msg.RequestID, msg.Agent)
-	jobContext, _ := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
+	jobContext, cancel := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
+
+	s.wg.Add(1)
+	defer s.wg.Done()
+
+	//save a reference to the cancel method of the job context
+	s.jobsMutex.Lock()
+	s.activeJobs[msg.RequestID] = cancel
+	s.jobsMutex.Unlock()
+	defer func() {
+		s.jobsMutex.Lock()
+		delete(s.activeJobs, msg.RequestID)
+		s.jobsMutex.Unlock()
+	}()
 
 	outChan := make(chan *arc.Reply)
 	go arc.ExecuteAction(jobContext, msg, outChan)
