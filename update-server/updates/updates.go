@@ -17,7 +17,7 @@ type AvailableUpdate struct {
 	version string
 }
 
-var StaticsRootPath string
+var StaticRootPath string
 var BuildRelativeUrl string
 
 /*
@@ -25,7 +25,7 @@ var BuildRelativeUrl string
  */
 func New(req *http.Request, staticsPath string, buildUrl string) *check.Result {
 	// save statics path
-	StaticsRootPath = staticsPath
+	StaticRootPath = staticsPath
 	BuildRelativeUrl = buildUrl
 	
 	// get host url
@@ -83,7 +83,7 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 	
 	buildFile := ""
 	buildVersion := "0.0.0"
-	builds, _ := ioutil.ReadDir(fmt.Sprint(StaticsRootPath, "/builds"))
+	builds, _ := ioutil.ReadDir(fmt.Sprint(StaticRootPath, "/builds"))
 	for _, f := range builds {		
 		if strings.HasPrefix(f.Name(), fmt.Sprint(appId, "_", appOs, "_", appArch, "_")) {
 			fileVersion := strings.Split(f.Name(), "_")[3]
