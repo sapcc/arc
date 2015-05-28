@@ -23,8 +23,8 @@
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.4-16-g38a6ff9",
-			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
+			"Comment": "v0.8.2-2-g6ba91e2",
+			"Rev": "6ba91e24c498b49d0363c723e9e2ab2b5b8fd012"
 		},
 		{
 			"ImportPath": "github.com/blang/semver",
