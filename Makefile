@@ -2,7 +2,8 @@ GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
 ORG_PATH:=gitHub.***REMOVED***/monsoon
 REPO_PATH:=$(ORG_PATH)/arc
 BUILD_DIR:=bin
-BINARY:=$(BUILD_DIR)/arc
+ARC_BINARY:=$(BUILD_DIR)/arc
+US_BINARY:=$(BUILD_DIR)/update-site
 GITVERSION:=-X main.GITCOMMIT `git rev-parse --short HEAD`
 
 TARGETS:=linux/amd64 windows/amd64 darwin/amd64
@@ -11,17 +12,23 @@ TARGETS:=linux/amd64 windows/amd64 darwin/amd64
 help:
 	@echo
 	@echo "Available targets:"
-	@echo "  * build        - build the binary, output to $(BINARY)"
-	@echo "  * test         - run all tests"
-	@echo "  * test-win     - run tests on windows (requires running vagrant vm)"
-	@echo "  * gopath       - print custom GOPATH external use" 
-	@echo "  * install-deps - build and cache dependencies (speeds up make build)" 
-	@echo "  * cross        - cross compile for darwin, windows, linux (requires docker)" 
+	@echo "  * build             - build the binary, output to $(ARC_BINARY)"
+	@echo "  * build-update-site - build the update site, output to $(US_BINARY)"
+	@echo "  * test              - run all tests"
+	@echo "  * test-win          - run tests on windows (requires running vagrant vm)"
+	@echo "  * gopath            - print custom GOPATH external use" 
+	@echo "  * install-deps      - build and cache dependencies (speeds up make build)" 
+	@echo "  * cross             - cross compile for darwin, windows, linux (requires docker)" 
 
 .PHONY: build
 build: setup
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(BINARY) -ldflags="$(GITVERSION)" $(REPO_PATH)
+	go build -o $(ARC_BINARY) -ldflags="$(GITVERSION)" $(REPO_PATH)
+
+.PHONY: build-update-site
+build-update-site: setup
+	@mkdir -p $(BUILD_DIR)
+	go build -o $(US_BINARY) $(REPO_PATH)/update-server
 
 .PHONY: test
 test: setup
