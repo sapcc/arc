@@ -6,15 +6,21 @@ import (
   "net/http"
   "os"
   "path"
-	"encoding/json"
-	
+	"encoding/json"		
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 )
 
-func main() {
-  fs := http.FileServer(http.Dir("static"))
-  http.Handle("/static/", http.StripPrefix("/static/", fs))	
+// TODO: fix absolute path to the static files
+const StaticRootPath = "/Users/userID/go/src/gitHub.***REMOVED***/monsoon/arc/update-server/static"
+const BuildRelativeUrl = "/static/builds/"
+
+func main() {	
+	// api
   http.HandleFunc("/updates", availableUpdates)	
+	// serve static files
+  fs := http.FileServer(http.Dir(StaticRootPath))
+  http.Handle("/static/", http.StripPrefix("/static/", fs))
+	// serve template
   http.HandleFunc("/", serveTemplate)
 
   log.Println("Listening...")
@@ -23,10 +29,19 @@ func main() {
 
 func availableUpdates(w http.ResponseWriter, r *http.Request) {	
 	w.Header().Set("Content-Type", "application/json")
-	update := updates.New(r)
-  if err := json.NewEncoder(w).Encode(update); err != nil {
-      log.Println(err.Error())
-  }
+	if r.Method == "POST" {
+		update := updates.New(r, StaticRootPath, BuildRelativeUrl)		
+		if update == nil {
+			w.WriteHeader(204)
+			return
+		}
+		
+	  if err := json.NewEncoder(w).Encode(update); err != nil {
+	      log.Println(err.Error())
+	  }	
+	} else {
+		http.NotFound(w, r)
+	}
 }
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {	
