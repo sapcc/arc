@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/joho/godotenv"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -54,7 +54,7 @@ func loadConfigFile(file string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Loaded file", file)
+	log.Info("Loaded config file: ", file)
 	for name, value := range vars {
 		name = strings.Replace(name, "-", "_", -1)
 		name = strings.Replace(name, " ", "_", -1)
