@@ -1,6 +1,10 @@
 {
 	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		".",
+		"./update-server"
+	],
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/go-uuid/uuid",
@@ -21,6 +25,11 @@
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.4-16-g38a6ff9",
 			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
+		},
+		{
+			"ImportPath": "github.com/blang/semver",
+			"Comment": "v3.0.0",
+			"Rev": "2f3112b6f8f18f9df8743cc75ed51da08094ef6a"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
