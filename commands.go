@@ -92,7 +92,12 @@ func cmdServer(c *cli.Context) {
 			os.Exit(0)
 		case <-tickChan.C:
 			if !c.GlobalBool("no-auto-update") {
-				go up.Update(tickChan)
+				go func(){
+					if success, _ := up.Update(); success {
+						server.GracefulShutdown()
+						tickChan.Stop()
+					}
+				}()
 			}
 		}
 	}

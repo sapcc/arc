@@ -1,7 +1,7 @@
 package updater
 
 import (
-	"time"
+	"runtime"
 	log "github.com/Sirupsen/logrus"
 	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
@@ -24,12 +24,13 @@ func New(options map[string]string) *Updater {
 		params: check.Params{
 			AppVersion: options["version"],
 			AppId:      options["appName"],
+			OS: runtime.GOOS,
 		},
 		updateUri: options["updateUri"],
 	}
 }
 
-func (u *Updater) Update(tickChan *time.Ticker) error {
+func (u *Updater) Update() (bool, error) {
 	// update obj
 	up := update.New()
 
@@ -38,23 +39,20 @@ func (u *Updater) Update(tickChan *time.Ticker) error {
 	if err == check.NoUpdateAvailable {
 		// no content means no available update, http 204
 		log.Errorf("No update available")
-		return err
+		return false, err
 	} else if err != nil {
 		log.Errorf("Error while checking for update: %v\n", err)
-		return err
+		return false, err
 	}
 	log.Infof("Updated version '%s' for app '%s' available ", r.Version, u.params.AppId)
 
 	// apply the update
 	err = applyUpdate(r)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	// Stop the ticker to not apply another update until the app is restarted	
-	tickChan.Stop()
-
-	return nil
+	return true, nil
 }
 
 // private

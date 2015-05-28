@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 	"github.com/inconshreveable/go-update/check"
-	
-	"time"
 	"net/http"
 	"net/http/httptest"
 )
@@ -34,29 +32,13 @@ func TestUpdaterUpdateNotAvailable(t *testing.T) {
 	server := testTools(204, "")
 	defer server.Close()
 	
-	Delta := 100 * time.Millisecond
-	tickChan := time.NewTicker(Delta)	
-	
 	// add the server url to the valid options to get a mock response
 	validOptions["updateUri"] = server.URL
 	
 	up := New(validOptions)
-	err := up.Update(tickChan)
+	_, err := up.Update()
 	if err != check.NoUpdateAvailable {
 		t.Error("Expected get one error, got ", err)
-	}
-	
-	// test ticker does not stop
-	isTicking := false
-	time.Sleep(Delta)
-	select {
-	case <-tickChan.C:
-		isTicking = true
-	default:
-		// ok
-	}
-	if !isTicking {
-		t.Error("Expected ticker to tick")
 	}
 }
 
@@ -70,26 +52,13 @@ func TestUpdaterUpdateSuccess(t *testing.T) {
 	server := testTools(200, `{"initiative":"automatically","url":"MIAU://non_valid_url","patch_url":null,"patch_type":null,"version":"999","checksum":null,"signature":null}`)
 	defer server.Close()
 
-	Delta := 100 * time.Millisecond
-	tickChan := time.NewTicker(Delta)
-
 	// add the server url to the valid options to get a mock response
 	validOptions["updateUri"] = server.URL
 
 	up := New(validOptions)
-	err := up.Update(tickChan)
-	
+	_,err := up.Update()	
 	if err != nil {
 		t.Error("Expected get no error, got ", err)
-	}
-	
-	// test ticker stops
-	time.Sleep(Delta)
-	select {
-	case <-tickChan.C:
-		t.Error("Ticker did not shut down")
-	default:
-		// ok
 	}
 }
 
