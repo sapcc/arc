@@ -77,7 +77,7 @@ func getHostUrl(req *http.Request) *url.URL {
 func getAvailableUpdate(appId string, appVersion string, appOs string, appArch string) *AvailableUpdate {
 	av, err := semver.Make(appVersion)
 	if err != nil {
-		log.Errorf("Error parsing app version. Got ", err)
+		log.Errorf("Error parsing app version. Got %q", err.Error())
 		return nil
 	}
 
@@ -89,10 +89,10 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 			fileVersion := strings.Split(f.Name(), "_")[3]
 			bv, err := semver.Make(fileVersion)
 			if err != nil {
-				log.Errorf("Error parsing build version. Got %q. With error %q", buildVersion, err)
+				log.Errorf("Error parsing build version. Got %q. With error %q", buildVersion, err.Error())
 			}
 
-			nbv, _ := semver.Make(buildVersion)
+			nbv, _ := semver.Make(buildVersion)			
 			if bv.Compare(av) == 1 && bv.Compare(nbv) == 1 {
 				buildFile = f.Name()
 				buildVersion = fileVersion

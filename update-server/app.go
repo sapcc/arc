@@ -1,12 +1,12 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"encoding/json"
 	"fmt"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -31,7 +31,7 @@ func main() {
 	// serve template
 	http.HandleFunc("/", serveTemplate)
 
-	log.Println("Listening...")
+	log.Infof("Listening...")
 	http.ListenAndServe(":3000", nil)
 }
 
@@ -45,7 +45,7 @@ func availableUpdates(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.NewEncoder(w).Encode(update); err != nil {
-			log.Println(err.Error())
+			log.Errorf(err.Error())
 		}
 	} else {
 		http.NotFound(w, r)
@@ -58,7 +58,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	// layout
 	lp_s, err := FSString(false, fmt.Sprint(templatesPath, "/layout.html"))
 	if err != nil {
-		log.Printf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
+		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
 		http.NotFound(w, r)
 		return
 	}
@@ -66,7 +66,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	// page
 	fp_s, err := FSString(false, fmt.Sprint(templatesPath, r.URL.Path))
 	if err != nil {
-		log.Printf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
+		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
 		http.NotFound(w, r)
 		return
 	}
@@ -74,7 +74,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	// parse layout
 	tmpl, err := template.New("layout").Parse(lp_s)
 	if err != nil {
-		log.Printf("Error parsing layout. Got %q", err.Error())
+		log.Errorf("Error parsing layout. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
@@ -82,7 +82,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	// parse page
 	tmpl, err = tmpl.New("page").Parse(fp_s)
 	if err != nil {
-		log.Printf("Error parsing page. Got %q", err.Error())
+		log.Errorf("Error parsing page. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
@@ -92,7 +92,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "layout", builds); err != nil {
-		log.Println(err.Error())
+		log.Errorf(err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}

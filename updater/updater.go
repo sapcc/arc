@@ -19,7 +19,7 @@ type Updater struct {
  * options["updateUri"] = update server uri
  */
 func New(options map[string]string) *Updater {
-	log.Infof("Updater setup with version '%s', app name '%s' and update uri '%s'", options["version"], options["appName"], options["updateUri"])
+	log.Infof("Updater setup with version %q, app name %q and update uri %q", options["version"], options["appName"], options["updateUri"])
 	return &Updater{
 		params: check.Params{
 			AppVersion: options["version"],
@@ -41,10 +41,10 @@ func (u *Updater) Update() (bool, error) {
 		log.Errorf("No update available")
 		return false, err
 	} else if err != nil {
-		log.Errorf("Error while checking for update: %v\n", err)
+		log.Errorf("Error while checking for update: %q", err.Error())
 		return false, err
 	}
-	log.Infof("Updated version '%s' for app '%s' available ", r.Version, u.params.AppId)
+	log.Infof("Updated version %q for app %q available ", r.Version, u.params.AppId)
 
 	// apply the update
 	err = applyUpdate(r)
@@ -61,10 +61,10 @@ var applyUpdate = apply_update
 func apply_update(r *check.Result) error {
 	err, _ := r.Update()
 	if err != nil {
-		log.Errorf("Failed to update: %v\n", err)
+		log.Errorf("Failed to update: %q", err.Error())
 		return err
 	}	
-	log.Infof("Updated to version %s!\n", r.Version)
+	log.Infof("Updated to version %q", r.Version)
 	
 	return nil
 }
