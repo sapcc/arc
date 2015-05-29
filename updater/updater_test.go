@@ -2,10 +2,10 @@ package updater
 
 import (
 	"fmt"
-	"testing"
 	"github.com/inconshreveable/go-update/check"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 )
 
 var validOptions = map[string]string{
@@ -31,10 +31,10 @@ func TestUpdaterNewSuccess(t *testing.T) {
 func TestUpdaterUpdateNotAvailable(t *testing.T) {
 	server := testTools(204, "")
 	defer server.Close()
-	
+
 	// add the server url to the valid options to get a mock response
 	validOptions["updateUri"] = server.URL
-	
+
 	up := New(validOptions)
 	_, err := up.Update()
 	if err != check.NoUpdateAvailable {
@@ -46,8 +46,8 @@ func TestUpdaterUpdateSuccess(t *testing.T) {
 	// mock apply upload
 	origApplyUpdate := applyUpdate
 	applyUpdate = mock_apply_update
-	defer func() {applyUpdate = origApplyUpdate}()
-	
+	defer func() { applyUpdate = origApplyUpdate }()
+
 	// mock server
 	server := testTools(200, `{"initiative":"automatically","url":"MIAU://non_valid_url","patch_url":null,"patch_type":null,"version":"999","checksum":null,"signature":null}`)
 	defer server.Close()
@@ -56,7 +56,7 @@ func TestUpdaterUpdateSuccess(t *testing.T) {
 	validOptions["updateUri"] = server.URL
 
 	up := New(validOptions)
-	_,err := up.Update()	
+	_, err := up.Update()
 	if err != nil {
 		t.Error("Expected get no error, got ", err)
 	}
@@ -77,7 +77,3 @@ func testTools(code int, body string) *httptest.Server {
 
 	return server
 }
-
-
-	
-	

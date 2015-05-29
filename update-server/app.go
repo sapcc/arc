@@ -1,9 +1,9 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"html/template"
 	"io/ioutil"

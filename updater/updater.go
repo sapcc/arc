@@ -1,10 +1,10 @@
 package updater
 
 import (
-	"runtime"
 	log "github.com/Sirupsen/logrus"
 	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
+	"runtime"
 )
 
 type Updater struct {
@@ -24,7 +24,7 @@ func New(options map[string]string) *Updater {
 		params: check.Params{
 			AppVersion: options["version"],
 			AppId:      options["appName"],
-			OS: runtime.GOOS,
+			OS:         runtime.GOOS,
 		},
 		updateUri: options["updateUri"],
 	}
@@ -58,13 +58,14 @@ func (u *Updater) Update() (bool, error) {
 // private
 
 var applyUpdate = apply_update
+
 func apply_update(r *check.Result) error {
 	err, _ := r.Update()
 	if err != nil {
 		log.Errorf("Failed to update: %q", err.Error())
 		return err
-	}	
+	}
 	log.Infof("Updated to version %q", r.Version)
-	
+
 	return nil
 }
