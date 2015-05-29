@@ -6,16 +6,12 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
-	"path"
 	"io/ioutil"
-	
 	"fmt"
 )
 
-const StaticRootPath = "/Users/userID/go/src/gitHub.***REMOVED***/monsoon/arc/update-server/static"
-const TemplateRootPath = "/Users/userID/go/src/gitHub.***REMOVED***/monsoon/arc/update-server/templates"
-const BuildRelativeUrl = "/static/builds/"
+const BuildsRootPath = "/Users/userID/go/src/gitHub.***REMOVED***/monsoon/arc/update-server/builds"
+const BuildRelativeUrl = "/builds/"
 
 type Build struct {
 	Files []string
@@ -24,9 +20,13 @@ type Build struct {
 func main() {
 	// api
 	http.HandleFunc("/updates", availableUpdates)
+	// serve build files
+	fs := http.FileServer(http.Dir(BuildsRootPath))
+	http.Handle("/builds/", http.StripPrefix("/builds/", fs))
+	
 	// serve static files
-	fs := http.FileServer(http.Dir(StaticRootPath))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/static/", http.FileServer(FS(false)))
+	
 	// serve template
 	http.HandleFunc("/", serveTemplate)
 
@@ -37,7 +37,7 @@ func main() {
 func availableUpdates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "POST" {
-		update := updates.New(r, StaticRootPath, BuildRelativeUrl)
+		update := updates.New(r, BuildsRootPath, BuildRelativeUrl)
 		if update == nil {
 			w.WriteHeader(204)
 			return
@@ -52,31 +52,38 @@ func availableUpdates(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
-	lp := path.Join(TemplateRootPath, "layout.html")
-	fp := path.Join(TemplateRootPath, r.URL.Path)
-
-	// Return a 404 if the template doesn't exist
-	info, err := os.Stat(fp)
+	templatesPath := "/static/templates"
+	
+	// layout
+	lp_s, err := FSString(false, fmt.Sprint(templatesPath, "/layout.html"))
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.Println(err.Error())
-			http.NotFound(w, r)
-			return
-		}
-	}
-
-	// Return a 404 if the request is for a directory
-	if info.IsDir() {
-		log.Println("Request is a directory")
+		log.Printf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
 		http.NotFound(w, r)
 		return
 	}
+	log.Println(lp_s)
 
-	tmpl, err := template.ParseFiles(lp, fp)
+	// page
+	fp_s, err := FSString(false, fmt.Sprint(templatesPath, r.URL.Path))
 	if err != nil {
-		// Log the detailed error
-		log.Println(err.Error())
-		// Return a generic "Internal Server Error" message
+		log.Printf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
+		http.NotFound(w, r)
+		return
+	}
+	log.Println(fp_s)
+	
+	// parse layout
+	tmpl, err := template.New("layout").Parse(lp_s)
+	if err != nil { 
+		log.Printf("Error parsing layout. Got %q", err.Error())
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	
+	// parse page
+	tmpl, err = tmpl.New("page").Parse(fp_s)
+	if err != nil { 
+		log.Printf("Error parsing page. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
@@ -88,6 +95,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.ExecuteTemplate(w, "layout", builds); err != nil {
 		log.Println(err.Error())
 		http.Error(w, http.StatusText(500), 500)
+		return
 	}
 }
 
@@ -95,7 +103,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 func getAllBuilds() *[]string{
 	var fileNames []string
-	builds, _ := ioutil.ReadDir(fmt.Sprint(StaticRootPath, "/builds"))
+	builds, _ := ioutil.ReadDir(BuildsRootPath)
 	for _, f := range builds {	
 		fileNames = append(fileNames, f.Name())
 	}
