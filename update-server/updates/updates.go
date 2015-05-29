@@ -13,8 +13,8 @@ import (
 )
 
 type AvailableUpdate struct {
-	buildName	string
-	version string
+	buildName string
+	version   string
 }
 
 var BuildsRootPath string
@@ -27,10 +27,10 @@ func New(req *http.Request, buildsPath string, buildUrl string) *check.Result {
 	// save statics path
 	BuildsRootPath = buildsPath
 	BuildRelativeUrl = buildUrl
-	
+
 	// get host url
 	hostUrl := getHostUrl(req)
-		
+
 	// read body
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -52,7 +52,7 @@ func New(req *http.Request, buildsPath string, buildUrl string) *check.Result {
 			Initiative: "automatically",
 			Url:        fmt.Sprint(hostUrl, BuildRelativeUrl, availableUpdate.buildName),
 			Version:    availableUpdate.version,
-		}		
+		}
 	}
 
 	return nil
@@ -60,17 +60,17 @@ func New(req *http.Request, buildsPath string, buildUrl string) *check.Result {
 
 // private
 
-func getHostUrl(req *http.Request) *url.URL{
+func getHostUrl(req *http.Request) *url.URL {
 	host := req.Host
 	scheme := ""
-	
+
 	// set the scheme
 	if req.TLS != nil {
 		scheme = "https"
 	} else {
-		scheme = "http"		
+		scheme = "http"
 	}
-		
+
 	return &url.URL{Scheme: scheme, Host: host}
 }
 
@@ -80,32 +80,32 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 		log.Errorf("Error parsing app version. Got ", err)
 		return nil
 	}
-	
+
 	buildFile := ""
 	buildVersion := "0.0.0"
 	builds, _ := ioutil.ReadDir(BuildsRootPath)
-	for _, f := range builds {		
+	for _, f := range builds {
 		if strings.HasPrefix(f.Name(), fmt.Sprint(appId, "_", appOs, "_", appArch, "_")) {
 			fileVersion := strings.Split(f.Name(), "_")[3]
 			bv, err := semver.Make(fileVersion)
 			if err != nil {
 				log.Errorf("Error parsing build version. Got %q. With error %q", buildVersion, err)
 			}
-			
+
 			nbv, _ := semver.Make(buildVersion)
-			if bv.Compare(av) == 1 && bv.Compare(nbv) == 1{
+			if bv.Compare(av) == 1 && bv.Compare(nbv) == 1 {
 				buildFile = f.Name()
-				buildVersion = fileVersion	
+				buildVersion = fileVersion
 			}
 		}
 	}
-	
+
 	if len(buildFile) > 0 {
 		return &AvailableUpdate{
-			buildName: buildFile, 
-			version: buildVersion,
-		} 
+			buildName: buildFile,
+			version:   buildVersion,
+		}
 	}
-	
+
 	return nil
 }

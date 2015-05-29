@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"io/ioutil"
-	"fmt"
 )
 
 const BuildsRootPath = "/Users/userID/go/src/gitHub.***REMOVED***/monsoon/arc/update-server/builds"
@@ -20,13 +20,14 @@ type Build struct {
 func main() {
 	// api
 	http.HandleFunc("/updates", availableUpdates)
+
 	// serve build files
 	fs := http.FileServer(http.Dir(BuildsRootPath))
 	http.Handle("/builds/", http.StripPrefix("/builds/", fs))
-	
+
 	// serve static files
 	http.Handle("/static/", http.FileServer(FS(false)))
-	
+
 	// serve template
 	http.HandleFunc("/", serveTemplate)
 
@@ -53,7 +54,7 @@ func availableUpdates(w http.ResponseWriter, r *http.Request) {
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	templatesPath := "/static/templates"
-	
+
 	// layout
 	lp_s, err := FSString(false, fmt.Sprint(templatesPath, "/layout.html"))
 	if err != nil {
@@ -69,18 +70,18 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	
+
 	// parse layout
 	tmpl, err := template.New("layout").Parse(lp_s)
-	if err != nil { 
+	if err != nil {
 		log.Printf("Error parsing layout. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
-	
+
 	// parse page
 	tmpl, err = tmpl.New("page").Parse(fp_s)
-	if err != nil { 
+	if err != nil {
 		log.Printf("Error parsing page. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
@@ -99,10 +100,10 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 // private
 
-func getAllBuilds() *[]string{
+func getAllBuilds() *[]string {
 	var fileNames []string
 	builds, _ := ioutil.ReadDir(BuildsRootPath)
-	for _, f := range builds {	
+	for _, f := range builds {
 		fileNames = append(fileNames, f.Name())
 	}
 	return &fileNames
