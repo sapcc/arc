@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 type rpcAgent struct{}
@@ -21,6 +22,10 @@ func (a *rpcAgent) Enabled() bool { return true }
 func (a *rpcAgent) Enable() error { return nil }
 
 func (a *rpcAgent) Disable() error { return nil }
+
+func (a *rpcAgent) VersionAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
+	return version.String(), nil
+}
 
 func (a *rpcAgent) PingAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
 	return "pong", nil

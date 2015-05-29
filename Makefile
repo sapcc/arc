@@ -4,7 +4,7 @@ REPO_PATH:=$(ORG_PATH)/arc
 BUILD_DIR:=bin
 ARC_BINARY:=$(BUILD_DIR)/arc
 US_BINARY:=$(BUILD_DIR)/update-site
-GITVERSION:=-X main.GITCOMMIT `git rev-parse --short HEAD`
+GITVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
 
 TARGETS:=linux/amd64 windows/amd64 darwin/amd64
 

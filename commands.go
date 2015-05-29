@@ -16,6 +16,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/server"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/updater"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 var Commands = []cli.Command{
@@ -63,7 +64,7 @@ func cmdServer(c *cli.Context) {
 	tickChan := time.NewTicker(time.Second * time.Duration(c.GlobalInt("update-interval")))
 	// updater object
 	up := updater.New(map[string]string{
-		"version":   Version,
+		"version":   version.Version,
 		"appName":   appName,
 		"updateUri": c.GlobalString("update-uri"),
 	})

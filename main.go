@@ -8,6 +8,7 @@ import (
 
 	_ "gitHub.***REMOVED***/monsoon/arc/agents/execute"
 	_ "gitHub.***REMOVED***/monsoon/arc/agents/rpc"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 		},
 	}
 	app.Usage = "Remote job execution galore"
-	app.Version = Version + "(" + GITCOMMIT + ")"
+	app.Version = version.String()
 
 	app.Flags = []cli.Flag{
 		//config-file is only here for the generated help, it is actually handled above
