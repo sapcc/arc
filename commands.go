@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -135,10 +135,8 @@ func cmdExecute(c *cli.Context) {
 		if c.String("payload") != "" {
 			log.Fatal("--stdin and --payload are mutually exclusive")
 		}
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			payload = scanner.Text()
-		}
+		bytes, _ := ioutil.ReadAll(os.Stdin)
+		payload = string(bytes)
 	}
 
 	if err := tp.Connect(); err != nil {
