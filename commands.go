@@ -61,6 +61,7 @@ var Commands = []cli.Command{
 func cmdServer(c *cli.Context) {
 
 	// Ticker containing a channel that will send the time with a period
+	log.Debugf("Checking for updates every %d seconds.", c.GlobalInt("update-interval"))
 	tickChan := time.NewTicker(time.Second * time.Duration(c.GlobalInt("update-interval")))
 	// updater object
 	up := updater.New(map[string]string{
@@ -93,7 +94,7 @@ func cmdServer(c *cli.Context) {
 			os.Exit(0)
 		case <-tickChan.C:
 			if !c.GlobalBool("no-auto-update") {
-				go func(){
+				go func() {
 					if success, _ := up.Update(); success {
 						server.GracefulShutdown()
 						tickChan.Stop()
@@ -164,19 +165,22 @@ func cmdExecute(c *cli.Context) {
 			state = reply.State
 
 			if reply.Payload != "" {
-				log.Info("Payload: ", reply.Payload)
+				//log.Info("Payload: ", reply.Payload)
+				fmt.Println(reply.Payload)
 			}
 			if state == arc.Complete {
 				log.Infof("Job %s completed successfully", reply.RequestID)
 				return
 			}
 			if state == arc.Failed {
-				log.Errorf("Job %s failed", reply.RequestID)
+				log.Warnf("Job %s failed", reply.RequestID)
+				exit_code = 1
 				return
 			}
 
 		case <-time.After(time.Duration(c.Int("timeout")+2) * time.Second):
 			log.Warnf("Timeout waiting for job %s\n", request.RequestID)
+			exit_code = 1
 			return
 		}
 	}

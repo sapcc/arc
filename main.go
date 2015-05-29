@@ -11,6 +11,8 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
+var exit_code = 0
+
 func main() {
 
 	//If we have a config file load it
@@ -112,4 +114,5 @@ func main() {
 
 	app.Run(os.Args)
 
+	os.Exit(exit_code)
 }
