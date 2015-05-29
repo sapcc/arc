@@ -61,7 +61,6 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	log.Println(lp_s)
 
 	// page
 	fp_s, err := FSString(false, fmt.Sprint(templatesPath, r.URL.Path))
@@ -70,7 +69,6 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	log.Println(fp_s)
 	
 	// parse layout
 	tmpl, err := template.New("layout").Parse(lp_s)
