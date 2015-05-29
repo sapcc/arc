@@ -54,7 +54,7 @@ func loadConfigFile(file string) error {
 	if err != nil {
 		return err
 	}
-	log.Info("Loaded config file: ", file)
+	log.Debug("Loaded config file: ", file)
 	for name, value := range vars {
 		name = strings.Replace(name, "-", "_", -1)
 		name = strings.Replace(name, " ", "_", -1)
