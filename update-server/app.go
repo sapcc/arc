@@ -1,10 +1,10 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"html/template"
 	"io/ioutil"
@@ -13,6 +13,7 @@ import (
 )
 
 var BuildsRootPath string
+
 const BuildRelativeUrl = "/builds/"
 
 type Build struct {
@@ -35,24 +36,24 @@ func main() {
 	}
 	app.Usage = "web server to to check and deliver from updates"
 	app.Version = "0.1.0-dev"
-  app.Action = runServer
+	app.Action = runServer
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "log-level,l",
-			Usage:  "log level",
-			Value:  "info",
-		},		
-		cli.StringFlag{
-			Name:   "builds-path",
-			Usage:  "Path to builds in the file system",
+			Name:  "log-level,l",
+			Usage: "log level",
+			Value: "info",
 		},
 		cli.StringFlag{
-			Name:   "server-port",
-			Usage:  "Update server port",
+			Name:  "builds-path",
+			Usage: "Path to builds in the file system",
+		},
+		cli.StringFlag{
+			Name:  "server-port",
+			Usage: "Update server port",
 			Value: "3000",
 		},
 	}
-	
+
 	app.Before = func(c *cli.Context) error {
 		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
 		if err != nil {
@@ -62,7 +63,7 @@ func main() {
 		log.SetLevel(lvl)
 		return nil
 	}
-	
+
 	app.Run(os.Args)
 }
 
@@ -73,10 +74,10 @@ func runServer(c *cli.Context) {
 	if len(c.GlobalString("builds-path")) == 0 {
 		log.Fatalf("Build path is missing. Got %q", c.GlobalString("builds-path"))
 		return
-	} 
-	
+	}
+
 	BuildsRootPath = c.GlobalString("builds-path")
-	
+
 	// api
 	http.HandleFunc("/updates", availableUpdates)
 
@@ -91,7 +92,7 @@ func runServer(c *cli.Context) {
 	http.HandleFunc("/", serveTemplate)
 
 	log.Infof("Listening on port %q...", c.GlobalString("server-port"))
-	http.ListenAndServe( fmt.Sprint(":", c.GlobalString("server-port")), nil)
+	http.ListenAndServe(fmt.Sprint(":", c.GlobalString("server-port")), nil)
 }
 
 func availableUpdates(w http.ResponseWriter, r *http.Request) {
