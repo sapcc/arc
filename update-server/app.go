@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
+	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 )
 
 var BuildsRootPath string
@@ -44,13 +45,13 @@ func main() {
 			Value: "info",
 		},
 		cli.StringFlag{
-			Name:  "builds-path",
-			Usage: "Path to builds in the file system",
+			Name:  "path,p",
+			Usage: "Directory containig update artifacts",
 		},
 		cli.StringFlag{
-			Name:  "server-port",
-			Usage: "Update server port",
-			Value: "3000",
+			Name:  "bind-address,b",
+			Usage: "listen address for the update server",
+			Value: "0.0.0.0:3000",
 		},
 	}
 
@@ -71,12 +72,10 @@ func main() {
 
 func runServer(c *cli.Context) {
 	// check mandatory params
-	if len(c.GlobalString("builds-path")) == 0 {
-		log.Fatalf("Build path is missing. Got %q", c.GlobalString("builds-path"))
-		return
+	BuildsRootPath = c.GlobalString("path")
+	if BuildsRootPath == "" {
+		log.Fatal("No path to update artifacts given.")
 	}
-
-	BuildsRootPath = c.GlobalString("builds-path")
 
 	// api
 	http.HandleFunc("/updates", availableUpdates)
@@ -91,8 +90,17 @@ func runServer(c *cli.Context) {
 	// serve template
 	http.HandleFunc("/", serveTemplate)
 
-	log.Infof("Listening on port %q...", c.GlobalString("server-port"))
-	http.ListenAndServe(fmt.Sprint(":", c.GlobalString("server-port")), nil)
+	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
+	if err := http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(http.DefaultServeMux)); err != nil {
+		log.Fatalf("Failed to bind on %s: %s", c.GlobalString("bind-address"), err)
+	}
+}
+
+func accessLogger(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Infof("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+	})
 }
 
 func availableUpdates(w http.ResponseWriter, r *http.Request) {
