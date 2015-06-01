@@ -75,7 +75,7 @@ func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 		close(msgChan)
 	}
 
-	c.client.Subscribe("identity/test", 0, messageCallback).Wait()
+	c.client.Subscribe(topic, 0, messageCallback).Wait()
 	return msgChan, cancel
 }
 

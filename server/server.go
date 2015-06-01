@@ -2,6 +2,7 @@ package server
 
 import (
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
@@ -60,7 +61,7 @@ func (s *server) Run() {
 
 	s.transport.Connect()
 	defer s.transport.Disconnect()
-	incomingChan, cancelSubscription := s.transport.Subscribe("test")
+	incomingChan, cancelSubscription := s.transport.Subscribe(runtime.GOOS)
 	defer cancelSubscription()
 
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
