@@ -21,12 +21,13 @@ import (
 var appName = "arc-update-server"
 var BuildsRootPath string
 var templates map[string]*template.Template
+
 const BuildRelativeUrl = "/builds/"
 
 type TmplData struct {
-	AppName string
+	AppName    string
 	AppVersion string
-	Files []string
+	Files      []string
 }
 
 func main() {
@@ -135,19 +136,19 @@ func availableUpdates(w http.ResponseWriter, r *http.Request) {
 func cacheTemplates() {
 	templatesPath := "/static/templates/"
 	pages := []string{"home", "healthcheck"}
-	
+
 	// init templates
 	if templates == nil {
 		templates = make(map[string]*template.Template)
 	}
-	
+
 	// get layout as string
 	stringLayout, err := FSString(false, fmt.Sprint(templatesPath, "layout.html"))
 	if err != nil {
 		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
 		return
-	}	
-	
+	}
+
 	// loop over the pages, get strings and parse to the templates
 	for i := 0; i < len(pages); i++ {
 		// get page as string
@@ -156,7 +157,7 @@ func cacheTemplates() {
 			log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
 			return
 		}
-		
+
 		// create a new template
 		tmpl, err := template.New("layout").Parse(stringLayout)
 		if err != nil {
@@ -170,7 +171,7 @@ func cacheTemplates() {
 			log.Errorf("Error parsing page. Got %q", err)
 			return
 		}
-		
+
 		// add template to the template array
 		templates[pages[i]] = tmpl
 	}
@@ -179,12 +180,12 @@ func cacheTemplates() {
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	// get the page name and the associated template
 	name := strings.Replace(r.URL.Path[1:], ".html", "", 1)
-	
+
 	// root path redirect to home page
 	if len(name) == 0 {
 		name = "home"
-	}	
-	
+	}
+
 	// get the template defined by the url
 	tmpl, ok := templates[name]
 	if !ok {
@@ -195,9 +196,9 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// get build files
 	data := TmplData{
-		AppName: appName,
+		AppName:    appName,
 		AppVersion: version.String(),
-		Files: *getAllBuilds(),
+		Files:      *getAllBuilds(),
 	}
 
 	// render template
