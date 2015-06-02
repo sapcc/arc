@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
@@ -60,6 +61,9 @@ func (c *MQTTClient) Disconnect() {
 func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	topic := identityTopic(identity)
 	msgChan := make(chan *arc.Request)
+	canceled := make(chan struct{})
+	var mutex sync.Mutex
+
 	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		payload := mMessage.Payload()
 		msg, err := arc.ParseRequest(&payload)
@@ -67,12 +71,20 @@ func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 			logrus.Warnf("Discarding invalid message on topic %s:%s", mMessage.Topic(), err)
 			return
 		}
-		msgChan <- msg
+		mutex.Lock()
+		select {
+		case <-canceled:
+		case msgChan <- msg:
+		}
+		mutex.Unlock()
 	}
 
 	cancel := func() {
 		c.client.Unsubscribe(topic).Wait()
+		close(canceled)
+		mutex.Lock()
 		close(msgChan)
+		mutex.Unlock()
 	}
 
 	c.client.Subscribe(topic, 0, messageCallback).Wait()
@@ -104,6 +116,8 @@ func (c *MQTTClient) Reply(msg *arc.Reply) {
 func (c *MQTTClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) {
 	topic := replyTopic(requestId)
 	out := make(chan *arc.Reply)
+	canceled := make(chan struct{})
+	var mutex sync.Mutex
 
 	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		payload := mMessage.Payload()
@@ -112,11 +126,19 @@ func (c *MQTTClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) 
 			logrus.Warnf("Discarding invalid message on topic %s:%s", mMessage.Topic(), err)
 			return
 		}
-		out <- msg
+		mutex.Lock()
+		select {
+		case <-canceled:
+		case out <- msg:
+		}
+		mutex.Unlock()
 	}
 	cancel := func() {
 		c.client.Unsubscribe(topic).Wait()
+		close(canceled)
+		mutex.Lock()
 		close(out)
+		mutex.Unlock()
 	}
 
 	c.client.Subscribe(topic, 0, messageCallback).Wait()
