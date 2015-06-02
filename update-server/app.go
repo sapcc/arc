@@ -7,24 +7,33 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var BuildsRootPath string
+// TODO: global var templates path
+// TODO: testing
 
+var appName = "arc-update-server"
+var BuildsRootPath string
+var templates map[string]*template.Template
 const BuildRelativeUrl = "/builds/"
 
-type Build struct {
+type TmplData struct {
+	AppName string
+	AppVersion string
 	Files []string
 }
 
 func main() {
 	app := cli.NewApp()
 
-	app.Name = "update-server"
+	app.Name = appName
+	app.Version = version.String()
 	app.Authors = []cli.Author{
 		{
 			Name:  "Fabian Ruff",
@@ -36,7 +45,6 @@ func main() {
 		},
 	}
 	app.Usage = "web server to to check and deliver from updates"
-	app.Version = "0.1.0-dev"
 	app.Action = runServer
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -77,6 +85,9 @@ func runServer(c *cli.Context) {
 		log.Fatal("No path to update artifacts given.")
 	}
 
+	// read and cache templates
+	cacheTemplates()
+
 	// api
 	http.HandleFunc("/updates", availableUpdates)
 
@@ -87,9 +98,10 @@ func runServer(c *cli.Context) {
 	// serve static files
 	http.Handle("/static/", http.FileServer(FS(false)))
 
-	// serve template
+	// serve templates
 	http.HandleFunc("/", serveTemplate)
 
+	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
 	if err := http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(http.DefaultServeMux)); err != nil {
 		log.Fatalf("Failed to bind on %s: %s", c.GlobalString("bind-address"), err)
@@ -120,47 +132,77 @@ func availableUpdates(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func cacheTemplates() {
+	templatesPath := "/static/templates/"
+	pages := []string{"home", "healthcheck"}
+	
+	// init templates
+	if templates == nil {
+		templates = make(map[string]*template.Template)
+	}
+	
+	// get layout as string
+	stringLayout, err := FSString(false, fmt.Sprint(templatesPath, "layout.html"))
+	if err != nil {
+		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
+		return
+	}	
+	
+	// loop over the pages, get strings and parse to the templates
+	for i := 0; i < len(pages); i++ {
+		// get page as string
+		stringPage, err := FSString(false, fmt.Sprint(templatesPath, pages[i], ".html"))
+		if err != nil {
+			log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
+			return
+		}
+		
+		// create a new template
+		tmpl, err := template.New("layout").Parse(stringLayout)
+		if err != nil {
+			log.Errorf("Error parsing layout. Got %q", err)
+			return
+		}
+
+		// parse page to the template
+		tmpl, err = tmpl.New(pages[i]).Parse(stringPage)
+		if err != nil {
+			log.Errorf("Error parsing page. Got %q", err)
+			return
+		}
+		
+		// add template to the template array
+		templates[pages[i]] = tmpl
+	}
+}
+
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
-	templatesPath := "/static/templates"
-
-	// layout
-	lp_s, err := FSString(false, fmt.Sprint(templatesPath, "/layout.html"))
-	if err != nil {
-		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
+	// get the page name and the associated template
+	name := strings.Replace(r.URL.Path[1:], ".html", "", 1)
+	
+	// root path redirect to home page
+	if len(name) == 0 {
+		name = "home"
+	}	
+	
+	// get the template defined by the url
+	tmpl, ok := templates[name]
+	if !ok {
+		log.Errorf("The template %s does not exist.", name)
 		http.NotFound(w, r)
 		return
 	}
 
-	// page
-	fp_s, err := FSString(false, fmt.Sprint(templatesPath, r.URL.Path))
-	if err != nil {
-		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err.Error())
-		http.NotFound(w, r)
-		return
-	}
-
-	// parse layout
-	tmpl, err := template.New("layout").Parse(lp_s)
-	if err != nil {
-		log.Errorf("Error parsing layout. Got %q", err.Error())
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-
-	// parse page
-	tmpl, err = tmpl.New("page").Parse(fp_s)
-	if err != nil {
-		log.Errorf("Error parsing page. Got %q", err.Error())
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-
-	builds := Build{
+	// get build files
+	data := TmplData{
+		AppName: appName,
+		AppVersion: version.String(),
 		Files: *getAllBuilds(),
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "layout", builds); err != nil {
-		log.Errorf(err.Error())
+	// render template
+	if err := tmpl.ExecuteTemplate(w, "layout", data); err != nil {
+		log.Errorf("Error executing template. Got %q", err)
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}

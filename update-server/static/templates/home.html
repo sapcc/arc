@@ -1,14 +1,46 @@
-{{define "title"}}Arc home page{{end}}
+{{define "title"}}Home page{{end}}
+
+{{define "stylesheets"}}
+	<link rel="stylesheet" href="/static/stylesheets/main.css">
+{{end}}
+
+{{define "javascripts"}}
+	<script type="text/javascript" src="/static/javascripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/static/javascripts/console.js"></script>
+{{end}}
 
 {{define "body"}}
 
-<div class="console-header">
-	<span id="a">arc</span>:<span id="b">~</span><span id="c">$</span> list available_builds
-</div>
-<div id="console">
+	<div class="console-header">
+		<span id="a">arc</span>:<span id="b">~</span><span id="c">$</span> list available_builds
+	</div>
+	<div id="console">
 
-	|
+		|
 
-</div>
+	</div>
+
+{{end}}
+
+{{define "scripts"}}
+
+	<script> 
+		buildFiles = [{{range .Files}}{{.}},{{end}}];
+	
+		for (i = 0; i < buildFiles.length; i++) { 
+		    Typer.text += buildFiles[i] + "<br>";
+		}
+	
+		Typer.speed=3;
+		Typer.init();
+ 
+		var timer = setInterval("t();", 30);
+		function t() {
+			Typer.addText({"keyCode": 123748});
+			if (Typer.index > Typer.text.length) {
+				clearInterval(timer);
+			}
+		}
+	</script>
 
 {{end}}
