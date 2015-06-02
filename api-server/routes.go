@@ -18,13 +18,13 @@ var routes = Routes{
 	Route{
 		"Agents",
 		"GET",
-		"/agent",
+		"/agents",
 		serveAgents,
 	},
 	Route{
 		"Agent",
 		"GET",
-		"/agent/{agentId}",
+		"/agents/{agentId}",
 		serveAgent,
 	},
 	Route{
@@ -42,7 +42,6 @@ var routes = Routes{
 }
 
 func newRouter() *mux.Router {
-
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
 		router.
