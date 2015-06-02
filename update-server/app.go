@@ -15,13 +15,12 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-// TODO: global var templates path
-// TODO: testing
-
 var appName = "arc-update-server"
-var BuildsRootPath string
+var buildsRootPath string
 var templates map[string]*template.Template
+var pages = []string{"home", "healthcheck"}
 
+const TemplatesPath = "/static/templates/"
 const BuildRelativeUrl = "/builds/"
 
 type TmplData struct {
@@ -81,8 +80,8 @@ func main() {
 
 func runServer(c *cli.Context) {
 	// check mandatory params
-	BuildsRootPath = c.GlobalString("path")
-	if BuildsRootPath == "" {
+	buildsRootPath = c.GlobalString("path")
+	if buildsRootPath == "" {
 		log.Fatal("No path to update artifacts given.")
 	}
 
@@ -93,7 +92,7 @@ func runServer(c *cli.Context) {
 	http.HandleFunc("/updates", availableUpdates)
 
 	// serve build files
-	fs := http.FileServer(http.Dir(BuildsRootPath))
+	fs := http.FileServer(http.Dir(buildsRootPath))
 	http.Handle("/builds/", http.StripPrefix("/builds/", fs))
 
 	// serve static files
@@ -119,7 +118,7 @@ func accessLogger(handler http.Handler) http.Handler {
 func availableUpdates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "POST" {
-		update := updates.New(r, BuildsRootPath, BuildRelativeUrl)
+		update := updates.New(r, buildsRootPath, BuildRelativeUrl)
 		if update == nil {
 			w.WriteHeader(204)
 			return
@@ -134,16 +133,13 @@ func availableUpdates(w http.ResponseWriter, r *http.Request) {
 }
 
 func cacheTemplates() {
-	templatesPath := "/static/templates/"
-	pages := []string{"home", "healthcheck"}
-
 	// init templates
 	if templates == nil {
 		templates = make(map[string]*template.Template)
 	}
 
 	// get layout as string
-	stringLayout, err := FSString(false, fmt.Sprint(templatesPath, "layout.html"))
+	stringLayout, err := FSString(false, fmt.Sprint(TemplatesPath, "layout.html"))
 	if err != nil {
 		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
 		return
@@ -152,7 +148,7 @@ func cacheTemplates() {
 	// loop over the pages, get strings and parse to the templates
 	for i := 0; i < len(pages); i++ {
 		// get page as string
-		stringPage, err := FSString(false, fmt.Sprint(templatesPath, pages[i], ".html"))
+		stringPage, err := FSString(false, fmt.Sprint(TemplatesPath, pages[i], ".html"))
 		if err != nil {
 			log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
 			return
@@ -211,7 +207,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 func getAllBuilds() *[]string {
 	var fileNames []string
-	builds, _ := ioutil.ReadDir(BuildsRootPath)
+	builds, _ := ioutil.ReadDir(buildsRootPath)
 	for _, f := range builds {
 		fileNames = append(fileNames, f.Name())
 	}
