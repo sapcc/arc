@@ -1,33 +1,20 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"html/template"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"strings"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"gitHub.***REMOVED***/monsoon/arc/version"
+	"html/template"
+	"net/http"
+	"os"
 )
 
-var appName = "arc-update-server"
-var buildsRootPath string
-var templates map[string]*template.Template
-var pages = []string{"home", "healthcheck"}
+const appName = "arc-update-server"
 
-const TemplatesPath = "/static/templates/"
-const BuildRelativeUrl = "/builds/"
-
-type TmplData struct {
-	AppName    string
-	AppVersion string
-	Files      []string
-}
+var (
+	buildsRootPath string
+	templates      map[string]*template.Template
+)
 
 func main() {
 	app := cli.NewApp()
@@ -85,25 +72,15 @@ func runServer(c *cli.Context) {
 		log.Fatal("No path to update artifacts given.")
 	}
 
-	// read and cache templates
-	cacheTemplates()
+	// cache the templates
+	templates = getTemplates()
 
-	// api
-	http.HandleFunc("/updates", availableUpdates)
-
-	// serve build files
-	fs := http.FileServer(http.Dir(buildsRootPath))
-	http.Handle("/builds/", http.StripPrefix("/builds/", fs))
-
-	// serve static files
-	http.Handle("/static/", http.FileServer(FS(false)))
-
-	// serve templates
-	http.HandleFunc("/", serveTemplate)
+	// get the router
+	router := newRouter()
 
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
-	if err := http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(http.DefaultServeMux)); err != nil {
+	if err := http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(router)); err != nil {
 		log.Fatalf("Failed to bind on %s: %s", c.GlobalString("bind-address"), err)
 	}
 }
@@ -113,103 +90,4 @@ func accessLogger(handler http.Handler) http.Handler {
 		log.Infof("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
 		handler.ServeHTTP(w, r)
 	})
-}
-
-func availableUpdates(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	if r.Method == "POST" {
-		update := updates.New(r, buildsRootPath, BuildRelativeUrl)
-		if update == nil {
-			w.WriteHeader(204)
-			return
-		}
-
-		if err := json.NewEncoder(w).Encode(update); err != nil {
-			log.Errorf(err.Error())
-		}
-	} else {
-		http.NotFound(w, r)
-	}
-}
-
-func cacheTemplates() {
-	// init templates
-	if templates == nil {
-		templates = make(map[string]*template.Template)
-	}
-
-	// get layout as string
-	stringLayout, err := FSString(false, fmt.Sprint(TemplatesPath, "layout.html"))
-	if err != nil {
-		log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
-		return
-	}
-
-	// loop over the pages, get strings and parse to the templates
-	for i := 0; i < len(pages); i++ {
-		// get page as string
-		stringPage, err := FSString(false, fmt.Sprint(TemplatesPath, pages[i], ".html"))
-		if err != nil {
-			log.Errorf("Error http.Filesystem for the embedded assets. Got %q", err)
-			return
-		}
-
-		// create a new template
-		tmpl, err := template.New("layout").Parse(stringLayout)
-		if err != nil {
-			log.Errorf("Error parsing layout. Got %q", err)
-			return
-		}
-
-		// parse page to the template
-		tmpl, err = tmpl.New(pages[i]).Parse(stringPage)
-		if err != nil {
-			log.Errorf("Error parsing page. Got %q", err)
-			return
-		}
-
-		// add template to the template array
-		templates[pages[i]] = tmpl
-	}
-}
-
-func serveTemplate(w http.ResponseWriter, r *http.Request) {
-	// get the page name and the associated template
-	name := strings.Replace(r.URL.Path[1:], ".html", "", 1)
-
-	// root path redirect to home page
-	if len(name) == 0 {
-		name = "home"
-	}
-
-	// get the template defined by the url
-	tmpl, ok := templates[name]
-	if !ok {
-		log.Errorf("The template %s does not exist.", name)
-		http.NotFound(w, r)
-		return
-	}
-
-	// get build files
-	data := TmplData{
-		AppName:    appName,
-		AppVersion: version.String(),
-		Files:      *getAllBuilds(),
-	}
-
-	// render template
-	if err := tmpl.ExecuteTemplate(w, "layout", data); err != nil {
-		log.Errorf("Error executing template. Got %q", err)
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-}
-
-func getAllBuilds() *[]string {
-	var fileNames []string
-	builds, _ := ioutil.ReadDir(buildsRootPath)
-	for _, f := range builds {
-		fileNames = append(fileNames, f.Name())
-	}
-	return &fileNames
 }

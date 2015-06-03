@@ -18,15 +18,14 @@ type AvailableUpdate struct {
 }
 
 var BuildsRootPath string
-var BuildRelativeUrl string
+const BuildRelativeUrl = "/builds/"
 
 /*
  * return nil if no update available
  */
-func New(req *http.Request, buildsPath string, buildUrl string) *check.Result {
+func New(req *http.Request, buildsPath string) *check.Result {
 	// save statics path
 	BuildsRootPath = buildsPath
-	BuildRelativeUrl = buildUrl
 
 	// get host url
 	hostUrl := getHostUrl(req)
