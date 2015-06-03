@@ -5,50 +5,50 @@ import (
 	"net/http"
 )
 
-type Route struct {
+type route struct {
 	Name        string
 	Method      string
 	Pattern     string
 	HandlerFunc http.HandlerFunc
 }
 
-type Routes []Route
+type routes []route
 
-var routes = Routes{
-	Route{
+var routesDefinition = routes{
+	route{
 		"Agents",
 		"GET",
 		"/agents",
 		serveAgents,
 	},
-	Route{
+	route{
 		"Agent",
 		"GET",
 		"/agents/{agentId}",
 		serveAgent,
 	},
-	Route{
+	route{
 		"Facts",
 		"GET",
-		"/agent/{agentId}/facts",
+		"/agents/{agentId}/facts",
 		serveFacts,
 	},
-	Route{
+	route{
 		"Fact",
 		"GET",
-		"/agent/{agentId}/facts/{factId}",
+		"/agents/{agentId}/facts/{factId}",
 		serveFact,
 	},
 }
 
 func newRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	for _, route := range routes {
+	for _, r := range routesDefinition {
 		router.
-			Methods(route.Method).
-			Path(route.Pattern).
-			Name(route.Name).
-			Handler(route.HandlerFunc)
+			Methods(r.Method).
+			Path(r.Pattern).
+			Name(r.Name).
+			Handler(r.HandlerFunc)
 	}
 
 	return router

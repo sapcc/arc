@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var appName = "arc-api-server"
+const appName = "arc-api-server"
 
 func main() {
 	app := cli.NewApp()
