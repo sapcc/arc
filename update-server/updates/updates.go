@@ -12,20 +12,20 @@ import (
 	"strings"
 )
 
-type AvailableUpdate struct {
+type availableUpdate struct {
 	buildName string
 	version   string
 }
 
-var BuildsRootPath string
-const BuildRelativeUrl = "/builds/"
+var buildsRootPath string
+const buildRelativeUrl = "/builds/"
 
 /*
  * return nil if no update available
  */
 func New(req *http.Request, buildsPath string) *check.Result {
 	// save statics path
-	BuildsRootPath = buildsPath
+	buildsRootPath = buildsPath
 
 	// get host url
 	hostUrl := getHostUrl(req)
@@ -44,13 +44,13 @@ func New(req *http.Request, buildsPath string) *check.Result {
 	}
 
 	// get build url
-	availableUpdate := getAvailableUpdate(reqParams.AppId, reqParams.AppVersion, reqParams.Tags["os"], reqParams.Tags["arch"])
+	au := getAvailableUpdate(reqParams.AppId, reqParams.AppVersion, reqParams.Tags["os"], reqParams.Tags["arch"])
 
-	if availableUpdate != nil {
+	if au != nil {
 		return &check.Result{
 			Initiative: "automatically",
-			Url:        fmt.Sprint(hostUrl, BuildRelativeUrl, availableUpdate.buildName),
-			Version:    availableUpdate.version,
+			Url:        fmt.Sprint(hostUrl, buildRelativeUrl, au.buildName),
+			Version:    au.version,
 		}
 	}
 
@@ -73,7 +73,7 @@ func getHostUrl(req *http.Request) *url.URL {
 	return &url.URL{Scheme: scheme, Host: host}
 }
 
-func getAvailableUpdate(appId string, appVersion string, appOs string, appArch string) *AvailableUpdate {
+func getAvailableUpdate(appId string, appVersion string, appOs string, appArch string) *availableUpdate {
 	av, err := semver.Make(appVersion)
 	if err != nil {
 		log.Errorf("Error parsing app version. Got %q", err.Error())
@@ -82,7 +82,7 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 
 	buildFile := ""
 	buildVersion := "0.0.0"
-	builds, _ := ioutil.ReadDir(BuildsRootPath)
+	builds, _ := ioutil.ReadDir(buildsRootPath)
 	for _, f := range builds {
 		if strings.HasPrefix(f.Name(), fmt.Sprint(appId, "_", appOs, "_", appArch, "_")) {
 			fileVersion := strings.Split(f.Name(), "_")[3]
@@ -100,7 +100,7 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 	}
 
 	if len(buildFile) > 0 {
-		return &AvailableUpdate{
+		return &availableUpdate{
 			buildName: buildFile,
 			version:   buildVersion,
 		}
