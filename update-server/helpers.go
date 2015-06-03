@@ -8,6 +8,7 @@ import (
 )
 
 const templatesPath = "/static/templates/"
+
 var pages = []string{"home", "healthcheck"}
 
 func getTemplates() map[string]*template.Template {
