@@ -17,35 +17,64 @@ type availableUpdate struct {
 	version   string
 }
 
-var buildsRootPath string
 const buildRelativeUrl = "/builds/"
 
 /*
  * return nil if no update available
  */
-func New(req *http.Request, buildsPath string) *check.Result {
-	// save statics path
-	buildsRootPath = buildsPath
+func New(req *http.Request, buildsRootPath string) *check.Result {
+	// check required build path
+	if len(buildsRootPath) == 0 {
+		log.Errorf("Build path is missing. Got %q", buildsRootPath)
+		return nil
+	}
 
 	// get host url
 	hostUrl := getHostUrl(req)
+	if hostUrl == nil {
+		log.Errorf("Computed host url is nil. Request %q", req)
+		return nil
+	}
 
 	// read body
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Errorf("Error while reading the request body. Got %q", err)
+		return nil
+	}
+	if len(body) == 0 {
+		log.Errorf("No request body. Got %q", body)
+		return nil
 	}
 
 	// convert to check.Params struc
 	var reqParams check.Params
 	err = json.Unmarshal(body, &reqParams)
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Errorf("Error unmarshaling body. Got %q", err)
+		return nil
+	}
+
+	// check required post attributes
+	if len(reqParams.AppId) == 0 {
+		log.Errorf("Missing required post attribute 'app_id'. Got %q", reqParams.AppId)
+		return nil
+	}
+	if len(reqParams.AppVersion) == 0 {
+		log.Errorf("Missing required post attribute 'app_version'. Got %q", reqParams.AppVersion)
+		return nil
+	}
+	if len(reqParams.Tags["os"]) == 0 {
+		log.Errorf("Missing required post attribute 'tags[os]'. Got %q", reqParams.Tags["os"])
+		return nil
+	}
+	if len(reqParams.Tags["arch"]) == 0 {
+		log.Errorf("Missing required post attribute 'tags[arch]'. Got %q", reqParams.Tags["arch"])
+		return nil
 	}
 
 	// get build url
-	au := getAvailableUpdate(reqParams.AppId, reqParams.AppVersion, reqParams.Tags["os"], reqParams.Tags["arch"])
-
+	au := getAvailableUpdate(buildsRootPath, reqParams.AppId, reqParams.AppVersion, reqParams.Tags["os"], reqParams.Tags["arch"])
 	if au != nil {
 		return &check.Result{
 			Initiative: "automatically",
@@ -60,9 +89,14 @@ func New(req *http.Request, buildsPath string) *check.Result {
 // private
 
 func getHostUrl(req *http.Request) *url.URL {
+	// get the host
 	host := req.Host
-	scheme := ""
+	if len(host) == 0 {
+		return nil
+	}
 
+	// get the scheme
+	scheme := ""
 	// set the scheme
 	if req.TLS != nil {
 		scheme = "https"
@@ -73,7 +107,7 @@ func getHostUrl(req *http.Request) *url.URL {
 	return &url.URL{Scheme: scheme, Host: host}
 }
 
-func getAvailableUpdate(appId string, appVersion string, appOs string, appArch string) *availableUpdate {
+func getAvailableUpdate(buildsRootPath string, appId string, appVersion string, appOs string, appArch string) *availableUpdate {
 	av, err := semver.Make(appVersion)
 	if err != nil {
 		log.Errorf("Error parsing app version. Got %q", err.Error())
@@ -82,7 +116,12 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 
 	buildFile := ""
 	buildVersion := "0.0.0"
-	builds, _ := ioutil.ReadDir(buildsRootPath)
+	builds, err := ioutil.ReadDir(buildsRootPath)
+	if err != nil {
+		log.Errorf("Error reading builds dir. Got %q", err.Error())
+		return nil
+	}
+
 	for _, f := range builds {
 		if strings.HasPrefix(f.Name(), fmt.Sprint(appId, "_", appOs, "_", appArch, "_")) {
 			fileVersion := strings.Split(f.Name(), "_")[3]
@@ -91,7 +130,7 @@ func getAvailableUpdate(appId string, appVersion string, appOs string, appArch s
 				log.Errorf("Error parsing build version. Got %q. With error %q", buildVersion, err.Error())
 			}
 
-			nbv, _ := semver.Make(buildVersion)			
+			nbv, _ := semver.Make(buildVersion)
 			if bv.Compare(av) == 1 && bv.Compare(nbv) == 1 {
 				buildFile = f.Name()
 				buildVersion = fileVersion
