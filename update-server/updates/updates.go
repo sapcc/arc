@@ -2,8 +2,8 @@ package updates
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/blang/semver"
 	"github.com/inconshreveable/go-update/check"
 	"io/ioutil"
@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 )
+
+var ArgumentError = fmt.Errorf("Build path is missing")
 
 type availableUpdate struct {
 	buildName string
@@ -20,70 +22,67 @@ type availableUpdate struct {
 const buildRelativeUrl = "/builds/"
 
 /*
- * return nil if no update available
+ * Results:
+ * nil, Error 						-> There is an error
+ * *check.Result, nil			-> There is an available update result to send back
+ * nil, nil								-> No updates available
  */
-func New(req *http.Request, buildsRootPath string) *check.Result {
-	// check required build path
-	if len(buildsRootPath) == 0 {
-		log.Errorf("Build path is missing. Got %q", buildsRootPath)
-		return nil
+func New(req *http.Request, buildsRootPath string) (*check.Result, error) {
+	// check arguments
+	if len(buildsRootPath) == 0 || req == nil {
+		return nil, ArgumentError
 	}
-
+	
 	// get host url
 	hostUrl := getHostUrl(req)
 	if hostUrl == nil {
-		log.Errorf("Computed host url is nil. Request %q", req)
-		return nil
+		return nil, errors.New(fmt.Sprintf("Computed host url is nil. Request %q", req))
 	}
 
 	// read body
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		log.Errorf("Error while reading the request body. Got %q", err)
-		return nil
+		return nil, errors.New(fmt.Sprintf("Error while reading the request body. Got %q", err))
 	}
 	if len(body) == 0 {
-		log.Errorf("No request body. Got %q", body)
-		return nil
+		return nil, errors.New(fmt.Sprintf("No request body. Got %q", body))
 	}
 
 	// convert to check.Params struc
 	var reqParams check.Params
 	err = json.Unmarshal(body, &reqParams)
 	if err != nil {
-		log.Errorf("Error unmarshaling body. Got %q", err)
-		return nil
+		return nil, errors.New(fmt.Sprintf("Error unmarshaling body. Got %q", err))
 	}
 
 	// check required post attributes
 	if len(reqParams.AppId) == 0 {
-		log.Errorf("Missing required post attribute 'app_id'. Got %q", reqParams.AppId)
-		return nil
+		return nil, errors.New(fmt.Sprintf("Missing required post attribute 'app_id'. Got %q", reqParams.AppId))
 	}
 	if len(reqParams.AppVersion) == 0 {
-		log.Errorf("Missing required post attribute 'app_version'. Got %q", reqParams.AppVersion)
-		return nil
+		return nil, errors.New(fmt.Sprintf("Missing required post attribute 'app_version'. Got %q", reqParams.AppVersion))
 	}
 	if len(reqParams.Tags["os"]) == 0 {
-		log.Errorf("Missing required post attribute 'tags[os]'. Got %q", reqParams.Tags["os"])
-		return nil
+		return nil, errors.New(fmt.Sprintf("Missing required post attribute 'tags[os]'. Got %q", reqParams.Tags["os"]))
 	}
 	if len(reqParams.Tags["arch"]) == 0 {
-		log.Errorf("Missing required post attribute 'tags[arch]'. Got %q", reqParams.Tags["arch"])
-		return nil
+		return nil, errors.New(fmt.Sprintf("Missing required post attribute 'tags[arch]'. Got %q", reqParams.Tags["arch"]))
 	}
 
 	// get build url
-	au := getAvailableUpdate(buildsRootPath, reqParams.AppId, reqParams.AppVersion, reqParams.Tags["os"], reqParams.Tags["arch"])
+	au, err := getAvailableUpdate(buildsRootPath, reqParams.AppId, reqParams.AppVersion, reqParams.Tags["os"], reqParams.Tags["arch"])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error getting available update %q", err))
+	}
 	if au != nil {
 		return &check.Result{
 			Initiative: "automatically",
 			Url:        fmt.Sprint(hostUrl, buildRelativeUrl, au.buildName),
 			Version:    au.version,
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // private
@@ -107,27 +106,32 @@ func getHostUrl(req *http.Request) *url.URL {
 	return &url.URL{Scheme: scheme, Host: host}
 }
 
-func getAvailableUpdate(buildsRootPath string, appId string, appVersion string, appOs string, appArch string) *availableUpdate {
+/* build file pattern			-> appId, "_", appOs, "_", appArch, "_", version
+ * Results:
+ * nil, Error 						-> There is an error
+ * *availableUpdate, nil	-> There is an available update
+ * nil, nil								-> No updates available
+ */
+func getAvailableUpdate(buildsRootPath string, appId string, appVersion string, appOs string, appArch string) (*availableUpdate, error) {
 	av, err := semver.Make(appVersion)
 	if err != nil {
-		log.Errorf("Error parsing app version. Got %q", err.Error())
-		return nil
+		return nil, err
 	}
 
 	buildFile := ""
 	buildVersion := "0.0.0"
 	builds, err := ioutil.ReadDir(buildsRootPath)
 	if err != nil {
-		log.Errorf("Error reading builds dir. Got %q", err.Error())
-		return nil
+		return nil, err
 	}
 
+	// loop over the builds and compare versions
 	for _, f := range builds {
 		if strings.HasPrefix(f.Name(), fmt.Sprint(appId, "_", appOs, "_", appArch, "_")) {
 			fileVersion := strings.Split(f.Name(), "_")[3]
 			bv, err := semver.Make(fileVersion)
 			if err != nil {
-				log.Errorf("Error parsing build version. Got %q. With error %q", buildVersion, err.Error())
+				return nil, err
 			}
 
 			nbv, _ := semver.Make(buildVersion)
@@ -142,8 +146,8 @@ func getAvailableUpdate(buildsRootPath string, appId string, appVersion string, 
 		return &availableUpdate{
 			buildName: buildFile,
 			version:   buildVersion,
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }

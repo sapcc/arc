@@ -12,7 +12,14 @@ import (
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "POST" {
-		update := updates.New(r, buildsRootPath)
+		update, err := updates.New(r, buildsRootPath)
+		if err == updates.ArgumentError {
+			http.Error(w, http.StatusText(500), 500)
+			return
+		} else if err != nil {
+			http.Error(w, http.StatusText(400), 400)
+			return
+		}
 		if update == nil {
 			w.WriteHeader(204)
 			return
