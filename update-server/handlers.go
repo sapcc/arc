@@ -14,9 +14,11 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		update, err := updates.New(r, buildsRootPath)
 		if err == updates.ArgumentError {
-			http.Error(w, http.StatusText(500), 500)
+			log.Errorf(err.Error())
+			http.Error(w, http.StatusText(500), 500)			
 			return
 		} else if err != nil {
+			log.Errorf(err.Error())
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
