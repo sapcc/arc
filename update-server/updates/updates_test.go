@@ -15,7 +15,7 @@ func TestUpdatesNewSuccess(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	// get a success update
-	var jsonStr = []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`) //
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	update, err := New(req, os.TempDir())
 	if err != nil {

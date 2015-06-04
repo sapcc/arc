@@ -27,7 +27,7 @@ const buildRelativeUrl = "/builds/"
  * *check.Result, nil			-> There is an available update result to send back
  * nil, nil								-> No updates available
  */
-func New(req *http.Request, buildsRootPath string) (*check.Result, error) {
+func New(req *http.Request, buildsRootPath string) (*check.Result, error) {	
 	// check arguments
 	if len(buildsRootPath) == 0 || req == nil {
 		log.Errorf("Buildpath and/or request are empty or nil")
@@ -41,6 +41,9 @@ func New(req *http.Request, buildsRootPath string) (*check.Result, error) {
 	}
 
 	// read body
+	if req.Body == nil {
+		return nil, fmt.Errorf("Error while reading the request body. Request body is nil")
+	}
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Error while reading the request body. Got %q", err)
