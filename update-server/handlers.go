@@ -15,7 +15,7 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 		update, err := updates.New(r, buildsRootPath)
 		if err == updates.ArgumentError {
 			log.Errorf(err.Error())
-			http.Error(w, http.StatusText(500), 500)			
+			http.Error(w, http.StatusText(500), 500)
 			return
 		} else if err != nil {
 			log.Errorf(err.Error())
