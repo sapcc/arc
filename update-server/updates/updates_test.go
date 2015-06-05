@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpdatesNewSuccess(t *testing.T) {
-	file, err := ioutil.TempFile(os.TempDir(), "arc_darwin_amd64_3.1.0-dev_")
+	file, _ := ioutil.TempFile(os.TempDir(), "arc_darwin_amd64_3.1.0-dev_")
 	defer os.Remove(file.Name())
 
 	// get a success update
