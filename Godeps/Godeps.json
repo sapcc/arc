@@ -26,6 +26,10 @@
 			"Rev": "6ba91e24c498b49d0363c723e9e2ab2b5b8fd012"
 		},
 		{
+			"ImportPath": "github.com/StackExchange/wmi",
+			"Rev": "f3e2bae1e0cb5aef83e319133eabfee30013a4a5"
+		},
+		{
 			"ImportPath": "github.com/blang/semver",
 			"Comment": "v3.0.0",
 			"Rev": "2f3112b6f8f18f9df8743cc75ed51da08094ef6a"
@@ -34,6 +38,11 @@
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-107-g942282e",
 			"Rev": "942282e931e8286aa802a30b01fa7e16befb50f3"
+		},
+		{
+			"ImportPath": "github.com/go-ole/go-ole",
+			"Comment": "v1.1.1-13-g487c37e",
+			"Rev": "487c37e10823c9d5e647262f01f51a12331525f2"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -64,6 +73,35 @@
 			"ImportPath": "github.com/lib/pq",
 			"Comment": "go1.0-cutoff-51-ga8d8d01",
 			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/common",
+			"Comment": "1.0.0-64-g64357f0",
+			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/cpu",
+			"Comment": "1.0.0-64-g64357f0",
+			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/host",
+			"Comment": "1.0.0-64-g64357f0",
+			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/net",
+			"Comment": "1.0.0-64-g64357f0",
+			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/process",
+			"Comment": "1.0.0-64-g64357f0",
+			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
+		},
+		{
+			"ImportPath": "github.com/shirou/w32",
+			"Rev": "ada3ba68f000aa1b58580e45c9d308fe0b7fc5c5"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
