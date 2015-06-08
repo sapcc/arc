@@ -1,10 +1,13 @@
 package models
 
-import ()
+import (
+	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"io"
+	"encoding/json"
+)
 
 type Job struct {
-	ReqID   string `json:"req_id"`
-	Payload string `json:"payload"`
+	Request arc.Request `json:"request"`
 	Status  Status `json:"status"`
 }
 
@@ -16,3 +19,13 @@ const (
 	Executing Status = "executing"
 	Failed Status = "failed"
 )
+
+func CreateJob(data *io.ReadCloser) (*Job, error) {
+	var job Job
+	decoder := json.NewDecoder(*data)
+	err := decoder.Decode(&job)
+	if err != nil {
+		return nil, err
+	}
+	return &job, nil
+}

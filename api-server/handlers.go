@@ -29,18 +29,20 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
-	// unmarshal
-	decoder := json.NewDecoder(r.Body)
-	var job models.Job
-	err := decoder.Decode(&job)
+	// create job
+	job, err := models.CreateJob(&r.Body)	
 	if err != nil {
-		log.Errorf("Error unmarshaling job post request. Got %q", err.Error())
+		log.Errorf("Error creating a job. Got %q", err.Error())
 		http.Error(w, http.StatusText(400), 400)
 	} else {
 		job.Status = models.Queued
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(job)
 	}
+	
+	// create a mqtt request
+	
+	// save db
 }
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
@@ -110,11 +112,11 @@ func serveFact(w http.ResponseWriter, r *http.Request) {
 func getJob(jobId string) *models.Job {
 	var job models.Job
 	for _, j := range jobs {
-		if j.ReqID == jobId {
+		if j.Request.RequestID == jobId {
 			job = models.Job(j)
 		}
 	}
-	if len(job.ReqID) == 0 {
+	if len(job.Request.RequestID) == 0 {
 		return nil
 	}
 	return &job
