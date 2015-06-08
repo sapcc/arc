@@ -145,6 +145,12 @@ func (c *MQTTClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) 
 	return out, cancel
 }
 
+func (c *MQTTClient) SubscribeReplies() (<-chan *arc.Reply, func()) {
+	//This is a little bit hacky but YOLO
+	//At some point we need to rethink that, maybe have "namespaces" one can subscribe to
+	return c.SubscribeJob("+")
+}
+
 func identityTopic(identity string) string {
 	return fmt.Sprintf("identity/%s", identity)
 }
