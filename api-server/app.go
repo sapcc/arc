@@ -38,6 +38,11 @@ func main() {
 			Usage: "listen address for the update server",
 			Value: "0.0.0.0:3000",
 		},
+		cli.StringFlag{
+			Name:  "db-bind-address,db",
+			Usage: "db connection address",
+			Value: "postgres://arc:arc@localhost:5432/arc_dev?sslmode=disable",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -56,6 +61,9 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
+	// db
+	NewDb(c.GlobalString("db-bind-address"))
+
 	// init the router
 	router := newRouter()
 

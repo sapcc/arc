@@ -8,6 +8,41 @@ import (
 	"net/http"
 )
 
+func serveJobs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(jobs)
+}
+
+func serveJob(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	agentId := vars["jobId"]
+
+	job := getJob(agentId)
+	if job == nil {
+		log.Errorf("Job with id %q not found.", agentId)
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(job)
+}
+
+func executeJob(w http.ResponseWriter, r *http.Request) {
+	// unmarshal
+	decoder := json.NewDecoder(r.Body)
+	var job models.Job
+	err := decoder.Decode(&job)
+	if err != nil {
+		log.Errorf("Error unmarshaling job post request. Got %q", err.Error())
+		http.Error(w, http.StatusText(400), 400)
+	} else {
+		job.Status = models.Queued
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(job)
+	}
+}
+
 func serveAgents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(agents)
@@ -71,6 +106,19 @@ func serveFact(w http.ResponseWriter, r *http.Request) {
 }
 
 // private
+
+func getJob(jobId string) *models.Job {
+	var job models.Job
+	for _, j := range jobs {
+		if j.ReqID == jobId {
+			job = models.Job(j)
+		}
+	}
+	if len(job.ReqID) == 0 {
+		return nil
+	}
+	return &job
+}
 
 func getAgent(agentId string) *models.Agent {
 	var agent models.Agent

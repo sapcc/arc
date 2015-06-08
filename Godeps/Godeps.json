@@ -2,9 +2,7 @@
 	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
 	"GoVersion": "go1.4.2",
 	"Packages": [
-		".",
-		"./update-server",
-		"./api-server/"
+		"./..."
 	],
 	"Deps": [
 		{
@@ -61,6 +59,11 @@
 		{
 			"ImportPath": "github.com/kr/binarydist",
 			"Rev": "9955b0ab8708602d411341e55fffd7e0700f86bd"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-51-ga8d8d01",
+			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

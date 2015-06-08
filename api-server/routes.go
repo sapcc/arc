@@ -16,6 +16,24 @@ type routes []route
 
 var routesDefinition = routes{
 	route{
+		"Jobs",
+		"GET",
+		"/jobs",
+		serveJobs,
+	},
+	route{
+		"Execute Job",
+		"POST",
+		"/jobs",
+		executeJob,
+	},
+	route{
+		"Job",
+		"GET",
+		"/jobs/{jobId}",
+		serveJob,
+	},
+	route{
 		"Agents",
 		"GET",
 		"/agents",
