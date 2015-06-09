@@ -26,10 +26,6 @@
 			"Rev": "6ba91e24c498b49d0363c723e9e2ab2b5b8fd012"
 		},
 		{
-			"ImportPath": "github.com/StackExchange/wmi",
-			"Rev": "f3e2bae1e0cb5aef83e319133eabfee30013a4a5"
-		},
-		{
 			"ImportPath": "github.com/blang/semver",
 			"Comment": "v3.0.0",
 			"Rev": "2f3112b6f8f18f9df8743cc75ed51da08094ef6a"
@@ -80,28 +76,14 @@
 			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
 		},
 		{
-			"ImportPath": "github.com/shirou/gopsutil/cpu",
-			"Comment": "1.0.0-64-g64357f0",
-			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
-		},
-		{
 			"ImportPath": "github.com/shirou/gopsutil/host",
 			"Comment": "1.0.0-64-g64357f0",
 			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
 		},
 		{
-			"ImportPath": "github.com/shirou/gopsutil/net",
+			"ImportPath": "github.com/shirou/gopsutil/mem",
 			"Comment": "1.0.0-64-g64357f0",
 			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
-		},
-		{
-			"ImportPath": "github.com/shirou/gopsutil/process",
-			"Comment": "1.0.0-64-g64357f0",
-			"Rev": "64357f04e785f61a86d993e486b0f9be54d44cb7"
-		},
-		{
-			"ImportPath": "github.com/shirou/w32",
-			"Rev": "ada3ba68f000aa1b58580e45c9d308fe0b7fc5c5"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

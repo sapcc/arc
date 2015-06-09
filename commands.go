@@ -13,6 +13,9 @@ import (
 	"github.com/codegangsta/cli"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/fact"
+	"gitHub.***REMOVED***/monsoon/arc/fact/host"
+	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
 	"gitHub.***REMOVED***/monsoon/arc/server"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/updater"
@@ -55,6 +58,11 @@ var Commands = []cli.Command{
 		Name:   "list",
 		Usage:  "list available agents and actions",
 		Action: cmdList,
+	},
+	{
+		Name:   "facts",
+		Usage:  "Discover and list facts on this system",
+		Action: cmdFacts,
 	},
 }
 
@@ -199,4 +207,13 @@ func cmdList(c *cli.Context) {
 		fmt.Printf("  %-20s%s\n", agent, strings.Join(registry.Actions(agent), ","))
 	}
 
+}
+
+func cmdFacts(c *cli.Context) {
+	store := fact.NewStore()
+	store.AddSource(host.New(), 0)
+	store.AddSource(memory.New(), 0)
+	for key, val := range store.Facts() {
+		fmt.Printf(" %-30s: %s\n", key, val)
+	}
 }
