@@ -8,16 +8,16 @@ import (
 var jobs = models.Jobs{
 	models.Job{
 		Request: arc.Request{
-			Version: 666,
-			Sender: "me",
+			Version:   666,
+			Sender:    "me",
 			RequestID: "123456789",
-			To: "you",
-			Timeout: 333,
-			Agent: "007",
-			Action: "hhmm",
-			Payload: "payload",
+			To:        "you",
+			Timeout:   333,
+			Agent:     "007",
+			Action:    "hhmm",
+			Payload:   "payload",
 		},
-		Status:  "Queued",
+		Status: "Queued",
 	},
 }
 
