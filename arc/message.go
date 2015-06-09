@@ -70,6 +70,7 @@ func CreateRequest(agent string, action string, to string, timeout int, payload 
 		Sender:    "me",
 	}
 }
+
 func ParseRequest(data *[]byte) (*Request, error) {
 	var request Request
 	// unmarshal
@@ -78,35 +79,10 @@ func ParseRequest(data *[]byte) (*Request, error) {
 		return nil, err
 	}
 
-	field_error := "Attribute '%s' is missing or invalid"
-
 	// validation
-	if request.Version < 1 {
-		return nil, fmt.Errorf(field_error, "Version")
-	}
-
-	if request.Sender == "" {
-		return nil, fmt.Errorf(field_error, "Sender")
-	}
-
-	if request.To == "" {
-		return nil, fmt.Errorf(field_error, "To")
-	}
-
-	if request.RequestID == "" {
-		return nil, fmt.Errorf(field_error, "RequestID")
-	}
-
-	if request.Timeout < 1 {
-		return nil, fmt.Errorf(field_error, "Timeout")
-	}
-
-	if request.Agent == "" {
-		return nil, fmt.Errorf(field_error, "Agent")
-	}
-
-	if request.Action == "" {
-		return nil, fmt.Errorf(field_error, "Action")
+	err = ValidateRequest(&request)
+	if err != nil {
+		return nil, err
 	}
 
 	return &request, nil
@@ -120,27 +96,71 @@ func ParseReply(data *[]byte) (*Reply, error) {
 		return nil, err
 	}
 
-	field_error := "Attribute '%s' is missing or invalid"
-
-	if reply.Version < 1 {
-		return nil, fmt.Errorf(field_error, "Version")
-	}
-
-	if reply.RequestID == "" {
-		return nil, fmt.Errorf(field_error, "RequestID")
-	}
-
-	if reply.Agent == "" {
-		return nil, fmt.Errorf(field_error, "Agent")
-	}
-
-	if reply.Action == "" {
-		return nil, fmt.Errorf(field_error, "Action")
-	}
-
-	if reply.State == 0 {
-		return nil, fmt.Errorf(field_error, "State")
+	// validation
+	err = ValidateReplay(&reply)
+	if err != nil {
+		return nil, err
 	}
 
 	return &reply, nil
+}
+
+func ValidateRequest(request *Request) error {
+	field_error := "Attribute '%s' is missing or invalid"
+
+	if request.Version < 1 {
+		return fmt.Errorf(field_error, "Version")
+	}
+
+	if request.Sender == "" {
+		return fmt.Errorf(field_error, "Sender")
+	}
+
+	if request.To == "" {
+		return fmt.Errorf(field_error, "To")
+	}
+
+	if request.RequestID == "" {
+		return fmt.Errorf(field_error, "RequestID")
+	}
+
+	if request.Timeout < 1 {
+		return fmt.Errorf(field_error, "Timeout")
+	}
+
+	if request.Agent == "" {
+		return fmt.Errorf(field_error, "Agent")
+	}
+
+	if request.Action == "" {
+		return fmt.Errorf(field_error, "Action")
+	}
+
+	return nil
+}
+
+func ValidateReplay(reply *Reply) error {
+	field_error := "Attribute '%s' is missing or invalid"
+
+	if reply.Version < 1 {
+		return fmt.Errorf(field_error, "Version")
+	}
+
+	if reply.RequestID == "" {
+		return fmt.Errorf(field_error, "RequestID")
+	}
+
+	if reply.Agent == "" {
+		return fmt.Errorf(field_error, "Agent")
+	}
+
+	if reply.Action == "" {
+		return fmt.Errorf(field_error, "Action")
+	}
+
+	if reply.State == 0 {
+		return fmt.Errorf(field_error, "State")
+	}
+
+	return nil
 }
