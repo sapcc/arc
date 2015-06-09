@@ -1,10 +1,10 @@
 package arc
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"fmt"
-
-	"code.google.com/p/go-uuid/uuid"
+	log "github.com/Sirupsen/logrus"
 )
 
 type Request struct {
@@ -59,7 +59,7 @@ func CreateReply(request *Request, state JobState, payload string) *Reply {
 }
 
 func CreateRequest(agent string, action string, to string, timeout int, payload string) *Request {
-	return &Request{
+	request := Request{
 		Version:   1,
 		Agent:     agent,
 		Action:    action,
@@ -69,6 +69,14 @@ func CreateRequest(agent string, action string, to string, timeout int, payload 
 		RequestID: uuid.New(),
 		Sender:    "me",
 	}
+
+	err := ValidateRequest(&request)
+	if err != nil {
+		log.Errorf(err.Error())
+		return nil
+	}
+
+	return &request
 }
 
 func ParseRequest(data *[]byte) (*Request, error) {
