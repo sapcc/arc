@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"errors"
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -13,13 +12,13 @@ import (
 var db *sql.DB
 var dbmap *gorp.DbMap
 
-func NewConnection(dbAddreess string) (*sql.DB, error) {
+func NewConnection(dbAddreess string) (*sql.DB,  *gorp.DbMap, error) {
 	var err error
 
 	// conect to the db
 	db, err = sql.Open("postgres", dbAddreess)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	
 	log.Infof(fmt.Sprintf("Connected to the DB with address %q", dbAddreess))
@@ -27,33 +26,20 @@ func NewConnection(dbAddreess string) (*sql.DB, error) {
 	// create tables if needed
 	err = createTables()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	
 	// create a struct mapper
 	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 	dbmap.AddTableWithName(models.Job{}, "jobs")
 	
-	return db, nil
+	return db, dbmap, nil
 }
 
 func CloseConnection() {
 	if db != nil {
 		db.Close()
 	}
-}
-
-func SaveJob(job *models.Job) error {
-	if db == nil || db == nil {		
-		return errors.New("db connection or db mapper is nil")
-	}
-	
-	err := dbmap.Insert(job)
-	if err != nil {
-		return err
-	}
-	
-	return nil
 }
 
 // private

@@ -4,24 +4,30 @@ import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"net/http"
 	"time"
 )
 
 func serveJobs(w http.ResponseWriter, r *http.Request) {
+	jobs, err := models.GetAllJobs(dbmap)
+	if err != nil {
+		log.Errorf("Error getting all jobs. Got %q", err.Error())
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(jobs)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	agentId := vars["jobId"]
+	jobId := vars["jobId"]
 
-	job := getJob(agentId)
-	if job == nil {
-		log.Errorf("Job with id %q not found.", agentId)
+	job, err := models.GetJob(dbmap, jobId)
+	if err != nil {
+		log.Errorf("Job with id %q not found.", jobId)
 		http.NotFound(w, r)
 		return
 	}
@@ -30,12 +36,14 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(job)
 }
 
+// TODO: parse a job and return 400 if not valid
 func executeJob(w http.ResponseWriter, r *http.Request) {
 	// create job
 	job, err := models.CreateJob(&r.Body)
 	if err != nil {
 		log.Errorf("Error creating a job. Got %q", err.Error())
 		http.Error(w, http.StatusText(400), 400)
+		return
 	}
 
 	// create a mqtt request
@@ -43,10 +51,11 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	job.Request.RequestID = time.Now().String()
 
 	// save db
-	err = ownDb.SaveJob(job)
+	err = models.SaveJob(dbmap, job)
 	if err != nil {
 		log.Errorf("Error saving job. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -116,19 +125,6 @@ func serveFact(w http.ResponseWriter, r *http.Request) {
 }
 
 // private
-
-func getJob(jobId string) *models.Job {
-	var job models.Job
-	for _, j := range jobs {
-		if j.Request.RequestID == jobId {
-			job = models.Job(j)
-		}
-	}
-	if len(job.Request.RequestID) == 0 {
-		return nil
-	}
-	return &job
-}
 
 func getAgent(agentId string) *models.Agent {
 	var agent models.Agent
