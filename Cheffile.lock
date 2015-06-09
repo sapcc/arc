@@ -4,9 +4,11 @@ SITE
     chef_handler (1.1.8)
     sap-proxy (1.5.0)
       windows (>= 0.0.0)
+    sap-ssl (1.3.2)
     windows (1.37.0)
       chef_handler (>= 0.0.0)
 
 DEPENDENCIES
   sap-proxy (>= 0)
+  sap-ssl (>= 0)
 

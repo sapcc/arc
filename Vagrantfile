@@ -11,6 +11,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION = "2") do |config|
       chef.log_level = :info
       chef.cookbooks_path = %w{chef/cookbooks chef/site-cookbooks}
       chef.add_recipe "sap-proxy::default"
+      chef.add_recipe "sap-ssl::default"
       chef.add_recipe "golang::default"
     end
 
