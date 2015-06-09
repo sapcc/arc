@@ -5,7 +5,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"	
 	"net/http"
+	"time"
 )
 
 func serveJobs(w http.ResponseWriter, r *http.Request) {
@@ -34,15 +36,21 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Error creating a job. Got %q", err.Error())
 		http.Error(w, http.StatusText(400), 400)
-	} else {
-		job.Status = models.Queued
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		json.NewEncoder(w).Encode(job)
 	}
 
 	// create a mqtt request
-
+	job.Status = string(models.Queued)
+	job.Request.RequestID = time.Now().String()
+	
 	// save db
+	err = ownDb.SaveJob(job)
+	if err != nil {
+		log.Errorf("Error saving job. Got %q", err.Error())
+		http.Error(w, http.StatusText(500), 500)
+	}
+	
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(job)
 }
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {

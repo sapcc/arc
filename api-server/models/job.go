@@ -1,23 +1,24 @@
 package models
 
 import (
+	"encoding/json"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"io"
-	"encoding/json"
 )
 
 type Job struct {
-	Request arc.Request `json:"request"`
-	Status  Status `json:"status"`
+	arc.Request `json:"request"`
+	Status      string `json:"status"`
 }
 
 type Jobs []Job
 
 type Status string
+
 const (
-	Queued Status = "queued"
+	Queued    Status = "queued"
 	Executing Status = "executing"
-	Failed Status = "failed"
+	Failed    Status = "failed"
 )
 
 func CreateJob(data *io.ReadCloser) (*Job, error) {

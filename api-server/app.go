@@ -4,11 +4,15 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"gitHub.***REMOVED***/monsoon/arc/version"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"	
+	"database/sql"
 	"net/http"
 	"os"
+	"fmt"
 )
 
 const appName = "arc-api-server"
+var db *sql.DB
 
 func main() {
 	app := cli.NewApp()
@@ -61,17 +65,19 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
+	var err error
+	
 	// db
-	NewDb(c.GlobalString("db-bind-address"))
+	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
+	checkErrAndPanic(err, "")
 
 	// init the router
 	router := newRouter()
 
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
-	if err := http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(router)); err != nil {
-		log.Fatalf("Failed to bind on %s: %s", c.GlobalString("bind-address"), err)
-	}
+	err = http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(router));
+	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")) )
 }
 
 func accessLogger(handler http.Handler) http.Handler {
@@ -79,4 +85,16 @@ func accessLogger(handler http.Handler) http.Handler {
 		log.Infof("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func checkErrAndPanic(err error, msg string) {
+	if err != nil {
+		panic(fmt.Sprintf(msg, err))
+	}
+}
+
+func checkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalf(msg, err)
+	}
 }
