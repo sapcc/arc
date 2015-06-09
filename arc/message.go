@@ -4,7 +4,6 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 )
 
 type Request struct {
@@ -58,7 +57,7 @@ func CreateReply(request *Request, state JobState, payload string) *Reply {
 
 }
 
-func CreateRequest(agent string, action string, to string, timeout int, payload string) *Request {
+func CreateRequest(agent string, action string, to string, timeout int, payload string) (*Request, error) {
 	request := Request{
 		Version:   1,
 		Agent:     agent,
@@ -72,11 +71,10 @@ func CreateRequest(agent string, action string, to string, timeout int, payload 
 
 	err := ValidateRequest(&request)
 	if err != nil {
-		log.Errorf(err.Error())
-		return nil
+		return nil, err
 	}
 
-	return &request
+	return &request, nil
 }
 
 func ParseRequest(data *[]byte) (*Request, error) {

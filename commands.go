@@ -144,7 +144,11 @@ func cmdExecute(c *cli.Context) {
 	}
 	defer tp.Disconnect()
 
-	request := arc.CreateRequest(agent, action, c.String("identity"), c.Int("timeout"), payload)
+	request, err := arc.CreateRequest(agent, action, c.String("identity"), c.Int("timeout"), payload)
+	if err != nil {
+		log.Fatal(err.Error())
+		return
+	}
 
 	msgChan, cancelSubscription := tp.SubscribeJob(request.RequestID)
 	defer cancelSubscription()
