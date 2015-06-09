@@ -6,11 +6,10 @@ import (
 	"github.com/gorilla/mux"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"net/http"
-	"time"
 )
 
 func serveJobs(w http.ResponseWriter, r *http.Request) {
-	jobs, err := models.GetAllJobs(dbmap)
+	jobs, err := models.GetAllJobs(db)
 	if err != nil {
 		log.Errorf("Error getting all jobs. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
@@ -25,7 +24,7 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	job, err := models.GetJob(dbmap, jobId)
+	job, err := models.GetJob(db, jobId)
 	if err != nil {
 		log.Errorf("Job with id %q not found.", jobId)
 		http.NotFound(w, r)
@@ -36,7 +35,6 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(job)
 }
 
-// TODO: parse a job and return 400 if not valid
 func executeJob(w http.ResponseWriter, r *http.Request) {
 	// create job
 	job, err := models.CreateJob(&r.Body)
@@ -47,11 +45,10 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a mqtt request
-	job.Status = string(models.Queued)
-	job.Request.RequestID = time.Now().String()
 
 	// save db
-	err = models.SaveJob(dbmap, job)
+	//err = models.SaveJobWithMapper(dbmap, job)
+	err = models.SaveJob(db, job)
 	if err != nil {
 		log.Errorf("Error saving job. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)

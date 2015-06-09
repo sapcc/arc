@@ -2,24 +2,7 @@ package main
 
 import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
-
-var jobs = models.Jobs{
-	models.Job{
-		Request: arc.Request{
-			Version:   666,
-			Sender:    "me",
-			RequestID: "123456789",
-			To:        "you",
-			Timeout:   333,
-			Agent:     "007",
-			Action:    "hhmm",
-			Payload:   "payload",
-		},
-		Status: "Queued",
-	},
-}
 
 var agents = models.Agents{
 	models.Agent{

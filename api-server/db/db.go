@@ -5,20 +5,17 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gopkg.in/gorp.v1"
 )
 
 var db *sql.DB
-var dbmap *gorp.DbMap
 
-func NewConnection(dbAddreess string) (*sql.DB,  *gorp.DbMap, error) {
+func NewConnection(dbAddreess string) (*sql.DB,  error) {
 	var err error
 
 	// conect to the db
 	db, err = sql.Open("postgres", dbAddreess)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	
 	log.Infof(fmt.Sprintf("Connected to the DB with address %q", dbAddreess))
@@ -26,14 +23,10 @@ func NewConnection(dbAddreess string) (*sql.DB,  *gorp.DbMap, error) {
 	// create tables if needed
 	err = createTables()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	
-	// create a struct mapper
-	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(models.Job{}, "jobs")
-	
-	return db, dbmap, nil
+	return db, nil
 }
 
 func CloseConnection() {

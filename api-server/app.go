@@ -7,7 +7,6 @@ import (
 	"github.com/codegangsta/cli"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/version"
-	"gopkg.in/gorp.v1"
 	"net/http"
 	"os"
 )
@@ -15,7 +14,6 @@ import (
 const appName = "arc-api-server"
 
 var db *sql.DB
-var dbmap *gorp.DbMap
 
 func main() {
 	app := cli.NewApp()
@@ -71,7 +69,7 @@ func runServer(c *cli.Context) {
 	var err error
 
 	// db
-	db, dbmap, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
+	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
 	checkErrAndPanic(err, "")
 
 	// init the router

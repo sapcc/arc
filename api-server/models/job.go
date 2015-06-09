@@ -3,7 +3,8 @@ package models
 import (
 	"encoding/json"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gopkg.in/gorp.v1"
+	"database/sql"
+	log "github.com/Sirupsen/logrus"	
 	"io"
 	"errors"
 )
@@ -24,21 +25,34 @@ const (
 )
 
 func CreateJob(data *io.ReadCloser) (*Job, error) {
-	var job Job
+	// unmarschall body to a request
+	var tmpReq arc.Request
 	decoder := json.NewDecoder(*data)
-	err := decoder.Decode(&job)
+	err := decoder.Decode(&tmpReq)
+	if err != nil {
+		return nil, err
+	}	
+	
+	// validate request
+	request, err := arc.CreateRequest(tmpReq.Agent, tmpReq.Action, tmpReq.To, tmpReq.Timeout, tmpReq.Payload)
 	if err != nil {
 		return nil, err
 	}
-	return &job, nil
+	
+	return &Job{
+		*request,
+		string(Queued),
+	}, nil
 }
 
-func SaveJob(dbmap *gorp.DbMap, job *Job) error {
-	if dbmap == nil {		
-		return errors.New("Db mapper is nil")
+func SaveJob(db *sql.DB, job *Job) error {
+	if db == nil {
+		return errors.New("Db is nil")
 	}
 	
-	err := dbmap.Insert(job)
+	var lastInsertId string
+	err := db.QueryRow(`INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning requestid;`, 
+		job.Version, job.Sender, job.RequestID, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
@@ -46,26 +60,37 @@ func SaveJob(dbmap *gorp.DbMap, job *Job) error {
 	return nil
 }
 
-func UpdateJob(dbmap *gorp.DbMap, job *Job) error {
-  _, err := dbmap.Update(&job)
+func UpdateJob(db *sql.DB, job *Job) error {
+  /*_, err := dbmap.Update(&job)
 	if err != nil {
 		return err
-	}
+	}*/
 	return nil
 }
 
-func GetAllJobs(dbmap *gorp.DbMap) (*Jobs, error) {
+func GetAllJobs(db *sql.DB) (*Jobs, error) {
 	var jobs Jobs
-	_, err := dbmap.Select(&jobs, "select * from jobs order by requestid")
+	rows, err := db.Query("SELECT * FROM jobs order by requestid")
 	if err != nil {
 		return nil, err
 	}
+	
+	var job Job
+	for rows.Next() {
+		err = rows.Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status)
+		if err != nil {
+			log.Errorf("Error scaning job results. Got ", err.Error())
+			continue
+		}
+		jobs = append(jobs, job)
+	}
+	
 	return &jobs, nil
 }
 
-func GetJob(dbmap *gorp.DbMap, requestId string) (*Job, error) {
+func GetJob(db *sql.DB, requestId string) (*Job, error) {
 	var job Job
-	err := dbmap.SelectOne(&job, "select * from jobs where requestid=$1", requestId)
+	err := db.QueryRow("SELECT * FROM jobs WHERE requestid=$1", requestId).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status)
 	if err != nil {
 		return nil, err
 	}

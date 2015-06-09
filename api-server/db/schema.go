@@ -3,10 +3,10 @@ package db
 var jobsTable = `
 	CREATE TABLE IF NOT EXISTS jobs
 	(
-		version integer,
-		sender text,
+		version integer NOT NULL,
+		sender text NOT NULL,
 		requestid text PRIMARY KEY NOT NULL,
-		"to" text,
+		"to" text NOT NULL,
 		timeout integer NOT NULL,
 		agent text NOT NULL,
 		action text NOT NULL,
@@ -56,3 +56,5 @@ var Tables = [...]string{
 	agentsTable,
 	factsTable,
 }
+
+var InsertJob = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning requestid;`
