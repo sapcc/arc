@@ -19,6 +19,7 @@ help:
 	@echo "  * gopath            - print custom GOPATH external use" 
 	@echo "  * install-deps      - build and cache dependencies (speeds up make build)" 
 	@echo "  * cross             - cross compile for darwin, windows, linux (requires docker)" 
+	@echo "  * run-linux         - run bin/arc_linux in a docker container" 
 
 .PHONY: build
 build: setup
@@ -47,6 +48,14 @@ test-gofmt:
 .PHONY: test-win
 test-win: 
 	vagrant provision --provision-with shell
+
+.PHONY: run-linux 
+run-linux: 
+	docker run \
+		--rm \
+		-v $(CURDIR)/bin/arc_linux:/arc \
+		ubuntu \
+		/arc $(ARGS)
 
 .PHONY: gopath 
 gopath: setup
