@@ -1,17 +1,18 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/version"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"	
-	"database/sql"
 	"net/http"
 	"os"
-	"fmt"
 )
 
 const appName = "arc-api-server"
+
 var db *sql.DB
 
 func main() {
@@ -66,7 +67,7 @@ func main() {
 
 func runServer(c *cli.Context) {
 	var err error
-	
+
 	// db
 	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
 	checkErrAndPanic(err, "")
@@ -76,8 +77,8 @@ func runServer(c *cli.Context) {
 
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
-	err = http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(router));
-	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")) )
+	err = http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(router))
+	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")))
 }
 
 func accessLogger(handler http.Handler) http.Handler {
