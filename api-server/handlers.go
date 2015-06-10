@@ -47,7 +47,6 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	// create a mqtt request
 
 	// save db
-	//err = models.SaveJobWithMapper(dbmap, job)
 	err = models.SaveJob(db, job)
 	if err != nil {
 		log.Errorf("Error saving job. Got %q", err.Error())

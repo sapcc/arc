@@ -57,4 +57,6 @@ var Tables = [...]string{
 	factsTable,
 }
 
-var InsertJob = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning requestid;`
+var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning requestid;`
+var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
+var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"

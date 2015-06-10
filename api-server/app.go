@@ -68,7 +68,7 @@ func main() {
 func runServer(c *cli.Context) {
 	var err error
 
-	// db
+	// db instance
 	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
 	checkErrAndPanic(err, "")
 
