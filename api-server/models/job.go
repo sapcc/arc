@@ -12,7 +12,7 @@ import (
 
 type Job struct {
 	arc.Request `json:"request"`
-	Status      string `json:"status"`
+	Status      arc.JobState `json:"status"`
 }
 
 type Jobs []Job
@@ -28,7 +28,7 @@ func CreateJob(data *io.ReadCloser) (*Job, error) {
 		return nil, err
 	}
 
-	// validate request
+	// create a valid request
 	request, err := arc.CreateRequest(tmpReq.Agent, tmpReq.Action, tmpReq.To, tmpReq.Timeout, tmpReq.Payload)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func CreateJob(data *io.ReadCloser) (*Job, error) {
 
 	return &Job{
 		*request,
-		arc.Queued.String(),
+		arc.Queued,
 	}, nil
 }
 
@@ -54,8 +54,22 @@ func SaveJob(db *sql.DB, job *Job) error {
 	return nil
 }
 
-func UpdateJob(db *sql.DB, job *Job) error {
-	return nil
+func UpdateJob(db *sql.DB, reply *arc.Reply) (int64, error) {
+	if db == nil {
+		return 0, errors.New("Db is nil")
+	}
+
+	res, err := db.Exec(ownDb.UpdateJob, reply.State, reply.RequestID)
+	if err != nil {
+		return 0, err
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+			
+	return affect, nil
 }
 
 func GetAllJobs(db *sql.DB) (*Jobs, error) {
@@ -64,7 +78,8 @@ func GetAllJobs(db *sql.DB) (*Jobs, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	defer rows.Close()
+	
 	var job Job
 	for rows.Next() {
 		err = rows.Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status)
@@ -74,7 +89,7 @@ func GetAllJobs(db *sql.DB) (*Jobs, error) {
 		}
 		jobs = append(jobs, job)
 	}
-
+	
 	return &jobs, nil
 }
 

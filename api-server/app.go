@@ -3,17 +3,26 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/version"
 	"net/http"
 	"os"
+	
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
+	
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/version"
+	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/transport"	
 )
 
-const appName = "arc-api-server"
+const(
+  appName 	= "arc-api-server"
+ 	envPrefix	= "ARC_"
+)
 
+var config arc.Config
 var db *sql.DB
+var tp transport.Transport
 
 func main() {
 	app := cli.NewApp()
@@ -34,10 +43,23 @@ func main() {
 	app.Action = runServer
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "log-level,l",
-			Usage: "log level",
-			Value: "info",
+			Name:   "transport,t",
+			Usage:  "transport backend driver",
+			Value:  "mqtt",
+			EnvVar: envPrefix + "TRANSPORT",
+		},		
+		cli.StringFlag{
+			Name:   "log-level,l",
+			Usage:  "log level",
+			EnvVar: envPrefix + "LOG_LEVEL",
+			Value:  "info",
 		},
+		cli.StringSliceFlag{
+			Name:   "endpoint,e",
+			Usage:  "endpoint url(s) for selected transport",
+			EnvVar: envPrefix + "ENDPOINT",
+			Value:  new(cli.StringSlice),
+		},		
 		cli.StringFlag{
 			Name:  "bind-address,b",
 			Usage: "listen address for the update server",
@@ -51,11 +73,14 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
+		config.Endpoints = c.GlobalStringSlice("endpoint")
+		config.Transport = c.GlobalString("transport")
 		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
 			return err
 		}
+		config.LogLevel = c.GlobalString("log-level")		
 		log.SetLevel(lvl)
 		return nil
 	}
@@ -66,11 +91,25 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
+	// check endpoint
+	if len(config.Endpoints) == 0 {
+		log.Fatal("No endpoints for MQTT given")
+	}
+	
 	var err error
 
-	// db instance
+	// db global instance
 	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
 	checkErrAndPanic(err, "")
+	defer db.Close()
+
+	// global transport instance
+	tp , err = arcNewConnection(config)
+	checkErrAndPanic(err, "")	
+	defer tp.Disconnect()
+	
+	// subscribe to all replies
+	go arcSubscribeReplies(tp)	
 
 	// init the router
 	router := newRouter()
@@ -89,12 +128,6 @@ func accessLogger(handler http.Handler) http.Handler {
 }
 
 func checkErrAndPanic(err error, msg string) {
-	if err != nil {
-		panic(fmt.Sprintf(msg, err))
-	}
-}
-
-func checkErr(err error, msg string) {
 	if err != nil {
 		log.Fatalf(msg, err)
 	}

@@ -11,7 +11,7 @@ var jobsTable = `
 		agent text NOT NULL,
 		action text NOT NULL,
 		payload text NOT NULL,
-		status text NOT NULL,
+		status integer NOT NULL,
 		CONSTRAINT uc_requestid UNIQUE (requestid)		
 	)
 	WITH (
@@ -58,5 +58,6 @@ var Tables = [...]string{
 }
 
 var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning requestid;`
+var UpdateJob = `UPDATE jobs SET status=$1 WHERE requestid=$2`
 var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
 var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"

@@ -8,6 +8,10 @@ import (
 	"net/http"
 )
 
+/*
+ * Jobs
+ */
+
 func serveJobs(w http.ResponseWriter, r *http.Request) {
 	jobs, err := models.GetAllJobs(db)
 	if err != nil {
@@ -44,8 +48,6 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create a mqtt request
-
 	// save db
 	err = models.SaveJob(db, job)
 	if err != nil {
@@ -54,9 +56,16 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create a mqtt request
+	arcSendRequest(&job.Request)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(job)
 }
+
+/*
+ * Agents
+ */
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -77,6 +86,10 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(agent)
 }
+
+/*
+ * Facts
+ */
 
 func serveFacts(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

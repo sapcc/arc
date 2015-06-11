@@ -29,12 +29,6 @@ func NewConnection(dbAddreess string) (*sql.DB,  error) {
 	return db, nil
 }
 
-func CloseConnection() {
-	if db != nil {
-		db.Close()
-	}
-}
-
 // private
 
 func createTables() error {
