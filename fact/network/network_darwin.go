@@ -1,5 +1,5 @@
 package network
 
-func (h Source) Facts() (map[string]string, error) {
-	return make(map[string]string), nil
+func (h Source) Facts() (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
 }

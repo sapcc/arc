@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -215,7 +216,11 @@ func cmdFacts(c *cli.Context) {
 	store.AddSource(host.New(), 0)
 	store.AddSource(memory.New(), 0)
 	store.AddSource(network.New(), 0)
-	for key, val := range store.Facts() {
-		fmt.Printf(" %-30s: %s\n", key, val)
+	j, err := json.MarshalIndent(store.Facts(), " ", "  ")
+	if err != nil {
+		log.Warnf("Failed to generate json: %s", err)
+		exit_code = 1
+		return
 	}
+	fmt.Println(string(j))
 }

@@ -3,7 +3,6 @@ package network
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"os/exec"
 	"regexp"
 )
@@ -23,15 +22,15 @@ type interf struct {
 	Mac  string
 }
 
-func (h Source) Facts() (map[string]string, error) {
+func (h Source) Facts() (map[string]interface{}, error) {
 
-	facts := make(map[string]string)
+	facts := make(map[string]interface{})
 	cmd := exec.Command("ip", "addr")
 	interfaces := make(map[string]*interf)
 	var currentInterface string
 	if out, err := cmd.Output(); err == nil {
 		scanner := bufio.NewScanner(bytes.NewReader(out))
-		fmt.Println(string(out))
+		//fmt.Println(string(out))
 		for scanner.Scan() {
 			line := scanner.Text()
 			if match := ipIntRegex.FindStringSubmatch(line); match != nil {
@@ -52,13 +51,13 @@ func (h Source) Facts() (map[string]string, error) {
 		}
 
 	}
-	for _, i := range interfaces {
-		fmt.Println("interface", i)
-	}
+	//for _, i := range interfaces {
+	//  fmt.Println("interface", i)
+	//}
 
 	cmd = exec.Command("ip", "-o", "-f", "inet", "route", "show")
 	if out, err := cmd.Output(); err == nil {
-		fmt.Println(string(out))
+		//fmt.Println(string(out))
 		scanner := bufio.NewScanner(bytes.NewReader(out))
 		for scanner.Scan() {
 			line := scanner.Text()

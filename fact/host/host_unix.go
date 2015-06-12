@@ -10,14 +10,14 @@ import (
 	"github.com/shirou/gopsutil/host"
 )
 
-func (h Source) Facts() (map[string]string, error) {
+func (h Source) Facts() (map[string]interface{}, error) {
 
 	info, err := host.HostInfo()
 	if err != nil {
 		return nil, err
 	}
 
-	facts := make(map[string]string)
+	facts := make(map[string]interface{})
 	facts["hostname"] = info.Hostname
 	cmd := exec.Command("hostname", "-f")
 	if out, err := cmd.Output(); err == nil {

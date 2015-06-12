@@ -19,8 +19,8 @@ type Win32_OperatingSystem struct {
 	BuildNumber string
 }
 
-func (h Source) Facts() (map[string]string, error) {
-	facts := make(map[string]string)
+func (h Source) Facts() (map[string]interface{}, error) {
+	facts := make(map[string]interface{})
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = strings.ToLower(hostname)
 		if hostent, err := syscall.GetHostByName(hostname); err == nil {

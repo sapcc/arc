@@ -1,10 +1,6 @@
 package memory
 
-import (
-	"fmt"
-
-	"github.com/shirou/gopsutil/mem"
-)
+import "github.com/shirou/gopsutil/mem"
 
 type Source struct{}
 
@@ -16,14 +12,14 @@ func (h Source) Name() string {
 	return "memory"
 }
 
-func (h Source) Facts() (map[string]string, error) {
-	facts := make(map[string]string)
+func (h Source) Facts() (map[string]interface{}, error) {
+	facts := make(map[string]interface{})
 	m, _ := mem.VirtualMemory()
 
-	facts["memory_total"] = fmt.Sprintf("%d", m.Total)
-	facts["memory_used"] = fmt.Sprintf("%d", m.Used)
-	facts["memory_used_percent"] = fmt.Sprintf("%d", int(m.UsedPercent+.5))
-	facts["memory_available"] = fmt.Sprintf("%d", m.Available)
+	facts["memory_total"] = m.Total
+	facts["memory_used"] = m.Used
+	facts["memory_used_percent"] = int(m.UsedPercent + .5)
+	facts["memory_available"] = m.Available
 
 	return facts, nil
 }

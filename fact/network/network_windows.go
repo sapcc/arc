@@ -9,8 +9,8 @@ import (
 	"github.com/shirou/gopsutil/common"
 )
 
-func (h Source) Facts() (map[string]string, error) {
-	facts := make(map[string]string)
+func (h Source) Facts() (map[string]interface{}, error) {
+	facts := make(map[string]interface{})
 
 	adapters, _ := getAdapterList()
 	for ; adapters != nil; adapters = adapters.Next {

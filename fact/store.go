@@ -4,34 +4,47 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type FactSource interface {
 	Name() string
-	Facts() (map[string]string, error)
+	Facts() (map[string]interface{}, error)
+}
+
+type factSource struct {
+	plugin FactSource
+	facts  map[string]interface{}
+	mutex  sync.RWMutex
 }
 
 type Store struct {
-	facts   map[string]string
-	sources map[string]FactSource
-	mutex   sync.RWMutex
+	sources map[string]factSource
 	wg      sync.WaitGroup
 }
 
 func NewStore() *Store {
 	return &Store{
-		facts:   make(map[string]string),
-		sources: make(map[string]FactSource),
+		sources: make(map[string]factSource),
 	}
 }
 
-func (fs *Store) AddSource(source FactSource, interval time.Duration) {
-	fs.sources[source.Name()] = source
+func (fs *Store) AddSource(plugin FactSource, interval time.Duration) {
+	fs.sources[plugin.Name()] = factSource{plugin: plugin, facts: make(map[string]interface{})}
 	fs.wg.Add(1)
 	//collect facts initially
 	go func() {
-		fs.update(source.Name())
+		fs.update(plugin.Name())
 		fs.wg.Done()
+		if interval > 0 {
+			for {
+				select {
+				case <-time.After(interval):
+					fs.update(plugin.Name())
+				}
+			}
+		}
 	}()
 }
 
@@ -39,43 +52,50 @@ func (fs *Store) Wait() {
 	fs.wg.Wait()
 }
 
-func (fs *Store) Fact(name string) (string, error) {
-	fs.mutex.RLock()
-	val, ok := fs.facts[name]
-	fs.mutex.RUnlock()
-	if !ok {
-		return "", fmt.Errorf("fact %s not found", name)
-	}
-	return val, nil
-}
+//func (fs *Store) Fact(name string) (string, error) {
+//  fs.mutex.RLock()
+//  val, ok := fs.facts[name]
+//  fs.mutex.RUnlock()
+//  if !ok {
+//    return "", fmt.Errorf("fact %s not found", name)
+//  }
+//  return val, nil
+//}
 
-func (fs *Store) Facts() map[string]string {
+func (fs *Store) Facts() map[string]interface{} {
 	fs.Wait()
 
 	//create a copy of the internal map
-	facts := make(map[string]string)
-	fs.mutex.RLock()
-	for fact, val := range fs.facts {
-		facts[fact] = val
+	facts := make(map[string]interface{})
+	for _, src := range fs.sources {
+		src.mutex.RLock()
+		for fact, val := range src.facts {
+			facts[fact] = val
+		}
+		src.mutex.RUnlock()
 	}
-	fs.mutex.RUnlock()
 	return facts
 }
 
 func (fs *Store) update(source string) error {
 
-	s, ok := fs.sources[source]
+	src, ok := fs.sources[source]
 	if !ok {
 		return fmt.Errorf("Unknown fact source %s", source)
 	}
-	facts, err := s.Facts()
+
+	start := time.Now()
+	facts, err := src.plugin.Facts()
 	if err != nil {
+		log.Warn("Failed to update %s fact source: %s", source, err)
 		return err
 	}
-	fs.mutex.Lock()
+	src.mutex.Lock()
+	//updated := len(facts) != len(src.facts)
 	for key, value := range facts {
-		fs.facts[key] = value
+		src.facts[key] = value
 	}
-	fs.mutex.Unlock()
+	src.mutex.Unlock()
+	log.Debugf("Updating fact source %s took %s", source, time.Since(start))
 	return nil
 }
