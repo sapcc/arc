@@ -16,6 +16,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/fact"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
 	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
+	"gitHub.***REMOVED***/monsoon/arc/fact/network"
 	"gitHub.***REMOVED***/monsoon/arc/server"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/updater"
@@ -213,6 +214,7 @@ func cmdFacts(c *cli.Context) {
 	store := fact.NewStore()
 	store.AddSource(host.New(), 0)
 	store.AddSource(memory.New(), 0)
+	store.AddSource(network.New(), 0)
 	for key, val := range store.Facts() {
 		fmt.Printf(" %-30s: %s\n", key, val)
 	}
