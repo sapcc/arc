@@ -3,16 +3,15 @@ package db
 var jobsTable = `
 	CREATE TABLE IF NOT EXISTS jobs
 	(
+		requestid text PRIMARY KEY,		
 		version integer NOT NULL,
 		sender text NOT NULL,
-		requestid text PRIMARY KEY NOT NULL,
 		"to" text NOT NULL,
 		timeout integer NOT NULL,
 		agent text NOT NULL,
 		action text NOT NULL,
 		payload text NOT NULL,
 		status integer NOT NULL,
-		CONSTRAINT uc_requestid UNIQUE (requestid)		
 	)
 	WITH (
  	 OIDS=FALSE
@@ -21,11 +20,24 @@ var jobsTable = `
 		OWNER TO arc;
 `
 
+var logs = `
+CREATE TABLE IF NOT EXISTS logs
+(
+	requestid text PRIMARY KEY,
+	id SERIAL,
+	payload text NOT NULL
+)
+WITH (
+ OIDS=FALSE
+);
+ALTER TABLE jobs
+	OWNER TO arc;
+`
+
 var agentsTable = `
 	CREATE TABLE IF NOT EXISTS agents 
 	( 
-		uid integer PRIMARY KEY NOT null, 
-		CONSTRAINT uc_uid UNIQUE (uid)
+		uid integer PRIMARY KEY,
 	)
 	WITH (
 	 OIDS=FALSE
@@ -53,6 +65,7 @@ var factsTable = `
 
 var Tables = [...]string{
 	jobsTable,
+	logs,
 	agentsTable,
 	factsTable,
 }

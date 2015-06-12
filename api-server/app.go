@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	
+
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/version"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/transport"	
+	"gitHub.***REMOVED***/monsoon/arc/transport"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-const(
-  appName 	= "arc-api-server"
- 	envPrefix	= "ARC_"
+const (
+	appName   = "arc-api-server"
+	envPrefix = "ARC_"
 )
 
 var config arc.Config
@@ -47,7 +47,7 @@ func main() {
 			Usage:  "transport backend driver",
 			Value:  "mqtt",
 			EnvVar: envPrefix + "TRANSPORT",
-		},		
+		},
 		cli.StringFlag{
 			Name:   "log-level,l",
 			Usage:  "log level",
@@ -59,7 +59,7 @@ func main() {
 			Usage:  "endpoint url(s) for selected transport",
 			EnvVar: envPrefix + "ENDPOINT",
 			Value:  new(cli.StringSlice),
-		},		
+		},
 		cli.StringFlag{
 			Name:  "bind-address,b",
 			Usage: "listen address for the update server",
@@ -80,7 +80,7 @@ func main() {
 			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
 			return err
 		}
-		config.LogLevel = c.GlobalString("log-level")		
+		config.LogLevel = c.GlobalString("log-level")
 		log.SetLevel(lvl)
 		return nil
 	}
@@ -95,7 +95,7 @@ func runServer(c *cli.Context) {
 	if len(config.Endpoints) == 0 {
 		log.Fatal("No endpoints for MQTT given")
 	}
-	
+
 	var err error
 
 	// db global instance
@@ -104,12 +104,12 @@ func runServer(c *cli.Context) {
 	defer db.Close()
 
 	// global transport instance
-	tp , err = arcNewConnection(config)
-	checkErrAndPanic(err, "")	
+	tp, err = arcNewConnection(config)
+	checkErrAndPanic(err, "")
 	defer tp.Disconnect()
-	
+
 	// subscribe to all replies
-	go arcSubscribeReplies(tp)	
+	go arcSubscribeReplies(tp)
 
 	// init the router
 	router := newRouter()

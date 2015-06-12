@@ -1,6 +1,6 @@
 package arc
 
-import(
+import (
 	"fmt"
 )
 
