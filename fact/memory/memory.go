@@ -20,6 +20,10 @@ func (h Source) Facts() (map[string]string, error) {
 	facts := make(map[string]string)
 	m, _ := mem.VirtualMemory()
 
-	fmt.Println("mem", m)
+	facts["memory_total"] = fmt.Sprintf("%d", m.Total)
+	facts["memory_used"] = fmt.Sprintf("%d", m.Used)
+	facts["memory_used_percent"] = fmt.Sprintf("%d", int(m.UsedPercent+.5))
+	facts["memory_available"] = fmt.Sprintf("%d", m.Available)
+
 	return facts, nil
 }
