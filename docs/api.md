@@ -9,7 +9,7 @@
 | /agent/{agent-id}/facts/{fact-id} | Gets the fact with agent-id and fact-id    | N/A                        | N/A           | N/A                       |
 | /jobs                             | List all jobs                              | N/A                        | Execute a job | N/A                       |
 | /jobs/{job-id}                    | Gets the job with the job-id               | N/A                        | N/A           | killing/canceling the job |
-| /jobs/{job-id}/log                | Gets the log from the job with the job-id  | N/A                        | N/A           | N/A                       |
+| /jobs/{job-id}/logs               | Gets the log from the job with the job-id  | N/A                        | N/A           | N/A                       |
 
 
 ### Examples:

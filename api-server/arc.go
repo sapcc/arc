@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	log "github.com/Sirupsen/logrus"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -34,11 +32,21 @@ func arcSubscribeReplies(tp transport.Transport) error {
 		case reply := <-msgChan:
 			log.Infof("Got reply with id %q and status %q", reply.RequestID, reply.State)
 
-			fmt.Println(reply.Payload)
-
+			// update job
 			affect, err := models.UpdateJob(db, reply)
 			if err != nil {
 				log.Errorf("Error updating job %q. Got %q", reply.RequestID, err.Error())
+				continue
+			}
+
+			// add log
+			if reply.Payload != "" {
+				log.Infof("Saving payload for reply with id %q and payload %q", reply.RequestID, reply.Payload)
+				err = models.SaveLog(db, reply)
+				if err != nil {
+					log.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
+					continue
+				}
 			}
 
 			log.Infof("%v rows where updated with id %q", affect, reply.RequestID)

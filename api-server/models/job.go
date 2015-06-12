@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	
 	log "github.com/Sirupsen/logrus"
+	
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"io"
@@ -59,7 +61,7 @@ func UpdateJob(db *sql.DB, reply *arc.Reply) (int64, error) {
 		return 0, errors.New("Db is nil")
 	}
 
-	res, err := db.Exec(ownDb.UpdateJob, reply.State, reply.RequestID)
+	res, err := db.Exec(ownDb.UpdateJobQuery, reply.State, reply.RequestID)
 	if err != nil {
 		return 0, err
 	}

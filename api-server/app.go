@@ -100,7 +100,7 @@ func runServer(c *cli.Context) {
 
 	// db global instance
 	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
-	checkErrAndPanic(err, "")
+	checkErrAndPanic(err, "Error connecting to the DB or creating tables:")
 	defer db.Close()
 
 	// global transport instance
