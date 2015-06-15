@@ -37,23 +37,18 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			log.Infof("Got reply with id %q and status %q", reply.RequestID, reply.State)
 
 			// update job
-			affect, err := models.UpdateJob(db, reply)
+			err := models.UpdateJob(db, reply)
 			if err != nil {
 				log.Errorf("Error updating job %q. Got %q", reply.RequestID, err.Error())
 				continue
 			}
 
 			// add log
-			if reply.Payload != "" {
-				log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
-				err = models.SaveLog(db, reply)
-				if err != nil {
-					log.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
-					continue
-				}
+			err = models.SaveLog(db, reply)
+			if err != nil {
+				log.Error(err)
+				continue
 			}
-
-			log.Infof("%v rows where updated with id %q", affect, reply.RequestID)
 		}
 	}
 }

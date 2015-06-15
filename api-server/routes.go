@@ -37,7 +37,7 @@ var routesDefinition = routes{
 		"Job logs",
 		"GET",
 		"/jobs/{jobId}/logs",
-		serveJobLogs,
+		serveJobLog,
 	},
 	route{
 		"Agents",

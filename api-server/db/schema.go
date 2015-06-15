@@ -25,11 +25,27 @@ var jobsTable = `
 var logsTable = `
 	CREATE TABLE IF NOT EXISTS logs
 	(
-		requestid text NOT NULL,
-		id integer NOT NULL,
-		payload text NOT NULL,
+		job_id text NOT NULL,
+		content text NOT NULL,
 		createdat integer NOT NULL,
-		CONSTRAINT uc_logID UNIQUE (requestid, id)
+		CONSTRAINT index_logs_on_job_id UNIQUE (job_id)
+	)
+	WITH (
+ 	 OIDS=FALSE
+	);
+	ALTER TABLE logs
+		OWNER TO arc;
+`
+
+var logPartsTable = `
+	CREATE TABLE IF NOT EXISTS log_parts
+	(
+		job_id text NOT NULL,
+		number integer NOT NULL,
+		content text,
+		final boolean,
+		createdat integer NOT NULL,
+		CONSTRAINT log_parts_job_id_number_index UNIQUE (job_id, number)
 	)
 	WITH (
  	 OIDS=FALSE
@@ -67,14 +83,17 @@ var factsTable = `
 var Tables = [...]string{
 	jobsTable,
 	logsTable,
+	logPartsTable,
 	//agentsTable,
 	//factsTable,
 }
 
+// Jobs
 var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status,createdat,updatedat) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning requestid;`
 var UpdateJobQuery = `UPDATE jobs SET status=$1,updatedat=$2 WHERE requestid=$3`
 var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
 var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"
 
-var InsertLogQuery = `INSERT INTO logs(requestid,id,payload,createdat) VALUES($1,$2,$3,$4) returning requestid;`
-var GetLogsQuery = "SELECT array_to_string(array_agg(logs.payload ORDER BY id, id), '') AS content FROM logs WHERE requestid=$1"
+// Log parts
+var InsertLogPartQuery = `INSERT INTO log_parts(job_id,number,content,final,createdat) VALUES($1,$2,$3,$4,$5) returning job_id;`
+var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content ORDER BY number, job_id), '') AS content FROM log_parts WHERE job_id=$1"

@@ -2,42 +2,40 @@ package models
 
 import (
 	"database/sql"
-	"errors"
-	"time"
-	
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"fmt"
+
+	log "github.com/Sirupsen/logrus"
+
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
 type Log struct {
-	RequestID string   `json:"request_id"`
-	Id				string 	 `json:"id"`
-	Payload   string   `json:"payload"`
+	RequestID string `json:"request_id"`
+	Id        string `json:"id"`
+	Payload   string `json:"payload"`
 }
 
 type Logs []Log
 
-func CollectLogs(db *sql.DB, requestID string) (*string, error) {
-	
-	var content string
-	err := db.QueryRow(ownDb.GetLogsQuery, requestID).Scan(&content)
-	if err != nil {
-		return nil, err
-	}
-	
-	return &content, nil
+func GetLog(db *sql.DB, requestID string) (*string, error) {
+	return nil, nil
 }
 
 func SaveLog(db *sql.DB, reply *arc.Reply) error {
-	if db == nil {
-		return errors.New("Db is nil")
+
+	// save log part
+	if reply.Payload != "" {
+		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
+		err := SaveLogPart(db, reply)
+		if err != nil {
+			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
+		}
 	}
-	
-	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertLogQuery, reply.RequestID, reply.Number, reply.Payload, time.Now().Unix()).Scan(&lastInsertId)
-	if err != nil {
-		return err
+
+	// collect log parts and save an entire log text
+	if reply.Final == true {
+
 	}
-	
+
 	return nil
 }
