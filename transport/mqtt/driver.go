@@ -42,9 +42,24 @@ func New(config arc.Config) (*MQTTClient, error) {
 		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
 	}
+	if reg, err := offlineMessage(); err == nil {
+		if j, err := reg.ToJSON(); err == nil {
+			logrus.Infof("Setting last will delivering to %s", identityTopic(reg.To))
+			opts.SetBinaryWill(identityTopic(reg.To), j, 0, false)
+		}
+	}
+	transport := &MQTTClient{identity: config.Identity, project: config.Project}
+	if req, err := onlineMessage(); err == nil {
+		opts.OnConnect = func(_ *MQTT.Client) {
+			logrus.Info("Sending online Message")
+			transport.Request(req)
+		}
+	}
 	opts.SetCleanSession(true)
 	c := MQTT.NewClient(opts)
-	return &MQTTClient{client: c, identity: config.Identity, project: config.Project}, nil
+	transport.client = c
+
+	return transport, nil
 }
 
 func (c *MQTTClient) Connect() error {
@@ -55,6 +70,9 @@ func (c *MQTTClient) Connect() error {
 }
 
 func (c *MQTTClient) Disconnect() {
+	if req, err := offlineMessage(); err == nil {
+		c.Request(req)
+	}
 	c.client.Disconnect(1000)
 }
 
@@ -97,7 +115,7 @@ func (c *MQTTClient) Request(msg *arc.Request) {
 	if err != nil {
 		logrus.Errorf("Error serializing Request to JSON: %s", err)
 	} else {
-		logrus.Debug("Publishing request %s\n", msg)
+		logrus.Debugf("Publishing request for %s/%s to %s", msg.Agent, msg.Action, topic)
 		c.client.Publish(topic, 0, false, j)
 	}
 }
@@ -156,4 +174,11 @@ func identityTopic(identity string) string {
 }
 func replyTopic(request_id string) string {
 	return fmt.Sprintf("reply/%s", request_id)
+}
+
+func offlineMessage() (*arc.Request, error) {
+	return arc.CreateRegistrationMessage(`{"online": false}`)
+}
+func onlineMessage() (*arc.Request, error) {
+	return arc.CreateRegistrationMessage(`{"online": true}`)
 }
