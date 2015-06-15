@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"time"
 	
 	log "github.com/Sirupsen/logrus"
 	
@@ -14,7 +15,9 @@ import (
 
 type Job struct {
 	arc.Request `json:"request"`
-	Status      arc.JobState `json:"status"`
+	Status      arc.JobState 	`json:"status"`
+	CreatedAt		int64 				`json:"createdat"`
+	UpdatedAt		int64					`json:"updatedat"`
 }
 
 type Jobs []Job
@@ -39,6 +42,8 @@ func CreateJob(data *io.ReadCloser) (*Job, error) {
 	return &Job{
 		*request,
 		arc.Queued,
+		time.Now().Unix(),
+		0,
 	}, nil
 }
 
@@ -48,7 +53,7 @@ func SaveJob(db *sql.DB, job *Job) error {
 	}
 
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertJobQuery, job.Version, job.Sender, job.RequestID, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertJobQuery, job.Version, job.Sender, job.RequestID, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
@@ -61,7 +66,7 @@ func UpdateJob(db *sql.DB, reply *arc.Reply) (int64, error) {
 		return 0, errors.New("Db is nil")
 	}
 
-	res, err := db.Exec(ownDb.UpdateJobQuery, reply.State, reply.RequestID)
+	res, err := db.Exec(ownDb.UpdateJobQuery, reply.State, time.Now().Unix(), reply.RequestID)
 	if err != nil {
 		return 0, err
 	}

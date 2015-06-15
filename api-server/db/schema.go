@@ -11,7 +11,9 @@ var jobsTable = `
 		agent text NOT NULL,
 		action text NOT NULL,
 		payload text NOT NULL,
-		status integer NOT NULL
+		status integer NOT NULL,
+		createdat integer NOT NULL,
+		updatedat integer NOT NULL
 	)
 	WITH (
  	 OIDS=FALSE
@@ -23,9 +25,11 @@ var jobsTable = `
 var logsTable = `
 	CREATE TABLE IF NOT EXISTS logs
 	(
-		requestid text PRIMARY KEY,
-		id SERIAL,
-		payload text NOT NULL
+		requestid text NOT NULL,
+		id integer NOT NULL,
+		payload text NOT NULL,
+		createdat integer NOT NULL,
+		CONSTRAINT uc_logID UNIQUE (requestid, id)
 	)
 	WITH (
  	 OIDS=FALSE
@@ -67,10 +71,10 @@ var Tables = [...]string{
 	//factsTable,
 }
 
-var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning requestid;`
-var UpdateJobQuery = `UPDATE jobs SET status=$1 WHERE requestid=$2`
+var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,agent,action,payload,status,createdat,updatedat) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning requestid;`
+var UpdateJobQuery = `UPDATE jobs SET status=$1,updatedat=$2 WHERE requestid=$3`
 var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
 var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"
 
-var InsertLogQuery = `INSERT INTO logs(requestid,payload) VALUES($1,$2) returning requestid;`
+var InsertLogQuery = `INSERT INTO logs(requestid,id,payload,createdat) VALUES($1,$2,$3,$4) returning requestid;`
 var GetLogsQuery = "SELECT * FROM logs WHERE requestid=$1 order by requestid"

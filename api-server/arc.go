@@ -8,6 +8,10 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 )
 
+/*
+ * Returns a transport connection
+ * Remember to disconnect when not any more in use. Use the Disconnect() method
+ */
 func arcNewConnection(config arc.Config) (transport.Transport, error) {
 	// get transport
 	tp, err := transport.New(config)
@@ -41,7 +45,7 @@ func arcSubscribeReplies(tp transport.Transport) error {
 
 			// add log
 			if reply.Payload != "" {
-				log.Infof("Saving payload for reply with id %q and payload %q", reply.RequestID, reply.Payload)
+				log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
 				err = models.SaveLog(db, reply)
 				if err != nil {
 					log.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())

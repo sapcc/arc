@@ -16,7 +16,7 @@
 ##### Execute a job:
 - Method: `POST`
 - URL: `http://localhost:3000/jobs`
-- Body: `{"sender":"me","to":"you","timeout":1,"agent":"007","action":"hhmm","payload":"payload"}`
+- Body: `{"sender":"me","to":"darwin","timeout":5,"agent":"rpc","action":"version","payload":""}`
 
 # Facts
 Retrieve status and settings from one agent:

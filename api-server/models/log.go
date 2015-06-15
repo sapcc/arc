@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"time"
 	
 	log "github.com/Sirupsen/logrus"
 	
@@ -45,7 +46,7 @@ func SaveLog(db *sql.DB, reply *arc.Reply) error {
 	}
 	
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertLogQuery, reply.RequestID, reply.Payload).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertLogQuery, reply.RequestID, reply.Number, reply.Payload, time.Now().Unix()).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
