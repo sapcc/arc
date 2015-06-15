@@ -89,7 +89,7 @@ func GetAllJobs(db *sql.DB) (*Jobs, error) {
 	
 	var job Job
 	for rows.Next() {
-		err = rows.Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status)
+		err = rows.Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 		if err != nil {
 			log.Errorf("Error scaning job results. Got ", err.Error())
 			continue
@@ -102,7 +102,7 @@ func GetAllJobs(db *sql.DB) (*Jobs, error) {
 
 func GetJob(db *sql.DB, requestId string) (*Job, error) {
 	var job Job
-	err := db.QueryRow(ownDb.GetJobQuery, requestId).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status)
+	err := db.QueryRow(ownDb.GetJobQuery, requestId).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
