@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"os"
 	"runtime"
 	"sync"
@@ -10,6 +11,10 @@ import (
 	"golang.org/x/net/context"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/fact"
+	"gitHub.***REMOVED***/monsoon/arc/fact/host"
+	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
+	"gitHub.***REMOVED***/monsoon/arc/fact/network"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 )
 
@@ -67,10 +72,23 @@ func (s *server) Run() {
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
 	done := s.rootContext.Done()
 
+	facts := setupFactStore()
+
 	for {
 		select {
 		case <-done:
 			return
+		case update := <-facts.Updates():
+			j, err := json.Marshal(update)
+			if err == nil {
+				if req, err := arc.CreateRegistrationMessage(string(j)); err == nil {
+					s.transport.Request(req)
+				} else {
+					log.Warn("Failed to create registratrion request ", err)
+				}
+			} else {
+				log.Warn("Failed to serialize fact update: ", err)
+			}
 		case msg := <-incomingChan:
 			go s.handleJob(msg)
 		}
@@ -107,4 +125,12 @@ func (s *server) handleJob(msg *arc.Request) {
 		s.transport.Reply(m)
 	}
 	log.Infof("Job %s completed", msg.RequestID)
+}
+
+func setupFactStore() *fact.Store {
+	s := fact.NewStore()
+	s.AddSource(host.New(), 1*time.Minute)
+	s.AddSource(memory.New(), 1*time.Minute)
+	s.AddSource(network.New(), 1*time.Minute)
+	return s
 }

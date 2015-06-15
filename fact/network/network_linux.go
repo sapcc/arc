@@ -24,7 +24,7 @@ type interf struct {
 
 func (h Source) Facts() (map[string]interface{}, error) {
 
-	facts := make(map[string]interface{})
+	facts := newFacts()
 	cmd := exec.Command("ip", "addr")
 	interfaces := make(map[string]*interf)
 	var currentInterface string

@@ -2,6 +2,7 @@ package fact
 
 import (
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -17,32 +18,38 @@ type factSource struct {
 	plugin FactSource
 	facts  map[string]interface{}
 	mutex  sync.RWMutex
+	ticker <-chan time.Time
 }
 
 type Store struct {
-	sources map[string]factSource
-	wg      sync.WaitGroup
+	sources     map[string]factSource
+	wg          sync.WaitGroup
+	updateChan  chan (map[string]interface{})
+	initialized bool
+	mu          sync.Mutex
 }
 
 func NewStore() *Store {
 	return &Store{
-		sources: make(map[string]factSource),
+		sources:     make(map[string]factSource),
+		initialized: false,
 	}
 }
 
 func (fs *Store) AddSource(plugin FactSource, interval time.Duration) {
-	fs.sources[plugin.Name()] = factSource{plugin: plugin, facts: make(map[string]interface{})}
+
+	source := factSource{plugin: plugin, facts: make(map[string]interface{})}
+
+	fs.sources[plugin.Name()] = source
 	fs.wg.Add(1)
-	//collect facts initially
 	go func() {
+		//collect facts initially
 		fs.update(plugin.Name())
 		fs.wg.Done()
 		if interval > 0 {
-			for {
-				select {
-				case <-time.After(interval):
-					fs.update(plugin.Name())
-				}
+			source.ticker = time.Tick(interval)
+			for range source.ticker {
+				fs.update(plugin.Name())
 			}
 		}
 	}()
@@ -52,15 +59,19 @@ func (fs *Store) Wait() {
 	fs.wg.Wait()
 }
 
-//func (fs *Store) Fact(name string) (string, error) {
-//  fs.mutex.RLock()
-//  val, ok := fs.facts[name]
-//  fs.mutex.RUnlock()
-//  if !ok {
-//    return "", fmt.Errorf("fact %s not found", name)
-//  }
-//  return val, nil
-//}
+func (fs *Store) Updates() <-chan map[string]interface{} {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+	if fs.updateChan == nil {
+		fs.updateChan = make(chan map[string]interface{})
+		go func() {
+			fs.Wait()
+			fs.updateChan <- fs.Facts()
+			fs.initialized = true
+		}()
+	}
+	return fs.updateChan
+}
 
 func (fs *Store) Facts() map[string]interface{} {
 	fs.Wait()
@@ -77,25 +88,34 @@ func (fs *Store) Facts() map[string]interface{} {
 	return facts
 }
 
-func (fs *Store) update(source string) error {
+func (fs *Store) update(name string) error {
 
-	src, ok := fs.sources[source]
+	source, ok := fs.sources[name]
 	if !ok {
-		return fmt.Errorf("Unknown fact source %s", source)
+		return fmt.Errorf("Unknown fact source %s", name)
 	}
 
 	start := time.Now()
-	facts, err := src.plugin.Facts()
+	facts, err := source.plugin.Facts()
 	if err != nil {
-		log.Warn("Failed to update %s fact source: %s", source, err)
+		log.Warn("Failed to update %s fact source: %s", name, err)
 		return err
 	}
-	src.mutex.Lock()
-	//updated := len(facts) != len(src.facts)
+	source.mutex.Lock()
+	unmodified := len(facts) == len(source.facts)
 	for key, value := range facts {
-		src.facts[key] = value
+		if unmodified {
+			unmodified = reflect.DeepEqual(source.facts[key], value)
+		}
+		source.facts[key] = value
 	}
-	src.mutex.Unlock()
-	log.Debugf("Updating fact source %s took %s", source, time.Since(start))
+	source.mutex.Unlock()
+	if !unmodified {
+		log.Debugf("%s facts changed.", name)
+		if fs.initialized {
+			fs.updateChan <- facts
+		}
+	}
+	log.Debugf("Updating fact source %s took %s.", name, time.Since(start))
 	return nil
 }

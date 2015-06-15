@@ -60,6 +60,10 @@ func CreateReply(request *Request, state JobState, payload string, number int) *
 
 }
 
+func CreateRegistrationMessage(payload string) (*Request, error) {
+	return CreateRequest("registration", "register", "registry", 5, payload)
+}
+
 func CreateRequest(agent string, action string, to string, timeout int, payload string) (*Request, error) {
 	request := Request{
 		Version:   1,

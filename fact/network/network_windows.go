@@ -10,7 +10,7 @@ import (
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {
-	facts := make(map[string]interface{})
+	facts := newFacts()
 
 	adapters, _ := getAdapterList()
 	for ; adapters != nil; adapters = adapters.Next {
