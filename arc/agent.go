@@ -66,27 +66,33 @@ func RegisterAgent(name string, agent Agent) {
 func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 	defer close(out)
 	agt := agentRegistry.agents[request.Agent]
+	sequence := 0
+	reply_number := func() int {
+		sequence++
+		return sequence
+	}
+
 	if agt == nil {
-		out <- CreateReply(request, Failed, "Agent not found")
+		out <- CreateReply(request, Failed, "Agent not found", reply_number())
 		return
 	}
 	if agt.agent.Enabled() == false {
-		out <- CreateReply(request, Failed, "Agent not enabled")
+		out <- CreateReply(request, Failed, "Agent not enabled", reply_number())
 		return
 	}
 	if _, exists := agt.actions[request.Action]; !exists {
-		out <- CreateReply(request, Failed, "Action not found")
+		out <- CreateReply(request, Failed, "Action not found", reply_number())
 		return
 	}
 	hearbeat := func(payload string) {
-		out <- CreateReply(request, Executing, payload)
+		out <- CreateReply(request, Executing, payload, reply_number())
 	}
 
 	result, err := agt.executeAction(ctx, request.Action, request.Payload, hearbeat)
 	if err != nil {
-		out <- CreateReply(request, Failed, err.Error())
+		out <- CreateReply(request, Failed, err.Error(), reply_number())
 	} else {
-		out <- CreateReply(request, Complete, result)
+		out <- CreateReply(request, Complete, result, reply_number())
 	}
 
 }

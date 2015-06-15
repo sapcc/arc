@@ -1,9 +1,10 @@
 package arc
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"fmt"
+
+	"code.google.com/p/go-uuid/uuid"
 )
 
 type Request struct {
@@ -26,6 +27,7 @@ type Reply struct {
 	State     JobState `json:"state"`
 	Final     bool     `json:"final"`
 	Payload   string   `json:"payload"`
+	Number    int      `json:"number"`
 }
 
 func (r *Request) ToJSON() ([]byte, error) {
@@ -42,7 +44,7 @@ func (r *Reply) ToJSON() ([]byte, error) {
 	}{r, "reply"})
 }
 
-func CreateReply(request *Request, state JobState, payload string) *Reply {
+func CreateReply(request *Request, state JobState, payload string, number int) *Reply {
 
 	final := state == Complete || state == Failed
 	return &Reply{
@@ -53,6 +55,7 @@ func CreateReply(request *Request, state JobState, payload string) *Reply {
 		RequestID: request.RequestID,
 		State:     state,
 		Final:     final,
+		Number:    number,
 	}
 
 }
@@ -166,6 +169,10 @@ func ValidateReplay(reply *Reply) error {
 
 	if reply.State == 0 {
 		return fmt.Errorf(field_error, "State")
+	}
+
+	if reply.Number < 0 {
+		return fmt.Errorf(field_error, "Number")
 	}
 
 	return nil
