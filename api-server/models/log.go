@@ -5,8 +5,6 @@ import (
 	"errors"
 	"time"
 	
-	log "github.com/Sirupsen/logrus"
-	
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
@@ -19,25 +17,15 @@ type Log struct {
 
 type Logs []Log
 
-func GetLogs(db *sql.DB, requestID string) (*Logs, error) {
-	var resLogs Logs
-	rows, err := db.Query(ownDb.GetLogsQuery, requestID)
+func CollectLogs(db *sql.DB, requestID string) (*string, error) {
+	
+	var content string
+	err := db.QueryRow(ownDb.GetLogsQuery, requestID).Scan(&content)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 	
-	var resLog Log
-	for rows.Next() {
-		err = rows.Scan(&resLog.RequestID, &resLog.Id, &resLog.Payload)
-		if err != nil {
-			log.Errorf("Error scaning log results. Got ", err.Error())
-			continue
-		}
-		resLogs = append(resLogs, resLog)
-	}
-	
-	return &resLogs, nil
+	return &content, nil
 }
 
 func SaveLog(db *sql.DB, reply *arc.Reply) error {

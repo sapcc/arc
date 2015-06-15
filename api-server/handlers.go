@@ -71,7 +71,7 @@ func serveJobLogs(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	resLogs, err := models.GetLogs(db, jobId)
+	resLogs, err := models.CollectLogs(db, jobId)
 	if err != nil {
 		log.Errorf("Logs for Job with id %q not found.", jobId)
 		http.NotFound(w, r)
@@ -79,7 +79,7 @@ func serveJobLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(resLogs)
+	w.Write([]byte(*resLogs))
 }
 
 /*

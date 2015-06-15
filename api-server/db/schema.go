@@ -77,4 +77,4 @@ var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
 var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"
 
 var InsertLogQuery = `INSERT INTO logs(requestid,id,payload,createdat) VALUES($1,$2,$3,$4) returning requestid;`
-var GetLogsQuery = "SELECT * FROM logs WHERE requestid=$1 order by requestid"
+var GetLogsQuery = "SELECT array_to_string(array_agg(logs.payload ORDER BY id, id), '') AS content FROM logs WHERE requestid=$1"
