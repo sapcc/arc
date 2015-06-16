@@ -71,7 +71,7 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	resLogs, err := models.CollectLogParts(db, jobId)
+	resLogs, err := models.GetLog(db, jobId)
 	if err != nil {
 		log.Errorf("Logs for Job with id %q not found.", jobId)
 		http.NotFound(w, r)
