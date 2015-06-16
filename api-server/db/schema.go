@@ -94,6 +94,16 @@ var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,age
 var UpdateJobQuery = `UPDATE jobs SET status=$1,updatedat=$2 WHERE requestid=$3`
 var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
 var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"
+var CleanJobsQuery = `
+	UPDATE jobs SET status=3,updatedat=NOW() 
+	WHERE requestid IN 
+	(
+		SELECT DISTINCT requestid
+		FROM jobs
+		WHERE (createdat <= NOW() - INTERVAL '1 second' * $1 - INTERVAL '1 second' * timeout)
+		AND (status=1 OR status=2)
+	)
+`
 
 // Log
 var GetLogQuery = "SELECT content FROM logs WHERE job_id=$1"
@@ -104,3 +114,4 @@ var UpdateLogQuery = "UPDATE logs SET content=$1,updatedat=$2 WHERE job_id=$3"
 var InsertLogPartQuery = `INSERT INTO log_parts(job_id,number,content,final,createdat) VALUES($1,$2,$3,$4,$5) returning job_id;`
 var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content ORDER BY number, job_id), '') AS content FROM log_parts WHERE job_id=$1"
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
+
