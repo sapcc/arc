@@ -44,7 +44,7 @@ func (r *Reply) ToJSON() ([]byte, error) {
 	}{r, "reply"})
 }
 
-func CreateReply(request *Request, state JobState, payload string, number int) *Reply {
+func CreateReply(request *Request, identity string, state JobState, payload string, number int) *Reply {
 
 	final := state == Complete || state == Failed
 	return &Reply{
@@ -56,15 +56,16 @@ func CreateReply(request *Request, state JobState, payload string, number int) *
 		State:     state,
 		Final:     final,
 		Number:    number,
+		Sender:    identity,
 	}
 
 }
 
-func CreateRegistrationMessage(payload string) (*Request, error) {
-	return CreateRequest("registration", "register", "registry", 5, payload)
+func CreateRegistrationMessage(identity, payload string) (*Request, error) {
+	return CreateRequest("registration", "register", identity, "registry", 5, payload)
 }
 
-func CreateRequest(agent string, action string, to string, timeout int, payload string) (*Request, error) {
+func CreateRequest(agent string, action string, identity string, to string, timeout int, payload string) (*Request, error) {
 	request := Request{
 		Version:   1,
 		Agent:     agent,
@@ -73,7 +74,7 @@ func CreateRequest(agent string, action string, to string, timeout int, payload 
 		Timeout:   timeout,
 		Payload:   payload,
 		RequestID: uuid.New(),
-		Sender:    "me",
+		Sender:    identity,
 	}
 
 	err := ValidateRequest(&request)

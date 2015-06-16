@@ -13,9 +13,10 @@ import (
 )
 
 type MQTTClient struct {
-	client   *MQTT.Client
-	identity string
-	project  string
+	client       *MQTT.Client
+	identity     string
+	project      string
+	organization string
 }
 
 func New(config arc.Config) (*MQTTClient, error) {
@@ -63,18 +64,21 @@ func New(config arc.Config) (*MQTTClient, error) {
 		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
 	}
-	if reg, err := offlineMessage(); err == nil {
+	if reg, err := offlineMessage(config.Identity); err == nil {
 		if j, err := reg.ToJSON(); err == nil {
 			logrus.Infof("Setting last will delivering to %s", identityTopic(reg.To))
 			opts.SetBinaryWill(identityTopic(reg.To), j, 0, false)
 		}
 	}
-	transport := &MQTTClient{identity: config.Identity, project: config.Project}
-	if req, err := onlineMessage(); err == nil {
+	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization}
+	if req, err := onlineMessage(config.Identity); err == nil {
 		opts.OnConnect = func(_ *MQTT.Client) {
 			logrus.Info("Sending online Message")
 			transport.Request(req)
 		}
+	} else {
+		logrus.Error("Failed to create 'online' registration message ", err)
+
 	}
 	opts.SetCleanSession(true)
 	c := MQTT.NewClient(opts)
@@ -91,8 +95,10 @@ func (c *MQTTClient) Connect() error {
 }
 
 func (c *MQTTClient) Disconnect() {
-	if req, err := offlineMessage(); err == nil {
+	if req, err := offlineMessage(c.identity); err == nil {
 		c.Request(req)
+	} else {
+		logrus.Error("Failed to create 'offline' registration message: ", err)
 	}
 	c.client.Disconnect(1000)
 }
@@ -197,9 +203,9 @@ func replyTopic(request_id string) string {
 	return fmt.Sprintf("reply/%s", request_id)
 }
 
-func offlineMessage() (*arc.Request, error) {
-	return arc.CreateRegistrationMessage(`{"online": false}`)
+func offlineMessage(identity string) (*arc.Request, error) {
+	return arc.CreateRegistrationMessage(identity, `{"online": false}`)
 }
-func onlineMessage() (*arc.Request, error) {
-	return arc.CreateRegistrationMessage(`{"online": true}`)
+func onlineMessage(identity string) (*arc.Request, error) {
+	return arc.CreateRegistrationMessage(identity, `{"online": true}`)
 }

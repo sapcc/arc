@@ -63,7 +63,7 @@ func RegisterAgent(name string, agent Agent) {
 	agentRegistry.agents[name] = &agentInfo{agent, actionMap}
 }
 
-func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
+func ExecuteAction(ctx context.Context, identity string, request *Request, out chan<- *Reply) {
 	defer close(out)
 	agt := agentRegistry.agents[request.Agent]
 	sequence := 0
@@ -73,26 +73,26 @@ func ExecuteAction(ctx context.Context, request *Request, out chan<- *Reply) {
 	}
 
 	if agt == nil {
-		out <- CreateReply(request, Failed, "Agent not found", reply_number())
+		out <- CreateReply(request, identity, Failed, "Agent not found", reply_number())
 		return
 	}
 	if agt.agent.Enabled() == false {
-		out <- CreateReply(request, Failed, "Agent not enabled", reply_number())
+		out <- CreateReply(request, identity, Failed, "Agent not enabled", reply_number())
 		return
 	}
 	if _, exists := agt.actions[request.Action]; !exists {
-		out <- CreateReply(request, Failed, "Action not found", reply_number())
+		out <- CreateReply(request, identity, Failed, "Action not found", reply_number())
 		return
 	}
 	hearbeat := func(payload string) {
-		out <- CreateReply(request, Executing, payload, reply_number())
+		out <- CreateReply(request, identity, Executing, payload, reply_number())
 	}
 
 	result, err := agt.executeAction(ctx, request.Action, request.Payload, hearbeat)
 	if err != nil {
-		out <- CreateReply(request, Failed, err.Error(), reply_number())
+		out <- CreateReply(request, identity, Failed, err.Error(), reply_number())
 	} else {
-		out <- CreateReply(request, Complete, result, reply_number())
+		out <- CreateReply(request, identity, Complete, result, reply_number())
 	}
 
 }

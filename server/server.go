@@ -82,7 +82,7 @@ func (s *server) Run() {
 		case update := <-facts.Updates():
 			j, err := json.Marshal(update)
 			if err == nil {
-				if req, err := arc.CreateRegistrationMessage(string(j)); err == nil {
+				if req, err := arc.CreateRegistrationMessage(s.config.Identity, string(j)); err == nil {
 					s.transport.Request(req)
 				} else {
 					log.Warn("Failed to create registratrion request ", err)
@@ -120,7 +120,7 @@ func (s *server) handleJob(msg *arc.Request) {
 	}()
 
 	outChan := make(chan *arc.Reply)
-	go arc.ExecuteAction(jobContext, msg, outChan)
+	go arc.ExecuteAction(jobContext, s.config.Identity, msg, outChan)
 
 	for m := range outChan {
 		s.transport.Reply(m)
