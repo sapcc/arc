@@ -98,7 +98,7 @@ func (fs *Store) update(name string) error {
 	start := time.Now()
 	facts, err := source.plugin.Facts()
 	if err != nil {
-		log.Warn("Failed to update %s fact source: %s", name, err)
+		log.Warn("Failed to update %s facts: %s", name, err)
 		return err
 	}
 	source.mutex.Lock()
@@ -110,12 +110,12 @@ func (fs *Store) update(name string) error {
 		source.facts[key] = value
 	}
 	source.mutex.Unlock()
+	log.Debugf("Updating %s facts took %s.", name, time.Since(start))
 	if !unmodified {
 		log.Debugf("%s facts changed.", name)
 		if fs.initialized {
 			fs.updateChan <- facts
 		}
 	}
-	log.Debugf("Updating fact source %s took %s.", name, time.Since(start))
 	return nil
 }
