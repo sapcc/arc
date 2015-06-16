@@ -70,6 +70,7 @@ var Commands = []cli.Command{
 
 func cmdServer(c *cli.Context) {
 
+	log.Infof("Starting server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
 	// Ticker containing a channel that will send the time with a period
 	log.Debugf("Checking for updates every %d seconds.", c.GlobalInt("update-interval"))
 	tickChan := time.NewTicker(time.Second * time.Duration(c.GlobalInt("update-interval")))
@@ -84,7 +85,7 @@ func cmdServer(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	server := server.New(tp)
+	server := server.New(config, tp)
 
 	go server.Run()
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
@@ -60,7 +61,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "tls-ca-cert",
 			Usage:  "CA to verify transport endpoints",
-			EnvVar: envPrefix + "TLS_CLIENT_CA",
+			EnvVar: envPrefix + "TLS_CA_CERT",
 		},
 		cli.StringFlag{
 			Name:   "tls-client-cert",
@@ -102,6 +103,16 @@ func main() {
 	app.Before = func(c *cli.Context) error {
 		config.Endpoints = c.GlobalStringSlice("endpoint")
 		config.Transport = c.GlobalString("transport")
+		if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
+			if err := config.LoadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
+				return err
+			}
+		} else {
+			//This is only for testing when running without a tls certificate
+			config.Identity = runtime.GOOS
+			config.Project = "test-project"
+			config.Organization = "test-org"
+		}
 		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
@@ -112,7 +123,10 @@ func main() {
 		return nil
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Error(err)
+		exit_code = 1
+	}
 
 	os.Exit(exit_code)
 }

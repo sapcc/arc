@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"os"
-	"runtime"
 	"sync"
 	"time"
 
@@ -27,6 +26,7 @@ type Server interface {
 
 type server struct {
 	doneChan    chan struct{}
+	config      arc.Config
 	transport   transport.Transport
 	activeJobs  map[string]func()
 	jobsMutex   sync.Mutex
@@ -35,11 +35,12 @@ type server struct {
 	wg          sync.WaitGroup
 }
 
-func New(transport transport.Transport) Server {
+func New(config arc.Config, transport transport.Transport) Server {
 	return &server{
 		doneChan:   make(chan struct{}),
 		transport:  transport,
 		activeJobs: make(map[string]func()),
+		config:     config,
 	}
 }
 
@@ -66,7 +67,7 @@ func (s *server) Run() {
 
 	s.transport.Connect()
 	defer s.transport.Disconnect()
-	incomingChan, cancelSubscription := s.transport.Subscribe(runtime.GOOS)
+	incomingChan, cancelSubscription := s.transport.Subscribe(s.config.Identity)
 	defer cancelSubscription()
 
 	s.rootContext, s.cancel = context.WithCancel(context.Background())

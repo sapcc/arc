@@ -1,8 +1,10 @@
 package mqtt
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net/url"
 	"sync"
 
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
@@ -38,6 +40,25 @@ func New(config arc.Config) (*MQTTClient, error) {
 	}
 
 	opts := MQTT.NewClientOptions()
+	if len(config.Endpoints) == 0 {
+		return nil, fmt.Errorf("No transport endpoints given")
+	}
+	//check the first endpoint if we need to setup a TlsConfig
+	if url, err := url.Parse(config.Endpoints[0]); err == nil {
+		switch url.Scheme {
+		case "tls", "ssl", "tcps", "wss":
+
+			tlsc := tls.Config{
+				RootCAs:      config.CACerts,
+				Certificates: []tls.Certificate{*config.ClientCert},
+				MinVersion:   tls.VersionTLS12,
+			}
+			opts.SetTLSConfig(&tlsc)
+		}
+
+	} else {
+		return nil, fmt.Errorf("Invalid url as transport endpoint given")
+	}
 	for _, endpoint := range config.Endpoints {
 		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
