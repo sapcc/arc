@@ -12,8 +12,8 @@ var jobsTable = `
 		action text NOT NULL,
 		payload text NOT NULL,
 		status integer NOT NULL,
-		createdat integer NOT NULL,
-		updatedat integer NOT NULL
+		createdat timestamp NOT NULL,
+		updatedat timestamp NOT NULL
 	)
 	WITH (
  	 OIDS=FALSE
@@ -27,8 +27,8 @@ var logsTable = `
 	(
 		job_id text NOT NULL,
 		content text NOT NULL,
-		createdat integer NOT NULL,
-		updatedat integer NOT NULL,
+		createdat timestamp NOT NULL,
+		updatedat timestamp NOT NULL,
 		CONSTRAINT index_logs_on_job_id UNIQUE (job_id)
 	)
 	WITH (
@@ -45,7 +45,7 @@ var logPartsTable = `
 		number integer NOT NULL,
 		content text,
 		final boolean,
-		createdat integer NOT NULL,
+		createdat timestamp NOT NULL,
 		CONSTRAINT log_parts_job_id_number_index UNIQUE (job_id, number)
 	)
 	WITH (

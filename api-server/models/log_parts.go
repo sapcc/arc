@@ -29,7 +29,7 @@ func SaveLogPart(db *sql.DB, reply *arc.Reply) error {
 	}
 
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertLogPartQuery, reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now().Unix()).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertLogPartQuery, reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}

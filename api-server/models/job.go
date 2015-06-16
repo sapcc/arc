@@ -16,8 +16,8 @@ import (
 type Job struct {
 	arc.Request `json:"request"`
 	Status      arc.JobState `json:"status"`
-	CreatedAt   int64        `json:"createdat"`
-	UpdatedAt   int64        `json:"updatedat"`
+	CreatedAt   time.Time    `json:"createdat"`
+	UpdatedAt   time.Time    `json:"updatedat"`
 }
 
 type Jobs []Job
@@ -42,8 +42,8 @@ func CreateJob(data *io.ReadCloser) (*Job, error) {
 	return &Job{
 		*request,
 		arc.Queued,
-		time.Now().Unix(),
-		0,
+		time.Now(),
+		time.Now(),
 	}, nil
 }
 
@@ -66,7 +66,7 @@ func UpdateJob(db *sql.DB, reply *arc.Reply) error {
 		return errors.New("Db is nil")
 	}
 
-	res, err := db.Exec(ownDb.UpdateJobQuery, reply.State, time.Now().Unix(), reply.RequestID)
+	res, err := db.Exec(ownDb.UpdateJobQuery, reply.State, time.Now(), reply.RequestID)
 	if err != nil {
 		return err
 	}
