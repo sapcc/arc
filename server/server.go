@@ -11,6 +11,7 @@ import (
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact"
+	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
 	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
 	"gitHub.***REMOVED***/monsoon/arc/fact/network"
@@ -73,7 +74,7 @@ func (s *server) Run() {
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
 	done := s.rootContext.Done()
 
-	facts := setupFactStore()
+	facts := s.setupFactStore()
 
 	for {
 		select {
@@ -128,10 +129,11 @@ func (s *server) handleJob(msg *arc.Request) {
 	log.Infof("Job %s completed", msg.RequestID)
 }
 
-func setupFactStore() *fact.Store {
-	s := fact.NewStore()
-	s.AddSource(host.New(), 1*time.Minute)
-	s.AddSource(memory.New(), 1*time.Minute)
-	s.AddSource(network.New(), 1*time.Minute)
-	return s
+func (s *server) setupFactStore() *fact.Store {
+	store := fact.NewStore()
+	store.AddSource(host.New(), 1*time.Minute)
+	store.AddSource(memory.New(), 1*time.Minute)
+	store.AddSource(network.New(), 1*time.Minute)
+	store.AddSource(arc_facts.New(s.config), 0)
+	return store
 }
