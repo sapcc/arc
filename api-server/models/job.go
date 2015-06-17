@@ -24,7 +24,7 @@ type Jobs []Job
 
 type Status string
 
-func CreateJob(data *io.ReadCloser) (*Job, error) {
+func CreateJob(data *io.ReadCloser, identity string) (*Job, error) {
 	// unmarschall body to a request
 	var tmpReq arc.Request
 	decoder := json.NewDecoder(*data)
@@ -34,7 +34,7 @@ func CreateJob(data *io.ReadCloser) (*Job, error) {
 	}
 
 	// create a valid request
-	request, err := arc.CreateRequest(tmpReq.Agent, tmpReq.Action, tmpReq.To, tmpReq.Timeout, tmpReq.Payload)
+	request, err := arc.CreateRequest(tmpReq.Agent, tmpReq.Action, identity, tmpReq.To, tmpReq.Timeout, tmpReq.Payload)
 	if err != nil {
 		return nil, err
 	}

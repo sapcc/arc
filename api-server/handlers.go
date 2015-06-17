@@ -41,7 +41,7 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
 	// create job
-	job, err := models.CreateJob(&r.Body)
+	job, err := models.CreateJob(&r.Body, config.Identity)
 	if err != nil {
 		log.Errorf("Error creating a job. Got %q", err.Error())
 		http.Error(w, http.StatusText(400), 400)

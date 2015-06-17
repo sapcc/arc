@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
@@ -75,6 +76,16 @@ func main() {
 	app.Before = func(c *cli.Context) error {
 		config.Endpoints = c.GlobalStringSlice("endpoint")
 		config.Transport = c.GlobalString("transport")
+		if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
+			if err := config.LoadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
+				return err
+			}
+		} else {
+			//This is only for testing when running without a tls certificate
+			config.Identity = runtime.GOOS
+			config.Project = "test-project"
+			config.Organization = "test-org"
+		}
 		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
@@ -91,6 +102,8 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
+	log.Infof("Starting api server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
+	
 	// check endpoint
 	if len(config.Endpoints) == 0 {
 		log.Fatal("No endpoints for MQTT given")
