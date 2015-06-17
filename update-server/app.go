@@ -1,19 +1,24 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/version"
 	"html/template"
 	"net/http"
 	"os"
+	"runtime"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
+	
+	"gitHub.***REMOVED***/monsoon/arc/version"
+	"gitHub.***REMOVED***/monsoon/arc/arc"	
 )
 
 const appName = "arc-update-server"
 
 var (
-	buildsRootPath string
-	templates      map[string]*template.Template
+	buildsRootPath	string
+	templates				map[string]*template.Template
+	config 					arc.Config
 )
 
 func main() {
@@ -51,6 +56,16 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
+		if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
+			if err := config.LoadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
+				return err
+			}
+		} else {
+			//This is only for testing when running without a tls certificate
+			config.Identity = runtime.GOOS
+			config.Project = "test-project"
+			config.Organization = "test-org"
+		}
 		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
@@ -66,6 +81,8 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
+	log.Infof("Starting update server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
+	
 	// check mandatory params
 	buildsRootPath = c.GlobalString("path")
 	if buildsRootPath == "" {
