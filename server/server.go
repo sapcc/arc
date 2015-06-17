@@ -121,7 +121,8 @@ func (s *server) handleJob(msg *arc.Request) {
 	}()
 
 	outChan := make(chan *arc.Reply)
-	go arc.ExecuteAction(jobContext, s.config.Identity, msg, outChan)
+	job := arc.NewJob(s.config.Identity, msg, outChan)
+	go arc.ExecuteAction(jobContext, job)
 
 	for m := range outChan {
 		s.transport.Reply(m)

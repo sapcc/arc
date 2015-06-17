@@ -23,21 +23,21 @@ func (a *rpcAgent) Enable() error { return nil }
 
 func (a *rpcAgent) Disable() error { return nil }
 
-func (a *rpcAgent) VersionAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
+func (a *rpcAgent) VersionAction(ctx context.Context, job *arc.Job) (string, error) {
 	return version.String(), nil
 }
 
-func (a *rpcAgent) PingAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
+func (a *rpcAgent) PingAction(ctx context.Context, job *arc.Job) (string, error) {
 	return "pong", nil
 }
 
-func (a *rpcAgent) SleepAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
+func (a *rpcAgent) SleepAction(ctx context.Context, job *arc.Job) (string, error) {
 
-	wait, err := strconv.Atoi(payload)
+	wait, err := strconv.Atoi(job.Payload)
 	if err != nil {
 		return "", err
 	}
-	heartbeat("")
+	job.Heartbeat("")
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()

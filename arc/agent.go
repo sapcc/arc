@@ -17,7 +17,7 @@ var (
 	agentRegistry = &registry{agents: make(map[string]*agentInfo)}
 )
 
-type agentAction func(context.Context, string, func(string)) (string, error)
+type agentAction func(context.Context, *Job) (string, error)
 
 type agentInfo struct {
 	agent   Agent
@@ -51,7 +51,7 @@ func RegisterAgent(name string, agent Agent) {
 		method := agentType.Method(i)
 		if match := re.FindStringSubmatch(method.Name); match != nil {
 			action := strings.ToLower(match[1])
-			actionFunction, ok := reflect.ValueOf(agent).MethodByName(method.Name).Interface().(func(context.Context, string, func(string)) (string, error))
+			actionFunction, ok := reflect.ValueOf(agent).MethodByName(method.Name).Interface().(func(context.Context, *Job) (string, error))
 			if ok {
 				actionMap[action] = actionFunction
 			} else {
@@ -63,42 +63,33 @@ func RegisterAgent(name string, agent Agent) {
 	agentRegistry.agents[name] = &agentInfo{agent, actionMap}
 }
 
-func ExecuteAction(ctx context.Context, identity string, request *Request, out chan<- *Reply) {
-	defer close(out)
-	agt := agentRegistry.agents[request.Agent]
-	sequence := 0
-	reply_number := func() int {
-		sequence++
-		return sequence
-	}
+func ExecuteAction(ctx context.Context, job *Job) {
+	agt := agentRegistry.agents[job.Agent]
 
 	if agt == nil {
-		out <- CreateReply(request, identity, Failed, "Agent not found", reply_number())
+		job.Fail("Agent not found")
 		return
 	}
 	if agt.agent.Enabled() == false {
-		out <- CreateReply(request, identity, Failed, "Agent not enabled", reply_number())
+		job.Fail("Agent not enabled")
 		return
 	}
-	if _, exists := agt.actions[request.Action]; !exists {
-		out <- CreateReply(request, identity, Failed, "Action not found", reply_number())
+	if _, exists := agt.actions[job.Action]; !exists {
+		job.Fail("Action not found")
 		return
-	}
-	hearbeat := func(payload string) {
-		out <- CreateReply(request, identity, Executing, payload, reply_number())
 	}
 
-	result, err := agt.executeAction(ctx, request.Action, request.Payload, hearbeat)
+	result, err := agt.executeAction(ctx, job)
 	if err != nil {
-		out <- CreateReply(request, identity, Failed, err.Error(), reply_number())
+		job.Fail(err.Error())
 	} else {
-		out <- CreateReply(request, identity, Complete, result, reply_number())
+		job.Complete(result)
 	}
 
 }
 
-func (a *agentInfo) executeAction(ctx context.Context, action, payload string, hearbeat func(string)) (string, error) {
-	return a.actions[action](ctx, payload, hearbeat)
+func (a *agentInfo) executeAction(ctx context.Context, job *Job) (string, error) {
+	return a.actions[job.Action](ctx, job)
 }
 
 func (r *registry) Agents() []string {

@@ -21,6 +21,50 @@ func JobFromContext(ctx context.Context) (string, bool) {
 	return jobID, ok
 }
 
+type Job struct {
+	Jid            string
+	Payload        string
+	Agent          string
+	Action         string
+	out            chan<- *Reply
+	reply_sequence uint
+	request        *Request
+	identity       string
+}
+
+func NewJob(identity string, request *Request, out chan<- *Reply) *Job {
+
+	return &Job{
+		Jid:            request.RequestID,
+		Payload:        request.Payload,
+		Agent:          request.Agent,
+		Action:         request.Action,
+		request:        request,
+		out:            out,
+		reply_sequence: 0,
+		identity:       identity,
+	}
+}
+
+func (j *Job) Heartbeat(payload string) {
+	j.out <- CreateReply(j.request, j.identity, Executing, payload, j.reply_number())
+}
+
+func (j *Job) Fail(payload string) {
+	j.out <- CreateReply(j.request, j.identity, Failed, payload, j.reply_number())
+	close(j.out)
+}
+
+func (j *Job) Complete(payload string) {
+	j.out <- CreateReply(j.request, j.identity, Complete, payload, j.reply_number())
+	close(j.out)
+}
+
+func (j *Job) reply_number() uint {
+	j.reply_sequence++
+	return j.reply_sequence
+}
+
 type JobState byte
 
 const (

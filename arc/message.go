@@ -27,7 +27,7 @@ type Reply struct {
 	State     JobState `json:"state"`
 	Final     bool     `json:"final"`
 	Payload   string   `json:"payload"`
-	Number    int      `json:"number"`
+	Number    uint     `json:"number"`
 }
 
 func (r *Request) ToJSON() ([]byte, error) {
@@ -44,7 +44,7 @@ func (r *Reply) ToJSON() ([]byte, error) {
 	}{r, "reply"})
 }
 
-func CreateReply(request *Request, identity string, state JobState, payload string, number int) *Reply {
+func CreateReply(request *Request, identity string, state JobState, payload string, number uint) *Reply {
 
 	final := state == Complete || state == Failed
 	return &Reply{

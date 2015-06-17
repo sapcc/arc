@@ -24,9 +24,9 @@ func (a *executeAgent) Enable() error { return nil }
 
 func (a *executeAgent) Disable() error { return nil }
 
-func (a *executeAgent) CommandAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
+func (a *executeAgent) CommandAction(ctx context.Context, job *arc.Job) (string, error) {
 
-	command := splitArgs(payload)
+	command := splitArgs(job.Payload)
 	if len(command) == 0 {
 		return "", fmt.Errorf("Invalid payload. Command should by a string or array.")
 	}
@@ -38,7 +38,7 @@ func (a *executeAgent) CommandAction(ctx context.Context, payload string, heartb
 		return "", err
 	}
 	//send empty heartbeat so that the caller knows the command is executing
-	heartbeat("")
+	job.Heartbeat("")
 
 	for {
 		select {
@@ -50,20 +50,20 @@ func (a *executeAgent) CommandAction(ctx context.Context, payload string, heartb
 			for {
 				select {
 				case line := <-output:
-					heartbeat(line)
+					job.Heartbeat(line)
 				default:
 					return "", process.Error()
 				}
 			}
 		case line := <-output:
-			heartbeat(line)
+			job.Heartbeat(line)
 		}
 	}
 
 }
 
-func (a *executeAgent) ScriptAction(ctx context.Context, payload string, heartbeat func(string)) (string, error) {
-	if payload == "" {
+func (a *executeAgent) ScriptAction(ctx context.Context, job *arc.Job) (string, error) {
+	if job.Payload == "" {
 		return "", errors.New("Empty payload")
 	}
 
@@ -71,7 +71,7 @@ func (a *executeAgent) ScriptAction(ctx context.Context, payload string, heartbe
 	if err != nil {
 		return "", fmt.Errorf("Failed to create temporary file: ", err)
 	}
-	if _, err := file.WriteString(payload); err != nil {
+	if _, err := file.WriteString(job.Payload); err != nil {
 		os.Remove(file.Name())
 		return "", fmt.Errorf("Failed to write script to temporary file: ", err)
 	}
@@ -89,7 +89,7 @@ func (a *executeAgent) ScriptAction(ctx context.Context, payload string, heartbe
 		return "", err
 	}
 	//send empty heartbeat so that the caller knows the command is executing
-	heartbeat("")
+	job.Heartbeat("")
 	for {
 		select {
 		case <-ctx.Done():
@@ -100,13 +100,13 @@ func (a *executeAgent) ScriptAction(ctx context.Context, payload string, heartbe
 			for {
 				select {
 				case line := <-output:
-					heartbeat(line)
+					job.Heartbeat(line)
 				default:
 					return "", process.Error()
 				}
 			}
 		case line := <-output:
-			heartbeat(line)
+			job.Heartbeat(line)
 		}
 	}
 
