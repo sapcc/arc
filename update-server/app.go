@@ -8,17 +8,17 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	
+
+	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
-	"gitHub.***REMOVED***/monsoon/arc/arc"	
 )
 
 const appName = "arc-update-server"
 
 var (
-	buildsRootPath	string
-	templates				map[string]*template.Template
-	config 					arc.Config
+	buildsRootPath string
+	templates      map[string]*template.Template
+	config         arc.Config
 )
 
 func main() {
@@ -82,7 +82,7 @@ func main() {
 
 func runServer(c *cli.Context) {
 	log.Infof("Starting update server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
-	
+
 	// check mandatory params
 	buildsRootPath = c.GlobalString("path")
 	if buildsRootPath == "" {

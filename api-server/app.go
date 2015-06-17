@@ -103,7 +103,7 @@ func main() {
 
 func runServer(c *cli.Context) {
 	log.Infof("Starting api server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
-	
+
 	// check endpoint
 	if len(config.Endpoints) == 0 {
 		log.Fatal("No endpoints for MQTT given")
