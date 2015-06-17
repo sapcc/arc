@@ -20,9 +20,9 @@ func init() {
 
 func (a *executeAgent) Enabled() bool { return true }
 
-func (a *executeAgent) Enable() error { return nil }
+func (a *executeAgent) Enable(ctx context.Context, job *arc.Job) (string, error) { return "", nil }
 
-func (a *executeAgent) Disable() error { return nil }
+func (a *executeAgent) Disable(ctx context.Context, job *arc.Job) (string, error) { return "", nil }
 
 func (a *executeAgent) CommandAction(ctx context.Context, job *arc.Job) (string, error) {
 

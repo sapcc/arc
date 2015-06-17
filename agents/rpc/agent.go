@@ -19,9 +19,9 @@ func init() {
 
 func (a *rpcAgent) Enabled() bool { return true }
 
-func (a *rpcAgent) Enable() error { return nil }
+func (a *rpcAgent) Enable(ctx context.Context, job *arc.Job) (string, error) { return "", nil }
 
-func (a *rpcAgent) Disable() error { return nil }
+func (a *rpcAgent) Disable(ctx context.Context, job *arc.Job) (string, error) { return "", nil }
 
 func (a *rpcAgent) VersionAction(ctx context.Context, job *arc.Job) (string, error) {
 	return version.String(), nil

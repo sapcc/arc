@@ -26,8 +26,8 @@ type agentInfo struct {
 
 type Agent interface {
 	Enabled() bool
-	Enable() error
-	Disable() error
+	Enable(context.Context, *Job) (string, error)
+	Disable(context.Context, *Job) (string, error)
 }
 
 type Registry interface {
