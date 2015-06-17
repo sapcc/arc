@@ -97,7 +97,7 @@ func UpdateFact(db *sql.DB, req *arc.Request) (err error) {
 	err = tx.QueryRow(ownDb.GetAgentQuery, req.Sender).Scan(&agent.AgentID, &agent.CreatedAt, &agent.UpdatedAt)
 	if err == nil {
 		log.Infof("Registry for sender %q will be updated.", req.Sender)		
-		if _, err = tx.Exec(ownDb.UpdateFact, req.Sender); err != nil {
+		if _, err = tx.Exec(ownDb.UpdateFact, req.Sender, jsonReq); err != nil {
 			return
 		}		
 	} else {

@@ -136,4 +136,4 @@ var GetAgentsQuery = "SELECT DISTINCT * FROM facts"
 var GetAgentQuery = "SELECT agent_id,createdat,updatedat FROM facts WHERE agent_id=$1"
 var GetFactQuery = "SELECT facts FROM facts WHERE agent_id=$1"
 var InsertFactQuery = `INSERT INTO facts(agent_id,facts,createdat,updatedat) VALUES($1,$2,$3,$4) returning agent_id`
-var UpdateFact = `UPDATE facts SET facts=json_replace((SELECT facts::json FROM facts WHERE agent_id=$1),'{"new":"fact"}'::json)::jsonb where agent_id=$1`
+var UpdateFact = `UPDATE facts SET facts=json_replace((SELECT facts::json FROM facts WHERE agent_id=$1),$2::json)::jsonb where agent_id=$1`
