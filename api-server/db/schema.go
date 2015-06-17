@@ -54,6 +54,35 @@ var logPartsTable = `
 	ALTER TABLE logs
 		OWNER TO arc;
 `
+var factsTable = `
+	CREATE TABLE IF NOT EXISTS facts
+	(
+		agent_id text PRIMARY KEY,
+		facts jsonb,
+		createdat timestamp NOT NULL,
+		updatedat timestamp NOT NULL
+	)
+	WITH (
+ 	 OIDS=FALSE
+	);
+	ALTER TABLE facts
+		OWNER TO arc;
+`
+
+var factsJsonReplaceFunction = `
+	CREATE OR REPLACE FUNCTION json_replace(old_data json, new_data json)
+	RETURNS json
+	IMMUTABLE
+	LANGUAGE sql
+	AS $$
+		SELECT ('{'||string_agg(to_json(key)||':'||value, ',')||'}')::json
+		FROM (
+			SELECT * FROM json_each(old_data) WHERE key NOT IN (SELECT json_object_keys(new_data))
+			UNION ALL
+			SELECT * FROM json_each(new_data) WHERE json_typeof(value) <> 'null'
+    ) t;
+	$$
+`
 
 var agentsTable = `
 	CREATE TABLE IF NOT EXISTS agents
@@ -67,26 +96,13 @@ var agentsTable = `
 		OWNER TO arc;
 `
 
-var factsTable = `
-	CREATE TABLE IF NOT EXISTS facts
-	(
-		uid text PRIMARY KEY,
-		name varchar(255) NOT null,
-		value varchar(255) NOT null
-	)
-	WITH (
- 	 OIDS=FALSE
-	);
-	ALTER TABLE facts
-		OWNER TO arc;
-`
-
 var Tables = [...]string{
 	jobsTable,
 	logsTable,
 	logPartsTable,
+	factsTable,
+	factsJsonReplaceFunction,
 	//agentsTable,
-	//factsTable,
 }
 
 // Jobs
@@ -115,3 +131,9 @@ var InsertLogPartQuery = `INSERT INTO log_parts(job_id,number,content,final,crea
 var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content ORDER BY number, job_id), '') AS content FROM log_parts WHERE job_id=$1"
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
 
+// Facts
+var GetAgentsQuery = "SELECT DISTINCT * FROM facts"
+var GetAgentQuery = "SELECT agent_id,createdat,updatedat FROM facts WHERE agent_id=$1"
+var GetFactQuery = "SELECT facts FROM facts WHERE agent_id=$1"
+var InsertFactQuery = `INSERT INTO facts(agent_id,facts,createdat,updatedat) VALUES($1,$2,$3,$4) returning agent_id`
+var UpdateFact = `UPDATE facts SET facts=json_replace((SELECT facts::json FROM facts WHERE agent_id=$1),'{"new":"fact"}'::json)::jsonb where agent_id=$1`

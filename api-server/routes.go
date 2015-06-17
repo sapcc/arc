@@ -57,12 +57,6 @@ var routesDefinition = routes{
 		"/agents/{agentId}/facts",
 		serveFacts,
 	},
-	route{
-		"Fact",
-		"GET",
-		"/agents/{agentId}/facts/{factId}",
-		serveFact,
-	},
 }
 
 func newRouter() *mux.Router {
