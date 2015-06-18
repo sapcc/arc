@@ -3,6 +3,8 @@ package network
 import (
 	"bufio"
 	"bytes"
+	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 )
@@ -12,7 +14,7 @@ var (
 	linkRegex  *regexp.Regexp = regexp.MustCompile(`link\/(\w+) ([\da-f\:]+) `)
 	inetRegex  *regexp.Regexp = regexp.MustCompile(`inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\/(\d{1,2}))?`)
 
-	defaultGwRegex *regexp.Regexp = regexp.MustCompile(`defaut via ([^\s]+) dev ([^\s]+)`)
+	defaultGwRegex *regexp.Regexp = regexp.MustCompile(`default via ([^\s]+) dev ([^\s]+)`)
 )
 
 type interf struct {
@@ -22,10 +24,20 @@ type interf struct {
 	Mac  string
 }
 
+func ipBinary() string {
+	//possible_locations := []string{"/sbin/ip", "/usr/bin/ip", "/bin/ip"}
+	for _, path := range []string{"/sbin/ip", "/usr/bin/ip", "/bin/ip"} {
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	return ""
+}
+
 func (h Source) Facts() (map[string]interface{}, error) {
 
 	facts := newFacts()
-	cmd := exec.Command("ip", "addr")
+	cmd := exec.Command(ipBinary(), "addr")
 	interfaces := make(map[string]*interf)
 	var currentInterface string
 	if out, err := cmd.Output(); err == nil {
@@ -55,9 +67,9 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	//  fmt.Println("interface", i)
 	//}
 
-	cmd = exec.Command("ip", "-o", "-f", "inet", "route", "show")
+	cmd = exec.Command(ipBinary(), "-o", "-f", "inet", "route", "show")
 	if out, err := cmd.Output(); err == nil {
-		//fmt.Println(string(out))
+		fmt.Println(string(out))
 		scanner := bufio.NewScanner(bytes.NewReader(out))
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -66,14 +78,12 @@ func (h Source) Facts() (map[string]interface{}, error) {
 				facts["ipaddress"] = interfaces[match[2]].IPs[0]
 				facts["macaddress"] = interfaces[match[2]].Mac
 				facts["default_gateway"] = match[1]
-			} else {
-
 			}
 		}
 	}
 
 	//If no default gatway can be found fall back to the first ethernet interface
-	if _, ok := facts["ipaddress"]; !ok {
+	if ip := facts["ipaddress"]; ip == nil {
 		for name, i := range interfaces {
 			if i.Type == "ether" {
 				facts["ipaddress"] = interfaces[name].IPs[0]
