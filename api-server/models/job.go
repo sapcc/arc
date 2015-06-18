@@ -80,7 +80,11 @@ func UpdateJob(db *sql.DB, reply *arc.Reply) error {
 }
 
 func GetAllJobs(db *sql.DB) (*Jobs, error) {
-	var jobs Jobs
+	if db == nil {
+		return nil, errors.New("Db is nil")
+	}
+		
+	jobs := make(Jobs,0)
 	rows, err := db.Query(ownDb.GetAllJobsQuery)
 	if err != nil {
 		return nil, err

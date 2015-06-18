@@ -29,7 +29,7 @@ func GetAgents(db *sql.DB) (*Agents, error) {
 		return nil, errors.New("Db is nil")
 	}
 	
-	var agents Agents
+	agents := make(Agents,0)
 	rows, err := db.Query(ownDb.GetAgentsQuery)
 	if err != nil {
 		return nil, err
