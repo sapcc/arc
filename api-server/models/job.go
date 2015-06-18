@@ -10,7 +10,6 @@ import (
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"io"
 )
 
 type Job struct {
@@ -24,11 +23,10 @@ type Jobs []Job
 
 type Status string
 
-func CreateJob(data *io.ReadCloser, identity string) (*Job, error) {
-	// unmarschall body to a request
+func CreateJob(data *[]byte, identity string) (*Job, error) {
 	var tmpReq arc.Request
-	decoder := json.NewDecoder(*data)
-	err := decoder.Decode(&tmpReq)
+	// unmarshal
+	err := json.Unmarshal(*data, &tmpReq)
 	if err != nil {
 		return nil, err
 	}

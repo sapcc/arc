@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"net/http"
 )
 
 /*
@@ -40,8 +43,15 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Error creating a job. Got %q", err.Error())
+		http.Error(w, http.StatusText(400), 400)
+		return
+	}
+
 	// create job
-	job, err := models.CreateJob(&r.Body, config.Identity)
+	job, err := models.CreateJob(&data, config.Identity)
 	if err != nil {
 		log.Errorf("Error creating a job. Got %q", err.Error())
 		http.Error(w, http.StatusText(400), 400)
