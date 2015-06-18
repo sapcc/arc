@@ -22,7 +22,9 @@ help:
 	@echo "  * gopath            - print custom GOPATH external use" 
 	@echo "  * install-deps      - build and cache dependencies (speeds up make build)" 
 	@echo "  * cross             - cross compile for darwin, windows, linux (requires docker)" 
-	@echo "  * run-linux         - run bin/arc_linux in a docker container" 
+	@echo "  * run-ubuntu        - run bin/arc_linux in a docker container" 
+	@echo "  * run-rhel          - run bin/arc_linux in a docker container" 
+	@echo "  * run-sles          - run bin/arc_linux in a docker container" 
 
 .PHONY: build
 build: setup
@@ -60,14 +62,28 @@ test-gofmt:
 test-win: 
 	vagrant provision --provision-with shell
 
-.PHONY: run-linux 
-run-linux: 
+.PHONY: run-ubuntu 
+run-ubuntu: 
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \
-		ubuntu \
+		docker.***REMOVED***/ubuntu \
 		/arc $(ARGS)
 
+.PHONY: run-rhel 
+run-rhel: 
+	docker run \
+		--rm \
+		-v $(CURDIR)/bin/arc_linux:/arc \
+		docker.***REMOVED***/rhel \
+		/arc $(ARGS)
+.PHONY: run-sles
+run-sles: 
+	docker run \
+		--rm \
+		-v $(CURDIR)/bin/arc_linux:/arc \
+		docker.***REMOVED***/sles11 \
+		/arc $(ARGS)
 .PHONY: gopath 
 gopath: setup
 	@echo $(GOPATH)
