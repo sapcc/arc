@@ -37,7 +37,7 @@ func arcSubscribeReplies(tp transport.Transport) error {
 	for {
 		select {
 		case registry := <-regChan:
-			log.Infof("Got registry from %q with data %q", registry.Sender, registry)
+			log.Infof("Got registry from %q with data %q", registry.Sender, registry.Payload)
 			err := models.UpdateFact(db, registry)
 			if err != nil {
 				log.Errorf("Error updating fact %q. Got %q", registry, err.Error())

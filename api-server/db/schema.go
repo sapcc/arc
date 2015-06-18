@@ -84,25 +84,12 @@ var factsJsonReplaceFunction = `
 	$$
 `
 
-var agentsTable = `
-	CREATE TABLE IF NOT EXISTS agents
-	(
-		uid text PRIMARY KEY
-	)
-	WITH (
- 	 OIDS=FALSE
-	);
-	ALTER TABLE agents
-		OWNER TO arc;
-`
-
 var Tables = [...]string{
 	jobsTable,
 	logsTable,
 	logPartsTable,
 	factsTable,
 	factsJsonReplaceFunction,
-	//agentsTable,
 }
 
 // Jobs
@@ -132,7 +119,7 @@ var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content O
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
 
 // Facts
-var GetAgentsQuery = "SELECT DISTINCT * FROM facts"
+var GetAgentsQuery = "SELECT DISTINCT agent_id,createdat,updatedat FROM facts"
 var GetAgentQuery = "SELECT agent_id,createdat,updatedat FROM facts WHERE agent_id=$1"
 var GetFactQuery = "SELECT facts FROM facts WHERE agent_id=$1"
 var InsertFactQuery = `INSERT INTO facts(agent_id,facts,createdat,updatedat) VALUES($1,$2,$3,$4) returning agent_id`
