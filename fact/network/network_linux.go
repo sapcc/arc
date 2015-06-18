@@ -3,7 +3,6 @@ package network
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -69,7 +68,6 @@ func (h Source) Facts() (map[string]interface{}, error) {
 
 	cmd = exec.Command(ipBinary(), "-o", "-f", "inet", "route", "show")
 	if out, err := cmd.Output(); err == nil {
-		fmt.Println(string(out))
 		scanner := bufio.NewScanner(bytes.NewReader(out))
 		for scanner.Scan() {
 			line := scanner.Text()
