@@ -2,6 +2,7 @@ package arc
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"os"
 	"os/exec"
@@ -23,6 +24,21 @@ type Subprocess struct {
 
 func NewSubprocess(command string, args ...string) *Subprocess {
 	return &Subprocess{Command: append([]string{command}, args...)}
+}
+
+func ScanLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+	if i := bytes.IndexByte(data, '\n'); i >= 0 {
+		// We have a full newline-terminated line.
+		return i + 1, data[0 : i+1], nil
+	}
+	if atEOF {
+		return len(data), data, nil
+	}
+	// Request more data.
+	return 0, nil, nil
 }
 
 func (s *Subprocess) Start() (<-chan string, error) {
@@ -84,6 +100,7 @@ func (s *Subprocess) waitForExit() {
 
 func (s *Subprocess) scan(pipe io.ReadCloser) {
 	scanner := bufio.NewScanner(pipe)
+	scanner.Split(ScanLines)
 	for scanner.Scan() {
 		s.outChan <- scanner.Text()
 	}

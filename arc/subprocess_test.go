@@ -25,7 +25,7 @@ func TestSubprocess(t *testing.T) {
 	lines, _ := sub.Start()
 
 	output := <-lines
-	if output != "tut" {
+	if output != "tut\n" {
 		t.Error("Unexpected output: ", output)
 	}
 	<-sub.Done()
