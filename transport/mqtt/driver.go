@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/url"
 	"sync"
+	"time"
 
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
@@ -96,6 +97,7 @@ func (c *MQTTClient) Connect() error {
 
 func (c *MQTTClient) Disconnect() {
 	if req, err := offlineMessage(c.identity); err == nil {
+		logrus.Info("Sending offline message")
 		c.Request(req)
 	} else {
 		logrus.Error("Failed to create 'offline' registration message: ", err)
@@ -143,7 +145,7 @@ func (c *MQTTClient) Request(msg *arc.Request) {
 		logrus.Errorf("Error serializing Request to JSON: %s", err)
 	} else {
 		logrus.Debugf("Publishing request for %s/%s to %s", msg.Agent, msg.Action, topic)
-		c.client.Publish(topic, 0, false, j)
+		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
 }
 
@@ -154,7 +156,7 @@ func (c *MQTTClient) Reply(msg *arc.Reply) {
 		logrus.Errorf("Error serializing Reply to JSON: %s", err)
 	} else {
 		logrus.Debugf("Publishing reply %s\n to %s", msg, topic)
-		c.client.Publish(topic, 0, false, j)
+		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
 }
 
