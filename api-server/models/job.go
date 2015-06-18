@@ -15,8 +15,8 @@ import (
 type Job struct {
 	arc.Request `json:"request"`
 	Status      arc.JobState `json:"status"`
-	CreatedAt   time.Time    `json:"createdat"`
-	UpdatedAt   time.Time    `json:"updatedat"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type Jobs []Job

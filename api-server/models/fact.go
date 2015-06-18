@@ -13,8 +13,8 @@ import (
 
 type Agent struct {
 	AgentID		string 		`json:"agent_id"`
-	CreatedAt	time.Time	`json:"createdat"`
-	UpdatedAt	time.Time	`json:"createdat"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type Agents []Agent
