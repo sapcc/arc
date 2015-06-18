@@ -19,6 +19,10 @@ type Job struct {
 	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
+type JobID struct {
+	RequestID string   `json:"request_id"`
+}
+
 type Jobs []Job
 
 type Status string

@@ -69,8 +69,11 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	// create a mqtt request
 	arcSendRequest(&job.Request)
 
+	// create response
+	response := models.JobID{job.RequestID}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(job)
+	json.NewEncoder(w).Encode(response)
 }
 
 /*
