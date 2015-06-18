@@ -1,4 +1,4 @@
-package host
+package arc
 
 import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -14,7 +14,7 @@ func New(config arc.Config) Source {
 }
 
 func (h Source) Name() string {
-	return "host"
+	return "arc"
 }
 
 func (h Source) Facts() (map[string]interface{}, error) {
