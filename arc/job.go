@@ -4,21 +4,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
+
+	"gitHub.***REMOVED***/monsoon/arc/fact"
 
 	"golang.org/x/net/context"
 )
 
 type contextKey int
 
-const jobIDKey contextKey = 0
+const factsKey contextKey = 1
 
-func NewJobContext(ctx context.Context, jobID string) context.Context {
-	return context.WithValue(ctx, jobIDKey, jobID)
+func NewJobContext(ctx context.Context, timeout time.Duration, store *fact.Store) (context.Context, func()) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	return context.WithValue(ctx, factsKey, store), cancel
 }
 
-func JobFromContext(ctx context.Context) (string, bool) {
-	jobID, ok := ctx.Value(jobIDKey).(string)
-	return jobID, ok
+func FactsFromContext(ctx context.Context) (map[string]interface{}, bool) {
+	if f, ok := ctx.Value(factsKey).(*fact.Store); ok {
+		return f.Facts(), true
+	}
+	return nil, false
 }
 
 type Job struct {

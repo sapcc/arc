@@ -34,6 +34,7 @@ type server struct {
 	rootContext context.Context
 	cancel      func()
 	wg          sync.WaitGroup
+	factStore   *fact.Store
 }
 
 func New(config arc.Config, transport transport.Transport) Server {
@@ -74,13 +75,13 @@ func (s *server) Run() {
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
 	done := s.rootContext.Done()
 
-	facts := s.setupFactStore()
+	s.factStore = s.setupFactStore()
 
 	for {
 		select {
 		case <-done:
 			return
-		case update := <-facts.Updates():
+		case update := <-s.factStore.Updates():
 			j, err := json.Marshal(update)
 			if err == nil {
 				if req, err := arc.CreateRegistrationMessage(s.config.Identity, string(j)); err == nil {
@@ -105,7 +106,7 @@ func (s *server) Stop() {
 
 func (s *server) handleJob(msg *arc.Request) {
 	log.Infof("Dispatching message with requestID %s to agent %s", msg.RequestID, msg.Agent)
-	jobContext, cancel := context.WithTimeout(s.rootContext, time.Duration(msg.Timeout)*time.Second)
+	jobContext, cancel := arc.NewJobContext(s.rootContext, time.Duration(msg.Timeout)*time.Second, s.factStore)
 
 	s.wg.Add(1)
 	defer s.wg.Done()
