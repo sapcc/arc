@@ -179,8 +179,7 @@ func cmdExecute(c *cli.Context) {
 			state = reply.State
 
 			if reply.Payload != "" {
-				//log.Info("Payload: ", reply.Payload)
-				fmt.Println(reply.Payload)
+				fmt.Print(reply.Payload)
 			}
 			if state == arc.Complete {
 				log.Infof("Job %s completed successfully", reply.RequestID)
