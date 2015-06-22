@@ -125,7 +125,7 @@ func runServer(c *cli.Context) {
 	go arcSubscribeReplies(tp)
 
 	// start the routine scheduler
-	go routineScheduler()
+	go routineScheduler(db)
 
 	// init the router
 	router := newRouter()

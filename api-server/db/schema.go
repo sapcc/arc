@@ -97,7 +97,7 @@ var InsertJobQuery = `INSERT INTO jobs(version,sender,requestid,"to",timeout,age
 var UpdateJobQuery = `UPDATE jobs SET status=$1,updatedat=$2 WHERE requestid=$3`
 var GetAllJobsQuery = "SELECT * FROM jobs order by requestid"
 var GetJobQuery = "SELECT * FROM jobs WHERE requestid=$1"
-var CleanJobsQuery = `
+var CleanJobsTimeoutQuery = `
 	UPDATE jobs SET status=3,updatedat=NOW() 
 	WHERE requestid IN 
 	(
@@ -105,6 +105,16 @@ var CleanJobsQuery = `
 		FROM jobs
 		WHERE (createdat <= NOW() - INTERVAL '1 second' * $1 - INTERVAL '1 second' * timeout)
 		AND (status=1 OR status=2)
+	)
+`
+var CleanJobsNonHeartbeatQuery = `
+	UPDATE jobs SET status=3,updatedat=NOW() 
+	WHERE requestid IN 
+	(
+		SELECT DISTINCT requestid
+		FROM jobs
+		WHERE (createdat <= NOW() - INTERVAL '1 second' * $1)
+		AND status=1
 	)
 `
 
