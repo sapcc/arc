@@ -67,7 +67,7 @@ run-ubuntu:
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \
-		docker.***REMOVED***/ubuntu \
+		ubuntu-arc \
 		/arc $(ARGS)
 
 .PHONY: run-rhel 
@@ -75,14 +75,14 @@ run-rhel:
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \
-		docker.***REMOVED***/rhel \
+		rhel7-arc \
 		/arc $(ARGS)
 .PHONY: run-sles
 run-sles: 
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \
-		docker.***REMOVED***/sles11 \
+		sles11-arc \
 		/arc $(ARGS)
 .PHONY: gopath 
 gopath: setup
