@@ -3,11 +3,12 @@
 
 | URI                               | GET                                        | PUT                        | POST          | DELETE                    |
 |:----------------------------------|:-------------------------------------------|:---------------------------|:--------------|:--------------------------|
-| /agent                            | List all agents (with attr: id)            | N/A                        | N/A           | N/A                       |
-| /agent/{agent-id}/facts           | List all facts from an agent with agent-id | N/A                        | N/A           | N/A                       |
+| /agents                           | List all agents (with attr: id)            | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}                | Gets the agent with agent-id               | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}/facts          | List all facts from an agent with agent-id | N/A                        | N/A           | N/A                       |
 | /jobs                             | List all jobs                              | N/A                        | Execute a job | N/A                       |
 | /jobs/{job-id}                    | Gets the job with the job-id               | N/A                        | N/A           | N/A                      |
-| /jobs/{job-id}/log               | Gets the log from the job with the job-id  | N/A                        | N/A           | N/A                       |
+| /jobs/{job-id}/log                | Gets the log from the job with the job-id  | N/A                        | N/A           | N/A                       |
 
 
 ### Agents and facts:
