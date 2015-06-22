@@ -7,6 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
+	_ "gitHub.***REMOVED***/monsoon/arc/agents/chef"
 	_ "gitHub.***REMOVED***/monsoon/arc/agents/execute"
 	_ "gitHub.***REMOVED***/monsoon/arc/agents/rpc"
 	"gitHub.***REMOVED***/monsoon/arc/version"

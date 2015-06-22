@@ -44,6 +44,8 @@ func RegisterAgent(name string, agent Agent) {
 
 	agentType := reflect.TypeOf(agent)
 	actionMap := make(map[string]agentAction)
+	actionMap["enable"] = agent.Enable
+	actionMap["disable"] = agent.Disable
 
 	re := regexp.MustCompile("^([A-Z].*)Action$")
 
@@ -70,7 +72,7 @@ func ExecuteAction(ctx context.Context, job *Job) {
 		job.Fail("Agent not found")
 		return
 	}
-	if agt.agent.Enabled() == false {
+	if job.Action != "enable" && job.Action != "disable" && agt.agent.Enabled() == false {
 		job.Fail("Agent not enabled")
 		return
 	}
