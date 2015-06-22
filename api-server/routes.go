@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type route struct {
@@ -15,6 +16,12 @@ type route struct {
 type routes []route
 
 var routesDefinition = routes{
+	route{
+		"Root",
+		"GET",
+		"/",
+		root,
+	},
 	route{
 		"Jobs",
 		"GET",

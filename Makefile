@@ -39,7 +39,7 @@ build-update-site: setup
 .PHONY: build-api
 build-api: setup
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(API_BINARY) $(REPO_PATH)/api-server
+	go build -o $(API_BINARY) -ldflags="$(GITVERSION)" $(REPO_PATH)/api-server
 
 .PHONY: build-all
 build-all: build build-update-site build-api

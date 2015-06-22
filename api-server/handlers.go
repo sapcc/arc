@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 /*
@@ -144,4 +145,13 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	//json.NewEncoder(w).Encode(agent.Facts)
 	w.Write([]byte(agent.Facts))
+}
+
+/*
+ * Root
+ */
+
+func root(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Arc api-server " + version.String()))
 }
