@@ -67,7 +67,7 @@
 
 ### Jobs
 
-##### Get all job:
+##### Get all jobs:
 - Method: `GET`
 - URL: `/jobs`
 - Response:
@@ -83,7 +83,7 @@
 			timeout: 60,
 			agent: "execute",
 			action: "script",
-			payload: "echo "Scritp start" for i in {1..10} do echo $i sleep 1s done echo "Scritp done""
+			payload: "echo "Script start" for i in {1..10} do echo $i sleep 1s done echo "Script done""
 		},
 		status: "failed",
 		created_at: "2015-06-18T15:23:23.595169Z",
@@ -108,9 +108,9 @@
 		timeout: 60,
 		agent: "execute",
 		action: "script",
-		payload: "echo "Scritp start" for i in {1..10} do echo $i sleep 1s done echo "Scritp done""
+		payload: "echo "Script start" for i in {1..10} do echo $i sleep 1s done echo "Script done""
 	},
-	status: "failed",
+	status: "completed",
 	created_at: "2015-06-18T15:23:23.595169Z",
 	updated_at: "2015-06-18T15:25:32.09501Z"
 }
