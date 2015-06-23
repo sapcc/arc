@@ -11,25 +11,31 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-func GetLog(db *sql.DB, id string) (*string, error) {
-	// check if log already exists (should no be the case)
-	var content string
-	db.QueryRow(ownDb.GetLogQuery, id).Scan(&content)
-
-	if content != "" {
-		return &content, nil
-	} else {
-		content, err := CollectLogParts(db, id)
-		if err != nil {
-			return nil, err
-		}
-		return content, nil
-	}
-
-	return &content, nil
+type Log struct {
+	JobID 			string		`json:"job_id"`
+	Content			string		`json:"content"`
+	CreatedAt   time.Time	`json:"created_at"`
+	UpdatedAt   time.Time	`json:"updated_at"`
 }
 
-func SaveLog(db *sql.DB, reply *arc.Reply) error {
+func (log *Log) Get(db *sql.DB, id string) error {
+	err := db.QueryRow(ownDb.GetLogQuery, id).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)	
+	
+	// check if the entry already exists
+	if err != nil {
+		// if no log entry collect all log parts
+		log_part := LogPart{JobID:id}		
+		content, err := log_part.Collect(db)
+		if err != nil {
+			return err
+		}
+		log.JobID = id
+		log.Content = *content
+	}	
+	return nil
+}
+
+func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
 	if db == nil {
 		return fmt.Errorf("Db is nil")
 	}
@@ -37,7 +43,9 @@ func SaveLog(db *sql.DB, reply *arc.Reply) error {
 	// save log part
 	if reply.Payload != "" {
 		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
-		err := SaveLogPart(db, reply)
+		
+		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
+		err := logPart.Save(db)
 		if err != nil {
 			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
 		}

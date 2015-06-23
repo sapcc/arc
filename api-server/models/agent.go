@@ -18,15 +18,16 @@ type Agent struct {
 
 type Agents []Agent
 
-func GetAgents(db *sql.DB) (*Agents, error) {
+
+func (agents *Agents) Get(db *sql.DB) error{
 	if db == nil {
-		return nil, errors.New("Db is nil")
+		return errors.New("Db is nil")
 	}
 	
-	agents := make(Agents,0)
+	*agents = make(Agents,0)
 	rows, err := db.Query(ownDb.GetAgentsQuery)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
@@ -37,21 +38,20 @@ func GetAgents(db *sql.DB) (*Agents, error) {
 			log.Errorf("Error scaning agent results. Got ", err.Error())
 			continue
 		}
-		agents = append(agents, agent)
+		*agents = append(*agents, agent)
 	}
 
-	return &agents, nil
+	return nil
 }
 
-func GetAgent(db *sql.DB, agent_id string) (*Agent, error) {
+func (agent *Agent) Get(db *sql.DB, agent_id string) error {
 	if db == nil {
-		return nil, errors.New("Db is nil")
+		return errors.New("Db is nil")
 	}
-	
-	var agent Agent
+
 	err := db.QueryRow(ownDb.GetAgentQuery, agent_id).Scan(&agent.AgentID, &agent.CreatedAt, &agent.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &agent, nil
+	return nil
 }

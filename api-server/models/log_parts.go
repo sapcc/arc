@@ -6,16 +6,23 @@ import (
 	"time"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-func CollectLogParts(db *sql.DB, id string) (*string, error) {
+type LogPart struct {
+	JobID 			string		`json:"job_id"`
+	Number 			uint			`json:"number"`
+	Content			string		`json:"content"`
+	Final				bool			`json:"final"`
+	CreatedAt   time.Time	`json:"created_at"`
+}
+
+func (log_part *LogPart) Collect(db *sql.DB) (*string, error) {
 	if db == nil {
 		return nil, errors.New("Db is nil")
 	}
 
 	var content string
-	err := db.QueryRow(ownDb.CollectLogPartsQuery, id).Scan(&content)
+	err := db.QueryRow(ownDb.CollectLogPartsQuery, log_part.JobID).Scan(&content)
 	if err != nil {
 		return nil, err
 	}
@@ -23,16 +30,16 @@ func CollectLogParts(db *sql.DB, id string) (*string, error) {
 	return &content, nil
 }
 
-func SaveLogPart(db *sql.DB, reply *arc.Reply) error {
+func (log_part *LogPart) Save(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
 
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertLogPartQuery, reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertLogPartQuery, log_part.JobID, log_part.Number, log_part.Content, log_part.Final, time.Now()).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return nil		
 }

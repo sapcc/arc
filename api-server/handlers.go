@@ -17,7 +17,8 @@ import (
  */
 
 func serveJobs(w http.ResponseWriter, r *http.Request) {
-	jobs, err := models.GetAllJobs(db)
+	jobs := models.Jobs{}
+	err := jobs.Get(db)
 	if err != nil {
 		log.Errorf("Error getting all jobs. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
@@ -32,7 +33,8 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	job, err := models.GetJob(db, jobId)
+	job := models.Job{}
+	err := job.Get(db, jobId)
 	if err != nil {
 		log.Errorf("Job with id %q not found. Got %q", jobId, err.Error())
 		http.NotFound(w, r)
@@ -60,7 +62,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// save db
-	err = models.SaveJob(db, job)
+	err = job.Save(db)
 	if err != nil {
 		log.Errorf("Error saving job. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
@@ -85,7 +87,8 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	resLogs, err := models.GetLog(db, jobId)
+	logEntry := models.Log{}
+	err := logEntry.Get(db, jobId)
 	if err != nil {
 		log.Errorf("Logs for Job with id %q not found.", jobId)
 		http.NotFound(w, r)
@@ -93,7 +96,7 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write([]byte(*resLogs))
+	w.Write([]byte(logEntry.Content))
 }
 
 /*
@@ -101,7 +104,11 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
  */
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
-	agents, err := models.GetAgents(db)
+
+	agents := models.Agents{}
+	err := agents.Get(db)
+
+	//agents, err := models.GetAgents(db)
 	if err != nil {
 		log.Errorf("Error getting all agents. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
@@ -116,7 +123,8 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
-	agent, err := models.GetAgent(db, agentId)
+	agent := models.Agent{}
+	err := agent.Get(db, agentId)
 	if err != nil {
 		log.Errorf("Agent with id %q not found. Got %q", agentId, err.Error())
 		http.NotFound(w, r)
@@ -135,7 +143,8 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
-	agent, err := models.GetFact(db, agentId)
+	fact := models.Fact{}
+	err := fact.Get(db, agentId)
 	if err != nil {
 		log.Errorf("Agent with id %q not found. Got %q", agentId, err.Error())
 		http.NotFound(w, r)
@@ -143,8 +152,7 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//json.NewEncoder(w).Encode(agent.Facts)
-	w.Write([]byte(agent.Facts))
+	w.Write([]byte(fact.Facts))
 }
 
 /*

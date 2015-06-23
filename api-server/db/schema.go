@@ -119,7 +119,7 @@ var CleanJobsNonHeartbeatQuery = `
 `
 
 // Log
-var GetLogQuery = "SELECT content FROM logs WHERE job_id=$1"
+var GetLogQuery = "SELECT * FROM logs WHERE job_id=$1"
 var InsertLogQuery = "INSERT INTO logs(job_id,content,createdat,updatedat) VALUES($1,$2,$3,$4) returning job_id"
 var UpdateLogQuery = "UPDATE logs SET content=$1,updatedat=$2 WHERE job_id=$3"
 
@@ -131,6 +131,6 @@ var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
 // Facts
 var GetAgentsQuery = "SELECT DISTINCT agent_id,createdat,updatedat FROM facts"
 var GetAgentQuery = "SELECT agent_id,createdat,updatedat FROM facts WHERE agent_id=$1"
-var GetFactQuery = "SELECT facts FROM facts WHERE agent_id=$1"
+var GetFactQuery = "SELECT * FROM facts WHERE agent_id=$1"
 var InsertFactQuery = `INSERT INTO facts(agent_id,facts,createdat,updatedat) VALUES($1,$2,$3,$4) returning agent_id`
 var UpdateFact = `UPDATE facts SET facts=json_replace((SELECT facts::json FROM facts WHERE agent_id=$1),$2::json)::jsonb where agent_id=$1`

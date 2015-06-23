@@ -16,16 +16,15 @@ type Fact struct {
 	Facts  	string 	`json:"facts"`
 }
 
-func GetFact(db *sql.DB, agent_id string) (*Fact, error) {
-	var fact Fact
-	err := db.QueryRow(ownDb.GetFactQuery, agent_id).Scan(&fact.Facts)
+func (fact *Fact) Get(db *sql.DB, agent_id string) error {
+	err := db.QueryRow(ownDb.GetFactQuery, agent_id).Scan(&fact.AgentID, &fact.Facts, &fact.CreatedAt, &fact.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &fact, nil
+	return nil
 }
 
-func UpdateFact(db *sql.DB, req *arc.Request) (err error) {
+func (fact *Fact) Update(db *sql.DB, req *arc.Request) (err error) {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
@@ -35,7 +34,7 @@ func UpdateFact(db *sql.DB, req *arc.Request) (err error) {
 	if err != nil {
 		return
 	}
-
+	
 	defer func() {
 		if err != nil {
 			tx.Rollback()
@@ -44,8 +43,8 @@ func UpdateFact(db *sql.DB, req *arc.Request) (err error) {
 		err = tx.Commit()
 	}()
 
-	var agent Agent
-	err = tx.QueryRow(ownDb.GetAgentQuery, req.Sender).Scan(&agent.AgentID, &agent.CreatedAt, &agent.UpdatedAt)
+	// insert or update
+	err = tx.QueryRow(ownDb.GetAgentQuery, req.Sender).Scan(&fact.AgentID, &fact.CreatedAt, &fact.UpdatedAt)
 	if err == nil {
 		log.Infof("Registry for sender %q will be updated.", req.Sender)		
 		if _, err = tx.Exec(ownDb.UpdateFact, req.Sender, req.Payload); err != nil {
@@ -57,6 +56,12 @@ func UpdateFact(db *sql.DB, req *arc.Request) (err error) {
 		if err = tx.QueryRow(ownDb.InsertFactQuery, req.Sender, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId); err != nil {
 			return
 		}
+	}
+
+	// update object data
+	err = tx.QueryRow(ownDb.GetFactQuery, req.Sender).Scan(&fact.AgentID, &fact.Facts, &fact.CreatedAt, &fact.UpdatedAt)
+	if err != nil {
+		return
 	}
 
 	return

@@ -49,49 +49,15 @@ func CreateJob(data *[]byte, identity string) (*Job, error) {
 	}, nil
 }
 
-func SaveJob(db *sql.DB, job *Job) error {
+func (jobs *Jobs) Get(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
 
-	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertJobQuery, job.Version, job.Sender, job.RequestID, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func UpdateJob(db *sql.DB, reply *arc.Reply) error {
-	if db == nil {
-		return errors.New("Db is nil")
-	}
-
-	res, err := db.Exec(ownDb.UpdateJobQuery, reply.State, time.Now(), reply.RequestID)
-	if err != nil {
-		return err
-	}
-
-	affect, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	log.Infof("%v rows where updated with id %q", affect, reply.RequestID)
-
-	return nil
-}
-
-func GetAllJobs(db *sql.DB) (*Jobs, error) {
-	if db == nil {
-		return nil, errors.New("Db is nil")
-	}
-		
-	jobs := make(Jobs,0)
+	*jobs = make(Jobs,0)
 	rows, err := db.Query(ownDb.GetAllJobsQuery)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
@@ -102,17 +68,69 @@ func GetAllJobs(db *sql.DB) (*Jobs, error) {
 			log.Errorf("Error scaning job results. Got ", err.Error())
 			continue
 		}
-		jobs = append(jobs, job)
+		*jobs = append(*jobs, job)
 	}
 
-	return &jobs, nil
+	return nil
 }
 
-func GetJob(db *sql.DB, requestId string) (*Job, error) {
-	var job Job
+func (job *Job) Get(db *sql.DB, requestId string) error {
 	err := db.QueryRow(ownDb.GetJobQuery, requestId).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &job, nil
+	return nil
+}
+
+func (job *Job) Save(db *sql.DB) error {
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+	
+	var lastInsertId string
+	err := db.QueryRow(ownDb.InsertJobQuery, job.Version, job.Sender, job.RequestID, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
+	if err != nil {
+		return err
+	}
+
+	return nil	
+}
+
+func (job *Job) Update(db *sql.DB) (err error) {
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+
+	// start transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
+	
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}()
+
+	// update job
+	res, err := tx.Exec(ownDb.UpdateJobQuery, job.Status, time.Now(), job.RequestID); 
+	if err != nil {
+		return
+	}
+	affect, err := res.RowsAffected(); 
+	if err != nil {
+		return
+	}
+
+	// update object data
+	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt); err != nil {
+		return
+	}
+
+	log.Infof("%v rows where updated with id %q", affect, job.RequestID)
+
+	return
 }
