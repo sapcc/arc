@@ -69,15 +69,15 @@ func ExecuteAction(ctx context.Context, job *Job) {
 	agt := agentRegistry.agents[job.Agent]
 
 	if agt == nil {
-		job.Fail("Agent not found")
+		job.Fail("Agent not found\n")
 		return
 	}
 	if job.Action != "enable" && job.Action != "disable" && agt.agent.Enabled() == false {
-		job.Fail("Agent not enabled")
+		job.Fail("Agent not enabled\n")
 		return
 	}
 	if _, exists := agt.actions[job.Action]; !exists {
-		job.Fail("Action not found")
+		job.Fail("Action not found\n")
 		return
 	}
 
