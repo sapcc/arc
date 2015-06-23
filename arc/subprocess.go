@@ -1,13 +1,13 @@
 package arc
 
 import (
-	"bufio"
-	"bytes"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -20,25 +20,11 @@ type Subprocess struct {
 	done      chan struct{}
 	outChan   chan string
 	exitError error
+	wg        sync.WaitGroup
 }
 
 func NewSubprocess(command string, args ...string) *Subprocess {
 	return &Subprocess{Command: append([]string{command}, args...)}
-}
-
-func ScanLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-	if i := bytes.IndexByte(data, '\n'); i >= 0 {
-		// We have a full newline-terminated line.
-		return i + 1, data[0 : i+1], nil
-	}
-	if atEOF {
-		return len(data), data, nil
-	}
-	// Request more data.
-	return 0, nil, nil
 }
 
 func (s *Subprocess) Start() (<-chan string, error) {
@@ -93,15 +79,26 @@ func (s *Subprocess) ProcessState() *os.ProcessState {
 func (s *Subprocess) waitForExit() {
 	s.exitError = s.cmd.Wait()
 	log.Debugf("Subprocess exited")
+	s.wg.Wait()
 	if s.done != nil {
 		close(s.done)
 	}
 }
 
 func (s *Subprocess) scan(pipe io.ReadCloser) {
-	scanner := bufio.NewScanner(pipe)
-	scanner.Split(ScanLines)
-	for scanner.Scan() {
-		s.outChan <- scanner.Text()
+	s.wg.Add(1)
+	defer s.wg.Done()
+
+	chunker := NewChunkedReader(pipe, 1*time.Second, 4096)
+
+	for {
+		chunk, err := chunker.Read()
+		if chunk != nil {
+			log.Debugf("Sending chunk (size: %d)", len(chunk))
+			s.outChan <- string(chunk)
+		}
+		if err != nil {
+			return
+		}
 	}
 }
