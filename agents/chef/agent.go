@@ -6,8 +6,11 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"path"
 	"regexp"
+	"strings"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 
@@ -34,6 +37,7 @@ type chefZeroPayload struct {
 	RunList    []string               `json:"run_list"`
 	RecipeURL  string                 `json:"recipe_url"`
 	Attributes map[string]interface{} `json:"attributes"`
+	Debug      bool                   `json:"debug"`
 }
 
 func init() {
@@ -73,14 +77,15 @@ func (a *chefAgent) Enable(ctx context.Context, job *arc.Job) (string, error) {
 		if job.Payload != "" {
 			omnitruckUrl = job.Payload
 		}
-		job.Heartbeat("")
+		job.Heartbeat("Downloading chef installer via " + omnitruckUrl + "\n")
 		platform := facts["platform"].(string)
 		platform_version := facts["platform_version"].(string)
 		if installer, err := downloadInstaller(omnitruckUrl, platform, platform_version); err == nil {
+			job.Heartbeat("Installing " + installer + "\n")
 			if err := install(installer); err != nil {
 				return "", err
 			}
-			return "Agent enabled", nil
+			return "Agent enabled\n", nil
 		} else {
 			return "", err
 		}
@@ -108,19 +113,44 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 		data.Attributes = make(map[string]interface{})
 	}
 	data.Attributes["run_list"] = data.RunList
-	dna, err := json.Marshal(data.Attributes)
+	dna, err := json.MarshalIndent(data.Attributes, " ", "  ")
 	if err != nil {
 		return "", fmt.Errorf("Failed to serialize dna.json: %s", err)
 	}
-	tempfile, _ := arc.TempFile("", "dna", ".json")
-	log.Infof("Writing dna.json to %s", tempfile.Name())
-	if _, err := tempfile.Write(dna); err != nil {
+	tmpDir, err := ioutil.TempDir("", "chef-zero")
+	if err != nil {
+		return "", fmt.Errorf("Failed to create temporary directory: %s", tmpDir)
+	}
+
+	log_level := "info"
+	if data.Debug {
+		log_level = "debug"
+	} else {
+		//by default if we are not in debug mode we remove the temporary Directory
+		defer os.Remove(tmpDir)
+	}
+
+	dnaFile, err := os.Create(path.Join(tmpDir, "dna.json"))
+	if err != nil {
+		return "", fmt.Errorf("Failed to create dna.json: %s", err)
+	}
+	log.Infof("Writing dna.json to %s", dnaFile.Name())
+	if _, err := dnaFile.Write(dna); err != nil {
 		return "", fmt.Errorf("Failed to write dna.json to disk: %s", err)
 	}
-	tempfile.Close()
-	//defer os.Remove(tempfile.Name())
+	dnaFile.Close()
 
-	process := arc.NewSubprocess(chef_binary, "--local-mode", "--recipe-url="+data.RecipeURL, "-j", tempfile.Name())
+	configFile, err := os.Create(path.Join(tmpDir, "client.rb"))
+	if err != nil {
+		return "", fmt.Errorf("Failed to create client.rb: %s", err)
+	}
+	if _, err := configFile.Write([]byte(fmt.Sprintf("chef_repo_path '%s'\n", tmpDir))); err != nil {
+		return "", fmt.Errorf("Failed to write client.rb to disk: %s", err)
+	}
+	dnaFile.Close()
+
+	process := arc.NewSubprocess(chef_binary, "--local-mode", "--recipe-url="+data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level="+log_level)
+	log.Info("Running ", strings.Join(process.Command, " "))
 
 	output, err := process.Start()
 	if err != nil {
@@ -139,12 +169,14 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 			for {
 				select {
 				case line := <-output:
+					//fmt.Print(line)
 					job.Heartbeat(line)
 				default:
 					return "", process.Error()
 				}
 			}
 		case line := <-output:
+			//fmt.Print(line)
 			job.Heartbeat(line)
 		}
 	}
