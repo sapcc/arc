@@ -7,4 +7,5 @@ package vendor
 import (
 	_ "github.com/go-ole/go-ole"
 	_ "github.com/go-ole/go-ole/oleutil"
+	_ "github.com/shirou/gopsutil/host"
 )

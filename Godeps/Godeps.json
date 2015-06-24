@@ -66,6 +66,11 @@
 			"Rev": "9955b0ab8708602d411341e55fffd7e0700f86bd"
 		},
 		{
+			"ImportPath": "github.com/kylelemons/go-gypsy/yaml",
+			"Comment": "go.weekly.2011-11-02-19-g42fc2c7",
+			"Rev": "42fc2c7ee9b8bd0ff636cd2d7a8c0a49491044c5"
+		},
+		{
 			"ImportPath": "github.com/lib/pq",
 			"Comment": "go1.0-cutoff-51-ga8d8d01",
 			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"

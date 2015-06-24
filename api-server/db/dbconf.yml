@@ -1,0 +1,11 @@
+development:
+  driver: postgres
+  open: dbname=arc_dev sslmode=disable
+
+test:
+  driver: postgres
+  open: dbname=arc_test sslmode=disable
+
+production:
+  driver: postgres
+  open: $ARC_DB_DSN

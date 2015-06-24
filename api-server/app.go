@@ -9,6 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/kylelemons/go-gypsy/yaml"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -67,9 +68,16 @@ func main() {
 			Value: "0.0.0.0:3000",
 		},
 		cli.StringFlag{
-			Name:  "db-bind-address,db",
-			Usage: "db connection address",
-			Value: "postgres://arc:arc@localhost:5432/arc_dev?sslmode=disable",
+			Name:   "env",
+			Usage:  "environment to use (development, test, production)",
+			Value:  "development",
+			EnvVar: envPrefix + "ENV",
+		},
+		cli.StringFlag{
+			Name:   "db-config,c",
+			Usage:  "database configuration file",
+			Value:  "db/dbconf.yml",
+			EnvVar: envPrefix + "DB_CONFIG",
 		},
 	}
 
@@ -102,22 +110,32 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
-	log.Infof("Starting api server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
+	log.Infof("Starting api server version %s.", version.Version)
 
 	// check endpoint
 	if len(config.Endpoints) == 0 {
 		log.Fatal("No endpoints for MQTT given")
 	}
 
-	var err error
-
-	// db global instance
-	db, err = ownDb.NewConnection(c.GlobalString("db-bind-address"))
-	checkErrAndPanic(err, "Error connecting to the DB or creating tables:")
+	if _, err := os.Stat(c.GlobalString("db-config")); err != nil {
+		log.Fatal("Can't load database configuration from. ", err)
+	}
+	f, err := yaml.ReadFile(c.GlobalString("db-config"))
+	if err != nil {
+		log.Fatal("Failed to parse database configuration file %s: %s", c.GlobalString("db-config"), err)
+	}
+	open, err := f.Get(fmt.Sprintf("%s.open", c.GlobalString("env")))
+	if err != nil {
+		log.Fatal("Can't find 'open' key for %s environment ", c.GlobalString("env"))
+	}
+	log.Infof("Using environment '%s'", c.GlobalString("env"))
+	db_dsn := os.ExpandEnv(open)
 	defer db.Close()
+	db, err := ownDb.NewConnection(db_dsn)
+	checkErrAndPanic(err, "Error connecting to the DB or creating tables:")
 
 	// global transport instance
-	tp, err = arcNewConnection(config)
+	tp, err := arcNewConnection(config)
 	checkErrAndPanic(err, "")
 	defer tp.Disconnect()
 
