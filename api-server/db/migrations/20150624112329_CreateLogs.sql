@@ -3,11 +3,11 @@
 -- SQL in section 'Up' is executed when this migration is applied
 CREATE TABLE logs
 (
-  job_id text REFERENCES jobs(requestid) ON DELETE CASCADE,
+  job_id text REFERENCES jobs(id) ON DELETE CASCADE,
   content text NOT NULL,
-  createdat timestamp NOT NULL,
-  updatedat timestamp NOT NULL,
-  CONSTRAINT index_logs_on_job_id UNIQUE (job_id)
+  created_at timestamp without time zone NOT NULL,
+  updated_at timestamp without time zone NOT NULL,
+  PRIMARY KEY(job_id)
 );
 
 

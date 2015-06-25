@@ -3,17 +3,17 @@
 -- SQL in section 'Up' is executed when this migration is applied
 CREATE TABLE jobs
 (
+  id text PRIMARY KEY,
   version integer NOT NULL,
   sender text NOT NULL,
-  requestid text PRIMARY KEY,
   "to" text NOT NULL,
   timeout integer NOT NULL,
   agent text NOT NULL,
   action text NOT NULL,
   payload text NOT NULL,
   status integer NOT NULL,
-  createdat timestamp NOT NULL,
-  updatedat timestamp NOT NULL
+  created_at timestamp without time zone NOT NULL,
+  updated_at timestamp without time zone NOT NULL
 );
 
 

@@ -5,8 +5,8 @@ CREATE TABLE facts
 (
   agent_id text PRIMARY KEY,
   facts jsonb,
-  createdat timestamp NOT NULL,
-  updatedat timestamp NOT NULL
+  created_at timestamp without time zone NOT NULL,
+  updated_at timestamp without time zone NOT NULL
 );
 
 
