@@ -17,8 +17,8 @@
 		},
 		{
 			"ImportPath": "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git",
-			"Comment": "v0.9.1-8-g1d65364",
-			"Rev": "1d6536402dac4b2528bc23f08ecc318c295c320a"
+			"Comment": "v0.9.1-9-gefdb79c",
+			"Rev": "efdb79c97e13aee279571215e6fe4030059447ce"
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
