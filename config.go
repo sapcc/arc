@@ -17,9 +17,8 @@ import (
 func defaultConfigDir() string {
 	if runtime.GOOS == "windows" {
 		return "C:/monsoon"
-	} else {
-		return "/etc/monsoon"
 	}
+	return "/etc/monsoon"
 }
 
 var (

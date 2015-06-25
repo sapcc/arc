@@ -13,7 +13,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var exit_code = 0
+var exitCode = 0
 
 func main() {
 
@@ -99,7 +99,7 @@ func main() {
 		},
 	}
 
-	app.Commands = Commands
+	app.Commands = commands
 
 	app.Before = func(c *cli.Context) error {
 		config.Endpoints = c.GlobalStringSlice("endpoint")
@@ -126,8 +126,8 @@ func main() {
 
 	if err := app.Run(os.Args); err != nil {
 		log.Error(err)
-		exit_code = 1
+		exitCode = 1
 	}
 
-	os.Exit(exit_code)
+	os.Exit(exitCode)
 }

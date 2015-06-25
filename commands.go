@@ -25,7 +25,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var Commands = []cli.Command{
+var commands = []cli.Command{
 	{
 		Name:   "server",
 		Usage:  "Run the agent",
@@ -187,13 +187,13 @@ func cmdExecute(c *cli.Context) {
 			}
 			if state == arc.Failed {
 				log.Warnf("Job %s failed", reply.RequestID)
-				exit_code = 1
+				exitCode = 1
 				return
 			}
 
 		case <-time.After(time.Duration(c.Int("timeout")+2) * time.Second):
 			log.Warnf("Timeout waiting for job %s\n", request.RequestID)
-			exit_code = 1
+			exitCode = 1
 			return
 		}
 	}
@@ -221,7 +221,7 @@ func cmdFacts(c *cli.Context) {
 	j, err := json.MarshalIndent(store.Facts(), " ", "  ")
 	if err != nil {
 		log.Warnf("Failed to generate json: %s", err)
-		exit_code = 1
+		exitCode = 1
 		return
 	}
 	fmt.Println(string(j))
