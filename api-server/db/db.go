@@ -25,26 +25,10 @@ func NewConnection(dbAddress string) (*sql.DB, error) {
 
 	log.Infof(fmt.Sprintf("Connected to the DB with address %q", dbAddress))
 
-	// create tables if needed
-	err = createTables()
-	if err != nil {
-		return nil, err
-	}
-
 	return db, nil
 }
 
 // private
-
-func createTables() error {
-	var err error
-	for _, t := range Tables {
-		if _, err = execQuery(db, t); err != nil {
-			break
-		}
-	}
-	return err
-}
 
 func execQuery(db *sql.DB, query string) (sql.Result, error) {
 	res, err := db.Exec(query)
