@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"code.google.com/p/go-uuid/uuid"
 
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -29,7 +30,7 @@ var _ = Describe("LogParts", func() {
 		})
 
 		It("should collect all log chuncks", func() {
-			job_id := "super_id"
+			job_id := uuid.New()
 			// add a job related to the log chuncks
 			newJob := Job{Request: arc.Request{RequestID: job_id}}
 			newJob.Save(db)
@@ -64,7 +65,7 @@ var _ = Describe("LogParts", func() {
 		})
 
 		It("should save a log part", func() {
-			job_id := "super_id"
+			job_id := uuid.New()
 			// add a job related to the log chuncks
 			newJob := Job{Request: arc.Request{RequestID: job_id}}
 			newJob.Save(db)

@@ -18,22 +18,21 @@ type Log struct {
 	UpdatedAt   time.Time	`json:"updated_at"`
 }
 
-func (log *Log) Get(db *sql.DB, id string) error {
+func (log *Log) Get(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("Db is nil")
 	}
 	
-	err := db.QueryRow(ownDb.GetLogQuery, id).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)	
+	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)	
 	
 	// check if the entry already exists
 	if err != nil {
 		// if no log entry collect all log parts
-		log_part := LogPart{JobID:id}		
+		log_part := LogPart{JobID:log.JobID}		
 		content, err := log_part.Collect(db)
 		if err != nil {
 			return err
 		}
-		log.JobID = id
 		log.Content = *content
 	}	
 	return nil
