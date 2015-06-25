@@ -3,7 +3,7 @@ package models_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"	
 
 	"database/sql"
 	"testing"
@@ -26,4 +26,11 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	db.Close()
+})
+
+var _ = BeforeEach(func() {
+	DeleteAllRowsFromTable(db, "jobs")
+	DeleteAllRowsFromTable(db, "facts")
+	DeleteAllRowsFromTable(db, "logs")
+	DeleteAllRowsFromTable(db, "log_parts")
 })

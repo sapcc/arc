@@ -16,11 +16,6 @@ import (
 
 var _ = Describe("LogParts", func() {
 
-	BeforeEach(func() {
-		DeleteAllRowsFromTable(db, "log_parts")
-		DeleteAllRowsFromTable(db, "jobs")
-	})
-
 	Describe("Collect", func() {
 
 		It("returns an error if no db connection is given", func() {

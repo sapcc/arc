@@ -16,12 +16,6 @@ import (
 
 var _ = Describe("Log", func() {
 
-	BeforeEach(func() {
-		DeleteAllRowsFromTable(db, "logs")
-		DeleteAllRowsFromTable(db, "jobs")
-		DeleteAllRowsFromTable(db, "log_parts")
-	})
-
 	Describe("Get", func() {
 
 		It("returns an error if no db connection is given", func() {
@@ -76,5 +70,18 @@ var _ = Describe("Log", func() {
 		})
 
 	})
+	
+	Describe("ProcessLogReply", func() {
+		
+		It("returns an error if no db connection is given", func() {
+			reply := arc.Reply{RequestID: uuid.New()}
+			err := ProcessLogReply(nil, &reply)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("should not save a log part entry if the payload is empty", func() {})
+		It("should save a log part entry if the payload is not empty", func() {})
+		It("should collect all log parts, save a new log entry and remove all log parts if final attribute is true ", func() {})		
+	})	
 
 })
