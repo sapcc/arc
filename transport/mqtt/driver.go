@@ -28,10 +28,10 @@ func New(config arc.Config) (*MQTTClient, error) {
 	logger.Level = logrus.InfoLevel
 	// We should really close this writer at some point
 	w := logger.Writer()
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.ErrorLevel {
 		MQTT.CRITICAL = log.New(w, "MQTT CRITICAL ", 0)
 	}
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.ErrorLevel {
 		MQTT.ERROR = log.New(w, "MQTT ERROR ", 0)
 	}
 	if logrus.GetLevel() >= logrus.DebugLevel {
