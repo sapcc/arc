@@ -116,12 +116,13 @@ func runServer(c *cli.Context) {
 		log.Fatal("No endpoints for MQTT given")
 	}
 
-	db, err := ownDb.NewConnection(c.GlobalString("db-config"), c.GlobalString("env"))
+	var err error
+	db, err = ownDb.NewConnection(c.GlobalString("db-config"), c.GlobalString("env"))
 	checkErrAndPanic(err, "Error connecting to the DB:")
 	defer db.Close()
 
 	// global transport instance
-	tp, err := arcNewConnection(config)
+	tp, err = arcNewConnection(config)
 	checkErrAndPanic(err, "")
 	defer tp.Disconnect()
 

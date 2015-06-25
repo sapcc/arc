@@ -63,7 +63,7 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 
 	var job Job
 	for rows.Next() {
-		err = rows.Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
+		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 		if err != nil {
 			log.Errorf("Error scaning job results. Got ", err.Error())
 			continue
@@ -75,7 +75,11 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 }
 
 func (job *Job) Get(db *sql.DB, requestId string) error {
-	err := db.QueryRow(ownDb.GetJobQuery, requestId).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+	
+	err := db.QueryRow(ownDb.GetJobQuery, requestId).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -88,7 +92,7 @@ func (job *Job) Save(db *sql.DB) error {
 	}
 	
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertJobQuery, job.Version, job.Sender, job.RequestID, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
@@ -126,7 +130,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	}
 
 	// update object data
-	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.Version, &job.Sender, &job.RequestID, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt); err != nil {
+	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt); err != nil {
 		return
 	}
 
