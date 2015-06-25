@@ -1,10 +1,9 @@
 package models_test
 
 import (
-	"database/sql"
-	"time"
 	"fmt"
 	"strings"
+	"time"
 
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -16,35 +15,23 @@ import (
 
 var _ = Describe("LogParts", func() {
 
-	var (
-		db *sql.DB
-	)
-
-	BeforeSuite(func() {
-		db, _ = NewConnection("../db/dbconf.yml", "test")
-	})
-
-	AfterSuite(func() {
-		db.Close()
-	})
-
 	BeforeEach(func() {
 		DeleteAllRowsFromTable(db, "log_parts")
 		DeleteAllRowsFromTable(db, "jobs")
 	})
 
 	Describe("Collect", func() {
-		
+
 		It("returns an error if no db connection is given", func() {
-			logPart := LogPart{JobID:"the_job_id"}
+			logPart := LogPart{JobID: "the_job_id"}
 			_, err := logPart.Collect(nil)
 			Expect(err).To(HaveOccurred())
 		})
-		
+
 		It("should collect all log chuncks", func() {
 			job_id := "super_id"
 			// add a job related to the log chuncks
-			newJob := Job{Request: arc.Request{RequestID: job_id}}			
+			newJob := Job{Request: arc.Request{RequestID: job_id}}
 			newJob.Save(db)
 			// save different chuncks
 			var contentSlice [3]string
@@ -52,7 +39,7 @@ var _ = Describe("LogParts", func() {
 				chunck := fmt.Sprintf("This is the %d chunck", i)
 				contentSlice[i] = chunck
 				logPart := LogPart{job_id, uint(i), chunck, false, time.Now()}
-				err := logPart.Save(db)				
+				err := logPart.Save(db)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -60,12 +47,12 @@ var _ = Describe("LogParts", func() {
 			content := strings.Join(contentSlice[:], "")
 
 			// collect
-			logPart := LogPart{JobID:job_id}
+			logPart := LogPart{JobID: job_id}
 			dbContent, err := logPart.Collect(db)
 			Expect(dbContent).To(Equal(&content))
 			Expect(err).NotTo(HaveOccurred())
 		})
-		
+
 	})
 
 	Describe("Save", func() {
@@ -79,9 +66,9 @@ var _ = Describe("LogParts", func() {
 		It("should save a log part", func() {
 			job_id := "super_id"
 			// add a job related to the log chuncks
-			newJob := Job{Request: arc.Request{RequestID: job_id}}			
+			newJob := Job{Request: arc.Request{RequestID: job_id}}
 			newJob.Save(db)
-			
+
 			// save chunck
 			logPart := LogPart{job_id, 1, "the log chunck", false, time.Now()}
 			err := logPart.Save(db)

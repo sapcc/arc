@@ -19,6 +19,10 @@ type Log struct {
 }
 
 func (log *Log) Get(db *sql.DB, id string) error {
+	if db == nil {
+		return fmt.Errorf("Db is nil")
+	}
+	
 	err := db.QueryRow(ownDb.GetLogQuery, id).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)	
 	
 	// check if the entry already exists
