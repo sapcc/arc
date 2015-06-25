@@ -9,7 +9,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"github.com/kylelemons/go-gypsy/yaml"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -110,29 +109,16 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
-	log.Infof("Starting api server version %s.", version.Version)
+	log.Infof("Starting api server version %s. Environment: %s", version.Version, c.GlobalString("env"))
 
 	// check endpoint
 	if len(config.Endpoints) == 0 {
 		log.Fatal("No endpoints for MQTT given")
 	}
 
-	if _, err := os.Stat(c.GlobalString("db-config")); err != nil {
-		log.Fatal("Can't load database configuration from. ", err)
-	}
-	f, err := yaml.ReadFile(c.GlobalString("db-config"))
-	if err != nil {
-		log.Fatal("Failed to parse database configuration file %s: %s", c.GlobalString("db-config"), err)
-	}
-	open, err := f.Get(fmt.Sprintf("%s.open", c.GlobalString("env")))
-	if err != nil {
-		log.Fatal("Can't find 'open' key for %s environment ", c.GlobalString("env"))
-	}
-	log.Infof("Using environment '%s'", c.GlobalString("env"))
-	db_dsn := os.ExpandEnv(open)
+	db, err := ownDb.NewConnection(c.GlobalString("db-config"), c.GlobalString("env"))
+	checkErrAndPanic(err, "Error connecting to the DB:")
 	defer db.Close()
-	db, err := ownDb.NewConnection(db_dsn)
-	checkErrAndPanic(err, "Error connecting to the DB or creating tables:")
 
 	// global transport instance
 	tp, err := arcNewConnection(config)
