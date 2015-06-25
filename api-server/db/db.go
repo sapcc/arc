@@ -11,8 +11,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
-
 func NewConnection(dbConfigFile, env string) (*sql.DB, error) {
 	if _, err := os.Stat(dbConfigFile); err != nil {
 		return nil, fmt.Errorf("Can't load database configuration file %s: %s", dbConfigFile, err)

@@ -25,6 +25,7 @@ help:
 	@echo "  * run-ubuntu        - run bin/arc_linux in a docker container" 
 	@echo "  * run-rhel          - run bin/arc_linux in a docker container" 
 	@echo "  * run-sles          - run bin/arc_linux in a docker container" 
+	@echo "  * up                - run dev stack in iTerm tabs" 
 
 .PHONY: build
 build: setup
@@ -103,6 +104,10 @@ cross:
 		-v $(CURDIR):/gonative/src/gitHub.***REMOVED***/monsoon/arc \
 		gonative \
 		gox -osarch="$(TARGETS)" -output="bin/arc_{{.OS}}" -ldflags="-w $(GITVERSION)"
+
+.PHONY: up
+up:
+	osascript $(CURDIR)/scripts/arcup.scpt
 
 .gopath/src/$(REPO_PATH):
 	mkdir -p .gopath/src/$(ORG_PATH)
