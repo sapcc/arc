@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
@@ -33,8 +34,8 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	job := models.Job{}
-	err := job.Get(db, jobId)
+	job := models.Job{Request: arc.Request{RequestID: jobId}}
+	err := job.Get(db)
 	if err != nil {
 		log.Errorf("Job with id %q not found. Got %q", jobId, err.Error())
 		http.NotFound(w, r)

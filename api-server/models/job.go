@@ -74,12 +74,12 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 	return nil
 }
 
-func (job *Job) Get(db *sql.DB, requestId string) error {
+func (job *Job) Get(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
 	
-	err := db.QueryRow(ownDb.GetJobQuery, requestId).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
+	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 	if err != nil {
 		return err
 	}

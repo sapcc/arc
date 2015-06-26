@@ -3,7 +3,7 @@ package db
 // Jobs
 var InsertJobQuery = `INSERT INTO jobs(id,version,sender,"to",timeout,agent,action,payload,status,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id;`
 var UpdateJobQuery = `UPDATE jobs SET status=$1,updated_at=$2 WHERE id=$3`
-var GetAllJobsQuery = "SELECT * FROM jobs order by id"
+var GetAllJobsQuery = "SELECT * FROM jobs order by updated_at"
 var GetJobQuery = "SELECT * FROM jobs WHERE id=$1"
 var CleanJobsTimeoutQuery = `
 	UPDATE jobs SET status=3,updated_at=NOW() 
