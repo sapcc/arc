@@ -143,8 +143,8 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
-	fact := models.Fact{}
-	err := fact.Get(db, agentId)
+	fact := models.Fact{Agent: models.Agent{AgentID: agentId}}
+	err := fact.Get(db)
 	if err != nil {
 		log.Errorf("Agent with id %q not found. Got %q", agentId, err.Error())
 		http.NotFound(w, r)

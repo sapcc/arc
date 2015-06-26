@@ -16,8 +16,12 @@ type Fact struct {
 	Facts  	string 	`json:"facts"`
 }
 
-func (fact *Fact) Get(db *sql.DB, agent_id string) error {
-	err := db.QueryRow(ownDb.GetFactQuery, agent_id).Scan(&fact.AgentID, &fact.Facts, &fact.CreatedAt, &fact.UpdatedAt)
+func (fact *Fact) Get(db *sql.DB) error {
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+	
+	err := db.QueryRow(ownDb.GetFactQuery, fact.AgentID).Scan(&fact.AgentID, &fact.Facts, &fact.CreatedAt, &fact.UpdatedAt)
 	if err != nil {
 		return err
 	}
