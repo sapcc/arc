@@ -15,7 +15,7 @@ func NewConnection(dbConfigFile, env string) (*sql.DB, error) {
 	// check and load config file
 	if _, err := os.Stat(dbConfigFile); err != nil {
 		return nil, fmt.Errorf("Can't load database configuration file %s: %s", dbConfigFile, err)
-	}	
+	}
 	f, err := yaml.ReadFile(dbConfigFile)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse database configuration file %s: %s", dbConfigFile, err)
@@ -32,7 +32,11 @@ func NewConnection(dbConfigFile, env string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+	//connection is defered until the first query unless we ping
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
 	// hide user data
 	logDSN := regexp.MustCompile(`password=[^ ]+`).ReplaceAllString(dbDSN, "password=****")
 	logDSN = regexp.MustCompile(`:[^/:@]+@`).ReplaceAllString(logDSN, ":****@")
