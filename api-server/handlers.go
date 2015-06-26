@@ -123,8 +123,8 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
-	agent := models.Agent{}
-	err := agent.Get(db, agentId)
+	agent := models.Agent{AgentID: agentId}
+	err := agent.Get(db)
 	if err != nil {
 		log.Errorf("Agent with id %q not found. Got %q", agentId, err.Error())
 		http.NotFound(w, r)

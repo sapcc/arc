@@ -44,12 +44,12 @@ func (agents *Agents) Get(db *sql.DB) error{
 	return nil
 }
 
-func (agent *Agent) Get(db *sql.DB, agent_id string) error {
+func (agent *Agent) Get(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetAgentQuery, agent_id).Scan(&agent.AgentID, &agent.CreatedAt, &agent.UpdatedAt)
+	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.CreatedAt, &agent.UpdatedAt)
 	if err != nil {
 		return err
 	}

@@ -41,7 +41,7 @@ var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content O
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
 
 // Facts
-var GetAgentsQuery = "SELECT DISTINCT agent_id,created_at,updated_at FROM facts"
+var GetAgentsQuery = "SELECT DISTINCT agent_id,created_at,updated_at FROM facts order by updated_at"
 var GetAgentQuery = "SELECT agent_id,created_at,updated_at FROM facts WHERE agent_id=$1"
 var GetFactQuery = "SELECT * FROM facts WHERE agent_id=$1"
 var InsertFactQuery = `INSERT INTO facts(agent_id,facts,created_at,updated_at) VALUES($1,$2,$3,$4) returning agent_id`
