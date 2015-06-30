@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -19,16 +20,15 @@ import (
 
 func serveJobs(w http.ResponseWriter, r *http.Request) {
 	jobs := models.Jobs{}
-	err := jobs.Get(db)
-	if err != nil {
-		log.Errorf("Error getting all jobs. Got %q", err.Error())
-		http.Error(w, http.StatusText(500), 500)
+	if err := jobs.Get(db); err != nil {
+		checkErrAndReturnStatus(w, err, "Error getting all jobs", http.StatusInternalServerError)
 		return
 	}
 
+	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	err = json.NewEncoder(w).Encode(jobs)
-	checkEncodeToJson(w, err)
+	err := json.NewEncoder(w).Encode(jobs)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
@@ -36,15 +36,14 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	jobId := vars["jobId"]
 
 	job := models.Job{Request: arc.Request{RequestID: jobId}}
-	err := job.Get(db)
-	if err != nil {
-		log.Errorf("Job with id %q not found. Got %q", jobId, err.Error())
-		http.NotFound(w, r)
+	if err := job.Get(db); err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(job)
+	err := json.NewEncoder(w).Encode(job)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", 500)
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
@@ -165,10 +164,10 @@ func root(w http.ResponseWriter, r *http.Request) {
 
 // private
 
-func checkEncodeToJson(w http.ResponseWriter, err error) {
+func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
 	if err != nil {
-		log.Errorf("Error encoding to json. Got %q", err.Error())
-		http.Error(w, http.StatusText(500), 500)
-		return
+		log.Errorf("Error, returning status %v. %s %s", status, msg, err.Error())
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, http.StatusText(status), status)
 	}
 }
