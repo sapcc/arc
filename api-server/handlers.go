@@ -28,7 +28,7 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(jobs)
-	checkEncodeToJson(w,err)
+	checkEncodeToJson(w, err)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
@@ -170,5 +170,5 @@ func checkEncodeToJson(w http.ResponseWriter, err error) {
 		log.Errorf("Error encoding to json. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
-	}	
+	}
 }
