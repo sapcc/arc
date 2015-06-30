@@ -27,7 +27,8 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(jobs)
+	err = json.NewEncoder(w).Encode(jobs)
+	checkEncodeToJson(w,err)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
@@ -105,11 +106,8 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
  */
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
-
 	agents := models.Agents{}
 	err := agents.Get(db)
-
-	//agents, err := models.GetAgents(db)
 	if err != nil {
 		log.Errorf("Error getting all agents. Got %q", err.Error())
 		http.Error(w, http.StatusText(500), 500)
@@ -163,4 +161,14 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 func root(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("Arc api-server " + version.String()))
+}
+
+// private
+
+func checkEncodeToJson(w http.ResponseWriter, err error) {
+	if err != nil {
+		log.Errorf("Error encoding to json. Got %q", err.Error())
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}	
 }

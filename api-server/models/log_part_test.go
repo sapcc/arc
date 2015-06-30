@@ -8,7 +8,6 @@ import (
 
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,16 +32,15 @@ var _ = Describe("LogParts", func() {
 		})
 		
 		It("should collect all log chuncks", func() {
-			job_id := uuid.New()
 			// add a job related to the log chuncks
-			newJob := Job{Request: arc.Request{RequestID: job_id}}
+			newJob := ExecuteSctiptJob()
 			newJob.Save(db)
 			// save different chuncks
 			var contentSlice [3]string
 			for i := 0; i < 3; i++ {
 				chunck := fmt.Sprintf("This is the %d chunck", i)
 				contentSlice[i] = chunck
-				logPart := LogPart{job_id, uint(i), chunck, false, time.Now()}
+				logPart := LogPart{newJob.RequestID, uint(i), chunck, false, time.Now()}
 				err := logPart.Save(db)
 				if err != nil {
 					fmt.Println(err)
@@ -51,7 +49,7 @@ var _ = Describe("LogParts", func() {
 			content := strings.Join(contentSlice[:], "")
 
 			// collect
-			logPart := LogPart{JobID: job_id}
+			logPart := LogPart{JobID: newJob.RequestID}
 			dbContent, err := logPart.Collect(db)
 			Expect(dbContent).To(Equal(&content))
 			Expect(err).NotTo(HaveOccurred())
@@ -77,17 +75,16 @@ var _ = Describe("LogParts", func() {
 		})
 
 		It("should save a log part", func() {
-			job_id := uuid.New()
 			// add a job related to the log chuncks
-			newJob := Job{Request: arc.Request{RequestID: job_id}}
+			newJob := ExecuteSctiptJob()
 			newJob.Save(db)
 
 			// save chunck
-			logPart := LogPart{job_id, 1, "the log chunck", false, time.Now()}
+			logPart := LogPart{newJob.RequestID, 1, "the log chunck", false, time.Now()}
 			err := logPart.Save(db)
 
 			dbLogPart := LogPart{}
-			db.QueryRow(GetLogPartQuery, job_id).Scan(&dbLogPart.JobID, &dbLogPart.Number, &dbLogPart.Content, &dbLogPart.Final, &dbLogPart.CreatedAt)
+			db.QueryRow(GetLogPartQuery, newJob.RequestID).Scan(&dbLogPart.JobID, &dbLogPart.Number, &dbLogPart.Content, &dbLogPart.Final, &dbLogPart.CreatedAt)
 			Expect(dbLogPart.JobID).To(Equal(logPart.JobID))
 			Expect(dbLogPart.Number).To(Equal(logPart.Number))
 			Expect(dbLogPart.Content).To(Equal(logPart.Content))

@@ -2,7 +2,7 @@ package models_test
 
 import (
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"	
+	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 	"code.google.com/p/go-uuid/uuid"	
 	
 	"fmt"
@@ -17,16 +17,13 @@ var _ = Describe("Jobs", func() {
 	Describe("Get", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := Job{Request: arc.Request{RequestID: uuid.New()}}			
+			job := ExecuteSctiptJob()
 			err := job.Get(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should return all jobs", func() {
-			job1 := Job{Request: arc.Request{RequestID: uuid.New()}}		
-			job2 := Job{Request: arc.Request{RequestID: uuid.New()}}		
-			job3 := Job{Request: arc.Request{RequestID: uuid.New()}}		
-			jobs := []Job{job1, job2, job3}
+			jobs := []Job{ExecuteSctiptJob(), ExecuteSctiptJob(), ExecuteSctiptJob()}
 			
 			// insert 3 agents
 			for i := 0; i < len(jobs); i++ {
@@ -38,9 +35,9 @@ var _ = Describe("Jobs", func() {
 			dbJobs := Jobs{}
 			err := dbJobs.Get(db)
 			Expect(err).NotTo(HaveOccurred())						
-			Expect(dbJobs[0].RequestID).To(Equal(job1.RequestID))
-			Expect(dbJobs[1].RequestID).To(Equal(job2.RequestID))
-			Expect(dbJobs[2].RequestID).To(Equal(job3.RequestID))						
+			Expect(dbJobs[0].RequestID).To(Equal(jobs[0].RequestID))
+			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
+			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))						
 		})
 		
 	})
@@ -91,24 +88,21 @@ var _ = Describe("Job", func() {
 	Describe("Get", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := Job{Request: arc.Request{RequestID: uuid.New()}}			
+			job := ExecuteSctiptJob()
 			err := job.Get(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("returns an error if job not found", func() {
-			job := Job{Request: arc.Request{RequestID: uuid.New()}}			
+			job := ExecuteSctiptJob()
 			err := job.Get(db)
 			Expect(err).To(HaveOccurred())
 		})		
 		
 		It("should return the job", func() {			
 			// create and save a job
-			str := `{"to":"darwin","timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`
-			strSlice := []byte(str)			
-			job, err := CreateJob(&strSlice, uuid.New())					
-			Expect(err).NotTo(HaveOccurred())			
-			err = job.Save(db)
+			job := ExecuteSctiptJob()
+			err := job.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get the job
@@ -128,18 +122,14 @@ var _ = Describe("Job", func() {
 	Describe("Save", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := Job{Request: arc.Request{RequestID: uuid.New()}}			
+			job := ExecuteSctiptJob()
 			err := job.Save(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("should save a job", func() {
-			// create and save a job
-			str := `{"to":"darwin","timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`
-			strSlice := []byte(str)			
-			job, err := CreateJob(&strSlice, uuid.New())					
-			Expect(err).NotTo(HaveOccurred())			
-			err = job.Save(db)
+			job := ExecuteSctiptJob()
+			err := job.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get the job and check
@@ -159,18 +149,15 @@ var _ = Describe("Job", func() {
 	Describe("Update", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := Job{Request: arc.Request{RequestID: uuid.New()}}			
+			job := ExecuteSctiptJob()
 			err := job.Update(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("should update a job", func() {
-			// create and save a job
-			str := `{"to":"darwin","timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`
-			strSlice := []byte(str)			
-			job, err := CreateJob(&strSlice, uuid.New())					
-			Expect(err).NotTo(HaveOccurred())			
-			err = job.Save(db)
+			// save a job
+			job := ExecuteSctiptJob()
+			err := job.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// update a job and check

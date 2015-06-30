@@ -53,14 +53,3 @@ func DeleteAllRowsFromTable(db *sql.DB, table string) (sql.Result, error) {
 	}
 	return res, nil
 }
-
-// private
-
-func execQuery(db *sql.DB, query string) (sql.Result, error) {
-	res, err := db.Exec(query)
-	if err != nil {
-		log.Fatalf(err.Error())
-		return nil, err
-	}
-	return res, nil
-}

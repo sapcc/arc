@@ -25,28 +25,26 @@ var _ = Describe("Log", func() {
 		})
 
 		It("should return a log string from the log table if exists", func() {
-			job_id := uuid.New()
 			// add a job related to the log
-			newJob := Job{Request: arc.Request{RequestID: job_id}}
+			newJob := ExecuteSctiptJob()
 			newJob.Save(db)
 			
 			content := "Log content"
 			
 			// insert a log
-			_, err := db.Exec(InsertLogQuery, job_id, content, time.Now(), time.Now())
+			_, err := db.Exec(InsertLogQuery, newJob.RequestID, content, time.Now(), time.Now())
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get the log
-			newLog := Log{JobID:job_id}
+			newLog := Log{JobID:newJob.RequestID}
 			err = newLog.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(content).To(Equal(newLog.Content))
 		})
 
 		It("should collect the log parts if a log from the log table doesn't exist", func() {
-			job_id := uuid.New()
 			// add a job related to the log
-			newJob := Job{Request: arc.Request{RequestID: job_id}}
+			newJob := ExecuteSctiptJob()
 			newJob.Save(db)
 			
 			// save different chuncks
@@ -54,7 +52,7 @@ var _ = Describe("Log", func() {
 			for i := 0; i < 3; i++ {
 				chunck := fmt.Sprintf("This is the %d chunck", i)
 				contentSlice[i] = chunck
-				logPart := LogPart{job_id, uint(i), chunck, false, time.Now()}
+				logPart := LogPart{newJob.RequestID, uint(i), chunck, false, time.Now()}
 				err := logPart.Save(db)
 				if err != nil {
 					fmt.Println(err)
@@ -63,7 +61,7 @@ var _ = Describe("Log", func() {
 			content := strings.Join(contentSlice[:], "")
 			
 			// get the log
-			newLog := Log{JobID:job_id}
+			newLog := Log{JobID:newJob.RequestID}
 			err := newLog.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(content).To(Equal(newLog.Content))
@@ -97,52 +95,50 @@ var _ = Describe("Log", func() {
 		})
 		
 		It("should save a log part entry if the payload is not empty", func() {
-			job_id := uuid.New()
 			chunck := "This is a chunck log"
 			
 			// add a job related to the log
-			newJob := Job{Request: arc.Request{RequestID: job_id}}
+			newJob := ExecuteSctiptJob()
 			err := newJob.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// process reply
-			reply := arc.Reply{RequestID: job_id, Payload: chunck, Final:false}			
+			reply := arc.Reply{RequestID: newJob.RequestID, Payload: chunck, Final:false}			
 			err = ProcessLogReply(db, &reply)			
 			Expect(err).NotTo(HaveOccurred())
 			
 			// check log
-			newLog := Log{JobID:job_id}			
+			newLog := Log{JobID:newJob.RequestID}			
 			err = db.QueryRow(GetLogQuery, newLog.JobID).Scan(&newLog.JobID, &newLog.Content, &newLog.CreatedAt, &newLog.UpdatedAt)				
 			Expect(err).To(HaveOccurred())
 			
 			// check log parts
-			logPart := LogPart{JobID: job_id}
+			logPart := LogPart{JobID: newJob.RequestID}
 			dbContent, err := logPart.Collect(db)
 			Expect(dbContent).To(Equal(&chunck))
 			Expect(err).NotTo(HaveOccurred())
 		})
 		
 		It("should collect all log parts, save a new log entry and remove all log parts if final attribute is true", func() {
-			job_id := uuid.New()
 			chunck := "This is a chunck log"
 
 			// add a job related to the log
-			newJob := Job{Request: arc.Request{RequestID: job_id}}
+			newJob := ExecuteSctiptJob()
 			err := newJob.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// process reply
-			reply := arc.Reply{RequestID: job_id, Payload: chunck, Final:true}			
+			reply := arc.Reply{RequestID: newJob.RequestID, Payload: chunck, Final:true}			
 			err = ProcessLogReply(db, &reply)			
 			Expect(err).NotTo(HaveOccurred())
 			
 			// check log parts
-			logPart := LogPart{JobID: job_id}
+			logPart := LogPart{JobID: newJob.RequestID}
 			_, err = logPart.Collect(db)
 			Expect(err).To(HaveOccurred())
 			
 			// check log
-			newLog := Log{JobID:job_id}			
+			newLog := Log{JobID:newJob.RequestID}			
 			err = db.QueryRow(GetLogQuery, newLog.JobID).Scan(&newLog.JobID, &newLog.Content, &newLog.CreatedAt, &newLog.UpdatedAt)				
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newLog.Content).To(Equal(chunck))			
