@@ -29,7 +29,7 @@ var _ = Describe("Handlers", func() {
 			req, err := http.NewRequest("GET", "/jobs", bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			serveJobs(w, req)
+			router.ServeHTTP(w, req)
 
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
@@ -38,10 +38,10 @@ var _ = Describe("Handlers", func() {
 
 		It("returns empty json arry if no jobs found", func() {
 			// make a request
-			req, err := http.NewRequest("POST", "/jobs", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", "/jobs", bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			serveJobs(w, req)
+			router.ServeHTTP(w, req)
 
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
@@ -63,7 +63,7 @@ var _ = Describe("Handlers", func() {
 			req, err := http.NewRequest("GET", "/jobs", bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			serveJobs(w, req)
+			router.ServeHTTP(w, req)
 
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
@@ -88,7 +88,7 @@ var _ = Describe("Handlers", func() {
 			req, err := http.NewRequest("GET", "/jobs/non_existing_id", bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			serveJob(w, req)
+			router.ServeHTTP(w, req)
 
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
@@ -107,7 +107,6 @@ var _ = Describe("Handlers", func() {
 			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			router.HandleFunc("/employees/{id}", serveJob)
 			router.ServeHTTP(w, req)
 
 			// check response code and header
