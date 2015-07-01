@@ -13,7 +13,11 @@ import (
 	"net/http/httptest"
 )
 
-var _ = Describe("Handlers", func() {
+var _ = Describe("Job Handlers", func() {
+
+	var (
+		job models.Job
+	)
 
 	Describe("serveJobs", func() {
 
@@ -76,12 +80,19 @@ var _ = Describe("Handlers", func() {
 			Expect(dbJobs[0].RequestID).To(Equal(jobs[0].RequestID))
 			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
 			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))
-
 		})
 
 	})
 
 	Describe("serveJob", func() {
+
+		JustBeforeEach(func() {
+			// save a job
+			job = models.Job{}
+			job.RpcVersionExample()
+			err := job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+		})
 
 		It("returns a 404 error if job not found", func() {
 			// make request
@@ -96,11 +107,9 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("returns a 500 error if something goes wrong", func() {
-			// save bad data
-			job := models.Job{}
-			job.RpcVersionExample()
-			job.Status = 6 // not existing status
-			err := job.Save(db)
+			// introduce bad data
+			job.Status = 6 // not existing status should produce an error
+			err := job.Update(db)
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
@@ -114,10 +123,62 @@ var _ = Describe("Handlers", func() {
 			Expect(w.Code).To(Equal(500))
 		})
 
-		It("should return the job", func() {})
+		It("should return the job", func() {
+			// make a request
+			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check json body response
+			var dbJob models.Job
+			err = json.Unmarshal(w.Body.Bytes(), &dbJob)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbJob.RequestID).To(Equal(job.RequestID))
+		})
 	})
 
-	Describe("executeJob", func() {})
+	Describe("executeJob", func() {
+
+		JustBeforeEach(func() {
+			config.Identity = "darwin"
+			config.Transport = "fake"
+		})
+
+		It("should save the job and return the unique id as JSON", func() {
+			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
+			// make a request
+			req, err := http.NewRequest("POST", "/jobs", bytes.NewBuffer(jsonStr))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check json body response
+			var dbJobID models.JobID
+			err = json.Unmarshal(w.Body.Bytes(), &dbJobID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbJobID.RequestID).NotTo(BeEmpty())
+			
+			// check the job is being saved
+			dbJob := Job{RequestID: dbJobID.RequestID}
+			dbJob.Get(db)
+			Expect(dbJob.RequestID).To(Equal(dbJobID.RequestID))
+		})
+
+	})
+
+})
+
+var _ = Describe("Log Handlers", func() {
+
 	Describe("serveJobLog", func() {})
 	Describe("serveAgents", func() {})
 	Describe("serveAgent", func() {})

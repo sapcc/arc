@@ -43,30 +43,27 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err := json.NewEncoder(w).Encode(job)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", 500)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Errorf("Error creating a job. Got %q", err.Error())
-		http.Error(w, http.StatusText(400), 400)
+		checkErrAndReturnStatus(w, err, "Error creating a job", http.StatusBadRequest)
 		return
 	}
 
 	// create job
 	job, err := models.CreateJob(&data, config.Identity)
 	if err != nil {
-		log.Errorf("Error creating a job. Got %q", err.Error())
-		http.Error(w, http.StatusText(400), 400)
+		checkErrAndReturnStatus(w, err, "Error creating a job", http.StatusBadRequest)
 		return
 	}
 
 	// save db
 	err = job.Save(db)
 	if err != nil {
-		log.Errorf("Error saving job. Got %q", err.Error())
-		http.Error(w, http.StatusText(500), 500)
+		checkErrAndReturnStatus(w, err, "Error saving job", http.StatusInternalServerError)
 		return
 	}
 
@@ -77,7 +74,8 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	response := models.JobID{job.RequestID}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
 /*
