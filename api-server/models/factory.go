@@ -9,9 +9,11 @@ import (
 )
 
 func (jobs *Jobs) CreateAndSaveRpcVersionExamples(db *sql.DB, number int) {
+	now := time.Now()
 	for i := 0; i < number; i++ {
 		job := Job{}
 		job.RpcVersionExample()
+		job.UpdatedAt = now.Add(time.Duration(i) * time.Minute)
 		job.Save(db)
 		*jobs = append(*jobs, job)
 	}

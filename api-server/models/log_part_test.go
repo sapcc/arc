@@ -33,7 +33,8 @@ var _ = Describe("LogParts", func() {
 		
 		It("should collect all log chuncks", func() {
 			// add a job related to the log chuncks
-			newJob := ExecuteSctiptJob()
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
 			newJob.Save(db)
 			// save different chuncks
 			var contentSlice [3]string
@@ -76,7 +77,8 @@ var _ = Describe("LogParts", func() {
 
 		It("should save a log part", func() {
 			// add a job related to the log chuncks
-			newJob := ExecuteSctiptJob()
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
 			newJob.Save(db)
 
 			// save chunck
@@ -84,7 +86,8 @@ var _ = Describe("LogParts", func() {
 			err := logPart.Save(db)
 
 			dbLogPart := LogPart{}
-			db.QueryRow(GetLogPartQuery, newJob.RequestID).Scan(&dbLogPart.JobID, &dbLogPart.Number, &dbLogPart.Content, &dbLogPart.Final, &dbLogPart.CreatedAt)
+			err = db.QueryRow(GetLogPartQuery, newJob.RequestID).Scan(&dbLogPart.JobID, &dbLogPart.Number, &dbLogPart.Content, &dbLogPart.Final, &dbLogPart.CreatedAt)
+			Expect(err).NotTo(HaveOccurred())
 			Expect(dbLogPart.JobID).To(Equal(logPart.JobID))
 			Expect(dbLogPart.Number).To(Equal(logPart.Number))
 			Expect(dbLogPart.Content).To(Equal(logPart.Content))

@@ -17,27 +17,22 @@ var _ = Describe("Jobs", func() {
 	Describe("Get", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Get(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should return all jobs", func() {
-			jobs := []Job{ExecuteSctiptJob(), ExecuteSctiptJob(), ExecuteSctiptJob()}
-			
-			// insert 3 agents
-			for i := 0; i < len(jobs); i++ {
-				job := jobs[i]
-				err := job.Save(db);
-				Expect(err).NotTo(HaveOccurred())			
-			}
+			jobs := Jobs{}
+			jobs.CreateAndSaveRpcVersionExamples(db,3)
 			
 			dbJobs := Jobs{}
-			err := dbJobs.Get(db)
+			err := dbJobs.Get(db)			
 			Expect(err).NotTo(HaveOccurred())						
 			Expect(dbJobs[0].RequestID).To(Equal(jobs[0].RequestID))
 			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
-			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))						
+			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))									
 		})
 		
 	})
@@ -88,20 +83,23 @@ var _ = Describe("Job", func() {
 	Describe("Get", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Get(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("returns an error if job not found", func() {
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Get(db)
 			Expect(err).To(HaveOccurred())
 		})		
 		
 		It("should return the job", func() {			
 			// create and save a job
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
@@ -122,13 +120,15 @@ var _ = Describe("Job", func() {
 	Describe("Save", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Save(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("should save a job", func() {
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
@@ -149,14 +149,16 @@ var _ = Describe("Job", func() {
 	Describe("Update", func() {
 		
 		It("returns an error if no db connection is given", func() {
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Update(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("should update a job", func() {
 			// save a job
-			job := ExecuteSctiptJob()
+			job := Job{}
+			job.ExecuteScriptExample()
 			err := job.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			

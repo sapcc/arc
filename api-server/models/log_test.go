@@ -26,7 +26,8 @@ var _ = Describe("Log", func() {
 
 		It("should return a log string from the log table if exists", func() {
 			// add a job related to the log
-			newJob := ExecuteSctiptJob()
+			newJob := Job{}
+			newJob.ExecuteScriptExample()			
 			newJob.Save(db)
 			
 			content := "Log content"
@@ -44,7 +45,8 @@ var _ = Describe("Log", func() {
 
 		It("should collect the log parts if a log from the log table doesn't exist", func() {
 			// add a job related to the log
-			newJob := ExecuteSctiptJob()
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
 			newJob.Save(db)
 			
 			// save different chuncks
@@ -98,7 +100,8 @@ var _ = Describe("Log", func() {
 			chunck := "This is a chunck log"
 			
 			// add a job related to the log
-			newJob := ExecuteSctiptJob()
+			newJob := Job{}
+			newJob.ExecuteScriptExample()			
 			err := newJob.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
@@ -123,7 +126,8 @@ var _ = Describe("Log", func() {
 			chunck := "This is a chunck log"
 
 			// add a job related to the log
-			newJob := ExecuteSctiptJob()
+			newJob := Job{}
+			newJob.ExecuteScriptExample()			
 			err := newJob.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
