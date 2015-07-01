@@ -21,6 +21,8 @@ func New(config arc.Config) (Transport, error) {
 	switch config.Transport {
 	case "mqtt":
 		return mqtt.New(config)
+	case "fake":
+		return fake.New(config)		
 	}
 	return nil, errors.New("Invalid transport")
 }
