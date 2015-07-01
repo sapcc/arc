@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
 	"gitHub.***REMOVED***/monsoon/arc/transport/mqtt"
 )
 
@@ -22,7 +23,7 @@ func New(config arc.Config) (Transport, error) {
 	case "mqtt":
 		return mqtt.New(config)
 	case "fake":
-		return fake.New(config)		
+		return fake.New(config)
 	}
 	return nil, errors.New("Invalid transport")
 }

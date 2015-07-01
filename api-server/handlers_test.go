@@ -2,6 +2,7 @@ package main
 
 import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	//"gitHub.***REMOVED***/monsoon/arc/arc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -35,9 +36,11 @@ var _ = Describe("Job Handlers", func() {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// check response code and header
+			// check response code, header and body
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
 			Expect(w.Code).To(Equal(500))
+
+			// TODO: check the body when error
 		})
 
 		It("returns empty json arry if no jobs found", func() {
@@ -149,7 +152,22 @@ var _ = Describe("Job Handlers", func() {
 			config.Transport = "fake"
 		})
 
-		It("should save the job and return the unique id as JSON", func() {
+		It("returns a 400 error if request is wrong", func() {
+			jsonStr := []byte(`this is not json`)
+			// make a request
+			req, err := http.NewRequest("POST", "/jobs", bytes.NewBuffer(jsonStr))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(400))
+		})
+
+		It("returns a 500 error if something goes wrong", func() {})
+
+		/*It("should save the job and return the unique id as JSON", func() {
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
 			req, err := http.NewRequest("POST", "/jobs", bytes.NewBuffer(jsonStr))
@@ -166,12 +184,12 @@ var _ = Describe("Job Handlers", func() {
 			err = json.Unmarshal(w.Body.Bytes(), &dbJobID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbJobID.RequestID).NotTo(BeEmpty())
-			
+
 			// check the job is being saved
-			dbJob := Job{RequestID: dbJobID.RequestID}
+			dbJob := models.Job{Request: arc.Request{RequestID: dbJobID.RequestID}}
 			dbJob.Get(db)
 			Expect(dbJob.RequestID).To(Equal(dbJobID.RequestID))
-		})
+		})*/
 
 	})
 
