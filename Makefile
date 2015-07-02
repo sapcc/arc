@@ -18,6 +18,8 @@ help:
 	@echo "  * build-api         - build the api server, output to $(API_BINARY)"
 	@echo "  * build-all         - build everything" 
 	@echo "  * test              - run all tests"
+	@echo "  * unit              - run unit tests"
+	@echo "  * integration test  - run integration tests"
 	@echo "  * test-win          - run tests on windows (requires running vagrant vm)"
 	@echo "  * gopath            - print custom GOPATH external use" 
 	@echo "  * install-deps      - build and cache dependencies (speeds up make build)" 
@@ -114,7 +116,7 @@ cross:
 
 .PHONY: up
 up:
-	osascript $(CURDIR)/scripts/arcup.scpt
+	osascript $(CURDIR)/scripts/arcup.applescript
 
 .gopath/src/$(REPO_PATH):
 	mkdir -p .gopath/src/$(ORG_PATH)
