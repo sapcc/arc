@@ -43,9 +43,7 @@ var _ = Describe("LogParts", func() {
 				contentSlice[i] = chunck
 				logPart := LogPart{newJob.RequestID, uint(i), chunck, false, time.Now()}
 				err := logPart.Save(db)
-				if err != nil {
-					fmt.Println(err)
-				}
+				Expect(err).NotTo(HaveOccurred())
 			}
 			content := strings.Join(contentSlice[:], "")
 

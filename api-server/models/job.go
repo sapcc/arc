@@ -71,6 +71,7 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 		*jobs = append(*jobs, job)
 	}
 
+	rows.Close()
 	return nil
 }
 

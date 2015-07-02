@@ -31,6 +31,7 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
+// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
@@ -82,6 +83,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
  * Logs
  */
 
+// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
@@ -115,6 +117,7 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(agents)
 }
 
+// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveAgent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
@@ -135,6 +138,7 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
  * Facts
  */
 
+// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveFacts(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]

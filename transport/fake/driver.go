@@ -2,13 +2,15 @@ package fake
 
 import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	log "github.com/Sirupsen/logrus"
 )
 
 type FakeClient struct {
 	Name string
 }
 
-func New(config arc.Config) (*FakeClient, error) {
+func New(config arc.Config) (*FakeClient, error) {	
+	log.Infof("Using FAKE transport.")
 	return &FakeClient{Name: "fake"}, nil
 }
 

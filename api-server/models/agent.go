@@ -40,7 +40,8 @@ func (agents *Agents) Get(db *sql.DB) error{
 		}
 		*agents = append(*agents, agent)
 	}
-
+	
+	rows.Close()
 	return nil
 }
 

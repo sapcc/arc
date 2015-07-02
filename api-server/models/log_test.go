@@ -123,7 +123,7 @@ var _ = Describe("Log", func() {
 		})
 		
 		It("should collect all log parts, save a new log entry and remove all log parts if final attribute is true", func() {
-			chunck := "This is a chunck log"
+			chunck := "This is a chunck log for should collect all log parts, save a new log entry and remove all log parts if final attribute is true"
 
 			// add a job related to the log
 			newJob := Job{}
