@@ -1,3 +1,5 @@
+// +build integration
+
 package models_test
 
 import (

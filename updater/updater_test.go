@@ -1,11 +1,14 @@
+// +build !integration
+
 package updater
 
 import (
 	"fmt"
-	"github.com/inconshreveable/go-update/check"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/inconshreveable/go-update/check"
 )
 
 var validOptions = map[string]string{

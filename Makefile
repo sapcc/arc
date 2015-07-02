@@ -46,8 +46,15 @@ build-api: setup
 build-all: build build-update-site build-api
 
 .PHONY: test
-test: setup test-gofmt
+test: test-gofmt unit integration 
+
+.PHONY: unit
+unit: setup
 	go test ./... -v
+
+.PHONY: integration
+integration: setup
+	go test ./... -v -p=1 -tags=integration
 
 .PHONY: test-gofmt
 test-gofmt:
