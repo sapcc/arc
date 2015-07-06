@@ -21,13 +21,14 @@ func (log_part *LogPart) Collect(db *sql.DB) (*string, error) {
 		return nil, errors.New("Db is nil")
 	}
 
-	var content string
-	err := db.QueryRow(ownDb.CollectLogPartsQuery, log_part.JobID).Scan(&content)
-	if err != nil {
-		return nil, err
+	//var content string
+	var content sql.NullString
+	db.QueryRow(ownDb.CollectLogPartsQuery, log_part.JobID).Scan(&content)
+	if !content.Valid {
+		return nil, sql.ErrNoRows
 	}
 
-	return &content, nil
+	return &content.String, nil
 }
 
 func (log_part *LogPart) Save(db *sql.DB) error {

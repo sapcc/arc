@@ -23,10 +23,8 @@ func (log *Log) Get(db *sql.DB) error {
 		return fmt.Errorf("Db is nil")
 	}
 	
-	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)	
-	
-	// check if the entry already exists
-	if err != nil {
+	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)		
+	if err == sql.ErrNoRows {	
 		// if no log entry collect all log parts
 		log_part := LogPart{JobID:log.JobID}		
 		content, err := log_part.Collect(db)
@@ -34,7 +32,10 @@ func (log *Log) Get(db *sql.DB) error {
 			return err
 		}
 		log.Content = *content
-	}	
+	}	else if err != nil {
+		return err
+	}
+	
 	return nil
 }
 

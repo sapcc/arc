@@ -54,12 +54,14 @@ func (fact *Fact) Update(db *sql.DB, req *arc.Request) (err error) {
 		if _, err = tx.Exec(ownDb.UpdateFact, req.Sender, req.Payload); err != nil {
 			return
 		}		
-	} else {
+	} else if err == sql.ErrNoRows{
 		log.Infof("New registry for sender %q will be saved.", req.Sender)
 		var lastInsertId string
 		if err = tx.QueryRow(ownDb.InsertFactQuery, req.Sender, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId); err != nil {
 			return
 		}
+	} else if err != nil {
+		return
 	}
 
 	// update object data

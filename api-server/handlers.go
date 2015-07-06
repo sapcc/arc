@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -31,19 +32,22 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
-// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
 	job := models.Job{Request: arc.Request{RequestID: jobId}}
-	if err := job.Get(db); err != nil {
+	err := job.Get(db)
+	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	err := json.NewEncoder(w).Encode(job)
+	err = json.NewEncoder(w).Encode(job)
 	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
@@ -83,20 +87,21 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
  * Logs
  */
 
-// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
 	logEntry := models.Log{JobID: jobId}
 	err := logEntry.Get(db)
-	if err != nil {
-		log.Errorf("Logs for Job with id %q not found.", jobId)
-		http.NotFound(w, r)
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(logEntry.Content))
 }
 
@@ -117,37 +122,40 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(agents)
 }
 
-// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveAgent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
 	agent := models.Agent{AgentID: agentId}
 	err := agent.Get(db)
-	if err != nil {
-		log.Errorf("Agent with id %q not found. Got %q", agentId, err.Error())
-		http.NotFound(w, r)
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(agent)
+	err = json.NewEncoder(w).Encode(agent)
+	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
 }
 
 /*
  * Facts
  */
 
-// TODO: check error against err == sql.ErrNoRows to return 404, all other errors are 500 (connection or statement error)
 func serveFacts(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
 	fact := models.Fact{Agent: models.Agent{AgentID: agentId}}
 	err := fact.Get(db)
-	if err != nil {
-		log.Errorf("Agent with id %q not found. Got %q", agentId, err.Error())
-		http.NotFound(w, r)
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
 		return
 	}
 
