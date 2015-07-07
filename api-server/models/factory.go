@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"		
 
 	"database/sql"
 	"fmt"
@@ -89,6 +90,30 @@ func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, 
 	reply.Final = final
 	reply.Payload = payload
 	reply.Number = number
+}
+
+func (agent *Agent) Example() {
+	agent.AgentID = uuid.New()
+	agent.Project = "test project"
+	agent.Organization = "test organization"
+	agent.CreatedAt = time.Now()
+	agent.UpdatedAt = time.Now()
+}
+
+func (agents *Agents) CreateAndSaveAgentExamples(db *sql.DB, number int) {
+	now := time.Now()
+	for i := 0; i < number; i++ {
+		agent := Agent{}
+		agent.Example()
+		agent.CreatedAt = now.Add(time.Duration(i) * time.Minute)
+		agent.UpdatedAt = now.Add(time.Duration(i) * time.Minute)
+		var lastInsertId string
+		err := db.QueryRow(ownDb.InsertFactQuery, agent.AgentID, agent.Project, agent.Organization, "{}", agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId);				
+		if err != nil {
+			log.Error(err)
+		}
+		*agents = append(*agents, agent)
+	}
 }
 
 func (agents *Agents) CreateAndSaveRegistryExamples(db *sql.DB, number int) {

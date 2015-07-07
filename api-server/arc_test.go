@@ -9,8 +9,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	//"time"
 )
 
 var _ = Describe("Arc", func() {

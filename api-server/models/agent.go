@@ -11,9 +11,11 @@ import (
 )
 
 type Agent struct {
-	AgentID			string	 		`json:"agent_id"`
-	CreatedAt   time.Time		`json:"created_at"`
-	UpdatedAt   time.Time 	`json:"updated_at"`
+	AgentID				string	 		`json:"agent_id"`
+	Project				string			`json:"project"`
+	Organization	string			`json:"organization"`
+	CreatedAt   	time.Time		`json:"created_at"`
+	UpdatedAt   	time.Time 	`json:"updated_at"`
 }
 
 type Agents []Agent
@@ -33,7 +35,7 @@ func (agents *Agents) Get(db *sql.DB) error{
 
 	var agent Agent
 	for rows.Next() {
-		err = rows.Scan(&agent.AgentID,&agent.CreatedAt,&agent.UpdatedAt)
+		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.CreatedAt, &agent.UpdatedAt)
 		if err != nil {
 			log.Errorf("Error scaning agent results. Got ", err.Error())
 			continue
@@ -50,7 +52,7 @@ func (agent *Agent) Get(db *sql.DB) error {
 		return errors.New("Db is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.CreatedAt, &agent.UpdatedAt)
+	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.CreatedAt, &agent.UpdatedAt)
 	if err != nil {
 		return err
 	}

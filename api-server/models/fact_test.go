@@ -9,6 +9,7 @@ import (
 	"code.google.com/p/go-uuid/uuid"	
 	
 	"time"
+	"fmt"
 	
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,12 +33,14 @@ var _ = Describe("Fact", func() {
 
 		It("should return the facts", func() {			
 			agent_id := uuid.New()
-			facts := `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			proj := "huhu project"
+			org := "Miau organization"
+			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
 			
 			// insert facts			
 			req := arc.Request{Sender:agent_id, Payload: facts}
 			var lastInsertId string
-			err := db.QueryRow(InsertFactQuery, req.Sender, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId);
+			err := db.QueryRow(InsertFactQuery, req.Sender, proj, org, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId);
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get the facts
@@ -45,6 +48,8 @@ var _ = Describe("Fact", func() {
 			err = newFact.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newFact.Facts).To(Equal(facts))
+			Expect(newFact.Project).To(Equal(proj))
+			Expect(newFact.Organization).To(Equal(org))
 		})
 		
 	})
@@ -59,7 +64,9 @@ var _ = Describe("Fact", func() {
 		
 		It("should insert a new entry if facts doesn't exist yet", func() {
 			agent_id := uuid.New()
-			facts := `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			proj := "huhu project"
+			org := "Miau organization"
+			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
 			
 			// build a request
 			req := arc.Request{Sender:agent_id, Payload: facts}
@@ -71,23 +78,29 @@ var _ = Describe("Fact", func() {
 			
 			// check
 			newFact := Fact{}
-			err = db.QueryRow(GetFactQuery, agent_id).Scan(&newFact.AgentID, &newFact.Facts, &newFact.CreatedAt, &newFact.UpdatedAt)
+			err = db.QueryRow(GetFactQuery, agent_id).Scan(&newFact.AgentID, &newFact.Project, &newFact.Organization, &newFact.Facts, &newFact.CreatedAt, &newFact.UpdatedAt)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newFact.Facts).To(Equal(fact.Facts))			
+			Expect(newFact.Project).To(Equal(proj))
+			Expect(newFact.Organization).To(Equal(org))
 		})		
 		
 		It("should update an existing entry", func() {
 			agent_id := uuid.New()
-			facts := `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			proj := "huhu project"
+			org := "Miau organization"
+			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
 			
 			// insert facts			
 			req := arc.Request{Sender:agent_id, Payload: facts}
 			var lastInsertId string
-			err := db.QueryRow(InsertFactQuery, req.Sender, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId);
+			err := db.QueryRow(InsertFactQuery, req.Sender, proj, org, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId);
 			Expect(err).NotTo(HaveOccurred())
 			
 			// build a request
-			newFacts :=  `{"memory_used": 666666, "memory_total": 55555}`			
+			memory_used := 666666
+			memory_total := 55555
+			newFacts :=  fmt.Sprintf(`{"memory_used": %v, "memory_total": %v}`, memory_used, memory_total)
 			newReq := arc.Request{Sender:agent_id, Payload: newFacts}
 			
 			// facts upate
@@ -97,9 +110,10 @@ var _ = Describe("Fact", func() {
 						
 			// check
 			dbFact := Fact{}
-			err = db.QueryRow(GetFactQuery, agent_id).Scan(&dbFact.AgentID, &dbFact.Facts, &dbFact.CreatedAt, &dbFact.UpdatedAt)
+			dbFacts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": %v, "memory_total": %v, "organization": "%s"}`, proj, memory_used, memory_total, org)
+			err = db.QueryRow(GetFactQuery, agent_id).Scan(&dbFact.AgentID, &dbFact.Project, &dbFact.Organization, &dbFact.Facts, &dbFact.CreatedAt, &dbFact.UpdatedAt)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbFact.Facts).To(Equal(`{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 666666, "memory_total": 55555, "organization": "test-org"}`))			
+			Expect(dbFact.Facts).To(Equal(dbFacts))
 		})		
 		
 	})

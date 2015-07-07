@@ -31,7 +31,7 @@ var _ = AfterSuite(func() {
 
 var _ = BeforeEach(func() {
 	DeleteAllRowsFromTable(db, "jobs")
-	DeleteAllRowsFromTable(db, "facts")
+	DeleteAllRowsFromTable(db, "agents")
 	DeleteAllRowsFromTable(db, "logs")
 	DeleteAllRowsFromTable(db, "log_parts")
 })

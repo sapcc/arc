@@ -5,9 +5,6 @@ package models_test
 import (
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"			
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"code.google.com/p/go-uuid/uuid"
-	
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,27 +20,17 @@ var _ = Describe("Agents", func() {
 			Expect(err).To(HaveOccurred())
 		})
 		
-		It("should return all agents", func() {
-			agent1 := Agent{AgentID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()}
-			agent2 := Agent{AgentID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()}
-			agent3 := Agent{AgentID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()}						
-			agents := []Agent{agent1, agent2, agent3}
-			
-			// insert 3 agents
-			for i := 0; i < len(agents); i++ {
-				agent := agents[i]
-				var lastInsertId string
-				err := db.QueryRow(InsertFactQuery, agent.AgentID, "{}", agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId);
-				Expect(err).NotTo(HaveOccurred())			
-			}
+		It("should return all agents", func() {			
+			agents := Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
 			
 			// insert facts / agent
 			dbAgents := Agents{}
 			err := dbAgents.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbAgents[0].AgentID).To(Equal(agent1.AgentID))
-			Expect(dbAgents[1].AgentID).To(Equal(agent2.AgentID))
-			Expect(dbAgents[2].AgentID).To(Equal(agent3.AgentID))			
+			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
+			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
+			Expect(dbAgents[2].AgentID).To(Equal(agents[2].AgentID))
 		})
 		
 	})
@@ -55,28 +42,26 @@ var _ = Describe("Agent", func() {
 	Describe("Get", func() {
 
 		It("returns an error if no db connection is given", func() {
-			newAgent := Agent{AgentID: uuid.New()}
-			err := newAgent.Get(nil)
+			agent := Agent{}; agent.Example()
+			err := agent.Get(nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
 		It("returns an error if no agent found", func() {
-			newAgent := Agent{AgentID: uuid.New()}
-			err := newAgent.Get(db)
+			agent := Agent{}; agent.Example()
+			err := agent.Get(db)
 			Expect(err).To(HaveOccurred())
 		})
 		
-		It("should return the agent", func() {
-			agent_id := uuid.New()
-			
+		It("should return the agent", func() {			
 			// insert facts / agent
-			agent := Agent{AgentID: agent_id, CreatedAt: time.Now(), UpdatedAt: time.Now()}
+			agent := Agent{}; agent.Example()
 			var lastInsertId string
-			err := db.QueryRow(InsertFactQuery, agent_id, "{}", agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId);
+			err := db.QueryRow(InsertFactQuery, agent.AgentID, agent.Project, agent.Organization, "{}", agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId);
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get agent
-			newAgent := Agent{AgentID: agent_id}
+			newAgent := Agent{AgentID: agent.AgentID}
 			err = newAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(agent.AgentID).To(Equal(newAgent.AgentID))
