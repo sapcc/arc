@@ -42,8 +42,8 @@ func (job *Job) RpcVersionExample() {
 	job.Timeout = 60
 	job.RequestID = uuid.New()
 	job.Status = arc.Queued
-	job.CreatedAt = time.Now()
-	job.UpdatedAt = time.Now()
+	job.CreatedAt = time.Now().Add(-1 * time.Minute)
+	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
 }
 
 func (job *Job) ExecuteScriptExample() {
@@ -56,8 +56,8 @@ func (job *Job) ExecuteScriptExample() {
 	job.Payload = "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""
 	job.RequestID = uuid.New()
 	job.Status = arc.Queued
-	job.CreatedAt = time.Now()
-	job.UpdatedAt = time.Now()
+	job.CreatedAt = time.Now().Add(-1 * time.Minute)
+	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
 }
 
 func (request *Request) RegistryExample() {
@@ -77,7 +77,11 @@ func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, 
 	reply.RequestID = id
 	reply.Agent = "execute"
 	reply.Action = "script"
-	reply.State = arc.Executing
+	if final == true {
+		reply.State = arc.Complete
+	} else {
+		reply.State = arc.Executing
+	}
 	reply.Final = final
 	reply.Payload = payload
 	reply.Number = number

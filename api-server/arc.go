@@ -8,6 +8,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
+	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
 )
 
 /*
@@ -47,6 +48,12 @@ func arcSubscribeReplies(tp transport.Transport) error {
 				log.Errorf("Error updating fact %q. Got %q", registry, err.Error())
 				continue
 			}
+
+			// send done signal (for testing)
+			ftp, ok := tp.(*fake.FakeClient)
+			if ok {
+				ftp.DoneSignal()
+			}
 		case reply := <-msgChan:
 			log.Infof("Got reply with id %q and status %q", reply.RequestID, reply.State)
 
@@ -63,6 +70,12 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			if err != nil {
 				log.Error(err)
 				continue
+			}
+
+			// send done signal (for testing)
+			ftp, ok := tp.(*fake.FakeClient)
+			if ok {
+				ftp.DoneSignal()
 			}
 		}
 	}
