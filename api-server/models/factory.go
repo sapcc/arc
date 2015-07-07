@@ -46,18 +46,22 @@ func (job *Job) RpcVersionExample() {
 	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
 }
 
-func (job *Job) ExecuteScriptExample() {
+func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.Time, timeout int) {
 	job.Sender = "windows"
 	job.Version = 1
 	job.Agent = "execute"
 	job.Action = "script"
 	job.To = "darwin"
-	job.Timeout = 60
+	job.Timeout = timeout
 	job.Payload = "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""
 	job.RequestID = uuid.New()
-	job.Status = arc.Queued
-	job.CreatedAt = time.Now().Add(-1 * time.Minute)
-	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
+	job.Status = status
+	job.CreatedAt = createdAt
+	job.UpdatedAt = createdAt
+}
+
+func (job *Job) ExecuteScriptExample() {
+	job.CustomExecuteScriptExample(arc.Queued, time.Now().Add(-1 * time.Minute), 60)
 }
 
 func (request *Request) RegistryExample() {
