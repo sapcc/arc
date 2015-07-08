@@ -31,7 +31,7 @@ func arcNewConnection(config arc.Config) (transport.Transport, error) {
 }
 
 func arcSubscribeReplies(tp transport.Transport) error {
-	regChan, cancelRegSubscription := tp.Subscribe("registry")
+	regChan, cancelRegSubscription := tp.SubscribeRegistrations()
 	defer cancelRegSubscription()
 
 	msgChan, cancelRepliesSubscription := tp.SubscribeReplies()
@@ -42,8 +42,8 @@ func arcSubscribeReplies(tp transport.Transport) error {
 		case registry := <-regChan:
 			log.Infof("Got registry from %q with data %q", registry.Sender, registry.Payload)
 
-			fact := models.Fact{}
-			err := fact.ProcessRequest(db, registry)
+			agent := models.Agent{}
+			err := agent.ProcessRegistration(db, registry)
 			if err != nil {
 				log.Errorf("Error updating fact %q. Got %q", registry, err.Error())
 				continue

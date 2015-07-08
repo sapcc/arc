@@ -9,6 +9,7 @@ type FakeClient struct {
 	Name      string
 	Done      chan bool
 	ReplyChan chan *arc.Reply
+	RegChan 	chan *arc.Registration	
 	ReqChan   chan *arc.Request
 }
 
@@ -33,7 +34,7 @@ func (c *FakeClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	out := make(chan *arc.Request)
 	c.ReqChan = out
 	cancel := func() {
-		log.Infof("FAKE transport closed")
+		log.Infof("FAKE request transport closed")
 		close(out)
 	}
 	return out, cancel
@@ -63,20 +64,26 @@ func (c *FakeClient) SubscribeReplies() (<-chan *arc.Reply, func()) {
 	out := make(chan *arc.Reply)
 	c.ReplyChan = out
 	cancel := func() {
-		log.Infof("FAKE transport closed")
+		log.Infof("FAKE reply transport closed")
 		close(out)
 	}
 	return out, cancel
 }
 
 func (c *FakeClient) Registration(msg *arc.Registration) {
+	go func() {
+		log.Infof("Writing Request into the FAKE transport. %q", msg)
+		c.RegChan <- msg
+	}()
 }
 
 func (c *FakeClient) SubscribeRegistrations() (<-chan *arc.Registration, func()) {
-	out := make(chan *arc.Registration)
+	log.Infof("SubscribeRegistrations with the FAKE transport")
 
+	out := make(chan *arc.Registration)
+	c.RegChan = out
 	cancel := func() {
-		log.Info("FAKE transport closed")
+		log.Info("FAKE registration transport closed")
 		close(out)
 	}
 

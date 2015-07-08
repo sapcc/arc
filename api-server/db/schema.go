@@ -40,9 +40,8 @@ var InsertLogPartQuery = `INSERT INTO log_parts(job_id,number,content,final,crea
 var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content ORDER BY number, job_id), '') AS content FROM log_parts WHERE job_id=$1"
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
 
-// Facts
-var GetAgentsQuery = "SELECT DISTINCT agent_id,project,organization,created_at,updated_at FROM agents order by updated_at"
-var GetAgentQuery = "SELECT agent_id,project,organization,created_at,updated_at FROM agents WHERE agent_id=$1"
-var GetFactQuery = "SELECT * FROM agents WHERE agent_id=$1"
-var InsertFactQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6) returning agent_id`
-var UpdateFact = `UPDATE agents SET facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$2::json)::jsonb WHERE agent_id=$1`
+// Agents
+var GetAgentsQuery = "SELECT DISTINCT * FROM agents order by updated_at"
+var GetAgentQuery = "SELECT * FROM agents WHERE agent_id=$1"
+var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6) returning agent_id`
+var UpdateAgent = `UPDATE agents SET project=$2,organization=$3,facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$4::json)::jsonb,updated_at=$5 WHERE agent_id=$1`

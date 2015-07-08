@@ -21,14 +21,14 @@ var _ = Describe("Arc", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("should receive all registry requests and update facts", func() {
+	It("should receive all registries and update facts", func() {
 		// subscribe to all replies
 		go arcSubscribeReplies(tp)
 
 		// write to chan
-		req := models.Request{}
-		req.RegistryExample()
-		tp.Request(&req.Request)
+		reg := models.Registration{}
+		reg.Example()
+		tp.Registration(&reg.Registration)
 
 		// wait till done
 		ftp, ok := tp.(*fake.FakeClient)
@@ -36,10 +36,10 @@ var _ = Describe("Arc", func() {
 		<-ftp.Done
 
 		// check registry is been saved
-		dbFact := models.Fact{Agent: models.Agent{AgentID: req.Sender}}
-		err := dbFact.Get(db)
+		dbAgent := models.Agent{AgentID: reg.Sender}
+		err := dbAgent.Get(db)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(dbFact.Facts).To(Equal(req.Payload))
+		Expect(dbAgent.Facts).To(Equal(reg.Payload))
 	})
 
 	It("should receive all replies, update job and save log", func() {

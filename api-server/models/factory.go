@@ -3,8 +3,7 @@ package models
 import (
 	"code.google.com/p/go-uuid/uuid"
 	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"		
+	"gitHub.***REMOVED***/monsoon/arc/arc"	
 
 	"database/sql"
 	"fmt"
@@ -14,6 +13,10 @@ import (
 
 type Request struct {
 	arc.Request
+}
+
+type Registration struct {
+	arc.Registration
 }
 
 type Reply struct {
@@ -81,21 +84,30 @@ func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, 
 	reply.Number = number
 }
 
-func (request *Request) RegistryExample() {
-	request.Sender = uuid.New()
-	request.Version = 1
-	request.Agent = "registration"
-	request.Action = "register"
-	request.To = "registry"
-	request.Timeout = 5
-	request.Payload = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
-	request.RequestID = uuid.New()
+func (req *Request) Example() {
+	req.Version = 1
+	req.Sender = "windows"
+	req.RequestID = uuid.New()	
+	req.To = "darwin"	
+	req.Timeout = 60	
+	req.Agent = "execute"
+	req.Action = "script"
+	req.Payload = "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""
+}
+
+func (reg *Registration) Example() {
+	reg.Sender = uuid.New()
+	reg.Version = 1
+	reg.Project = "test-proj"
+	reg.Organization = "test-org"
+	reg.Payload = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 }
 
 func (agent *Agent) Example() {
 	agent.AgentID = uuid.New()
-	agent.Project = "test project"
-	agent.Organization = "test organization"
+	agent.Project = "test-project"
+	agent.Organization = "test-org"
+	agent.Facts = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 	agent.CreatedAt = time.Now()
 	agent.UpdatedAt = time.Now()
 }
@@ -103,31 +115,13 @@ func (agent *Agent) Example() {
 func (agents *Agents) CreateAndSaveAgentExamples(db *sql.DB, number int) {
 	now := time.Now()
 	for i := 0; i < number; i++ {
-		agent := Agent{}
-		agent.Example()
+		agent := Agent{}; agent.Example()
 		agent.CreatedAt = now.Add(time.Duration(i) * time.Minute)
 		agent.UpdatedAt = now.Add(time.Duration(i) * time.Minute)
-		var lastInsertId string
-		err := db.QueryRow(ownDb.InsertFactQuery, agent.AgentID, agent.Project, agent.Organization, "{}", agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId);				
+		err := agent.Save(db)
 		if err != nil {
 			log.Error(err)
 		}
-		*agents = append(*agents, agent)
-	}
-}
-
-func (agents *Agents) CreateAndSaveRegistryExamples(db *sql.DB, number int) {
-	for i := 0; i < number; i++ {
-		// build a request
-		req := Request{}
-		req.RegistryExample()
-		// save a job
-		fact := Fact{}
-		err := fact.ProcessRequest(db, &req.Request)
-		if err != nil {
-			log.Error(err)
-		}
-		agent := fact.Agent
 		*agents = append(*agents, agent)
 	}
 }
