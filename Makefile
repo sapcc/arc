@@ -52,11 +52,11 @@ test: test-gofmt unit integration
 
 .PHONY: unit
 unit: setup
-	go test ./... -v
+	go test -v -timeout=2s ./...
 
 .PHONY: integration
 integration: setup
-	go test ./... -v -p=1 -tags=integration
+	go test ./... -v -p=1 -timeout=30s -tags=integration
 
 .PHONY: test-gofmt
 test-gofmt:

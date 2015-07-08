@@ -69,6 +69,20 @@ func (c *FakeClient) SubscribeReplies() (<-chan *arc.Reply, func()) {
 	return out, cancel
 }
 
+func (c *FakeClient) Registration(msg *arc.Registration) {
+}
+
+func (c *FakeClient) SubscribeRegistrations() (<-chan *arc.Registration, func()) {
+	out := make(chan *arc.Registration)
+
+	cancel := func() {
+		log.Info("FAKE transport closed")
+		close(out)
+	}
+
+	return out, cancel
+}
+
 func (c *FakeClient) DoneSignal() {
 	c.Done <- true
 }

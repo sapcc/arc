@@ -84,10 +84,10 @@ func (s *server) Run() {
 		case update := <-s.factStore.Updates():
 			j, err := json.Marshal(update)
 			if err == nil {
-				if req, err := arc.CreateRegistrationMessage(s.config.Identity, string(j)); err == nil {
-					s.transport.Request(req)
+				if req, err := arc.CreateRegistration(s.config.Organization, s.config.Project, s.config.Identity, string(j)); err == nil {
+					s.transport.Registration(req)
 				} else {
-					log.Warn("Failed to create registratrion request ", err)
+					log.Warn("Failed to create registration message", err)
 				}
 			} else {
 				log.Warn("Failed to serialize fact update: ", err)

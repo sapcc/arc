@@ -12,10 +12,12 @@ type Transport interface {
 	Connect() error
 	Disconnect()
 	Request(msg *arc.Request)
+	Registration(msg *arc.Registration)
 	Reply(msg *arc.Reply)
 	Subscribe(identity string) (messages <-chan *arc.Request, cancel func())
 	SubscribeJob(requestId string) (messages <-chan *arc.Reply, cancel func())
 	SubscribeReplies() (messages <-chan *arc.Reply, cancel func())
+	SubscribeRegistrations() (messages <-chan *arc.Registration, cancel func())
 }
 
 func New(config arc.Config) (Transport, error) {

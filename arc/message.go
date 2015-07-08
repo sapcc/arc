@@ -30,6 +30,14 @@ type Reply struct {
 	Number    uint     `json:"number"`
 }
 
+type Registration struct {
+	Version      int    `json:"version"`
+	Sender       string `json:"sender"`
+	Organization string `json:"organization"`
+	Project      string `json:"project"`
+	Payload      string `json:"payload"`
+}
+
 func (r *Request) ToJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		*Request
@@ -42,6 +50,13 @@ func (r *Reply) ToJSON() ([]byte, error) {
 		*Reply
 		Type string `json:"type"`
 	}{r, "reply"})
+}
+
+func (r *Registration) ToJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		*Registration
+		Type string `json:"type"`
+	}{r, "registration"})
 }
 
 func CreateReply(request *Request, identity string, state JobState, payload string, number uint) *Reply {
@@ -59,10 +74,6 @@ func CreateReply(request *Request, identity string, state JobState, payload stri
 		Sender:    identity,
 	}
 
-}
-
-func CreateRegistrationMessage(identity, payload string) (*Request, error) {
-	return CreateRequest("registration", "register", identity, "registry", 5, payload)
 }
 
 func CreateRequest(agent string, action string, identity string, to string, timeout int, payload string) (*Request, error) {
@@ -83,6 +94,18 @@ func CreateRequest(agent string, action string, identity string, to string, time
 	}
 
 	return &request, nil
+}
+
+func CreateRegistration(organization, project, identity, payload string) (*Registration, error) {
+	registration := Registration{
+		Version:      1,
+		Project:      project,
+		Organization: organization,
+		Sender:       identity,
+		Payload:      payload,
+	}
+
+	return &registration, nil
 }
 
 func ParseRequest(data *[]byte) (*Request, error) {
@@ -111,7 +134,7 @@ func ParseReply(data *[]byte) (*Reply, error) {
 	}
 
 	// validation
-	err = ValidateReplay(&reply)
+	err = ValidateReply(&reply)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +176,7 @@ func ValidateRequest(request *Request) error {
 	return nil
 }
 
-func ValidateReplay(reply *Reply) error {
+func ValidateReply(reply *Reply) error {
 	field_error := "Attribute '%s' is missing or invalid"
 
 	if reply.Version < 1 {

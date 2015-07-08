@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -65,17 +66,17 @@ func New(config arc.Config) (*MQTTClient, error) {
 		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
 	}
-	if reg, err := offlineMessage(config.Identity); err == nil {
+	if reg, err := offlineMessage(config.Organization, config.Project, config.Identity); err == nil {
 		if j, err := reg.ToJSON(); err == nil {
-			logrus.Infof("Setting last will delivering to %s", identityTopic(reg.To))
-			opts.SetBinaryWill(identityTopic(reg.To), j, 0, false)
+			logrus.Infof("Setting last will delivering to %s", registrationTopic(config.Organization, config.Project, config.Identity))
+			opts.SetBinaryWill(registrationTopic(config.Organization, config.Project, config.Identity), j, 0, false)
 		}
 	}
 	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization}
-	if req, err := onlineMessage(config.Identity); err == nil {
+	if req, err := onlineMessage(config.Organization, config.Project, config.Identity); err == nil {
 		opts.OnConnect = func(_ *MQTT.Client) {
 			logrus.Info("Sending online Message")
-			transport.Request(req)
+			transport.Registration(req)
 		}
 	} else {
 		logrus.Error("Failed to create 'online' registration message ", err)
@@ -96,9 +97,9 @@ func (c *MQTTClient) Connect() error {
 }
 
 func (c *MQTTClient) Disconnect() {
-	if req, err := offlineMessage(c.identity); err == nil {
+	if reg, err := offlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending offline message")
-		c.Request(req)
+		c.Registration(reg)
 	} else {
 		logrus.Error("Failed to create 'offline' registration message: ", err)
 	}
@@ -198,6 +199,50 @@ func (c *MQTTClient) SubscribeReplies() (<-chan *arc.Reply, func()) {
 	return c.SubscribeJob("+")
 }
 
+func (c *MQTTClient) Registration(msg *arc.Registration) {
+	topic := registrationTopic(c.organization, c.project, c.identity)
+	j, err := msg.ToJSON()
+	if err != nil {
+		logrus.Errorf("Error serializing Registration to JSON: %s", err)
+	} else {
+		logrus.Debugf("Publishing registration %s\n to %s", msg, topic)
+		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
+	}
+}
+
+func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func()) {
+	topic := "registration/+/+/+"
+	out := make(chan *arc.Registration)
+	canceled := make(chan struct{})
+	var mutex sync.Mutex
+
+	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
+		payload := mMessage.Payload()
+		c := strings.Split(mMessage.Topic(), "/")
+		msg, err := arc.CreateRegistration(c[1], c[2], c[3], string(payload))
+		if err != nil {
+			logrus.Warnf("Discarding invalid message on topic %s:%s", mMessage.Topic(), err)
+			return
+		}
+		mutex.Lock()
+		select {
+		case <-canceled:
+		case out <- msg:
+		}
+		mutex.Unlock()
+	}
+	cancel := func() {
+		c.client.Unsubscribe(topic).Wait()
+		close(canceled)
+		mutex.Lock()
+		close(out)
+		mutex.Unlock()
+	}
+
+	c.client.Subscribe(topic, 0, messageCallback).Wait()
+	return out, cancel
+}
+
 func identityTopic(identity string) string {
 	return fmt.Sprintf("identity/%s", identity)
 }
@@ -205,9 +250,13 @@ func replyTopic(request_id string) string {
 	return fmt.Sprintf("reply/%s", request_id)
 }
 
-func offlineMessage(identity string) (*arc.Request, error) {
-	return arc.CreateRegistrationMessage(identity, `{"online": false}`)
+func registrationTopic(organization, project, identity string) string {
+	return fmt.Sprintf("registration/%s/%s/%s", organization, project, identity)
 }
-func onlineMessage(identity string) (*arc.Request, error) {
-	return arc.CreateRegistrationMessage(identity, `{"online": true}`)
+
+func offlineMessage(organization, project, identity string) (*arc.Registration, error) {
+	return arc.CreateRegistration(organization, project, identity, `{"online": false}`)
+}
+func onlineMessage(organization, project, identity string) (*arc.Registration, error) {
+	return arc.CreateRegistration(organization, project, identity, `{"online": true}`)
 }
