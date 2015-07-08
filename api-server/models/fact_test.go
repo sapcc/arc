@@ -3,12 +3,10 @@
 package models_test
 
 import (
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"		
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"	
 	"code.google.com/p/go-uuid/uuid"	
-	
-	"time"
+
 	"fmt"
 	
 	. "github.com/onsi/ginkgo"
@@ -18,7 +16,7 @@ import (
 var _ = Describe("Fact", func() {
 
 	Describe("Get", func() {
-
+		
 		It("returns an error if no db connection is given", func() {
 			newFact := Fact{Agent: Agent{AgentID: uuid.New()}}			
 			err := newFact.Get(nil)
@@ -37,10 +35,9 @@ var _ = Describe("Fact", func() {
 			org := "Miau organization"
 			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
 			
-			// insert facts			
-			req := arc.Request{Sender:agent_id, Payload: facts}
-			var lastInsertId string
-			err := db.QueryRow(InsertFactQuery, req.Sender, proj, org, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId);
+			// save facts for agent
+			fact := Fact{Agent: Agent{AgentID: agent_id, Project: proj, Organization: org}, Facts: facts}
+			err := fact.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get the facts
@@ -51,14 +48,14 @@ var _ = Describe("Fact", func() {
 			Expect(newFact.Project).To(Equal(proj))
 			Expect(newFact.Organization).To(Equal(org))
 		})
-		
+
 	})
 
-	Describe("Update", func() {
+	Describe("ProcessRequest", func() {
 
 		It("returns an error if no db connection is given", func() {
 			newFact := Fact{Agent: Agent{AgentID: uuid.New()}}			
-			err := newFact.Update(nil, nil)
+			err := newFact.ProcessRequest(nil, nil)
 			Expect(err).To(HaveOccurred())
 		})
 		
@@ -71,47 +68,46 @@ var _ = Describe("Fact", func() {
 			// build a request
 			req := arc.Request{Sender:agent_id, Payload: facts}
 			
-			// facts upate
-			fact := Fact{Agent: Agent{AgentID: uuid.New()}}			
-			err := fact.Update(db, &req)
+			// process the request
+			fact := Fact{}
+			err := fact.ProcessRequest(db, &req)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// check
-			newFact := Fact{}
-			err = db.QueryRow(GetFactQuery, agent_id).Scan(&newFact.AgentID, &newFact.Project, &newFact.Organization, &newFact.Facts, &newFact.CreatedAt, &newFact.UpdatedAt)
+			newFact := Fact{Agent: Agent{AgentID: agent_id}}	
+			err = newFact.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newFact.Facts).To(Equal(fact.Facts))			
 			Expect(newFact.Project).To(Equal(proj))
 			Expect(newFact.Organization).To(Equal(org))
 		})		
-		
+
 		It("should update an existing entry", func() {
-			agent_id := uuid.New()
 			proj := "huhu project"
 			org := "Miau organization"
 			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
 			
-			// insert facts			
-			req := arc.Request{Sender:agent_id, Payload: facts}
-			var lastInsertId string
-			err := db.QueryRow(InsertFactQuery, req.Sender, proj, org, req.Payload, time.Now(), time.Now()).Scan(&lastInsertId);
+			// save agent with facts			
+			req := arc.Request{Sender:uuid.New(), Payload: facts}
+			fact := Fact{}; fact.FromRequest(&req)
+			err := fact.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// build a request
 			memory_used := 666666
 			memory_total := 55555
 			newFacts :=  fmt.Sprintf(`{"memory_used": %v, "memory_total": %v}`, memory_used, memory_total)
-			newReq := arc.Request{Sender:agent_id, Payload: newFacts}
+			newReq := arc.Request{Sender:fact.AgentID, Payload: newFacts}
 			
-			// facts upate
-			fact := Fact{Agent: Agent{AgentID: agent_id}}			
-			err = fact.Update(db, &newReq)
+			// process the request
+			updateFact := Fact{}			
+			err = updateFact.ProcessRequest(db, &newReq)
 			Expect(err).NotTo(HaveOccurred())
 						
 			// check
-			dbFact := Fact{}
 			dbFacts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": %v, "memory_total": %v, "organization": "%s"}`, proj, memory_used, memory_total, org)
-			err = db.QueryRow(GetFactQuery, agent_id).Scan(&dbFact.AgentID, &dbFact.Project, &dbFact.Organization, &dbFact.Facts, &dbFact.CreatedAt, &dbFact.UpdatedAt)
+			dbFact := Fact{Agent: Agent{AgentID: fact.AgentID}}
+			err = dbFact.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbFact.Facts).To(Equal(dbFacts))
 		})		

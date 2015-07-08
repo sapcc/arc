@@ -43,7 +43,7 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			log.Infof("Got registry from %q with data %q", registry.Sender, registry.Payload)
 
 			fact := models.Fact{}
-			err := fact.Update(db, registry)
+			err := fact.ProcessRequest(db, registry)
 			if err != nil {
 				log.Errorf("Error updating fact %q. Got %q", registry, err.Error())
 				continue

@@ -2,8 +2,7 @@
 
 package models_test
 
-import (
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"			
+import (		
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 
 	. "github.com/onsi/ginkgo"
@@ -56,9 +55,9 @@ var _ = Describe("Agent", func() {
 		It("should return the agent", func() {			
 			// insert facts / agent
 			agent := Agent{}; agent.Example()
-			var lastInsertId string
-			err := db.QueryRow(InsertFactQuery, agent.AgentID, agent.Project, agent.Organization, "{}", agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId);
-			Expect(err).NotTo(HaveOccurred())
+			fact := Fact{Agent: agent, Facts: "{}"}
+			err := fact.Save(db)
+			Expect(err).NotTo(HaveOccurred())			
 			
 			// get agent
 			newAgent := Agent{AgentID: agent.AgentID}

@@ -65,17 +65,6 @@ func (job *Job) ExecuteScriptExample() {
 	job.CustomExecuteScriptExample(arc.Queued, time.Now().Add(-1 * time.Minute), 60)
 }
 
-func (request *Request) RegistryExample() {
-	request.Sender = uuid.New()
-	request.Version = 1
-	request.Agent = "registration"
-	request.Action = "register"
-	request.To = "registry"
-	request.Timeout = 5
-	request.Payload = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
-	request.RequestID = uuid.New()
-}
-
 func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, number uint) {
 	reply.Version = 1
 	reply.Sender = "darwin"
@@ -90,6 +79,17 @@ func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, 
 	reply.Final = final
 	reply.Payload = payload
 	reply.Number = number
+}
+
+func (request *Request) RegistryExample() {
+	request.Sender = uuid.New()
+	request.Version = 1
+	request.Agent = "registration"
+	request.Action = "register"
+	request.To = "registry"
+	request.Timeout = 5
+	request.Payload = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+	request.RequestID = uuid.New()
 }
 
 func (agent *Agent) Example() {
@@ -123,7 +123,7 @@ func (agents *Agents) CreateAndSaveRegistryExamples(db *sql.DB, number int) {
 		req.RegistryExample()
 		// save a job
 		fact := Fact{}
-		err := fact.Update(db, &req.Request)
+		err := fact.ProcessRequest(db, &req.Request)
 		if err != nil {
 			log.Error(err)
 		}

@@ -319,7 +319,7 @@ var _ = Describe("Facts Handlers", func() {
 
 			// save a fact
 			fact := models.Fact{}
-			err := fact.Update(db, &req.Request)
+			err := fact.ProcessRequest(db, &req.Request)
 			Expect(err).NotTo(HaveOccurred())
 			agent = fact.Agent
 		})
@@ -413,7 +413,7 @@ var _ = Describe("Facts Handlers", func() {
 
 			// save a fact
 			fact := models.Fact{}
-			err := fact.Update(db, &regReq.Request)
+			err := fact.ProcessRequest(db, &regReq.Request)
 			Expect(err).NotTo(HaveOccurred())
 			agent := fact.Agent
 
