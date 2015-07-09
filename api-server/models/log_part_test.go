@@ -8,9 +8,7 @@ import (
 	"time"
 	"code.google.com/p/go-uuid/uuid"
 
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -58,35 +56,41 @@ var _ = Describe("LogParts", func() {
 
 	})
 
-	Describe("Save", func() {
+	Describe("Get and Save", func() {
 
-		It("returns an error if no db connection is given", func() {
+		It("returns an error if no db connection is given for get", func() {
+			logPart := LogPart{"the_job_id", 1, "the log chunck", false, time.Now()}
+			err := logPart.Get(nil)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("returns an error if no db connection is given for save", func() {
 			logPart := LogPart{"the_job_id", 1, "the log chunck", false, time.Now()}
 			err := logPart.Save(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should not save a log part if the job with the same id does not exist", func() {
-			job_id := uuid.New()
-			
+		It("should not save a log part if the job with the same id does not exist", func() {			
 			// save chunck
-			logPart := LogPart{job_id, 1, "the log chunck", false, time.Now()}
+			logPart := LogPart{uuid.New(), 1, "the log chunck", false, time.Now()}
 			err := logPart.Save(db)
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should save a log part", func() {
+		It("should save a log part and get the results", func() {
 			// add a job related to the log chuncks
 			newJob := Job{}
 			newJob.ExecuteScriptExample()
-			newJob.Save(db)
+			err := newJob.Save(db)
+			Expect(err).NotTo(HaveOccurred())			
 
 			// save chunck
 			logPart := LogPart{newJob.RequestID, 1, "the log chunck", false, time.Now()}
-			err := logPart.Save(db)
+			err = logPart.Save(db)
+			Expect(err).NotTo(HaveOccurred())
 
-			dbLogPart := LogPart{}
-			err = db.QueryRow(GetLogPartQuery, newJob.RequestID).Scan(&dbLogPart.JobID, &dbLogPart.Number, &dbLogPart.Content, &dbLogPart.Final, &dbLogPart.CreatedAt)
+			dbLogPart := LogPart{JobID: logPart.JobID, Number: logPart.Number}
+			err = dbLogPart.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbLogPart.JobID).To(Equal(logPart.JobID))
 			Expect(dbLogPart.Number).To(Equal(logPart.Number))
