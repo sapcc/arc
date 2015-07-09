@@ -218,12 +218,16 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 
 	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
 		payload := mMessage.Payload()
-		c := strings.Split(mMessage.Topic(), "/")
-		msg, err := arc.CreateRegistration(c[1], c[2], c[3], string(payload))
+		msg, err := arc.ParseRegistration(&payload)
 		if err != nil {
 			logrus.Warnf("Discarding invalid message on topic %s:%s", mMessage.Topic(), err)
 			return
 		}
+		if c := strings.Split(mMessage.Topic(), "/"); msg.Organization != c[1] || msg.Project != c[2] || msg.Sender != c[3] {
+			logrus.Warn("Discarding message with modified organization, project or sender")
+			return
+		}
+
 		mutex.Lock()
 		select {
 		case <-canceled:

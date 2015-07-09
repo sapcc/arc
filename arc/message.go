@@ -108,6 +108,21 @@ func CreateRegistration(organization, project, identity, payload string) (*Regis
 	return &registration, nil
 }
 
+func ParseRegistration(data *[]byte) (*Registration, error) {
+	var reg Registration
+	err := json.Unmarshal(*data, &reg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ValidateRegistration(&reg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &reg, err
+}
+
 func ParseRequest(data *[]byte) (*Request, error) {
 	var request Request
 	// unmarshal
@@ -204,4 +219,25 @@ func ValidateReply(reply *Reply) error {
 	}
 
 	return nil
+}
+
+func ValidateRegistration(reg *Registration) error {
+	field_error := "Attribute '%s' is missing or invalid"
+
+	if reg.Version < 1 {
+		return fmt.Errorf(field_error, "Version")
+	}
+
+	if reg.Organization == "" {
+		return fmt.Errorf(field_error, "Organization")
+	}
+	if reg.Project == "" {
+		return fmt.Errorf(field_error, "Project")
+	}
+	if reg.Sender == "" {
+		return fmt.Errorf(field_error, "Sender")
+	}
+
+	return nil
+
 }
