@@ -92,7 +92,7 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	jobId := vars["jobId"]
 
 	logEntry := models.Log{JobID: jobId}
-	err := logEntry.Get(db)
+	err := logEntry.GetOrCollect(db)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound)
 		return

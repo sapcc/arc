@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"	
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"code.google.com/p/go-uuid/uuid"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
@@ -18,11 +17,51 @@ import (
 
 var _ = Describe("Log", func() {
 
-	Describe("Get", func() {
+	Describe("Get and save", func() {
+
+		It("returns an error if no db connection is given for get", func() {
+			newLog := Log{JobID:uuid.New()}
+			err := newLog.Get(nil)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("returns an error if no db connection is given for save", func() {
+			newLog := Log{JobID:uuid.New()}
+			err := newLog.Save(nil)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("should save and get a log", func() {
+			// add a job related to the log
+			newJob := Job{}
+			newJob.ExecuteScriptExample()			
+			err := newJob.Save(db)
+			Expect(err).NotTo(HaveOccurred())					
+			
+			// insert a log
+			content := "Log content"
+			created_at := time.Now().Add((-5) * time.Minute)
+			updated_at := time.Now().Add((-5) * time.Minute)
+			log := Log{JobID:newJob.RequestID, Content:content, CreatedAt:created_at, UpdatedAt:updated_at}
+			err = log.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+			// get the log
+			newLog := Log{JobID:newJob.RequestID}
+			err = newLog.GetOrCollect(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newLog.Content).To(Equal(content))
+			Expect(newLog.CreatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(created_at.Format("2006-01-02 15:04:05.99")))
+			Expect(newLog.UpdatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(updated_at.Format("2006-01-02 15:04:05.99")))			
+		})
+		
+	})
+
+	Describe("GetOrCollect", func() {
 
 		It("returns an error if no db connection is given", func() {
 			newLog := Log{JobID:uuid.New()}
-			err := newLog.Get(nil)
+			err := newLog.GetOrCollect(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -32,15 +71,15 @@ var _ = Describe("Log", func() {
 			newJob.ExecuteScriptExample()			
 			newJob.Save(db)
 			
-			content := "Log content"
-			
 			// insert a log
-			_, err := db.Exec(InsertLogQuery, newJob.RequestID, content, time.Now(), time.Now())
+			content := "Log content"
+			log := Log{JobID:newJob.RequestID, Content:content, CreatedAt:time.Now(), UpdatedAt:time.Now()}
+			err := log.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 			
 			// get the log
 			newLog := Log{JobID:newJob.RequestID}
-			err = newLog.Get(db)
+			err = newLog.GetOrCollect(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(content).To(Equal(newLog.Content))
 		})
@@ -66,7 +105,7 @@ var _ = Describe("Log", func() {
 			
 			// get the log
 			newLog := Log{JobID:newJob.RequestID}
-			err := newLog.Get(db)
+			err := newLog.GetOrCollect(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(content).To(Equal(newLog.Content))
 		})
@@ -113,8 +152,8 @@ var _ = Describe("Log", func() {
 			Expect(err).NotTo(HaveOccurred())
 			
 			// check log
-			newLog := Log{JobID:newJob.RequestID}			
-			err = db.QueryRow(GetLogQuery, newLog.JobID).Scan(&newLog.JobID, &newLog.Content, &newLog.CreatedAt, &newLog.UpdatedAt)				
+			newLog := Log{JobID:newJob.RequestID}
+			err = newLog.Get(db)			
 			Expect(err).To(HaveOccurred())
 			
 			// check log parts
@@ -145,7 +184,7 @@ var _ = Describe("Log", func() {
 			
 			// check log
 			newLog := Log{JobID:newJob.RequestID}			
-			err = db.QueryRow(GetLogQuery, newLog.JobID).Scan(&newLog.JobID, &newLog.Content, &newLog.CreatedAt, &newLog.UpdatedAt)				
+			err = newLog.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(newLog.Content).To(Equal(chunck))			
 		})
@@ -165,8 +204,8 @@ var _ = Describe("Log", func() {
 			Expect(err).To(HaveOccurred())
 			
 			// check log
-			newLog := Log{JobID:job_id}			
-			err = db.QueryRow(GetLogQuery, newLog.JobID).Scan(&newLog.JobID, &newLog.Content, &newLog.CreatedAt, &newLog.UpdatedAt)				
+			newLog := Log{JobID:job_id}
+			err = newLog.Get(db)
 			Expect(err).To(HaveOccurred())
 		})		
 		

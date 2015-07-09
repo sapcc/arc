@@ -20,10 +20,37 @@ type Log struct {
 
 func (log *Log) Get(db *sql.DB) error {
 	if db == nil {
-		return fmt.Errorf("Db is nil")
+		return fmt.Errorf("Db connection is nil")
 	}
 	
 	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)		
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (log *Log) Save(db *sql.DB) error {
+	if db == nil {
+		return fmt.Errorf("Db connection is nil")
+	}	
+	
+	var lastInsertId string
+	err := db.QueryRow(ownDb.InsertLogQuery, log.JobID, log.Content, log.CreatedAt, log.UpdatedAt).Scan(&lastInsertId)
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (log *Log) GetOrCollect(db *sql.DB) error {
+	if db == nil {
+		return fmt.Errorf("Db is nil")
+	}
+	
+	err := log.Get(db)
 	if err == sql.ErrNoRows {	
 		// if no log entry collect all log parts
 		log_part := LogPart{JobID:log.JobID}		
@@ -41,7 +68,7 @@ func (log *Log) Get(db *sql.DB) error {
 
 func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
 	if db == nil {
-		return fmt.Errorf("Db is nil")
+		return fmt.Errorf("Db connection is nil")
 	}
 
 	// save log part
