@@ -1,0 +1,30 @@
+/[ \t\n]/         { /* Skip blanks and tabs. */ }
+/AND/           { return AND }
+/OR/            { return OR }
+/NOT/           { return NOT }
+/!=/            { return NEQ }
+/=/             { return '='  }
+/\(/             { return '(' }
+/\)/             { return ')' }
+/"([^"]|\\")+"/ { t := yylex.Text(); lval.str = t[1:len(t)-1]; return STRING }
+/'([^']|\\')+'/ { t := yylex.Text(); lval.str = t[1:len(t)-1]; return STRING }
+/[-_a-zA-Z][-_a-zA-Z0-9]*/        { lval.str = yylex.Text(); return FIELD }
+/[-]?[0-9]+/        { lval.num,_ = strconv.Atoi(yylex.Text()); return NUMBER }
+/./             { return 1 }
+//
+
+package filter
+
+import(
+  "strconv"
+  "fmt"
+)
+
+func (yylex *Lexer) Error(e string) {
+  col := 0
+  if len(yylex.stack) > 0 {
+    col = yylex.Column()
+  }
+  yylex.parseResult = fmt.Sprintf("%s. Column: %d", e, col ) 
+
+}
