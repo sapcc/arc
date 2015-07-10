@@ -73,7 +73,11 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a mqtt request
-	arcSendRequest(&job.Request)
+	err = arcSendRequest(&job.Request)
+	if err != nil {
+		checkErrAndReturnStatus(w, err, "Error saving job", http.StatusInternalServerError)
+		return
+	}
 
 	// create response
 	response := models.JobID{job.RequestID}

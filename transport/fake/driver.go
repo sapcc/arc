@@ -40,18 +40,20 @@ func (c *FakeClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	return out, cancel
 }
 
-func (c *FakeClient) Request(msg *arc.Request) {
+func (c *FakeClient) Request(msg *arc.Request) error {	
 	go func() {
 		log.Infof("Writing Request into the FAKE transport. %q", msg)
 		c.ReqChan <- msg
 	}()
+	return nil
 }
 
-func (c *FakeClient) Reply(msg *arc.Reply) {
+func (c *FakeClient) Reply(msg *arc.Reply) error {
 	go func() {
 		log.Infof("Writing Reply into the FAKE transport. %q", msg)
 		c.ReplyChan <- msg
 	}()
+	return nil
 }
 
 func (c *FakeClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) {
@@ -70,11 +72,12 @@ func (c *FakeClient) SubscribeReplies() (<-chan *arc.Reply, func()) {
 	return out, cancel
 }
 
-func (c *FakeClient) Registration(msg *arc.Registration) {
+func (c *FakeClient) Registration(msg *arc.Registration) error {
 	go func() {
 		log.Infof("Writing Request into the FAKE transport. %q", msg)
 		c.RegChan <- msg
 	}()
+	return nil
 }
 
 func (c *FakeClient) SubscribeRegistrations() (<-chan *arc.Registration, func()) {

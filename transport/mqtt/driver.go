@@ -139,26 +139,30 @@ func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	return msgChan, cancel
 }
 
-func (c *MQTTClient) Request(msg *arc.Request) {
+func (c *MQTTClient) Request(msg *arc.Request) error {
 	topic := identityTopic(msg.To)
 	j, err := msg.ToJSON()
 	if err != nil {
 		logrus.Errorf("Error serializing Request to JSON: %s", err)
+		return err
 	} else {
 		logrus.Debugf("Publishing request for %s/%s to %s", msg.Agent, msg.Action, topic)
 		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
+	return nil
 }
 
-func (c *MQTTClient) Reply(msg *arc.Reply) {
+func (c *MQTTClient) Reply(msg *arc.Reply) error {
 	topic := replyTopic(msg.RequestID)
 	j, err := msg.ToJSON()
 	if err != nil {
 		logrus.Errorf("Error serializing Reply to JSON: %s", err)
+		return err
 	} else {
 		logrus.Debugf("Publishing reply %s\n to %s", msg, topic)
 		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
+	return nil
 }
 
 func (c *MQTTClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) {
@@ -199,15 +203,17 @@ func (c *MQTTClient) SubscribeReplies() (<-chan *arc.Reply, func()) {
 	return c.SubscribeJob("+")
 }
 
-func (c *MQTTClient) Registration(msg *arc.Registration) {
+func (c *MQTTClient) Registration(msg *arc.Registration) error {
 	topic := registrationTopic(c.organization, c.project, c.identity)
 	j, err := msg.ToJSON()
 	if err != nil {
 		logrus.Errorf("Error serializing Registration to JSON: %s", err)
+		return err
 	} else {
 		logrus.Debugf("Publishing registration %s\n to %s", msg, topic)
 		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
+	return nil
 }
 
 func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func()) {

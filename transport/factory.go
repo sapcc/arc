@@ -11,9 +11,9 @@ import (
 type Transport interface {
 	Connect() error
 	Disconnect()
-	Request(msg *arc.Request)
-	Registration(msg *arc.Registration)
-	Reply(msg *arc.Reply)
+	Request(msg *arc.Request) error
+	Registration(msg *arc.Registration) error
+	Reply(msg *arc.Reply) error
 	Subscribe(identity string) (messages <-chan *arc.Request, cancel func())
 	SubscribeJob(requestId string) (messages <-chan *arc.Reply, cancel func())
 	SubscribeReplies() (messages <-chan *arc.Reply, cancel func())
