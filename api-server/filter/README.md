@@ -6,12 +6,12 @@ As we currently store the facts in a postgresql cloumn of type `jsonb` the parse
 
 Example:
 
-`column1 = "1" OR column2 != 2`
+`fact1 = "1" OR fact2 != 2`
 
 is transformed to
 
 
-`( facts->>'column1' = '1' OR (facts->>'column2')::numeric <> 2 )`
+`( facts->>'fact1' = '1' OR (facts->>'fact2')::numeric <> 2 )`
 
 
 Implementation details
