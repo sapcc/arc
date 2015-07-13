@@ -42,6 +42,7 @@ var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
 
 // Agents
 var GetAgentsQuery = "SELECT DISTINCT * FROM agents order by updated_at"
+var GetAgentsFilteredQuery = "SELECT DISTINCT * FROM agents WHERE %s order by updated_at"
 var GetAgentQuery = "SELECT * FROM agents WHERE agent_id=$1"
 var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6) returning agent_id`
 var UpdateAgent = `UPDATE agents SET project=$2,organization=$3,facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$4::json)::jsonb,updated_at=$5 WHERE agent_id=$1`

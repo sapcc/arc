@@ -115,10 +115,13 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
 	agents := models.Agents{}
-	err := agents.Get(db)
-	if err != nil {
-		log.Errorf("Error getting all agents. Got %q", err.Error())
-		http.Error(w, http.StatusText(500), 500)
+	err := agents.Get(db, r.URL.Query().Get("q"))
+
+	if err == models.FilterError {
+		checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError)
 		return
 	}
 

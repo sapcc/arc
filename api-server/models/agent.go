@@ -4,12 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/filter"
 )
+
+var FilterError = fmt.Errorf("Filter query has a syntax error.")
 
 type Db interface {
 	QueryRow(query string, args ...interface{}) *sql.Row
@@ -27,13 +31,27 @@ type Agent struct {
 
 type Agents []Agent
 
-func (agents *Agents) Get(db *sql.DB) error {
+func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
 
+	// select the query
+	sqlQuery := ownDb.GetAgentsQuery
+	if filterQuery != "" {
+		// query string to sql query
+		filterQuerySql, err := filter.Postgresql(filterQuery)
+		if err != nil {
+			log.Errorf(err.Error())
+			return FilterError
+		}
+		
+		log.Infof("Filtering Agents results with query %q and sql %q", filterQuery, filterQuerySql)
+		sqlQuery = fmt.Sprintf(ownDb.GetAgentsFilteredQuery, filterQuerySql)
+	}
+
 	*agents = make(Agents, 0)
-	rows, err := db.Query(ownDb.GetAgentsQuery)
+	rows, err := db.Query(sqlQuery)
 	if err != nil {
 		return err
 	}

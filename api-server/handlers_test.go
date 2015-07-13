@@ -304,6 +304,46 @@ var _ = Describe("Facts Handlers", func() {
 			Expect(dbAgents[2].AgentID).To(Equal(agents[2].AgentID))
 		})
 
+		It("returns all agents filtered", func() {
+			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			os := []string{"darwin", "windows", "windows"}
+			agents := models.Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
+			for i := 0; i < len(agents); i++ {
+				agents[i].Facts = fmt.Sprintf(facts, os[i])
+				err := agents[i].Update(db)
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			// make a request
+			req, err := http.NewRequest("GET", `/agents?q=os+%3D+"windows"`, bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check json body response
+			dbAgents := make(models.Agents, 0)
+			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(2))
+		})
+
+		It("returns a 400 if the filter query is wrong", func() {
+			// make a request
+			req, err := http.NewRequest("GET", `/agents?q=os+%3D`, bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(400))
+		})
+
 	})
 
 	Describe("serveAgent", func() {
