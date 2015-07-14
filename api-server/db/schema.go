@@ -39,6 +39,12 @@ var GetLogPartQuery = `SELECT * FROM log_parts WHERE job_id=$1 AND number=$2`
 var InsertLogPartQuery = `INSERT INTO log_parts(job_id,number,content,final,created_at) VALUES($1,$2,$3,$4,$5) returning job_id;`
 var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content ORDER BY number, job_id), '') AS content FROM log_parts WHERE job_id=$1"
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
+var GetLogPartsToCleanQuery = `
+	SELECT DISTINCT job_id
+	FROM log_parts
+	WHERE (created_at <= NOW() - INTERVAL '1 seconds' * $1 AND final = true)
+	OR created_at <= NOW() - INTERVAL '1 seconds' * $2
+`
 
 // Agents
 var GetAgentsQuery = "SELECT DISTINCT * FROM agents order by updated_at"

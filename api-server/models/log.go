@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+	"errors"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -91,6 +92,46 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
 		log.Infof("Aggregated log parts to log with id %q", reply.RequestID)
 	}
 
+	return nil
+}
+
+func CleanLogParts(db *sql.DB) error {	
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// get log parts to aggregate
+	rows, err := db.Query(ownDb.GetLogPartsToCleanQuery, 600, 84600) // 10 min and 1 day
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	
+	rowsCount := 0
+	var logPartID string
+	for rows.Next() {
+		// scan row
+		err = rows.Scan(&logPartID)
+		if err != nil {
+			return err
+		}	
+			
+		// aggregate the log parts found to the log table
+		err = aggregateLogParts(db, logPartID)
+		if err != nil{
+			return err
+		}
+		rowsCount++
+	}
+
+	log.Infof("Clean log parts: %v aggregable log parts found", rowsCount)
+
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+
+	//rows.Close()
 	return nil
 }
 

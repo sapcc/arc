@@ -211,4 +211,82 @@ var _ = Describe("Log", func() {
 		
 	})	
 
+	Describe("CleanLogParts", func() {
+		
+		It("returns an error if no db connection is given", func() {
+			err := CleanLogParts(nil)
+			Expect(err).To(HaveOccurred())
+		})
+		
+		It("should clean log parts with final state which are longer then 10 min", func() {
+			// add a job related to the log chuncks
+			job := Job{}
+			job.ExecuteScriptExample()
+			job.Save(db)
+			
+			// save different chuncks
+			var contentSlice [3]string
+			for i := 0; i < 3; i++ {
+				chunck := fmt.Sprintf("This is the %d chunck", i)
+				contentSlice[i] = chunck
+				logPart := LogPart{job.RequestID, uint(i), chunck, false, time.Now().Add(-601 * time.Second)} // bit more than 10 min
+				if i == 2 {
+					logPart.Final = true
+				}
+				err := logPart.Save(db)
+				Expect(err).NotTo(HaveOccurred())
+			}
+			content := strings.Join(contentSlice[:], "")
+			
+			// clean log parts
+			err := CleanLogParts(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+			// check log parts
+			logPart := LogPart{JobID: job.RequestID}
+			_, err = logPart.Collect(db)
+			Expect(err).To(HaveOccurred())
+			
+			// check log
+			newLog := Log{JobID: job.RequestID}			
+			err = newLog.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newLog.Content).To(Equal(content))
+		})
+		
+		It("should clean log parts which are longer then 1 day", func() {
+			// add a job related to the log chuncks
+			job := Job{}
+			job.ExecuteScriptExample()
+			job.Save(db)
+			
+			// save different chuncks
+			var contentSlice [3]string
+			for i := 0; i < 3; i++ {
+				chunck := fmt.Sprintf("This is the %d chunck", i)
+				contentSlice[i] = chunck
+				logPart := LogPart{job.RequestID, uint(i), chunck, false, time.Now().Add(-84601 * time.Second)} // bit more the 1 day
+				err := logPart.Save(db)
+				Expect(err).NotTo(HaveOccurred())
+			}
+			content := strings.Join(contentSlice[:], "")
+			
+			// clean log parts
+			err := CleanLogParts(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+			// check log parts
+			logPart := LogPart{JobID: job.RequestID}
+			_, err = logPart.Collect(db)
+			Expect(err).To(HaveOccurred())
+			
+			// check log
+			newLog := Log{JobID: job.RequestID}			
+			err = newLog.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newLog.Content).To(Equal(content))
+		})
+		
+	})
+
 })
