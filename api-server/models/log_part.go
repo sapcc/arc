@@ -50,7 +50,7 @@ func (log_part *LogPart) Save(db *sql.DB) error {
 	}
 
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertLogPartQuery, log_part.JobID, log_part.Number, log_part.Content, log_part.Final, time.Now()).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertLogPartQuery, log_part.JobID, log_part.Number, log_part.Content, log_part.Final, log_part.CreatedAt).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}

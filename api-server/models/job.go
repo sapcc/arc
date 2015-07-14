@@ -121,7 +121,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	}()
 
 	// update job
-	res, err := tx.Exec(ownDb.UpdateJobQuery, job.Status, time.Now(), job.RequestID); 
+	res, err := tx.Exec(ownDb.UpdateJobQuery, job.Status, job.UpdatedAt, job.RequestID); 
 	if err != nil {
 		return
 	}
