@@ -131,7 +131,7 @@ func CleanLogParts(db *sql.DB) error {
 		return err
 	}
 
-	//rows.Close()
+	rows.Close()
 	return nil
 }
 
