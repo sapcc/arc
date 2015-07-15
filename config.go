@@ -11,7 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/joho/godotenv"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"	
 )
 
 func defaultConfigDir() string {
@@ -25,7 +25,7 @@ var (
 	appName           = "arc"
 	envPrefix         = "ARC_"
 	defaultConfigFile = path.Join(defaultConfigDir(), appName+".cfg")
-	config            arc.Config
+	config            arc_config.Config
 )
 
 //returns the path to the config file we want to load

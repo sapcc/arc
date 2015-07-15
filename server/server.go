@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/fact"
 	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
@@ -27,7 +28,7 @@ type Server interface {
 
 type server struct {
 	doneChan    chan struct{}
-	config      arc.Config
+	config      arc_config.Config
 	transport   transport.Transport
 	activeJobs  map[string]func()
 	jobsMutex   sync.Mutex
@@ -37,7 +38,7 @@ type server struct {
 	factStore   *fact.Store
 }
 
-func New(config arc.Config, transport transport.Transport) Server {
+func New(config arc_config.Config, transport transport.Transport) Server {
 	return &server{
 		doneChan:   make(chan struct{}),
 		transport:  transport,

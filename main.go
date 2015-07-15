@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
@@ -101,26 +100,20 @@ func main() {
 
 	app.Commands = commands
 
-	app.Before = func(c *cli.Context) error {
-		config.Endpoints = c.GlobalStringSlice("endpoint")
-		config.Transport = c.GlobalString("transport")
-		if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
-			if err := config.LoadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
-				return err
-			}
-		} else {
-			//This is only for testing when running without a tls certificate
-			config.Identity = runtime.GOOS
-			config.Project = "test-project"
-			config.Organization = "test-org"
-		}
-		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
+	app.Before = func(c *cli.Context) error {		
+		err := config.Load(c)
 		if err != nil {
-			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
+			log.Fatalf("Invalid configuration: %s\n", err.Error())
+			return err			
+		}
+		
+		lvl, err := log.ParseLevel(config.LogLevel)
+		if err != nil {
+			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
 			return err
 		}
-		config.LogLevel = c.GlobalString("log-level")
-		log.SetLevel(lvl)
+				
+		log.SetLevel(lvl)		
 		return nil
 	}
 

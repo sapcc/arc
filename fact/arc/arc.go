@@ -1,15 +1,15 @@
 package arc
 
 import (
-	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"	
 )
 
 type Source struct {
-	config arc.Config
+	config arc_config.Config
 }
 
-func New(config arc.Config) Source {
+func New(config arc_config.Config) Source {
 	return Source{config: config}
 }
 

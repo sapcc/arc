@@ -11,7 +11,8 @@ import (
 
 	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/arc"	
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 )
 
 type MQTTClient struct {
@@ -21,7 +22,7 @@ type MQTTClient struct {
 	organization string
 }
 
-func New(config arc.Config) (*MQTTClient, error) {
+func New(config arc_config.Config) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
 	logger := logrus.New()
 	logger.Out = stdLogger.Out

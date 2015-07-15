@@ -1,10 +1,12 @@
-package arc
+package config
 
 import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/codegangsta/cli"
 	"io/ioutil"
+	"runtime"
 )
 
 type Config struct {
@@ -18,11 +20,31 @@ type Config struct {
 	LogLevel     string
 }
 
-func (c Config) String() string {
+func (config *Config) Load(c *cli.Context) error {
+	config.Endpoints = c.GlobalStringSlice("endpoint")
+	config.Transport = c.GlobalString("transport")
+
+	if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
+		if err := config.loadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
+			return err
+		}
+	} else {
+		//This is only for testing when running without a tls certificate
+		config.Identity = runtime.GOOS
+		config.Project = "test-project"
+		config.Organization = "test-org"
+	}
+
+	config.LogLevel = c.GlobalString("log-level")
+
+	return nil
+}
+
+func (c *Config) String() string {
 	return fmt.Sprintf("Endpoints: %s, CACerts: %s, ClientCert: %s, Transport: %s, Identity: %s, Project: %s, Organization: %s, LogLevel: %s", c.Endpoints, c.CACerts != nil, c.ClientCert != nil, c.Transport, c.Identity, c.Project, c.Organization, c.LogLevel)
 }
 
-func (c *Config) LoadTLSConfig(client_cert, client_key, ca_certs string) error {
+func (c *Config) loadTLSConfig(client_cert, client_key, ca_certs string) error {
 	cert, err := tls.LoadX509KeyPair(client_cert, client_key)
 	if err != nil {
 		return fmt.Errorf("Failed to load client certificate/key: %s", err)

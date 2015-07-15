@@ -3,6 +3,7 @@ package fake
 import (
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"	
 )
 
 type FakeClient struct {
@@ -13,7 +14,7 @@ type FakeClient struct {
 	ReqChan   chan *arc.Request
 }
 
-func New(config arc.Config) (*FakeClient, error) {
+func New(config arc_config.Config) (*FakeClient, error) {
 	log.Infof("Using FAKE transport")
 	return &FakeClient{
 			Name: "fake",

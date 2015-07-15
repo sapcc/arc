@@ -7,6 +7,7 @@ import (
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
 )
@@ -15,7 +16,7 @@ import (
  * Returns a transport connection
  * Remember to disconnect when not any more in use. Use the Disconnect() method
  */
-func arcNewConnection(config arc.Config) (transport.Transport, error) {
+func arcNewConnection(config arc_config.Config) (transport.Transport, error) {
 	// get transport
 	tp, err := transport.New(config)
 	if err != nil {

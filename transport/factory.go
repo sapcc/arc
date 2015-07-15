@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
 	"gitHub.***REMOVED***/monsoon/arc/transport/mqtt"
 )
@@ -20,7 +21,7 @@ type Transport interface {
 	SubscribeRegistrations() (messages <-chan *arc.Registration, cancel func())
 }
 
-func New(config arc.Config) (Transport, error) {
+func New(config arc_config.Config) (Transport, error) {
 	switch config.Transport {
 	case "mqtt":
 		return mqtt.New(config)

@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"runtime"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
@@ -22,7 +21,7 @@ const (
 	envPrefix = "ARC_"
 )
 
-var config arc.Config
+var config arc_config.Config
 var db *sql.DB
 var tp transport.Transport
 
@@ -82,24 +81,17 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		config.Endpoints = c.GlobalStringSlice("endpoint")
-		config.Transport = c.GlobalString("transport")
-		if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
-			if err := config.LoadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
-				return err
-			}
-		} else {
-			//This is only for testing when running without a tls certificate
-			config.Identity = runtime.GOOS
-			config.Project = "test-project"
-			config.Organization = "test-org"
-		}
-		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
+		err := config.Load(c)
 		if err != nil {
-			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
+			log.Fatalf("Invalid configuration: %s\n", err.Error())
 			return err
 		}
-		config.LogLevel = c.GlobalString("log-level")
+
+		lvl, err := log.ParseLevel(config.LogLevel)
+		if err != nil {
+			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
+			return err
+		}
 		log.SetLevel(lvl)
 		return nil
 	}
