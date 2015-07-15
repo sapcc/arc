@@ -3,59 +3,76 @@
 package main
 
 import (
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"time"
+	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-var _ = Describe("Job Handlers", func() {
+var _ = Describe("Routine scheduler", func() {
 
-	It("should clean jobs which no heartbeat was send back after created_at + 60 sec", func() {
+	It("should return an error if the db connection is nil", func() {
+
+	})
+
+	It("should tick", func() {
+		// start routine scheduler
+		go routineScheduler(db, 100*time.Millisecond)
+
+		time.Sleep(200 * time.Millisecond)
+
+		schedulerTick := false
+		select {
+		case <-routineSchedulerChan.C:
+			schedulerTick = true
+		}
+
+		Expect(schedulerTick).To(Equal(true))
+	})
+
+	It("should clean jobs", func() {
 		// save a job
-		job := models.Job{}
+		job := Job{}
 		job.CustomExecuteScriptExample(arc.Queued, time.Now().Add(-61*time.Second), 120)
 		err := job.Save(db)
 		Expect(err).NotTo(HaveOccurred())
 
-		// clean jobs
-		cleanJobs(db)
+		go routineScheduler(db, 100*time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 
 		// check job
-		dbJob := models.Job{Request: arc.Request{RequestID: job.RequestID}}
+		dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
 		err = dbJob.Get(db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dbJob.Status).To(Equal(arc.Failed))
 	})
 
-	It("should clean jobs which the timeout + 60 sec has exceeded and still in queued or executing status", func() {
-		// save a job
-		job := models.Job{}
-		job.CustomExecuteScriptExample(arc.Executing, time.Now().Add((-20-60)*time.Second), 15) // 60 sec extra to be sure
-		err := job.Save(db)
+	It("should clean log parts", func() {
+		// add a job related to the log chuncks
+		job := Job{}
+		job.ExecuteScriptExample()
+		job.Save(db)
+
+		// log part
+		logPart := LogPart{job.RequestID, 1, "Some chunk of code", true, time.Now().Add(-601 * time.Second)} // bit more than 10 min
+		err := logPart.Save(db)
 		Expect(err).NotTo(HaveOccurred())
 
-		job2 := models.Job{}
-		job2.CustomExecuteScriptExample(arc.Queued, time.Now().Add((-20-60)*time.Second), 15) // 60 sec extra to be sure
-		err = job2.Save(db)
-		Expect(err).NotTo(HaveOccurred())
+		go routineScheduler(db, 100*time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 
-		// clean jobs
-		cleanJobs(db)
+		// check log parts
+		dbLogPart := LogPart{JobID: job.RequestID}
+		_, err = dbLogPart.Collect(db)
+		Expect(err).To(HaveOccurred())
 
-		// check job
-		dbJob := models.Job{Request: arc.Request{RequestID: job.RequestID}}
-		err = dbJob.Get(db)
+		// check log
+		dbLog := Log{JobID: job.RequestID}
+		err = dbLog.Get(db)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(dbJob.Status).To(Equal(arc.Failed))
-
-		dbJob2 := models.Job{Request: arc.Request{RequestID: job2.RequestID}}
-		err = dbJob2.Get(db)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(dbJob2.Status).To(Equal(arc.Failed))
 	})
 
 })

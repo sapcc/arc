@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
@@ -130,7 +131,7 @@ func runServer(c *cli.Context) {
 	go arcSubscribeReplies(tp)
 
 	// start the routine scheduler
-	go routineScheduler(db)
+	go routineScheduler(db, 60*time.Second)
 
 	// init the router
 	router := newRouter()

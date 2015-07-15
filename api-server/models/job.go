@@ -139,3 +139,37 @@ func (job *Job) Update(db *sql.DB) (err error) {
 
 	return
 }
+
+func CleanJobs(db *sql.DB) error {
+	if db == nil {
+		return errors.New("Clean job: Db connection is nil")
+	}
+	
+	// clean jobs which no heartbeat was send back after created_at + 60 sec
+	res, err := db.Exec(ownDb.CleanJobsNonHeartbeatQuery, 60)
+	if err != nil {
+		return err
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Clean job: %v jobs without heartbeat answer where updated", affect)
+
+	// clean jobs which the timeout + 60 sec has exceeded and still in queued or executing status
+	res, err = db.Exec(ownDb.CleanJobsTimeoutQuery, 60)
+	if err != nil {
+		return err
+	}
+
+	affect, err = res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Clean job: %v timeout jobs where updated", affect)
+	
+	return nil
+}
