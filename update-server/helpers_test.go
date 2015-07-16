@@ -9,6 +9,17 @@ import (
 	"testing"
 )
 
+func TestGetAllBuildsEmpty(t *testing.T) {
+	builds := getAllBuilds()
+	if len(*builds) != 1 {
+		t.Error("Expected to get 1 builds")
+	}
+
+	if (*builds)[0] != "No files found" {
+		t.Error("Expected get 'No files found' text")
+	}
+}
+
 func TestGetAllBuilds(t *testing.T) {
 	buildsRootPath, _ = ioutil.TempDir(os.TempDir(), "arc_builds_")
 	file1, _ := ioutil.TempFile(buildsRootPath, "arc_darwin_amd64_3.1.0-dev_")

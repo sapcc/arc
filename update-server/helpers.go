@@ -57,5 +57,10 @@ func getAllBuilds() *[]string {
 	for _, f := range builds {
 		fileNames = append(fileNames, f.Name())
 	}
+
+	if len(fileNames) == 0 {
+		fileNames = append(fileNames, "No files found")
+	}
+
 	return &fileNames
 }

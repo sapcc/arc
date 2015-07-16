@@ -6,15 +6,14 @@
   <title>{{.AppName}} - {{.AppVersion}} - {{ template "title" }}</title>
 	{{ template "stylesheets" }}
 	{{ template "javascripts" }}
+	<meta content="width=device-width, initial-scale=1" name="viewport">
+	<meta content="IE=edge" http-equiv="X-UA-Compatible">
 </head>
-<body>
-  {{ template "body" . }}
-	
-	{{ template "scripts" . }}	
+<body class="{{ template "bodyClass" }}">	
+  {{ template "body" . }}	
 </body>
 </html>
 {{end}}
 
 {{ define "stylesheets" }}{{ end }}
 {{ define "javascripts" }}{{ end }}
-{{ define "scripts" }}{{ end }}
