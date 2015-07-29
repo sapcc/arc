@@ -1,4 +1,4 @@
 FROM docker.***REMOVED***/ubuntu
 
 ENV no_proxy $no_proxy,10.0.2.2
-RUN apt install -y tar
+RUN apt install -y tar && rm -rf /var/lib/apt/lists/*

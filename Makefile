@@ -94,6 +94,17 @@ run-sles:
 		-v $(CURDIR)/bin/arc_linux:/arc \
 		sles11-arc \
 		/arc $(ARGS)
+
+.PHONY: build-sles
+build-sles:
+	docker build -f scripts/Dockerfile.sles11 -t sles11-arc scripts/
+.PHONY: build-rhel
+build-rhel:
+	docker build -f scripts/Dockerfile.rhel7 -t rhel7-arc scripts/
+.PHONY: build-ubuntu
+build-ubuntu:
+	docker build -f scripts/Dockerfile.ubuntu -t ubuntu-arc scripts/
+
 .PHONY: gopath 
 gopath: setup
 	@echo $(GOPATH)
