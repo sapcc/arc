@@ -103,7 +103,7 @@ func getAllBuilds() *[]string {
 	for _, f := range builds {
 		// filter config file
 		if strings.ToLower(f.Name()) != "releases.yml" {
-			fileNames = append(fileNames, f.Name())	
+			fileNames = append(fileNames, f.Name())
 		}
 	}
 

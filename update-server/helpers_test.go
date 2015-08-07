@@ -5,9 +5,9 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"testing"
-	"path"
 )
 
 func TestGetReleasesYmlEmptyPath(t *testing.T) {
@@ -16,13 +16,13 @@ func TestGetReleasesYmlEmptyPath(t *testing.T) {
 	if releases != nil {
 		t.Error("Should return an empty map")
 	}
-	
+
 	// no file config given
-	buildsRootPath, _ = ioutil.TempDir(os.TempDir(), "arc_builds_")	
+	buildsRootPath, _ = ioutil.TempDir(os.TempDir(), "arc_builds_")
 	defer func() {
-		buildsRootPath = ""		
+		buildsRootPath = ""
 	}()
-		
+
 	releases, _ = getBuildExtraInfo()
 	if releases != nil {
 		t.Error("Should return an empty map")
@@ -35,12 +35,12 @@ func TestGetReleasesYml(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	
+
 	defer func() {
 		file.Close()
 		os.Remove(file.Name())
 		os.Remove(buildsRootPath)
-		buildsRootPath = ""		
+		buildsRootPath = ""
 	}()
 
 	data := `arc_darwin_amd64_3.1.0-dev:
@@ -61,7 +61,7 @@ func TestGetReleasesYml(t *testing.T) {
 	}
 	if releases["arc_darwin_amd64_3.1.0-dev"].Uid != "arcdarwinamd64310dev" {
 		t.Error("Uid no match the one from the test")
-	}	
+	}
 	if releases["arc_darwin_amd64_3.1.0-dev"].Filename != "arc_darwin_amd64_3.1.0-dev" {
 		t.Error("Filename no match the one from the test")
 	}
@@ -79,7 +79,7 @@ func TestGetReleasesYml(t *testing.T) {
 	}
 	if releases["arc_darwin_amd64_3.1.0-dev"].Date != "2015.07.15" {
 		t.Error("Date no match the one from the test")
-	}	
+	}
 }
 
 func TestGetAllBuildsEmpty(t *testing.T) {
@@ -126,7 +126,7 @@ func TestGetAllBuildsFilter(t *testing.T) {
 	file1, err := os.Create(path.Join(buildsRootPath, "releases.yml"))
 	if err != nil {
 		t.Error(err)
-	}	
+	}
 	file2, _ := ioutil.TempFile(buildsRootPath, "arc_windows_amd64_3.1.0-dev_")
 	defer func() {
 		file1.Close()
@@ -135,12 +135,12 @@ func TestGetAllBuildsFilter(t *testing.T) {
 		os.Remove(buildsRootPath)
 		buildsRootPath = ""
 	}()
-	
+
 	builds := getAllBuilds()
 	if len(*builds) != 1 {
 		t.Error("Expected to get 1 builds")
 	}
-	
+
 	for _, f := range *builds {
 		if !strings.HasSuffix(file2.Name(), f) {
 			t.Error("Expected to find build file")
