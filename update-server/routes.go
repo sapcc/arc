@@ -1,5 +1,8 @@
 package main
 
+//to re generate the asset you need to install esc once: go get -u github.com/mjibson/esc
+//go:generate esc -o assets.go static/
+
 import (
 	"net/http"
 )
