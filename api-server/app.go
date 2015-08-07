@@ -9,6 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/gorilla/handlers"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
@@ -130,15 +131,10 @@ func runServer(c *cli.Context) {
 
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
-	err = http.ListenAndServe(c.GlobalString("bind-address"), accessLogger(router))
+	//setup access logging middleware
+	accessLogger := handlers.CombinedLoggingHandler(os.Stdout, router)
+	err = http.ListenAndServe(c.GlobalString("bind-address"), accessLogger)
 	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")))
-}
-
-func accessLogger(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Infof("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
-		handler.ServeHTTP(w, r)
-	})
 }
 
 func checkErrAndPanic(err error, msg string) {
