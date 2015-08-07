@@ -108,6 +108,9 @@ func (s *server) Stop() {
 func (s *server) handleJob(msg *arc.Request) {
 	log.Infof("Dispatching message with requestID %s to agent %s", msg.RequestID, msg.Agent)
 	jobContext, cancel := arc.NewJobContext(s.rootContext, time.Duration(msg.Timeout)*time.Second, s.factStore)
+	//Accroding to https://www.youtube.com/watch?v=3EW1hZ8DVyw
+	//not canceling a context is a memory leak.
+	defer cancel()
 
 	s.wg.Add(1)
 	defer s.wg.Done()
