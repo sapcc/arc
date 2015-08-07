@@ -1,0 +1,11 @@
+.build-info {
+	margin-top: 20px;
+}
+
+.release-table td:first-child {
+	width: 1px;
+}
+
+.release-table tr.js-buildInfo:hover {
+	background-color:#e8e8e8
+}

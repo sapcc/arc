@@ -39,6 +39,7 @@ type tmplData struct {
 	AppName    string
 	AppVersion string
 	Files      []string
+	BuildInfos map[string]Release
 }
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
@@ -58,11 +59,14 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get build files
+	buildsInfo, _ := getBuildExtraInfo()
+
+	// get build infos
 	data := tmplData{
 		AppName:    appName,
 		AppVersion: version.String(),
 		Files:      *getAllBuilds(),
+		BuildInfos: buildsInfo,
 	}
 
 	// render template

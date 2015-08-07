@@ -2,9 +2,11 @@
 
 {{define "stylesheets"}}
 	<link rel="stylesheet" href="/static/stylesheets/application.css">
+	<link rel="stylesheet" href="/static/stylesheets/home.css">
 {{end}}
 
 {{define "javascripts"}}
+	<script type="text/javascript" src="/static/javascripts/jquery.js"></script>
 {{end}}
 
 {{define "bodyClass"}}services{{end}}
@@ -39,7 +41,7 @@
 			<div class="content">
 				<h1>Releases</h1>
 				
-				<table class="table table-striped">
+				<table class="table table-striped release-table">
 					<thead>
 						<tr>
 							<th>#</th>
@@ -48,9 +50,25 @@
 					</thead>
 					<tbody>
 						{{range $index, $value := .Files}}
-						<tr>
+						{{$build := index $.BuildInfos $value}}						
+						<tr id="{{$build.Uid}}-link" class="{{if ne $build.Uid ""}}js-buildInfo{{end}}">
 							<td>{{$index}}</td>
-							<td>{{$value}}</td>
+							<td>{{$value}}															
+								{{if ne $build.Uid ""}}
+									<span class="caret"></span>
+									<div id="{{$build.Uid}}-info" class="build-info hidden">
+										<ul>
+											<li><b>Id: </b>{{$build.Uid}}</li>
+											<li><b>Filename: </b>{{$build.Filename}}</li>
+											<li><b>App: </b>{{$build.App}}</li>
+											<li><b>Os: </b>{{$build.Os}}</li>
+											<li><b>Arch: </b>{{$build.Arch}}</li>
+											<li><b>Version: </b>{{$build.Version}}</li>
+											<li><b>Date: </b>{{$build.Date}}</li>
+										</ul>
+									</div>
+								{{end}}
+							</td>
 						</tr>
 						{{end}}
 					</tbody>
@@ -59,5 +77,21 @@
 			</div>
 		</div>
 	</div>
+
+	<script>
+		$(".js-buildInfo").click(function(event) {
+			event.stopPropagation();
+			event.preventDefault();
+			var eventid = event.target.parentElement.id;
+			var targetid = eventid.substr(0, eventid.indexOf('-'));
+			var target = "#"+targetid + "-info";			
+			if ($(target).hasClass("hidden")) {
+				$(target).removeClass("hidden");
+			} else {
+				$(target).addClass("hidden");		
+			}
+	 	 return;
+		});
+	</script>
 
 {{end}}
