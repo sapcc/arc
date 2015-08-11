@@ -14,7 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
-	arc_cmds"gitHub.***REMOVED***/monsoon/arc/commands"
+	"gitHub.***REMOVED***/monsoon/arc/commands"
 	"gitHub.***REMOVED***/monsoon/arc/fact"
 	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
@@ -26,7 +26,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var commands = []cli.Command{
+var cliCommands = []cli.Command{
 	{
 		Name:   "server",
 		Usage:  "Run the agent",
@@ -242,9 +242,9 @@ func cmdFacts(c *cli.Context) {
 }
 
 func cmdUpdate(c *cli.Context) {
-	code, err := arc_cmds.CmdUpdate(c, map[string]interface{}{"appName":appName})
+	code, err := commands.Update(c, map[string]interface{}{"appName": appName})
 	if err != nil {
 		log.Error(err)
 	}
-	exitCode = code
+	os.Exit(code)
 }

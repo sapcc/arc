@@ -39,7 +39,7 @@ func TestCmdUpdateYes(t *testing.T) {
 	}
 	confirmInput = in
 
-	code, err := CmdUpdate(ctx, map[string]interface{}{"appName": "test"})
+	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
@@ -77,7 +77,7 @@ func TestCmdUpdateNo(t *testing.T) {
 	}
 	confirmInput = in
 
-	code, err := CmdUpdate(ctx, map[string]interface{}{"appName": "test"})
+	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
@@ -109,7 +109,7 @@ func TestCmdUpdateForce(t *testing.T) {
 	// prepare context flags
 	ctx := cli.NewContext(nil, getLocalSet(false, true), getGlobalSet(server.URL))
 
-	code, err := CmdUpdate(ctx, map[string]interface{}{"appName": "test"})
+	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
@@ -139,7 +139,7 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 	// prepare context flags
 	ctx := cli.NewContext(nil, getLocalSet(true, false), getGlobalSet(server.URL))
 
-	code, err := CmdUpdate(ctx, map[string]interface{}{"appName": "test"})
+	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}

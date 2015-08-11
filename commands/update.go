@@ -11,7 +11,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-func CmdUpdate(c *cli.Context, options map[string]interface{}) (int, error) {
+func Update(c *cli.Context, options map[string]interface{}) (int, error) {
 	up := updater.New(map[string]string{
 		"version":   version.Version,
 		"appName":   options["appName"].(string),

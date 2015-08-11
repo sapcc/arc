@@ -98,22 +98,22 @@ func main() {
 		},
 	}
 
-	app.Commands = commands
+	app.Commands = cliCommands
 
-	app.Before = func(c *cli.Context) error {		
+	app.Before = func(c *cli.Context) error {
 		err := config.Load(c)
 		if err != nil {
 			log.Fatalf("Invalid configuration: %s\n", err.Error())
-			return err			
+			return err
 		}
-		
+
 		lvl, err := log.ParseLevel(config.LogLevel)
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
 			return err
 		}
-				
-		log.SetLevel(lvl)		
+
+		log.SetLevel(lvl)
 		return nil
 	}
 
