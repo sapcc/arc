@@ -14,6 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	arc_cmds"gitHub.***REMOVED***/monsoon/arc/commands"
 	"gitHub.***REMOVED***/monsoon/arc/fact"
 	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
@@ -67,10 +68,24 @@ var commands = []cli.Command{
 		Usage:  "Discover and list facts on this system",
 		Action: cmdFacts,
 	},
+	{
+		Name:  "update",
+		Usage: "checks for new updates",
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "force,f",
+				Usage: "No confirmation is needed",
+			},
+			cli.BoolFlag{
+				Name:  "no-update,n",
+				Usage: "No update is triggered",
+			},
+		},
+		Action: cmdUpdate,
+	},
 }
 
 func cmdServer(c *cli.Context) {
-
 	log.Infof("Starting server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
 	// Ticker containing a channel that will send the time with a period
 	log.Debugf("Checking for updates every %d seconds.", c.GlobalInt("update-interval"))
@@ -81,6 +96,7 @@ func cmdServer(c *cli.Context) {
 		"appName":   appName,
 		"updateUri": c.GlobalString("update-uri"),
 	})
+	log.Infof("Updater setup with version %q, app name %q and update uri %q", version.Version, appName, c.GlobalString("update-uri"))
 
 	tp, err := transport.New(config)
 	if err != nil {
@@ -107,7 +123,7 @@ func cmdServer(c *cli.Context) {
 		case <-tickChan.C:
 			if !c.GlobalBool("no-auto-update") {
 				go func() {
-					if success, _ := up.Update(); success {
+					if success, _ := up.CheckAndUpdate(); success {
 						server.GracefulShutdown()
 						tickChan.Stop()
 					}
@@ -119,7 +135,6 @@ func cmdServer(c *cli.Context) {
 }
 
 func cmdExecute(c *cli.Context) {
-
 	tp, err := transport.New(config)
 	if err != nil {
 		log.Fatal(err)
@@ -201,7 +216,6 @@ func cmdExecute(c *cli.Context) {
 }
 
 func cmdList(c *cli.Context) {
-
 	registry := arc.AgentRegistry()
 
 	fmt.Printf("  %-20sActions\n", "Agent")
@@ -225,4 +239,12 @@ func cmdFacts(c *cli.Context) {
 		return
 	}
 	fmt.Println(string(j))
+}
+
+func cmdUpdate(c *cli.Context) {
+	code, err := arc_cmds.CmdUpdate(c, map[string]interface{}{"appName":appName})
+	if err != nil {
+		log.Error(err)
+	}
+	exitCode = code
 }

@@ -31,7 +31,7 @@ func TestUpdaterNewSuccess(t *testing.T) {
 	}
 }
 
-func TestUpdaterUpdateNotAvailable(t *testing.T) {
+func TestUpdaterCheckAndUpdateNotAvailable(t *testing.T) {
 	server := testTools(204, "")
 	defer server.Close()
 
@@ -39,17 +39,17 @@ func TestUpdaterUpdateNotAvailable(t *testing.T) {
 	validOptions["updateUri"] = server.URL
 
 	up := New(validOptions)
-	_, err := up.Update()
+	_, err := up.CheckAndUpdate()
 	if err != check.NoUpdateAvailable {
 		t.Error("Expected get one error, got ", err)
 	}
 }
 
-func TestUpdaterUpdateSuccess(t *testing.T) {
+func TestUpdaterCheckAndUpdateSuccess(t *testing.T) {
 	// mock apply upload
-	origApplyUpdate := applyUpdate
-	applyUpdate = mock_apply_update
-	defer func() { applyUpdate = origApplyUpdate }()
+	origApplyUpdate := ApplyUpdate
+	ApplyUpdate = mock_apply_update
+	defer func() { ApplyUpdate = origApplyUpdate }()
 
 	// mock server
 	server := testTools(200, `{"initiative":"automatically","url":"MIAU://non_valid_url","patch_url":null,"patch_type":null,"version":"999","checksum":null,"signature":null}`)
@@ -59,7 +59,7 @@ func TestUpdaterUpdateSuccess(t *testing.T) {
 	validOptions["updateUri"] = server.URL
 
 	up := New(validOptions)
-	_, err := up.Update()
+	_, err := up.CheckAndUpdate()
 	if err != nil {
 		t.Error("Expected get no error, got ", err)
 	}
