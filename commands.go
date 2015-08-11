@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -82,6 +83,22 @@ var cliCommands = []cli.Command{
 			},
 		},
 		Action: cmdUpdate,
+	},
+	{
+		Name:   "init",
+		Usage:  "Initialize server configuration",
+		Action: cmdInit,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "registration-url,r",
+				Usage: "Registration url",
+			},
+			cli.StringFlag{
+				Name:  "config-dir,c",
+				Usage: "configuration directory",
+				Value: path.Dir(defaultConfigFile),
+			},
+		},
 	},
 }
 
@@ -243,6 +260,14 @@ func cmdFacts(c *cli.Context) {
 
 func cmdUpdate(c *cli.Context) {
 	code, err := commands.Update(c, map[string]interface{}{"appName": appName})
+	if err != nil {
+		log.Error(err)
+	}
+	os.Exit(code)
+}
+
+func cmdInit(c *cli.Context) {
+	code, err := commands.Init(c, appName)
 	if err != nil {
 		log.Error(err)
 	}

@@ -129,6 +129,22 @@ cross:
 up:
 	osascript $(CURDIR)/scripts/arcup.applescript
 
+.PHONY: assets
+assets: service/assets_linux/runsv service/assets_linux/svlogd service/assets_windows/nssm.exe
+	go generate $(ORG_PATH)/arc/service
+
+service/assets_linux/%:
+	mkdir -p service/assets_linux
+	docker build -f scripts/Dockerfile.runit -t static-runit scripts/
+	docker run --rm static-runit cat /musl/src/$* > $@
+	chmod +x $@
+
+service/assets_windows/nssm.exe:
+	mkdir -p service/assets_windows
+	wget -O $(dir $@)nssm.zip http://www.nssm.cc/release/nssm-2.24.zip
+	unzip -p $(dir $@)nssm.zip nssm-2.24/win64/nssm.exe > $@
+	rm -f $(dir $@)nssm.zip
+
 .gopath/src/$(REPO_PATH):
 	mkdir -p .gopath/src/$(ORG_PATH)
 	ln -s ../../../.. .gopath/src/$(REPO_PATH)

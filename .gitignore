@@ -3,3 +3,5 @@ bin/
 .vagrant/
 chef/cookbooks
 tmp/
+service/assets_linux/
+service/assets_windows/
