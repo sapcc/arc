@@ -1,0 +1,38 @@
+<div id="footer">
+	<div class="container">
+		<div class="footer-links">
+			<ul class="main-links nav navbar-nav rls-sb">
+				<li class="li-under"><a href="/intro/index.html">Intro</a></li>
+				<li class="active li-under"><a href="/docs/index.html">Docs</a></li>
+                <li class="li-under"><a href="/community.html">Community</a></li>
+				<li class="li-under"><a href="http://demo.consul.io/">Demo</a></li>
+			</ul>
+
+			<ul class="buttons nav navbar-nav rls-sb">
+				<li class="first download outline-btn"><a href="/downloads.html">Download</a></li>
+				<li class="github outline-btn"><a href="https://github.com/hashicorp/consul">GitHub</a></li>
+			</ul>
+		</div>
+		<div class="footer-logo">
+			<span></span>
+		</div>
+		<div class="footer-hashi os">
+			<span>Copyright &copy; <%= Time.now.year %></span>
+		</div>
+	</div>
+</div>
+
+
+<%= javascript_include_tag 'application' %>
+
+<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!--[if lt IE 9]>
+  <%= javascript_include_tag "ie-compat" %>
+<![endif]-->
+
+<script>
+	APP.initialize();
+</script>
+
+</body>
+</html>

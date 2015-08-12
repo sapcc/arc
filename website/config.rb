@@ -1,72 +1,61 @@
-###
-# Compass
-###
+#-------------------------------------------------------------------------
+# Configure Middleman
+#-------------------------------------------------------------------------
 
-# Change Compass configuration
-# compass_config do |config|
-#   config.output_style = :compact
-# end
+set :base_url, "https://gitHub.***REMOVED***/pages/monsoon/arc/"
 
-###
-# Page options, layouts, aliases and proxies
-###
+activate :deploy do |deploy|
+  deploy.method = :git
+  # Optional Settings
+  # deploy.remote   = 'custom-remote' # remote name or git url, default: origin
+  # deploy.branch   = 'custom-branch' # default: gh-pages
+  # deploy.strategy = :submodule      # commit strategy: can be :force_push or :submodule, default: :force_push
+  # deploy.commit_message = 'custom-message'      # commit message (can be empty), default: Automated commit at `timestamp` by middleman-deploy `version`
+end
 
-# Per-page layout changes:
-#
-# With no layout
-# page "/path/to/file.html", :layout => false
-#
-# With alternative layout
-# page "/path/to/file.html", :layout => :otherlayout
-#
-# A path which all have the same layout
-# with_layout :admin do
-#   page "/admin/*"
-# end
-
-# Proxy pages (https://middlemanapp.com/advanced/dynamic_pages/)
-# proxy "/this-page-has-no-template.html", "/template-file.html", :locals => {
-#  :which_fake_page => "Rendering a fake page with a local variable" }
-
-###
-# Helpers
-###
-
-# Automatic image dimensions on image_tag helper
-# activate :automatic_image_sizes
-
-# Reload the browser automatically whenever files change
-# configure :development do
-#   activate :livereload
-# end
-
-# Methods defined in the helpers block are available in templates
-# helpers do
-#   def some_helper
-#     "Helping"
-#   end
-# end
-
-set :css_dir, 'stylesheets'
-
-set :js_dir, 'javascripts'
-
-set :images_dir, 'images'
-
-# Build-specific configuration
 configure :build do
-  # For example, change the Compass output style for deployment
-  # activate :minify_css
+  set :http_prefix, "/pages/monsoon/arc/"
+end
 
-  # Minify Javascript on build
-  # activate :minify_javascript
+activate :hashicorp do |h|
+  h.version         = "0.5.2"
+  h.bintray_enabled = ENV["BINTRAY_ENABLED"]
+  h.bintray_repo    = "mitchellh/consul"
+  h.bintray_user    = "mitchellh"
+  h.bintray_key     = ENV["BINTRAY_API_KEY"]
 
-  # Enable cache buster
-  # activate :asset_hash
+  # Do not include the "web" in the default list of packages
+  h.bintray_exclude_proc = Proc.new do |os, filename|
+    os == "web"
+  end
 
-  # Use relative URLs
-  # activate :relative_assets
+  # Consul packages are not prefixed with consul_ - they should be in the
+  # future though!
+  h.bintray_prefixed = false
+end
 
-  # Or use a different image path
-  # set :http_prefix, "/Content/images/"
+helpers do
+  # This helps by setting the "active" class for sidebar nav elements
+  # if the YAML frontmatter matches the expected value.
+  def sidebar_current(expected)
+    current = current_page.data.sidebar_current || ""
+    if current.start_with?(expected)
+      return " class=\"active\""
+    else
+      return ""
+    end
+  end
+
+  # Get the title for the page.
+  #
+  # @param [Middleman::Page] page
+  #
+  # @return [String]
+  def title_for(page)
+    if page && page.data.page_title
+      return "#{page.data.page_title} - Consul by HashiCorp"
+    end
+
+    "Consul by HashiCorp"
+  end
 end
