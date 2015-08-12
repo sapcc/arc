@@ -56,6 +56,10 @@ RestartSec=1
 WantedBy=multi-user.target
 `))
 
+func Status(dir string) (string, error) {
+	return "", nil
+}
+
 func Install(dir string) error {
 	executable, err := osext.Executable()
 	if err != nil {

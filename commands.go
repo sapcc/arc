@@ -99,6 +99,11 @@ var cliCommands = []cli.Command{
 			},
 		},
 	},
+	{
+		Name:   "status",
+		Usage:  "Service status",
+		Action: cmdStatus,
+	},
 }
 
 func cmdServer(c *cli.Context) {
@@ -267,6 +272,14 @@ func cmdUpdate(c *cli.Context) {
 
 func cmdInit(c *cli.Context) {
 	code, err := commands.Init(c, appName)
+	if err != nil {
+		log.Error(err)
+	}
+	os.Exit(code)
+}
+
+func cmdStatus(c *cli.Context) {
+	code, err := commands.Status(c)
 	if err != nil {
 		log.Error(err)
 	}

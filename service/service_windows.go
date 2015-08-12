@@ -14,6 +14,10 @@ import (
 	"github.com/kardianos/osext"
 )
 
+func Status(dir string) (string, error) {
+	panic("Not implemented on this platform")
+}
+
 func Install(dir string) error {
 	executable, err := osext.Executable()
 	if err != nil {

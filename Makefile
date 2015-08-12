@@ -130,7 +130,7 @@ up:
 	osascript $(CURDIR)/scripts/arcup.applescript
 
 .PHONY: assets
-assets: service/assets_linux/runsv service/assets_linux/svlogd service/assets_windows/nssm.exe
+assets: service/assets_linux/runsv service/assets_linux/svlogd service/assets_linux/sv service/assets_windows/nssm.exe
 	go generate $(ORG_PATH)/arc/service
 
 service/assets_linux/%:
