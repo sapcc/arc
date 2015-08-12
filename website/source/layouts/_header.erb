@@ -35,10 +35,10 @@
             <span class="icon-bar"></span>
           </button>
 
-          <a class="navbar-brand logo" href="/">
+          <% link_to '/index.html', :class => "navbar-brand logo" do %>
             <span></span>
-          </a>
-          <a class="navbar-brand text rls-sb" href="/">ARC</a>
+          <% end %>
+          <%= link_to 'ARC', '/index.html', :class => "navbar-brand text rls-sb" %>
 
     		</div>
     		<nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">

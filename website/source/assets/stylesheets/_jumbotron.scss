@@ -23,14 +23,15 @@
 
     .jumbo-logo{
       position: absolute;
-      bottom: 0;
       right: -150px;
       width: 726px;
       height: 454px;
-      background:  transparent image-url("logo-circle-logo@2x.png") 0 0 no-repeat;
-      background-size: 726px 454px;
       z-index: 20;
-      pointer-events: none;
+
+      .link {
+        stroke: #999;
+        stroke-opacity: .6;
+      }
     }
 
     .col-lg-5{
