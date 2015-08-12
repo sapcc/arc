@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -94,9 +93,9 @@ var cliCommands = []cli.Command{
 				Usage: "Registration url",
 			},
 			cli.StringFlag{
-				Name:  "config-dir,c",
-				Usage: "configuration directory",
-				Value: path.Dir(defaultConfigFile),
+				Name:  "install-dir,i",
+				Usage: "installation directory",
+				Value: defaultConfigDir(),
 			},
 		},
 	},

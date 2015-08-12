@@ -11,14 +11,14 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/joho/godotenv"
 
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"	
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 )
 
 func defaultConfigDir() string {
 	if runtime.GOOS == "windows" {
-		return "C:/monsoon"
+		return "C:/monsoon/arc"
 	}
-	return "/etc/monsoon"
+	return "/opt/arc"
 }
 
 var (

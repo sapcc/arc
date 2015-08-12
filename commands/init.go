@@ -33,14 +33,14 @@ tls-client-key: {{ .Key }}
 
 func Init(c *cli.Context, appName string) (int, error) {
 	keySize := 2048
-	dir := c.String("config-dir")
+	dir := c.String("install-dir")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return 1, fmt.Errorf("Failed to create %s", dir)
 		}
 	}
 
-	if err := service.Install("/opt/arc"); err != nil {
+	if err := service.Install(dir); err != nil {
 		return 1, fmt.Errorf("Failed to install service: %s", err)
 	}
 
