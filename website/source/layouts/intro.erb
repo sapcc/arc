@@ -2,83 +2,84 @@
 	<% content_for :sidebar do %>
 		<div class="docs-sidebar hidden-print affix-top" role="complementary">
 			<ul class="nav docs-sidenav">
+
 				<li<%= sidebar_current("what") %>>
-				<a href="/intro/index.html">What is Consul?</a>
+					<%= link_to 'What is ARC?', '/intro/index.html' %>
 				</li>
 
 				<li<%= sidebar_current("vs-other") %>>
-				<a href="/intro/vs/index.html">Consul vs. Other Software</a>
-				<ul class="nav">
-					<li<%= sidebar_current("vs-other-zk") %>>
-					<a href="/intro/vs/zookeeper.html">ZooKeeper, doozerd, etcd</a>
-					</li>
+					<%= link_to 'ARC vs. Other Software', '/intro/vs/index.html' %>
+					<ul class="nav">
 
-					<li<%= sidebar_current("vs-other-chef") %>>
-					<a href="/intro/vs/chef-puppet.html">Chef, Puppet, etc.</a>
-                    </li>
+						<li<%= sidebar_current("vs-other-zk") %>>
+							<%= link_to 'ZooKeeper, doozerd, etcd', '/intro/vs/zookeeper.html' %>
+						</li>
 
-					<li<%= sidebar_current("vs-other-nagios-sensu") %>>
-					<a href="/intro/vs/nagios-sensu.html">Nagios, Sensu</a>
-                    </li>
+						<li<%= sidebar_current("vs-other-chef") %>>
+							<%= link_to 'Chef, Puppet, etc.', '/intro/vs/chef-puppet.html' %>
+						</li>
 
-					<li<%= sidebar_current("vs-other-skydns") %>>
-					<a href="/intro/vs/skydns.html">SkyDNS</a>
-                    </li>
+						<li<%= sidebar_current("vs-other-nagios-sensu") %>>
+							<%= link_to 'Nagios, Sensu', '/intro/vs/nagios-sensu.html' %>
+						</li>
 
-					<li<%= sidebar_current("vs-other-smartstack") %>>
-					<a href="/intro/vs/smartstack.html">SmartStack</a>
-                    </li>
+						<li<%= sidebar_current("vs-other-skydns") %>>
+							<%= link_to 'SkyDNS', '/intro/vs/skydns.html' %>
+            </li>
 
-					<li<%= sidebar_current("vs-other-serf") %>>
-					<a href="/intro/vs/serf.html">Serf</a>
-                    </li>
+						<li<%= sidebar_current("vs-other-smartstack") %>>
+							<%= link_to 'SmartStack', '/intro/vs/smartstack.html' %>
+						</li>
 
-					<li<%= sidebar_current("vs-other-custom") %>>
-					<a href="/intro/vs/custom.html">Custom Solutions</a>
-					</li>
-				</ul>
+						<li<%= sidebar_current("vs-other-serf") %>>
+							<%= link_to 'Serf', '/intro/vs/serf.html' %>
+						</li>
+
+						<li<%= sidebar_current("vs-other-custom") %>>
+							<%= link_to 'Custom Solutions', '/intro/vs/custom.html' %>
+						</li>
+					</ul>
 				</li>
 
 				<li<%= sidebar_current("hashicorp-ecosystem") %>>
-				<a href="/intro/hashicorp-ecosystem.html">Consul & the HashiCorp Ecosystem</a>
+					<%= link_to 'ARC & the HashiCorp Ecosystem', '/intro/hashicorp-ecosystem.html' %>
 				</li>
 
 				<li<%= sidebar_current("gettingstarted") %>>
-				<a href="/intro/getting-started/install.html">Getting Started</a>
-				<ul class="nav">
-					<li<%= sidebar_current("gettingstarted-install") %>>
-					<a href="/intro/getting-started/install.html">Install Consul</a>
-					</li>
+					<%= link_to 'Getting Started', '/intro/getting-started/install.html' %>
+					<ul class="nav">
+						<li<%= sidebar_current("gettingstarted-install") %>>
+							<%= link_to 'Install Consul', '/intro/getting-started/install.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-agent") %>>
-					<a href="/intro/getting-started/agent.html">Run the Agent</a>
-					</li>
+						<li<%= sidebar_current("gettingstarted-agent") %>>
+							<%= link_to 'Run the Agent', '/intro/getting-started/agent.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-services") %>>
-					<a href="/intro/getting-started/services.html">Services</a>
-					</li>
+						<li<%= sidebar_current("gettingstarted-services") %>>
+							<%= link_to 'Services', '/intro/getting-started/services.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-join") %>>
-					<a href="/intro/getting-started/join.html">Consul Cluster</a>
-					</li>
+						<li<%= sidebar_current("gettingstarted-join") %>>
+							<%= link_to 'Consul Cluster', '/intro/getting-started/join.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-checks") %>>
-					<a href="/intro/getting-started/checks.html">Health Checks</a>
-					</li>
+						<li<%= sidebar_current("gettingstarted-checks") %>>
+							<%= link_to 'Health Checks', '/intro/getting-started/checks.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-kv") %>>
-					<a href="/intro/getting-started/kv.html">Key/Value Data</a>
-					</li>
+						<li<%= sidebar_current("gettingstarted-kv") %>>
+							<%= link_to 'Key/Value Data', '/intro/getting-started/kv.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-ui") %>>
-					<a href="/intro/getting-started/ui.html">Web UI</a>
-					</li>
+						<li<%= sidebar_current("gettingstarted-ui") %>>
+							<%= link_to 'Web UI', '/intro/getting-started/ui.html' %>
+						</li>
 
-					<li<%= sidebar_current("gettingstarted-nextsteps") %>>
-					<a href="/intro/getting-started/next-steps.html">Next Steps</a>
-					</li>
-
-				</ul>
+						<li<%= sidebar_current("gettingstarted-nextsteps") %>>
+							<%= link_to 'Next Steps', '/intro/getting-started/next-steps.html' %>
+						</li>
+					</ul>
 				</li>
 			</ul>
 		</div>

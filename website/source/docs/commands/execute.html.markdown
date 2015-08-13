@@ -1,14 +1,13 @@
 ---
 layout: "docs"
-page_title: "Commands: ConfigTest"
-sidebar_current: "docs-commands-configtest"
-description: >
-  The `consul configtest` command tests that config files are valid by
-  attempting to parse them. Useful to ensure a configuration change will
-  not cause consul to fail after a restart.
+page_title: "Commands: Execute"
+sidebar_current: "docs-commands-execute"
+description: The `arc execute` command executes remote agent action.
 ---
 
-# Consul ConfigTest
+# ARC Execute
+
+Command: `arc execute`
 
 The `consul configtest` command performs a basic sanity test on Consul
 configuration files. For each file or directory given, the configtest command

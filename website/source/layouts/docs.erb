@@ -2,143 +2,112 @@
 	<% content_for :sidebar do %>
 		<div class="docs-sidebar hidden-print affix-top" role="complementary">
 			<ul class="nav docs-sidenav">
+
 				<li<%= sidebar_current("docs-home") %>>
-				<a href="/docs/index.html">Documentation Home</a>
+					<%= link_to 'Documentation', '/docs/index.html' %>
 				</li>
 
 				<li<%= sidebar_current("docs-arc") %>>
-					<a href="/docs/arc/overview.html">Arc</a>
+					<%= link_to 'Arc', '/docs/arc/overview.html' %>
 					<ul class="nav">
 						<li<%= sidebar_current("docs-arc-overview") %>>
-							<a href="/docs/arc/overview.html">Overview</a>
+							<%= link_to 'Overview', '/docs/arc/overview.html' %>
 						</li>
 						<li<%= sidebar_current("docs-arc-api") %>>
-							<a href="/docs/arc/api.html">Api</a>
+							<%= link_to 'Api', '/docs/arc/api.html' %>
 						</li>
 					</ul>
 				</li>
 
 				<li<%= sidebar_current("docs-upgrading") %>>
-				<a href="/docs/upgrading.html">Upgrading and Compatibility</a>
-				<ul class="nav">
-					<li<%= sidebar_current("docs-upgrading-upgrading") %>>
-					<a href="/docs/upgrading.html">Upgrading Consul</a>
-					</li>
+					<a href="/docs/upgrading.html">Upgrading and Compatibility</a>
+					<ul class="nav">
+						<li<%= sidebar_current("docs-upgrading-upgrading") %>>
+							<a href="/docs/upgrading.html">Upgrading Consul</a>
+						</li>
 
-					<li<%= sidebar_current("docs-upgrading-compat") %>>
-					<a href="/docs/compatibility.html">Compatibility Promise</a>
-                    </li>
+						<li<%= sidebar_current("docs-upgrading-compat") %>>
+							<a href="/docs/compatibility.html">Compatibility Promise</a>
+            </li>
 
-					<li<%= sidebar_current("docs-upgrading-specific") %>>
-					<a href="/docs/upgrade-specific.html">Specific Version Details</a>
-					</li>
-				</ul>
+						<li<%= sidebar_current("docs-upgrading-specific") %>>
+							<a href="/docs/upgrade-specific.html">Specific Version Details</a>
+						</li>
+					</ul>
 				</li>
 
 				<li<%= sidebar_current("docs-internals") %>>
-				<a href="/docs/internals/index.html">Consul Internals</a>
-				<ul class="nav">
-					<li<%= sidebar_current("docs-internals-architecture") %>>
-					<a href="/docs/internals/architecture.html">Architecture</a>
-					</li>
+					<a href="/docs/internals/index.html">Consul Internals</a>
+					<ul class="nav">
+						<li<%= sidebar_current("docs-internals-architecture") %>>
+							<a href="/docs/internals/architecture.html">Architecture</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-consensus") %>>
-					<a href="/docs/internals/consensus.html">Consensus Protocol</a>
-					</li>
+						<li<%= sidebar_current("docs-internals-consensus") %>>
+							<a href="/docs/internals/consensus.html">Consensus Protocol</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-gossip") %>>
-					<a href="/docs/internals/gossip.html">Gossip Protocol</a>
-					</li>
+						<li<%= sidebar_current("docs-internals-gossip") %>>
+							<a href="/docs/internals/gossip.html">Gossip Protocol</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-sessions") %>>
-					<a href="/docs/internals/sessions.html">Sessions</a>
-					</li>
+						<li<%= sidebar_current("docs-internals-sessions") %>>
+							<a href="/docs/internals/sessions.html">Sessions</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-acl") %>>
-					<a href="/docs/internals/acl.html">ACLs</a>
-					</li>
+						<li<%= sidebar_current("docs-internals-acl") %>>
+							<a href="/docs/internals/acl.html">ACLs</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-anti-entropy") %>>
-					<a href="/docs/internals/anti-entropy.html">Anti-Entropy</a>
-					</li>
+						<li<%= sidebar_current("docs-internals-anti-entropy") %>>
+							<a href="/docs/internals/anti-entropy.html">Anti-Entropy</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-security") %>>
-					<a href="/docs/internals/security.html">Security Model</a>
-					</li>
+						<li<%= sidebar_current("docs-internals-security") %>>
+							<a href="/docs/internals/security.html">Security Model</a>
+						</li>
 
-					<li<%= sidebar_current("docs-internals-jepsen") %>>
-					<a href="/docs/internals/jepsen.html">Jepsen Testing</a>
-					</li>
-				</ul>
+						<li<%= sidebar_current("docs-internals-jepsen") %>>
+							<a href="/docs/internals/jepsen.html">Jepsen Testing</a>
+						</li>
+					</ul>
 				</li>
 
 				<li<%= sidebar_current("docs-commands") %>>
-				<a href="/docs/commands/index.html">Consul Commands (CLI)</a>
-				<ul class="nav">
-					<li<%= sidebar_current("docs-commands-agent") %>>
-					<a href="/docs/commands/agent.html">agent</a>
-					</li>
+					<a href="/docs/commands/index.html">ARC Commands (CLI)</a>
+					<ul class="nav">
+						<li<%= sidebar_current("docs-commands-server") %>>
+							<a href="/docs/commands/server.html">server</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-configtest") %>>
-					<a href="/docs/commands/configtest.html">configtest</a>
-					</li>
+						<li<%= sidebar_current("docs-commands-execute") %>>
+							<a href="/docs/commands/execute.html">execute</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-event") %>>
-					<a href="/docs/commands/event.html">event</a>
-					</li>
+						<li<%= sidebar_current("docs-commands-list") %>>
+							<a href="/docs/commands/list.html">list</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-exec") %>>
-					<a href="/docs/commands/exec.html">exec</a>
-					</li>
+						<li<%= sidebar_current("docs-commands-facts") %>>
+							<a href="/docs/commands/facts.html">facts</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-forceleave") %>>
-					<a href="/docs/commands/force-leave.html">force-leave</a>
-					</li>
+						<li<%= sidebar_current("docs-commands-update") %>>
+							<a href="/docs/commands/update.html">update</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-join") %>>
-					<a href="/docs/commands/join.html">join</a>
-					</li>
+						<li<%= sidebar_current("docs-commands-init") %>>
+							<a href="/docs/commands/init.html">init</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-keygen") %>>
-					<a href="/docs/commands/keygen.html">keygen</a>
-					</li>
+						<li<%= sidebar_current("docs-commands-status") %>>
+							<a href="/docs/commands/status.html">status</a>
+						</li>
 
-					<li<%= sidebar_current("docs-commands-keyring") %>>
-					<a href="/docs/commands/keyring.html">keyring</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-leave") %>>
-					<a href="/docs/commands/leave.html">leave</a>
-                    </li>
-
-					<li<%= sidebar_current("docs-commands-lock") %>>
-					<a href="/docs/commands/lock.html">lock</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-maint") %>>
-					<a href="/docs/commands/maint.html">maint</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-members") %>>
-					<a href="/docs/commands/members.html">members</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-monitor") %>>
-					<a href="/docs/commands/monitor.html">monitor</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-info") %>>
-					<a href="/docs/commands/info.html">info</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-reload") %>>
-					<a href="/docs/commands/reload.html">reload</a>
-					</li>
-
-					<li<%= sidebar_current("docs-commands-watch") %>>
-					<a href="/docs/commands/watch.html">watch</a>
-					</li>
-				</ul>
+						<li<%= sidebar_current("docs-commands-help") %>>
+							<a href="/docs/commands/help.html">help</a>
+            </li>
+					</ul>
 				</li>
 
 				<li<%= sidebar_current("docs-agent") %>>

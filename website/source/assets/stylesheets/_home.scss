@@ -185,52 +185,6 @@ body.page-home{
 	}
 }
 
-#cta {
-	padding: 130px 0 130px;
-
-	.intro {
-		.left {
-			text-align: right;
-		}
-
-		.right {
-			margin-top: 12px;
-		}
-
-	}
-
-	p{
-		font-size: 14px;
-		letter-spacing: 1px;
-        line-height: 1.5em;
-		color: $consul-gray;
-		font-family: $font-family-museo;
-		font-weight: $font-weight-museo-sb;
-	}
-
-
-
-	.outline-btn {
-		padding: 8px;
-		display: inline-block;
-		&:focus {
-	    	outline: 0;
-		}
-
-	}
-
-	a {
-		font-weight: 500;
-	    font-size: 16px;
-	    text-transform: uppercase;
-	    letter-spacing: 3px;
-	    color: $purple;
-	    &:hover {
-	    	text-decoration: none;
-	    }
-	}
-}
-
 #demos{
 	padding: 30px 0 60px;
 	background-color: $consul-footer-gray;

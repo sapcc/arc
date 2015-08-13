@@ -1,12 +1,14 @@
 ---
 layout: "docs"
-page_title: "Commands: Agent"
-sidebar_current: "docs-commands-agent"
+page_title: "Commands: Server"
+sidebar_current: "docs-commands-server"
 description: |-
-  The `consul agent` command is the heart of Consul: it runs the agent that performs the important task of maintaining membership information, running checks, announcing services, handling queries, etc.
+  The `arc server` command runs the server.
 ---
 
-# Consul Agent
+# ARC Server
+
+Command: `arc server`
 
 The `consul agent` command is the heart of Consul: it runs the agent that
 performs the important task of maintaining membership information,

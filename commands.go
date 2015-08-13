@@ -14,7 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/commands"
+	arc_cmds"gitHub.***REMOVED***/monsoon/arc/commands"
 	"gitHub.***REMOVED***/monsoon/arc/fact"
 	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
@@ -26,7 +26,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var cliCommands = []cli.Command{
+var commands = []cli.Command{
 	{
 		Name:   "server",
 		Usage:  "Run the agent",
@@ -38,29 +38,29 @@ var cliCommands = []cli.Command{
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:  "timeout, t",
-				Usage: "timeout for executing the action",
+				Usage: "Timeout for executing the action",
 				Value: 60,
 			},
 			cli.StringFlag{
 				Name:  "identity, i",
-				Usage: "target system",
+				Usage: "Target system",
 				Value: "",
 			},
 			cli.StringFlag{
 				Name:  "payload,p",
-				Usage: "payload for action",
+				Usage: "Payload for action",
 				Value: "",
 			},
 			cli.BoolFlag{
 				Name:  "stdin,s",
-				Usage: "read payload from stdin",
+				Usage: "Read payload from stdin",
 			},
 		},
 		Action: cmdExecute,
 	},
 	{
 		Name:   "list",
-		Usage:  "list available agents and actions",
+		Usage:  "List available agents and actions",
 		Action: cmdList,
 	},
 	{
@@ -70,7 +70,7 @@ var cliCommands = []cli.Command{
 	},
 	{
 		Name:  "update",
-		Usage: "checks for new updates",
+		Usage: "Check for new updates and update to the last version",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "force,f",
@@ -82,27 +82,6 @@ var cliCommands = []cli.Command{
 			},
 		},
 		Action: cmdUpdate,
-	},
-	{
-		Name:   "init",
-		Usage:  "Initialize server configuration",
-		Action: cmdInit,
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "registration-url,r",
-				Usage: "Registration url",
-			},
-			cli.StringFlag{
-				Name:  "install-dir,i",
-				Usage: "installation directory",
-				Value: defaultConfigDir(),
-			},
-		},
-	},
-	{
-		Name:   "status",
-		Usage:  "Service status",
-		Action: cmdStatus,
 	},
 }
 
@@ -263,25 +242,9 @@ func cmdFacts(c *cli.Context) {
 }
 
 func cmdUpdate(c *cli.Context) {
-	code, err := commands.Update(c, map[string]interface{}{"appName": appName})
+	code, err := arc_cmds.CmdUpdate(c, map[string]interface{}{"appName":appName})
 	if err != nil {
 		log.Error(err)
 	}
-	os.Exit(code)
-}
-
-func cmdInit(c *cli.Context) {
-	code, err := commands.Init(c, appName)
-	if err != nil {
-		log.Error(err)
-	}
-	os.Exit(code)
-}
-
-func cmdStatus(c *cli.Context) {
-	code, err := commands.Status(c)
-	if err != nil {
-		log.Error(err)
-	}
-	os.Exit(code)
+	exitCode = code
 }

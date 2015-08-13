@@ -1,14 +1,13 @@
 ---
 layout: "docs"
-page_title: "Commands: Join"
-sidebar_current: "docs-commands-join"
-description: |-
-  The `join` command tells a Consul agent to join an existing cluster. A new Consul agent must join with at least one existing member of a cluster in order to join an existing cluster. After joining that one member, the gossip layer takes over, propagating the updated membership state across the cluster.
+page_title: "Commands: Status"
+sidebar_current: "docs-commands-status"
+description: The `status` command gives the service status.
 ---
 
-# Consul Join
+# ARC Status
 
-Command: `consul join`
+Command: `arc status`
 
 The `join` command tells a Consul agent to join an existing cluster.
 A new Consul agent must join with at least one existing member of a cluster

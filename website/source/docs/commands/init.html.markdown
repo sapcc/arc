@@ -1,14 +1,13 @@
 ---
 layout: "docs"
-page_title: "Commands: Info"
-sidebar_current: "docs-commands-info"
-description: |-
-  The `info` command provides various debugging information that can be useful to operators. Depending on if the agent is a client or server, information about different sub-systems will be returned.
+page_title: "Commands: Init"
+sidebar_current: "docs-commands-init"
+description: The `init` command initializes server configuration.
 ---
 
-# Consul Info
+# ARC Init
 
-Command: `consul info`
+Command: `arc init`
 
 The `info` command provides various debugging information that can be
 useful to operators. Depending on if the agent is a client or server,

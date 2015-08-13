@@ -7,7 +7,9 @@ description: Service discovery and configuration made easy. Distributed, highly 
 	<div class="container">
 		<div class="jumbo-graph hidden-xs hidden-sm"></div>
 		<div class="jumbo-hero col-lg-5 col-md-5">
-			<h2 class="rls-l">The ARC allows clients to schedule jobs on agents (servers). The agents process the jobs and report back on the progress and result of the job.</h2>
+			<h2 class="rls-l">
+				ARC is a multi-tenant, secure, self-updating, single binary, TLS driven framework for executing and supervising remote jobs on Linux & windows operating systems
+			</h2>
 		</div>
 	</div>
 </div>
@@ -21,11 +23,10 @@ description: Service discovery and configuration made easy. Distributed, highly 
 						<span class="icn discovery"></span>
 					</div>
 					<div class="col-lg-7 col-md-7">
-						<h2>Service Discovery</h2>
+						<h2>Self Updating</h2>
 						<p>
-						Consul makes it simple for services to register themselves
-						and to discover other services via a DNS or HTTP interface.
-						Register external services such as SaaS providers as well.</p>
+							Single command installation & autoupdates of agents supporting cloud-init and manual device on-boarding into tenants including CoreOS style update channels.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -35,8 +36,10 @@ description: Service discovery and configuration made easy. Distributed, highly 
 						<span class="icn health"></span>
 					</div>
 					<div class="col-lg-7 col-md-7">
-						<h2>Failure Detection</h2>
-						<p>Pairing service discovery with health checking prevents routing requests to unhealthy hosts and enables services to easily provide circuit breakers.</p>
+						<h2>Authentication</h2>
+						<p>
+							Build in certificate authority and certificate distribution & revocation to clients.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -49,8 +52,10 @@ description: Service discovery and configuration made easy. Distributed, highly 
 						<span class="icn multi"></span>
 					</div>
 					<div class="col-lg-7 col-md-7">
-						<h2>Multi Datacenter</h2>
-						<p>Consul scales to multiple datacenters out of the box with no complicated configuration. Look up services in other datacenters, or keep the request local.</p>
+						<h2>Plugins</h2>
+						<p>
+							Plugins for chef & script bootstrap and execution of jobs with openness for other provisioners.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -60,8 +65,10 @@ description: Service discovery and configuration made easy. Distributed, highly 
 						<span class="icn config"></span>
 					</div>
 					<div class="col-lg-7 col-md-7">
-						<h2>Key/Value Storage</h2>
-						<p>Flexible key/value store for dynamic configuration, feature flagging, coordination, leader election and more. Long poll for near-instant notification of configuration changes.</p>
+						<h2>Inventory and Supervision</h2>
+						<p>
+							Ohai style inventory collection and heartbeat based supervision of client status.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -158,19 +165,3 @@ description: Service discovery and configuration made easy. Distributed, highly 
 		</div>
 	</div>
 </div><!-- /#demos -->
-
-<div id="cta">
-	<div class="container">
-		<div class="row">
-			<div class="intro">
-				<div class="left col-xs-12 col-sm-offset-2 col-sm-4">
-					<p>The intro and getting started guide contain
-						a simple and approachable walkthrough for running Consul locally.</p>
-				</div>
-				<div class="col-xs-offset-5 col-xs-12 col-sm-6 col-sm-offset-0 right">
-					<a class="outline-btn purple" href="/intro/index.html">Read the intro &#187;</a>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
