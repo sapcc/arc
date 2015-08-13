@@ -1,3 +1,12 @@
+---
+layout: "docs"
+page_title: "Arc"
+sidebar_current: "docs-arc-overview"
+description: |-
+  Arc
+---
+
+
 Overview
 ========
 The [INSERT COOL NAME HERE] allows clients to schedule jobs on agents (servers).

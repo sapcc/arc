@@ -8,8 +8,8 @@
   background: linear-gradient(#2b3f7b, #008fcc);
   background-color:  $gray-light;
   color: $white;
-  padding: 48px 0;
   overflow: hidden;
+  min-height: 320px;
 
   &.mobile-hero{
     background:  transparent image-url("node-hero-pattern.jpg") center center;
@@ -21,17 +21,16 @@
     position: relative;
     height: 100%;
 
-    .jumbo-logo{
-      position: absolute;
-      right: -150px;
-      width: 726px;
-      height: 454px;
-      z-index: 20;
+    .jumbo-hero {
+      padding: 48px 0;
+    }
 
-      .link {
-        stroke: #999;
-        stroke-opacity: .6;
-      }
+    .jumbo-graph{
+      position: absolute;
+      right: -120px;
+      width: 720px;
+      height: 320px;
+      z-index: 20;
     }
 
     .col-lg-5{

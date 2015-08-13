@@ -1,3 +1,11 @@
+---
+layout: "docs"
+page_title: "Arc: Api"
+sidebar_current: "docs-arc-api"
+description: |-
+  Arc
+---
+
 # API
 ### Definition:
 

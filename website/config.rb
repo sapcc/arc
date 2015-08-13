@@ -53,9 +53,9 @@ helpers do
   # @return [String]
   def title_for(page)
     if page && page.data.page_title
-      return "#{page.data.page_title} - Consul by HashiCorp"
+      return "#{page.data.page_title} - ARC"
     end
 
-    "Consul by HashiCorp"
+    "ARC"
   end
 end

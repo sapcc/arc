@@ -8,9 +8,22 @@
 }*/
 
 body {
-    font-size: 15px;
-    color: $black;
-    font-weight: 300;
+	font-size: 15px;
+	color: $black;
+	font-weight: 300;
+	padding-top: 92px;
+}
+
+@media (max-width: 992px) {
+	body {
+		padding-top: 154px;
+	}
+}
+
+@media (max-width: 768px) {
+	body {
+		padding-top: 64px;
+	}
 }
 
 h1{
