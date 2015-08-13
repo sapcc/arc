@@ -1,6 +1,6 @@
 {
   "nodes":[
-		{"name":"Brocker","group":1},		
+		{"name":"Broker","group":1},
     {"name":"Client","group":2},
     {"name":"Client","group":2},
     {"name":"Client","group":2},
