@@ -1,7 +1,7 @@
-Consul Website
+ARC Website
 ==============
 
-This subdirectory contains the entire source for the [Consul Website](http://www.consul.io). This is a [Middleman](http://middlemanapp.com) project, which builds a static site from these source files.
+This subdirectory contains the entire source for the [ARC Webiste](https://gitHub.***REMOVED***/pages/monsoon/arc/). This is a [Middleman](http://middlemanapp.com) project, which builds a static site from these source files.
 
 Contributions Welcome!
 ----------------------
@@ -34,4 +34,3 @@ $ foreman start
 Then open up `localhost:5000`.
 
 Alternately, the site can now be deployed to Heroku or Cloud Foundry.
-
