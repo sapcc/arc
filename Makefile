@@ -123,7 +123,7 @@ cross:
 		--rm \
 		-v $(CURDIR):/gonative/src/gitHub.***REMOVED***/monsoon/arc \
 		gonative \
-		gox -osarch="$(TARGETS)" -output="bin/arc_{{.OS}}" -ldflags="-w $(GITVERSION)"
+		gox -osarch="$(TARGETS)" -output="bin/arc_{{.OS}}" -ldflags="-s -w $(GITVERSION)"
 
 .PHONY: up
 up:

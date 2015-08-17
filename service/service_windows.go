@@ -14,21 +14,30 @@ import (
 	"github.com/kardianos/osext"
 )
 
-func Status(dir string) (string, error) {
+func (s service) Status() (string, error) {
+	panic("Not implemented on this platform")
+}
+func (s service) Restart() error {
+	panic("Not implemented on this platform")
+}
+func (s service) Start() error {
+	panic("Not implemented on this platform")
+}
+func (s service) Stop() error {
 	panic("Not implemented on this platform")
 }
 
-func Install(dir string) error {
+func (s service) Install() error {
 	executable, err := osext.Executable()
 	if err != nil {
 		return errors.New("Can't locate running executable")
 	}
 
-	if err := os.MkdirAll(path.Join(dir, "log"), 0755); err != nil {
+	if err := os.MkdirAll(path.Join(s.dir, "log"), 0755); err != nil {
 		return err
 	}
 
-	return installNSSM(executable, dir)
+	return installNSSM(executable, s.dir)
 
 }
 

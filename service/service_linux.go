@@ -26,9 +26,9 @@ exec {{ .serviceDir }}/svlogd -tt {{ .arcDir }}/log
 `))
 
 var runitFinishScript = template.Must(template.New("finish").Parse(`#!/bin/sh
-if "$1" == "-1";then
+if [ "$1" = "-1" ]; then
   echo -n "process exited by signal "
-	kill -l $2
+  kill -l $2
 else
   echo process exited with exit code $1
 fi
@@ -56,21 +56,34 @@ RestartSec=1
 WantedBy=multi-user.target
 `))
 
-func Status(dir string) (string, error) {
-	return "", nil
+func (s service) Status() (string, error) {
+	out, err := s.svCmd("status", "service").CombinedOutput()
+	return string(out), err
 }
 
-func Install(dir string) error {
+func (s service) Start() error {
+	return s.svCmd("start", "service").Run()
+}
+
+func (s service) Stop() error {
+	return s.svCmd("start", "service").Run()
+}
+
+func (s service) Restart() error {
+	return s.svCmd("term", "service").Run()
+}
+
+func (s service) Install() error {
 	executable, err := osext.Executable()
 	if err != nil {
 		return errors.New("Can't locate running executable")
 	}
-	if err := os.MkdirAll(path.Join(dir, "log"), 0755); err != nil {
+	if err := os.MkdirAll(path.Join(s.dir, "log"), 0755); err != nil {
 		return err
 	}
 
-	serviceDir := path.Join(dir, "service")
-	if err = installRunitSupervisor(executable, dir, serviceDir); err != nil {
+	serviceDir := path.Join(s.dir, "service")
+	if err = installRunitSupervisor(executable, s.dir, serviceDir); err != nil {
 		return err
 	}
 	init, err := detectInitSystem()
@@ -89,6 +102,12 @@ func Install(dir string) error {
 		return sysvService(serviceCmd)
 	}
 	return fmt.Errorf("Unknown init system: %s", init)
+}
+
+func (s service) svCmd(args ...string) *exec.Cmd {
+	cmd := exec.Command(path.Join(s.dir, "service", "sv"), args...)
+	cmd.Env = []string{fmt.Sprintf("SVDIR=%s", s.dir)}
+	return cmd
 }
 
 func detectInitSystem() (string, error) {
@@ -111,7 +130,7 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 		return err
 	}
 	//Write our the runit binaries
-	for _, exe := range []string{"runsv", "svlogd"} {
+	for _, exe := range []string{"runsv", "svlogd", "sv"} {
 		err := ioutil.WriteFile(path.Join(serviceDir, exe), FSMustByte(false, "/"+exe), 0755)
 		if err != nil {
 			return err

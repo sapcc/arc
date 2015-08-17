@@ -40,7 +40,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 	}
 
-	if err := service.Install(dir); err != nil {
+	if err := service.New(dir).Install(); err != nil {
 		return 1, fmt.Errorf("Failed to install service: %s", err)
 	}
 

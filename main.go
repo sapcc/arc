@@ -42,19 +42,19 @@ func main() {
 		//so the the settings from the file are set as env vars before app.Run(...) is called
 		cli.StringFlag{
 			Name:   "config-file,c",
-			Usage:  "Load config file",
+			Usage:  "load config file",
 			Value:  defaultConfigFile,
 			EnvVar: envPrefix + "CONFIGFILE",
 		},
 		cli.StringFlag{
 			Name:   "transport,t",
-			Usage:  "Transport backend driver",
+			Usage:  "transport backend driver",
 			Value:  "mqtt",
 			EnvVar: envPrefix + "TRANSPORT",
 		},
 		cli.StringSliceFlag{
 			Name:   "endpoint,e",
-			Usage:  "Endpoint url(s) for selected transport",
+			Usage:  "endpoint url(s) for selected transport",
 			EnvVar: envPrefix + "ENDPOINT",
 			Value:  new(cli.StringSlice),
 		},
@@ -75,13 +75,13 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "log-level,l",
-			Usage:  "Log level",
+			Usage:  "log level",
 			EnvVar: envPrefix + "LOG_LEVEL",
 			Value:  "info",
 		},
 		cli.BoolFlag{
 			Name:   "no-auto-update",
-			Usage:  "Should NO trigger auto updates",
+			Usage:  "Specifies if the server should NO trigger auto updates",
 			EnvVar: envPrefix + "NO_AUTO_UPDATE",
 		},
 		cli.IntFlag{
@@ -98,22 +98,22 @@ func main() {
 		},
 	}
 
-	app.Commands = commands
+	app.Commands = cliCommands
 
-	app.Before = func(c *cli.Context) error {		
+	app.Before = func(c *cli.Context) error {
 		err := config.Load(c)
 		if err != nil {
 			log.Fatalf("Invalid configuration: %s\n", err.Error())
-			return err			
+			return err
 		}
-		
+
 		lvl, err := log.ParseLevel(config.LogLevel)
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
 			return err
 		}
-				
-		log.SetLevel(lvl)		
+
+		log.SetLevel(lvl)
 		return nil
 	}
 

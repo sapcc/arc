@@ -9,10 +9,10 @@ import (
 )
 
 func Status(c *cli.Context) (int, error) {
-	status, err := service.Status("/opt/arc/service")
+	status, err := service.New("/opt/arc").Status()
+	fmt.Println(status)
 	if err != nil {
 		return 1, err
 	}
-	fmt.Println(status)
 	return 0, nil
 }
