@@ -38,29 +38,29 @@ var cliCommands = []cli.Command{
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:  "timeout, t",
-				Usage: "timeout for executing the action",
+				Usage: "Timeout for executing the action",
 				Value: 60,
 			},
 			cli.StringFlag{
 				Name:  "identity, i",
-				Usage: "target system",
+				Usage: "Target system",
 				Value: "",
 			},
 			cli.StringFlag{
 				Name:  "payload,p",
-				Usage: "payload for action",
+				Usage: "Payload for action",
 				Value: "",
 			},
 			cli.BoolFlag{
 				Name:  "stdin,s",
-				Usage: "read payload from stdin",
+				Usage: "Read payload from stdin",
 			},
 		},
 		Action: cmdExecute,
 	},
 	{
 		Name:   "list",
-		Usage:  "list available agents and actions",
+		Usage:  "List available agents and actions",
 		Action: cmdList,
 	},
 	{
