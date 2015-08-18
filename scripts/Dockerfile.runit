@@ -15,7 +15,7 @@ ENV http_proxy=http://proxy.***REMOVED***:8080 \
     no_proxy=***REMOVED***,localhost,10.0.2.2
 
 RUN apt-get update
-RUN apt-get install -y wget make musl-tools dietlibc-dev # && rm -rf /var/lib/apt/lists/* 
+RUN apt-get install -y wget make patch musl-tools dietlibc-dev # && rm -rf /var/lib/apt/lists/* 
 
 RUN wget http://smarden.org/runit/runit-2.1.2.tar.gz
 
@@ -23,19 +23,22 @@ RUN mkdir musl && \
     cd musl && \
     tar zxf /runit-2.1.2.tar.gz --strip-components=2
 
+ADD *.patch /musl/
+RUN cd musl && cat *.patch |patch -p1
+
 RUN cd musl/src && \
     echo "musl-gcc -O2 -Wall" > conf-cc && \
     echo "musl-gcc -static -s -Os -pipe" > conf-ld && \
     make
 
-RUN mkdir dietlibc && \ 
-    cd dietlibc && \
-    tar zxf /runit-2.1.2.tar.gz --strip-components=2
+#RUN mkdir dietlibc && \ 
+#    cd dietlibc && \
+#    tar zxf /runit-2.1.2.tar.gz --strip-components=2
 
-RUN cd dietlibc/src && \
-    echo "diet -Os gcc -O2 -Wall" > conf-cc && \
-    echo "diet -Os gcc -s -Os -pipe" > conf-ld && \
-    make
+#RUN cd dietlibc/src && \
+#    echo "diet -Os gcc -O2 -Wall" > conf-cc && \
+#    echo "diet -Os gcc -s -Os -pipe" > conf-ld && \
+#    make
 
 
     
