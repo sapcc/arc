@@ -6,7 +6,7 @@ var color = d3.scale.category10();
 
 var force = d3.layout.force()
     .charge(-120)
-    .linkDistance(100)
+    .linkDistance(125)
     .size([width, height]);
 
 var svg = d3.select(".jumbo-graph").append("svg")
@@ -26,53 +26,90 @@ d3.json("nodes.json", function(error, graph) {
     .enter().append("line")
     .attr("class", "link")
     .style("stroke", "white")
-    .style("stroke-width",
-      function(d) {
-        return Math.sqrt(d.value);
-      }
-    );
+    .style("stroke-width", 3);
 
 	var elem = svg.selectAll(".node").data(graph.nodes)
-	var elemEnter = elem.enter()
-			.append("g");			
-	var circle = elemEnter
-    .append("circle")
-    .attr("class", "node")
-    .attr("r",
+	//var elemEnter = elem.enter()
+	//		.append("g");
+
+  var client = svg
+    .append("defs")
+    .append("pattern")
+    .attr("id", "client")
+    .attr("patternUnits", "userSpaceOnUse")
+    .attr("width", 40)
+    .attr("height", 40)
+    .attr("x", 20)
+    .attr("y", 20)
+    .append("image")
+    .attr("xlink:href", "/assets/images/client.png")
+    .attr("width", 40)
+    .attr("height", 40)
+    .attr("x", 0)
+    .attr("y", 0);
+
+  var broker = svg
+    .append("defs")
+    .append("pattern")
+    .attr("id", "broker")
+    .attr("patternUnits", "userSpaceOnUse")
+    .attr("width", 70)
+    .attr("height", 70)
+    .attr("x", 35)
+    .attr("y", 35)
+    .append("image")
+    .attr("xlink:href", "/assets/images/broker.png")
+    .attr("width", 70)
+    .attr("height", 70)
+    .attr("x", 0)
+    .attr("y", 0);
+
+	var circle = elem.enter()
+   .append("circle")
+   .attr("class", "node")
+   .attr("r",
       function(d){
         if(d.group == 2){
-          return 15;
+          return 20;
         }else if(d.group == 1){
           return 35;
         }
       })
-    .style("stroke", "white")
-    .style("stroke-width",
+   .style("stroke", "white")
+   .style("stroke-width",
       function(d){
-       if(d.group == 1){
-         return 2;
-       } else {
-         return 0;
-       }
-    })
-    .style("fill",
+        if(d.group == 2){
+          return 3;
+        }else if(d.group == 1){
+          return 3;
+        }
+      })
+   .style("fill",
       function(d) {
        if(d.group == 2){
-         return "rgba(176,60,68,1)"
+         return "url(#client)";
        }else if(d.group == 1){
-         return "rgba(0,102,179,1)"
+         return "url(#broker)";
        }
-    });
+   })
+    .call(force.drag);
 
-	var label = elemEnter
-			.append("text")
-      .attr("class", "node-text")
-      .attr("font-size", 16)
-			.attr("font-family", "sans-serif")
-			.attr("text-anchor", "middle")
-      .style("fill", "white")
-			.text(function(d) { return d.name; })
-      .call(force.drag);
+	//var label = elemEnter
+	//		.append("text")
+   //   .attr("class", "node-text")
+   //   .attr("font-size", 16)
+	//		.attr("font-family", "sans-serif")
+	//		.attr("text-anchor", "middle")
+   //   .style("fill",
+   //     function(d){
+   //       if(d.group == 2){
+   //         return "white";
+   //       }else if(d.group == 1){
+   //         return "white";
+   //       }
+   //     })
+	//		.text(function(d) { return d.name; })
+   //   .call(force.drag);
 
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
@@ -80,6 +117,6 @@ d3.json("nodes.json", function(error, graph) {
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 		
-				elemEnter.attr("transform", function(d){return "translate("+d.x+","+d.y+")"});
+				circle.attr("transform", function(d){return "translate("+d.x+","+d.y+")"});
   });
 });
