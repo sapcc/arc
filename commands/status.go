@@ -9,10 +9,13 @@ import (
 )
 
 func Status(c *cli.Context) (int, error) {
-	status, err := service.New("/opt/arc").Status()
-	fmt.Println(status)
-	if err != nil {
-		return 1, err
+	state, message, err := service.New(c.String("install-dir")).Status()
+	fmt.Println(message)
+	switch state {
+	case service.RUNNING:
+		return 0, err
+	case service.STOPPED:
+		return 3, err
 	}
-	return 0, nil
+	return 4, err
 }

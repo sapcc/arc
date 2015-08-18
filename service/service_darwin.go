@@ -4,7 +4,7 @@ func (s service) Install() error {
 	panic("Not implemented on this platform")
 }
 
-func (s service) Status() (string, error) {
+func (s service) Status() (State, string, error) {
 	panic("Not implemented on this platform")
 }
 func (s service) Restart() error {

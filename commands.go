@@ -103,6 +103,49 @@ var cliCommands = []cli.Command{
 		Name:   "status",
 		Usage:  "Service status",
 		Action: cmdStatus,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "install-dir,i",
+				Usage: "installation directory",
+				Value: defaultConfigDir(),
+			},
+		},
+	},
+	{
+		Name:   "start",
+		Usage:  "Start agent service",
+		Action: cmdStart,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "install-dir,i",
+				Usage: "installation directory",
+				Value: defaultConfigDir(),
+			},
+		},
+	},
+	{
+		Name:   "stop",
+		Usage:  "Stop agent service",
+		Action: cmdStop,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "install-dir,i",
+				Usage: "installation directory",
+				Value: defaultConfigDir(),
+			},
+		},
+	},
+	{
+		Name:   "restart",
+		Usage:  "Restart agent service",
+		Action: cmdRestart,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "install-dir,i",
+				Usage: "installation directory",
+				Value: defaultConfigDir(),
+			},
+		},
 	},
 }
 
@@ -279,9 +322,19 @@ func cmdInit(c *cli.Context) {
 }
 
 func cmdStatus(c *cli.Context) {
-	code, err := commands.Status(c)
-	if err != nil {
-		log.Error(err)
-	}
+	code, _ := commands.Status(c)
+	os.Exit(code)
+}
+
+func cmdStart(c *cli.Context) {
+	code, _ := commands.Start(c)
+	os.Exit(code)
+}
+func cmdStop(c *cli.Context) {
+	code, _ := commands.Stop(c)
+	os.Exit(code)
+}
+func cmdRestart(c *cli.Context) {
+	code, _ := commands.Restart(c)
 	os.Exit(code)
 }

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 	"text/template"
 
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
@@ -22,7 +23,7 @@ exec {{ .executable }} -c {{.arcDir}}/arc.cfg server
 `))
 
 var runitLogScript = template.Must(template.New("log").Parse(`#!/bin/sh
-exec {{ .serviceDir }}/svlogd -tt {{ .arcDir }}/log
+exec {{ .serviceDir }}/svlogd {{ .arcDir }}/log
 `))
 
 var runitFinishScript = template.Must(template.New("finish").Parse(`#!/bin/sh
@@ -56,9 +57,20 @@ RestartSec=1
 WantedBy=multi-user.target
 `))
 
-func (s service) Status() (string, error) {
-	out, err := s.svCmd("status", "service").CombinedOutput()
-	return string(out), err
+func (s service) Status() (State, string, error) {
+	cmd := s.svCmd("status", "service")
+	out, err := cmd.CombinedOutput()
+	message := strings.TrimSuffix(string(out), "\n")
+	if rc, ok := err.(*exec.ExitError); ok {
+		if rc.Sys().(syscall.WaitStatus).ExitStatus() == 3 {
+			return STOPPED, message, nil
+		}
+		return UNKNOWN, message, err
+	}
+	if err != nil {
+		return UNKNOWN, err.Error(), err
+	}
+	return RUNNING, message, nil
 }
 
 func (s service) Start() error {
@@ -105,7 +117,7 @@ func (s service) Install() error {
 }
 
 func (s service) svCmd(args ...string) *exec.Cmd {
-	cmd := exec.Command(path.Join(s.dir, "service", "sv"), args...)
+	cmd := exec.Command(path.Join(s.dir, "service", "service"), args...)
 	cmd.Env = []string{fmt.Sprintf("SVDIR=%s", s.dir)}
 	return cmd
 }
@@ -135,6 +147,12 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 		if err != nil {
 			return err
 		}
+	}
+	if _, err := os.Stat(path.Join(serviceDir, "service")); err == nil {
+		os.Remove(path.Join(serviceDir, "service"))
+	}
+	if err := os.Symlink("sv", path.Join(serviceDir, "service")); err != nil {
+		return err
 	}
 
 	templateVars := map[string]string{
