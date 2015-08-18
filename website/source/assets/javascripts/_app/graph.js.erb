@@ -42,7 +42,7 @@ d3.json("nodes.json", function(error, graph) {
     .attr("x", 20)
     .attr("y", 20)
     .append("image")
-    .attr("xlink:href", "/assets/images/client.png")
+    .attr("xlink:href", "<%= url_for '/assets/images/client.png' %>")
     .attr("width", 40)
     .attr("height", 40)
     .attr("x", 0)
@@ -58,7 +58,7 @@ d3.json("nodes.json", function(error, graph) {
     .attr("x", 35)
     .attr("y", 35)
     .append("image")
-    .attr("xlink:href", "/assets/images/broker.png")
+    .attr("xlink:href", "<%= url_for '/assets/images/broker.png' %>")
     .attr("width", 70)
     .attr("height", 70)
     .attr("x", 0)
@@ -93,23 +93,6 @@ d3.json("nodes.json", function(error, graph) {
        }
    })
     .call(force.drag);
-
-	//var label = elemEnter
-	//		.append("text")
-   //   .attr("class", "node-text")
-   //   .attr("font-size", 16)
-	//		.attr("font-family", "sans-serif")
-	//		.attr("text-anchor", "middle")
-   //   .style("fill",
-   //     function(d){
-   //       if(d.group == 2){
-   //         return "white";
-   //       }else if(d.group == 1){
-   //         return "white";
-   //       }
-   //     })
-	//		.text(function(d) { return d.name; })
-   //   .call(force.drag);
 
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
