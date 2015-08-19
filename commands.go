@@ -29,12 +29,12 @@ import (
 var cliCommands = []cli.Command{
 	{
 		Name:   "server",
-		Usage:  "Run the agent",
+		Usage:  "Run the Arc daemon",
 		Action: cmdServer,
 	},
 	{
-		Name:  "execute",
-		Usage: "Execute remote agent action",
+		Name:  "run",
+		Usage: "Execute an agent action on a remote Arc server",
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:  "timeout, t",
@@ -70,7 +70,7 @@ var cliCommands = []cli.Command{
 	},
 	{
 		Name:  "update",
-		Usage: "checks for new updates",
+		Usage: "Update current binary to the latest version",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "force,f",
