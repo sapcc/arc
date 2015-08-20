@@ -307,10 +307,12 @@ func cmdStart(c *cli.Context) {
 	code, _ := commands.Start(c)
 	os.Exit(code)
 }
+
 func cmdStop(c *cli.Context) {
 	code, _ := commands.Stop(c)
 	os.Exit(code)
 }
+
 func cmdRestart(c *cli.Context) {
 	code, _ := commands.Restart(c)
 	os.Exit(code)
