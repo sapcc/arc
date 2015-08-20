@@ -5,7 +5,7 @@ sidebar_current: "docs-commands-facts"
 description: The facts command discovers and list facts on this system.
 ---
 
-# ARC Facts
+# Arc Facts
 
 Command: `arc facts`
 

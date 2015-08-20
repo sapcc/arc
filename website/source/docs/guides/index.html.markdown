@@ -6,7 +6,7 @@ description: |-
   This section provides various guides for common actions.
 ---
 
-# ARC Guides
+# Arc Guides
 
 This section provides various guides for common actions.
 

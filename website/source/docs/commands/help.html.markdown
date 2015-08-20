@@ -5,7 +5,7 @@ sidebar_current: "docs-commands-help"
 description: The `help` shows a list of commands or help for one command.
 ---
 
-# ARC Help
+# Arc Help
 
 Command: `arc help`
 

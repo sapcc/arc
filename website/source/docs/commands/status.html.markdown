@@ -5,7 +5,7 @@ sidebar_current: "docs-commands-status"
 description: The `status` command gives the service status.
 ---
 
-# ARC Status
+# Arc Status
 
 Command: `arc status`
 

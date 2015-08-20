@@ -5,7 +5,7 @@ sidebar_current: "docs-commands-execute"
 description: The `arc execute` command executes remote agent action.
 ---
 
-# ARC Execute
+# Arc Execute
 
 Command: `arc execute`
 

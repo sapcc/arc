@@ -6,7 +6,7 @@ description: |-
   The `arc server` command runs the server.
 ---
 
-# ARC Server
+# Arc Server
 
 Command: `arc server`
 

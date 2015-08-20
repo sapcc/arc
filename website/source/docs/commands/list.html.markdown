@@ -5,7 +5,7 @@ sidebar_current: "docs-commands-list"
 description: The list command lists available agents and actions.
 ---
 
-# ARC List
+# Arc List
 
 Command: `arc list`
 

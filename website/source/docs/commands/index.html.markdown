@@ -3,17 +3,17 @@ layout: "docs"
 page_title: "Commands"
 sidebar_current: "docs-commands"
 description: |-
-  ARC is controlled via a very easy to use command-line interface (CLI).
+  Arc is controlled via a very easy to use command-line interface (CLI).
 ---
 
-# ARC Commands (CLI)
+# Arc Commands (CLI)
 
-ARC is controlled via a very easy to use command-line interface (CLI).
-ARC is only a single command-line application: `arc`. This application
+Arc is controlled via a very easy to use command-line interface (CLI).
+Arc is only a single command-line application: `arc`. This application
 then takes a subcommand such as "server" or "execute". The complete list of
 subcommands is in the navigation to the left.
 
-The `ARC` CLI is a well-behaved command line application. In erroneous
+The `Arc` CLI is a well-behaved command line application. In erroneous
 cases, a non-zero exit status will be returned. It also responds to `-h` and `--help`
 as you'd most likely expect.
 

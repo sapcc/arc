@@ -1,6 +1,6 @@
 ---
 layout: "docs"
-page_title: "ARC Protocol Compatibility Promise"
+page_title: "Arc Protocol Compatibility Promise"
 sidebar_current: "docs-upgrading-compatibility"
 description: |-
   Channel based upgrade concept.

@@ -1,11 +1,11 @@
 ---
 layout: "docs"
-page_title: "Upgrading ARC"
+page_title: "Upgrading Arc"
 sidebar_current: "docs-upgrading-upgrading"
 description: |-
   upgrade
 ---
 
-# Upgrading ARC
+# Upgrading Arc 
 
 later

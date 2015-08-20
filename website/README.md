@@ -1,7 +1,7 @@
-ARC Website
+Arc Website
 ==============
 
-This subdirectory contains the entire source for the [ARC Webiste](https://gitHub.***REMOVED***/pages/monsoon/arc/). This is a [Middleman](http://middlemanapp.com) project, which builds a static site from these source files.
+This subdirectory contains the entire source for the [Arc Webiste](https://gitHub.***REMOVED***/pages/monsoon/arc/). This is a [Middleman](http://middlemanapp.com) project, which builds a static site from these source files.
 
 Contributions Welcome!
 ----------------------

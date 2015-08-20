@@ -5,7 +5,7 @@ sidebar_current: "docs-commands-init"
 description: The `init` command initializes server configuration.
 ---
 
-# ARC Init
+# Arc Init
 
 Command: `arc init`
 
