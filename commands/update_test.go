@@ -30,7 +30,7 @@ func TestCmdUpdateYes(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(false, false), getGlobalSet(server.URL))
+	ctx := cli.NewContext(nil, getLocalSet(false, false, server.URL), getGlobalSet())
 
 	// mock input to yes
 	in, err := mockConfirmStdInput("yes")
@@ -68,7 +68,7 @@ func TestCmdUpdateNo(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(false, false), getGlobalSet(server.URL))
+	ctx := cli.NewContext(nil, getLocalSet(false, false, server.URL), getGlobalSet())
 
 	// mock input to no
 	in, err := mockConfirmStdInput("no")
@@ -107,7 +107,7 @@ func TestCmdUpdateForce(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(false, true), getGlobalSet(server.URL))
+	ctx := cli.NewContext(nil, getLocalSet(false, true, server.URL), getGlobalSet())
 
 	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
@@ -137,7 +137,7 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(true, false), getGlobalSet(server.URL))
+	ctx := cli.NewContext(nil, getLocalSet(true, false, server.URL), getGlobalSet())
 
 	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
@@ -159,16 +159,16 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 
 // private
 
-func getGlobalSet(serverUrl string) *flag.FlagSet {
+func getGlobalSet() *flag.FlagSet {
 	flagSet := flag.NewFlagSet("global", 0)
-	flagSet.String("update-uri", serverUrl, "global")
 	return flagSet
 }
 
-func getLocalSet(noUpdate bool, force bool) *flag.FlagSet {
+func getLocalSet(noUpdate bool, force bool, serverUrl string) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("local", 0)
 	flagSet.Bool("no-update", noUpdate, "local")
 	flagSet.Bool("force", force, "local")
+	flagSet.String("update-uri", serverUrl, "global")
 	return flagSet
 }
 

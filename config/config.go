@@ -4,9 +4,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/codegangsta/cli"
 	"io/ioutil"
 	"runtime"
+
+	"github.com/codegangsta/cli"
 )
 
 type Config struct {
@@ -21,11 +22,11 @@ type Config struct {
 }
 
 func (config *Config) Load(c *cli.Context) error {
-	config.Endpoints = c.GlobalStringSlice("endpoint")
-	config.Transport = c.GlobalString("transport")
+	config.Endpoints = c.StringSlice("endpoint")
+	config.Transport = c.String("transport")
 
-	if c.GlobalString("tls-client-cert") != "" || c.GlobalString("tls-client-key") != "" || c.GlobalString("tls-ca-cert") != "" {
-		if err := config.loadTLSConfig(c.GlobalString("tls-client-cert"), c.GlobalString("tls-client-key"), c.GlobalString("tls-ca-cert")); err != nil {
+	if c.String("tls-client-cert") != "" || c.String("tls-client-key") != "" || c.String("tls-ca-cert") != "" {
+		if err := config.loadTLSConfig(c.String("tls-client-cert"), c.String("tls-client-key"), c.String("tls-ca-cert")); err != nil {
 			return err
 		}
 	} else {

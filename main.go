@@ -38,15 +38,7 @@ func main() {
 	app.Version = version.String()
 	app.Flags = []cli.Flag{
 		optConfigFile,
-		optTransport,
-		optEndpoint,
-		optTlsCaCert,
-		optTlsClientCert,
-		optTlsClientKey,
 		optLogLevel,
-		optNoAutoUpdate,
-		optUpdateInterval,
-		optUpdateUri,
 	}
 
 	app.Commands = cliCommands

@@ -23,7 +23,8 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var configTemplate = template.Must(template.New("config").Parse(`{{if .Endpoint }}endpoint: {{ .Endpoint }}
+var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}
+{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}
 {{end}}tls-client-cert: {{ .Cert }}	
 tls-client-key: {{ .Key }}
 {{if .Ca }}tls-ca-cert: {{ .Ca }}
@@ -122,9 +123,10 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 
 		templateVars := map[string]string{
-			"Cert":     path.Join(dir, "cert.pem"),
-			"Key":      path.Join(dir, "cert.key"),
-			"Endpoint": strings.Join(c.GlobalStringSlice("endpoint"), ","),
+			"Cert":      path.Join(dir, "cert.pem"),
+			"Key":       path.Join(dir, "cert.key"),
+			"Endpoint":  strings.Join(c.StringSlice("endpoint"), ","),
+			"Transport": c.String("transport"),
 		}
 		err = configTemplate.Execute(cfgFile, templateVars)
 		if err != nil {

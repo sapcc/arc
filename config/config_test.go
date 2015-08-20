@@ -25,18 +25,18 @@ var _ = Describe("Config", func() {
 		stringSlice.Set("tcp://localhost:1883")
 		flag := cli.StringSliceFlag{Name: "endpoint", Value: &stringSlice}
 		flag.Apply(globalSet)
-		ctx := cli.NewContext(nil, nil, globalSet)
+		ctx := cli.NewContext(nil, globalSet, globalSet)
 
 		// load context to the config
 		conf := Config{}
 		err := conf.Load(ctx)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(ctx.GlobalString("transport")).To(Equal("mqtt"))
-		Expect(ctx.GlobalString("tls-client-cert")).To(Equal(""))
-		Expect(ctx.GlobalString("tls-client-key")).To(Equal(""))
-		Expect(ctx.GlobalString("tls-ca-cert")).To(Equal(""))
+		Expect(ctx.String("transport")).To(Equal("mqtt"))
+		Expect(ctx.String("tls-client-cert")).To(Equal(""))
+		Expect(ctx.String("tls-client-key")).To(Equal(""))
+		Expect(ctx.String("tls-ca-cert")).To(Equal(""))
 		Expect(ctx.GlobalString("log-level")).To(Equal("info"))
-		Expect(ctx.GlobalStringSlice("endpoint")).To(Equal([]string{"tcp://localhost:1883"}))
+		Expect(ctx.StringSlice("endpoint")).To(Equal([]string{"tcp://localhost:1883"}))
 	})
 
 })

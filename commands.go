@@ -31,11 +31,26 @@ var cliCommands = []cli.Command{
 		Name:   "server",
 		Usage:  "Run the Arc daemon",
 		Action: cmdServer,
+		Flags: []cli.Flag{
+			optTransport,
+			optEndpoint,
+			optTlsClientCert,
+			optTlsClientKey,
+			optTlsCaCert,
+			optNoAutoUpdate,
+			optUpdateUri,
+			optUpdateInterval,
+		},
 	},
 	{
 		Name:  "run",
 		Usage: "Execute an agent action on a remote Arc server",
 		Flags: []cli.Flag{
+			optTransport,
+			optEndpoint,
+			optTlsClientCert,
+			optTlsClientKey,
+			optTlsCaCert,
 			optTimeout,
 			optIdentity,
 			optPayload,
@@ -58,6 +73,7 @@ var cliCommands = []cli.Command{
 		Usage: "Update current binary to the latest version",
 		Flags: []cli.Flag{
 			optForce,
+			optUpdateUri,
 			optNoUpdate,
 		},
 		Action: cmdUpdate,
@@ -67,6 +83,11 @@ var cliCommands = []cli.Command{
 		Usage:  "Initialize server configuration",
 		Action: cmdInit,
 		Flags: []cli.Flag{
+			optTransport,
+			optEndpoint,
+			optTlsClientCert,
+			optTlsClientKey,
+			optTlsCaCert,
 			optRegistrationUrl,
 			optInstallDir,
 		},
@@ -108,15 +129,15 @@ var cliCommands = []cli.Command{
 func cmdServer(c *cli.Context) {
 	log.Infof("Starting server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
 	// Ticker containing a channel that will send the time with a period
-	log.Debugf("Checking for updates every %d seconds.", c.GlobalInt("update-interval"))
-	tickChan := time.NewTicker(time.Second * time.Duration(c.GlobalInt("update-interval")))
+	log.Debugf("Checking for updates every %d seconds.", c.Int("update-interval"))
+	tickChan := time.NewTicker(time.Second * time.Duration(c.Int("update-interval")))
 	// updater object
 	up := updater.New(map[string]string{
 		"version":   version.Version,
 		"appName":   appName,
-		"updateUri": c.GlobalString("update-uri"),
+		"updateUri": c.String("update-uri"),
 	})
-	log.Infof("Updater setup with version %q, app name %q and update uri %q", version.Version, appName, c.GlobalString("update-uri"))
+	log.Infof("Updater setup with version %q, app name %q and update uri %q", version.Version, appName, c.String("update-uri"))
 
 	tp, err := transport.New(config)
 	if err != nil {
@@ -141,7 +162,7 @@ func cmdServer(c *cli.Context) {
 		case <-server.Done():
 			os.Exit(0)
 		case <-tickChan.C:
-			if !c.GlobalBool("no-auto-update") {
+			if !c.Bool("no-auto-update") {
 				go func() {
 					if success, _ := up.CheckAndUpdate(); success {
 						server.GracefulShutdown()

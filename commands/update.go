@@ -15,7 +15,7 @@ func Update(c *cli.Context, options map[string]interface{}) (int, error) {
 	up := updater.New(map[string]string{
 		"version":   version.Version,
 		"appName":   options["appName"].(string),
-		"updateUri": c.GlobalString("update-uri"),
+		"updateUri": c.String("update-uri"),
 	})
 
 	r, err := up.Check()
