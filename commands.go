@@ -36,25 +36,10 @@ var cliCommands = []cli.Command{
 		Name:  "run",
 		Usage: "Execute an agent action on a remote Arc server",
 		Flags: []cli.Flag{
-			cli.IntFlag{
-				Name:  "timeout, t",
-				Usage: "Timeout for executing the action",
-				Value: 60,
-			},
-			cli.StringFlag{
-				Name:  "identity, i",
-				Usage: "Target system",
-				Value: "",
-			},
-			cli.StringFlag{
-				Name:  "payload,p",
-				Usage: "Payload for action",
-				Value: "",
-			},
-			cli.BoolFlag{
-				Name:  "stdin,s",
-				Usage: "Read payload from stdin",
-			},
+			optTimeout,
+			optIdentity,
+			optPayload,
+			optStdin,
 		},
 		Action: cmdExecute,
 	},
@@ -72,14 +57,8 @@ var cliCommands = []cli.Command{
 		Name:  "update",
 		Usage: "Update current binary to the latest version",
 		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "force,f",
-				Usage: "No confirmation is needed",
-			},
-			cli.BoolFlag{
-				Name:  "no-update,n",
-				Usage: "No update is triggered",
-			},
+			optForce,
+			optNoUpdate,
 		},
 		Action: cmdUpdate,
 	},
@@ -88,15 +67,8 @@ var cliCommands = []cli.Command{
 		Usage:  "Initialize server configuration",
 		Action: cmdInit,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "registration-url,r",
-				Usage: "Registration url",
-			},
-			cli.StringFlag{
-				Name:  "install-dir,i",
-				Usage: "installation directory",
-				Value: defaultConfigDir(),
-			},
+			optRegistrationUrl,
+			optInstallDir,
 		},
 	},
 	{
@@ -104,11 +76,7 @@ var cliCommands = []cli.Command{
 		Usage:  "Service status",
 		Action: cmdStatus,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "install-dir,i",
-				Usage: "installation directory",
-				Value: defaultConfigDir(),
-			},
+			optInstallDir,
 		},
 	},
 	{
@@ -116,11 +84,7 @@ var cliCommands = []cli.Command{
 		Usage:  "Start agent service",
 		Action: cmdStart,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "install-dir,i",
-				Usage: "installation directory",
-				Value: defaultConfigDir(),
-			},
+			optInstallDir,
 		},
 	},
 	{
@@ -128,11 +92,7 @@ var cliCommands = []cli.Command{
 		Usage:  "Stop agent service",
 		Action: cmdStop,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "install-dir,i",
-				Usage: "installation directory",
-				Value: defaultConfigDir(),
-			},
+			optInstallDir,
 		},
 	},
 	{
@@ -140,11 +100,7 @@ var cliCommands = []cli.Command{
 		Usage:  "Restart agent service",
 		Action: cmdRestart,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "install-dir,i",
-				Usage: "installation directory",
-				Value: defaultConfigDir(),
-			},
+			optInstallDir,
 		},
 	},
 }

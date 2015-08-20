@@ -36,66 +36,17 @@ func main() {
 	}
 	app.Usage = "Remote job execution galore"
 	app.Version = version.String()
-
 	app.Flags = []cli.Flag{
-		//config-file is only here for the generated help, it is actually handled above
-		//so the the settings from the file are set as env vars before app.Run(...) is called
-		cli.StringFlag{
-			Name:   "config-file,c",
-			Usage:  "load config file",
-			Value:  defaultConfigFile,
-			EnvVar: envPrefix + "CONFIGFILE",
-		},
-		cli.StringFlag{
-			Name:   "transport,t",
-			Usage:  "transport backend driver",
-			Value:  "mqtt",
-			EnvVar: envPrefix + "TRANSPORT",
-		},
-		cli.StringSliceFlag{
-			Name:   "endpoint,e",
-			Usage:  "endpoint url(s) for selected transport",
-			EnvVar: envPrefix + "ENDPOINT",
-			Value:  new(cli.StringSlice),
-		},
-		cli.StringFlag{
-			Name:   "tls-ca-cert",
-			Usage:  "CA to verify transport endpoints",
-			EnvVar: envPrefix + "TLS_CA_CERT",
-		},
-		cli.StringFlag{
-			Name:   "tls-client-cert",
-			Usage:  "Client cert to use for TLS",
-			EnvVar: envPrefix + "TLS_CLIENT_CERT",
-		},
-		cli.StringFlag{
-			Name:   "tls-client-key",
-			Usage:  "Private key used in client TLS auth",
-			EnvVar: envPrefix + "TLS_CLIENT_KEY",
-		},
-		cli.StringFlag{
-			Name:   "log-level,l",
-			Usage:  "log level",
-			EnvVar: envPrefix + "LOG_LEVEL",
-			Value:  "info",
-		},
-		cli.BoolFlag{
-			Name:   "no-auto-update",
-			Usage:  "Specifies if the server should NO trigger auto updates",
-			EnvVar: envPrefix + "NO_AUTO_UPDATE",
-		},
-		cli.IntFlag{
-			Name:   "update-interval",
-			Usage:  "Time update interval in seconds",
-			EnvVar: envPrefix + "UPDATE_INTERVAL",
-			Value:  21600,
-		},
-		cli.StringFlag{
-			Name:   "update-uri",
-			Usage:  "Update server uri",
-			EnvVar: envPrefix + "UPDATE_URI",
-			Value:  "http://localhost:3000/updates",
-		},
+		optConfigFile,
+		optTransport,
+		optEndpoint,
+		optTlsCaCert,
+		optTlsClientCert,
+		optTlsClientKey,
+		optLogLevel,
+		optNoAutoUpdate,
+		optUpdateInterval,
+		optUpdateUri,
 	}
 
 	app.Commands = cliCommands
