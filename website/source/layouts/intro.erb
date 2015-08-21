@@ -1,65 +1,65 @@
 <% wrap_layout :inner do %>
-	<% content_for :sidebar do %>
-		<div class="docs-sidebar hidden-print affix-top" role="complementary">
-			<ul class="nav docs-sidenav">
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
 
-				<li<%= sidebar_current("what") %>>
-					<%= link_to 'What is Arc?', '/intro/index.html' %>
-				</li>
+        <li<%= sidebar_current("what") %>>
+          <%= link_to 'What is Arc?', '/intro/index.html' %>
+        </li>
 
-				<li<%= sidebar_current("vs-other") %>>
-					<%= link_to 'Arc vs. Other Software', '/intro/vs/index.html' %>
-					<ul class="nav">
+        <li<%= sidebar_current("vs-other") %>>
+          <%= link_to 'Arc vs. Other Software', '/intro/vs/index.html' %>
+          <ul class="nav">
 
-						<li<%= sidebar_current("vs-other-mco") %>>
-							<%= link_to 'MCollective', '/intro/vs/mcollective.html' %>
-						</li>
+            <li<%= sidebar_current("vs-other-mco") %>>
+              <%= link_to 'MCollective', '/intro/vs/mcollective.html' %>
+            </li>
 
-						<li<%= sidebar_current("vs-other-ssh") %>>
-							<%= link_to 'SSH', '/intro/vs/ssh.html' %>
-						</li>
+            <li<%= sidebar_current("vs-other-ssh") %>>
+              <%= link_to 'SSH', '/intro/vs/ssh.html' %>
+            </li>
 
-						<li<%= sidebar_current("vs-other-chef") %>>
-							<%= link_to 'Chef, Puppet, etc.', '/intro/vs/chef-puppet.html' %>
-						</li>
+            <li<%= sidebar_current("vs-other-chef") %>>
+              <%= link_to 'Chef, Puppet, etc.', '/intro/vs/chef-puppet.html' %>
+            </li>
 
-						<li<%= sidebar_current("vs-other-consul") %>>
-							<%= link_to 'Consul', '/intro/vs/consul.html' %>
-						</li>
+            <li<%= sidebar_current("vs-other-consul") %>>
+              <%= link_to 'Consul', '/intro/vs/consul.html' %>
+            </li>
 
-						<li<%= sidebar_current("vs-other-custom") %>>
-							<%= link_to 'Custom Solutions', '/intro/vs/custom.html' %>
-						</li>
-					</ul>
-				</li>
+            <li<%= sidebar_current("vs-other-custom") %>>
+              <%= link_to 'Custom Solutions', '/intro/vs/custom.html' %>
+            </li>
+          </ul>
+        </li>
 
-				<li<%= sidebar_current("gettingstarted") %>>
-					<%= link_to 'Getting Started', '/intro/getting-started/install.html' %>
-					<ul class="nav">
-						<li<%= sidebar_current("gettingstarted-install") %>>
-							<%= link_to 'Installing Arc', '/intro/getting-started/install.html' %>
-						</li>
+        <li<%= sidebar_current("gettingstarted") %>>
+          <%= link_to 'Getting Started', '/intro/getting-started/install.html' %>
+          <ul class="nav">
+            <li<%= sidebar_current("gettingstarted-install") %>>
+              <%= link_to 'Installing Arc', '/intro/getting-started/install.html' %>
+            </li>
 
-						<li<%= sidebar_current("gettingstarted-middleware") %>>
-							<%= link_to 'Run the Middleware', '/intro/getting-started/middleware.html' %>
-						</li>
+            <li<%= sidebar_current("gettingstarted-middleware") %>>
+              <%= link_to 'Run the Middleware', '/intro/getting-started/middleware.html' %>
+            </li>
 
-						<li<%= sidebar_current("gettingstarted-server") %>>
-							<%= link_to 'Run the Server', '/intro/getting-started/server.html' %>
-						</li>
+            <li<%= sidebar_current("gettingstarted-server") %>>
+              <%= link_to 'Run the Server', '/intro/getting-started/server.html' %>
+            </li>
 
-						<li<%= sidebar_current("gettingstarted-client") %>>
-							<%= link_to 'Run the Client', '/intro/getting-started/client.html' %>
-						</li>
+            <li<%= sidebar_current("gettingstarted-client") %>>
+              <%= link_to 'Run the Client', '/intro/getting-started/client.html' %>
+            </li>
 
-						<li<%= sidebar_current("gettingstarted-nextsteps") %>>
-							<%= link_to 'Next Steps', '/intro/getting-started/next-steps.html' %>
-						</li>
-					</ul>
-				</li>
-			</ul>
-		</div>
-	<% end %>
+            <li<%= sidebar_current("gettingstarted-nextsteps") %>>
+              <%= link_to 'Next Steps', '/intro/getting-started/next-steps.html' %>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  <% end %>
 
-	<%= yield %>
+  <%= yield %>
 <% end %>
