@@ -11,4 +11,4 @@ description: |-
 This section covers some of the internals.
 
 -> **Note:** Knowing about the internals of Arc is not necessary to successfully
-use it. We document it here to be completely transparent about how Consul works.
+use it. We document it here to be completely transparent about how Arc works.

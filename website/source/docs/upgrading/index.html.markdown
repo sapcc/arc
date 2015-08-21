@@ -1,7 +1,7 @@
 ---
 layout: "docs"
 page_title: "Upgrading Arc"
-sidebar_current: "docs-upgrading-upgrading"
+sidebar_current: "docs-upgrading"
 description: |-
   upgrade
 ---

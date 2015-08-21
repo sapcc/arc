@@ -11,28 +11,20 @@
 					<%= link_to 'Arc vs. Other Software', '/intro/vs/index.html' %>
 					<ul class="nav">
 
-						<li<%= sidebar_current("vs-other-zk") %>>
-							<%= link_to 'ZooKeeper, doozerd, etcd', '/intro/vs/zookeeper.html' %>
+						<li<%= sidebar_current("vs-other-mco") %>>
+							<%= link_to 'MCollective', '/intro/vs/mcollective.html' %>
+						</li>
+
+						<li<%= sidebar_current("vs-other-ssh") %>>
+							<%= link_to 'SSH', '/intro/vs/ssh.html' %>
 						</li>
 
 						<li<%= sidebar_current("vs-other-chef") %>>
 							<%= link_to 'Chef, Puppet, etc.', '/intro/vs/chef-puppet.html' %>
 						</li>
 
-						<li<%= sidebar_current("vs-other-nagios-sensu") %>>
-							<%= link_to 'Nagios, Sensu', '/intro/vs/nagios-sensu.html' %>
-						</li>
-
-						<li<%= sidebar_current("vs-other-skydns") %>>
-							<%= link_to 'SkyDNS', '/intro/vs/skydns.html' %>
-            </li>
-
-						<li<%= sidebar_current("vs-other-smartstack") %>>
-							<%= link_to 'SmartStack', '/intro/vs/smartstack.html' %>
-						</li>
-
-						<li<%= sidebar_current("vs-other-serf") %>>
-							<%= link_to 'Serf', '/intro/vs/serf.html' %>
+						<li<%= sidebar_current("vs-other-consul") %>>
+							<%= link_to 'Consul', '/intro/vs/consul.html' %>
 						</li>
 
 						<li<%= sidebar_current("vs-other-custom") %>>
@@ -41,39 +33,23 @@
 					</ul>
 				</li>
 
-				<li<%= sidebar_current("hashicorp-ecosystem") %>>
-					<%= link_to 'Arc & the HashiCorp Ecosystem', '/intro/hashicorp-ecosystem.html' %>
-				</li>
-
 				<li<%= sidebar_current("gettingstarted") %>>
 					<%= link_to 'Getting Started', '/intro/getting-started/install.html' %>
 					<ul class="nav">
 						<li<%= sidebar_current("gettingstarted-install") %>>
-							<%= link_to 'Install Consul', '/intro/getting-started/install.html' %>
+							<%= link_to 'Installing Arc', '/intro/getting-started/install.html' %>
 						</li>
 
-						<li<%= sidebar_current("gettingstarted-agent") %>>
-							<%= link_to 'Run the Agent', '/intro/getting-started/agent.html' %>
+						<li<%= sidebar_current("gettingstarted-middleware") %>>
+							<%= link_to 'Run the Middleware', '/intro/getting-started/middleware.html' %>
 						</li>
 
-						<li<%= sidebar_current("gettingstarted-services") %>>
-							<%= link_to 'Services', '/intro/getting-started/services.html' %>
+						<li<%= sidebar_current("gettingstarted-server") %>>
+							<%= link_to 'Run the Server', '/intro/getting-started/server.html' %>
 						</li>
 
-						<li<%= sidebar_current("gettingstarted-join") %>>
-							<%= link_to 'Consul Cluster', '/intro/getting-started/join.html' %>
-						</li>
-
-						<li<%= sidebar_current("gettingstarted-checks") %>>
-							<%= link_to 'Health Checks', '/intro/getting-started/checks.html' %>
-						</li>
-
-						<li<%= sidebar_current("gettingstarted-kv") %>>
-							<%= link_to 'Key/Value Data', '/intro/getting-started/kv.html' %>
-						</li>
-
-						<li<%= sidebar_current("gettingstarted-ui") %>>
-							<%= link_to 'Web UI', '/intro/getting-started/ui.html' %>
+						<li<%= sidebar_current("gettingstarted-client") %>>
+							<%= link_to 'Run the Client', '/intro/getting-started/client.html' %>
 						</li>
 
 						<li<%= sidebar_current("gettingstarted-nextsteps") %>>

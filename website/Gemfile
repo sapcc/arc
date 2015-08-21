@@ -1,6 +1,5 @@
 # encoding: UTF-8
-source 'http://moo-repo.***REMOVED***:8080/rubygemsorg/'
-#source "https://rubygems.org"
+source "https://rubygems.org"
 
 #gem "middleman-hashicorp", github: "hashicorp/middleman-hashicorp"
 gem "middleman-hashicorp", :git => 'https://github.com/hashicorp/middleman-hashicorp.git'

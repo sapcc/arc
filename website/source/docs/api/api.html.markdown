@@ -1,7 +1,7 @@
 ---
 layout: "docs"
 page_title: "Arc: Api"
-sidebar_current: "docs-arc-api"
+sidebar_current: "docs-api-api"
 description: |-
   Arc
 ---

@@ -1,7 +1,7 @@
 ---
 layout: "docs"
 page_title: "Agent"
-sidebar_current: "docs-agent-running"
+sidebar_current: "docs-server-basics"
 description: |-
   The Consul agent is the core process of Consul. The agent maintains membership information, registers services, runs checks, responds to queries, and more. The agent must run on every node that is part of a Consul cluster.
 ---

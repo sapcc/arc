@@ -6,6 +6,6 @@ sidebar_current: "docs-faq"
 
 # Frequently Asked Questions
 
-## Q: Why is comming later?
+## Q: Why is there no FAQ available?
 
-Comming later
+It is comming later
