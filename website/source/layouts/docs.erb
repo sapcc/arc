@@ -1,108 +1,108 @@
 <% wrap_layout :inner do %>
-	<% content_for :sidebar do %>
-		<div class="docs-sidebar hidden-print affix-top" role="complementary">
-			<ul class="nav docs-sidenav">
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
 
-				<li<%= sidebar_current("docs-home") %>>
-					<%= link_to 'Documentation', '/docs/index.html' %>
-				</li>
+        <li<%= sidebar_current("docs-home") %>>
+          <%= link_to 'Documentation', '/docs/index.html' %>
+        </li>
 
-				<li<%= sidebar_current("docs-internals") %>>
-					<a href="/docs/internals/index.html">Arc Internals</a>
-					<ul class="nav">
-						<li<%= sidebar_current("docs-internals-architecture") %>>
-							<a href="/docs/internals/architecture.html">Architecture</a>
-						</li>
-						<li<%= sidebar_current("docs-internals-security") %>>
-							<%= link_to 'Security', '/docs/internals/security.html' %>
-						</li>
-					</ul>
-				</li>
-
-				<li<%= sidebar_current("docs-commands") %>>
-					<%= link_to 'Arc Commands (CLI)', '/docs/commands/index.html' %>
-					<ul class="nav">
-						<li<%= sidebar_current("docs-commands-server") %>>
-							<%= link_to 'server', '/docs/commands/server.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-execute") %>>
-							<%= link_to 'execute', '/docs/commands/execute.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-list") %>>
-							<%= link_to 'list', '/docs/commands/list.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-facts") %>>
-							<%= link_to 'facts', '/docs/commands/facts.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-update") %>>
-							<%= link_to 'update', '/docs/commands/update.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-init") %>>
-							<%= link_to 'init', '/docs/commands/init.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-status") %>>
-							<%= link_to 'status', '/docs/commands/status.html' %>
-						</li>
-
-						<li<%= sidebar_current("docs-commands-help") %>> <%= link_to 'help', '/docs/commands/help.html' %>
+        <li<%= sidebar_current("docs-internals") %>>
+          <%= link_to 'Arc Internals', '/docs/internals/index.html' %>
+          <ul class="nav">
+            <li<%= sidebar_current("docs-internals-architecture") %>>
+              <%= link_to 'Architecture', '/docs/internals/architecture.html' %>
             </li>
-					</ul>
-				</li>
+            <li<%= sidebar_current("docs-internals-security") %>>
+              <%= link_to 'Security', '/docs/internals/security.html' %>
+            </li>
+          </ul>
+        </li>
 
-				<li<%= sidebar_current("docs-server") %>>
-					<a href="/docs/server/basics.html">Arc Server</a>
-					<ul class="nav">
-						<li<%= sidebar_current("docs-server-basics") %>>
-							<a href="/docs/server/basics.html">Running and Stopping</a>
-						</li>
-
-						<li<%= sidebar_current("docs-server-config") %>>
-							<a href="/docs/server/config.html">Configuration</a>
-						</li>
-
-						<li<%= sidebar_current("docs-server-agents") %>>
-							<a href="/docs/server/agents.html">Agents</a>
+        <li<%= sidebar_current("docs-commands") %>>
+          <%= link_to 'Arc Commands (CLI)', '/docs/commands/index.html' %>
+          <ul class="nav">
+            <li<%= sidebar_current("docs-commands-server") %>>
+              <%= link_to 'server', '/docs/commands/server.html' %>
             </li>
 
-						<li<%= sidebar_current("docs-server-facts") %>>
-							<a href="/docs/server/facts.html">Agents</a>
+            <li<%= sidebar_current("docs-commands-execute") %>>
+              <%= link_to 'execute', '/docs/commands/execute.html' %>
             </li>
-					</ul>
-				</li>
-				<li<%= sidebar_current("docs-api") %>>
-					<a href="/docs/api/basics.html">Arc API Service</a>
-					<ul class="nav">
-						<li<%= sidebar_current("docs-api-basics") %>>
-							<a href="/docs/api/basics.html">Running and Stopping</a>
-						</li>
-						<li<%= sidebar_current("docs-api-api") %>>
-							<a href="/docs/api/api.html">API</a>
-						</li>
-					</ul>
-				</li>
 
-				<li<%= sidebar_current("docs-upgrading") %>>
-					<a href="/docs/upgrading/index.html">Upgrading Arc</a>
-					<ul class="nav">
-						<li<%= sidebar_current("docs-upgrading-server") %>>
-							<a href="/docs/upgrading/site.html">Update Site</a>
-						</li>
-					</ul>
-				</li>
+            <li<%= sidebar_current("docs-commands-list") %>>
+              <%= link_to 'list', '/docs/commands/list.html' %>
+            </li>
 
-				<li<%= sidebar_current("docs-faq") %>>
-					<a href="/docs/faq.html">Frequently Asked Questions</a>
-				</li>
+            <li<%= sidebar_current("docs-commands-facts") %>>
+              <%= link_to 'facts', '/docs/commands/facts.html' %>
+            </li>
 
-			</ul>
-		</div>
-	<% end %>
+            <li<%= sidebar_current("docs-commands-update") %>>
+              <%= link_to 'update', '/docs/commands/update.html' %>
+            </li>
 
-	<%= yield %>
+            <li<%= sidebar_current("docs-commands-init") %>>
+              <%= link_to 'init', '/docs/commands/init.html' %>
+            </li>
+
+            <li<%= sidebar_current("docs-commands-status") %>>
+              <%= link_to 'status', '/docs/commands/status.html' %>
+            </li>
+
+            <li<%= sidebar_current("docs-commands-help") %>> <%= link_to 'help', '/docs/commands/help.html' %>
+            </li>
+          </ul>
+        </li>
+
+        <li<%= sidebar_current("docs-server") %>>
+          <%= link_to 'Arc Server', '/docs/server/basics.html' %>
+          <ul class="nav">
+            <li<%= sidebar_current("docs-server-basics") %>>
+              <%= link_to 'Running and Stopping', '/docs/server/basics.html' %>
+            </li>
+
+            <li<%= sidebar_current("docs-server-config") %>>
+              <%= link_to 'Configuration', '/docs/server/config.html' %>
+            </li>
+
+            <li<%= sidebar_current("docs-server-agents") %>>
+              <%= link_to 'Agents', '/docs/server/agents.html' %>
+            </li>
+
+            <li<%= sidebar_current("docs-server-facts") %>>
+              <%= link_to 'Facts', '/docs/server/facts.html' %>
+            </li>
+          </ul>
+        </li>
+        <li<%= sidebar_current("docs-api") %>>
+          <%= link_to 'Arc API Service', '/docs/api/basics.html' %>
+          <ul class="nav">
+            <li<%= sidebar_current("docs-api-basics") %>>
+              <%= link_to 'Running ans Stopping', '/docs/api/basics.html' %>
+            </li>
+            <li<%= sidebar_current("docs-api-api") %>>
+              <%= link_to 'API', '/docs/api/api.html' %>
+            </li>
+          </ul>
+        </li>
+
+        <li<%= sidebar_current("docs-upgrading") %>>
+          <%= link_to 'Upgrading Arc', '/docs/upgrading/index.html' %>
+          <ul class="nav">
+            <li<%= sidebar_current("docs-upgrading-server") %>>
+              <%= link_to 'Update Site', '/docs/upgrading/site.html' %>
+            </li>
+          </ul>
+        </li>
+
+        <li<%= sidebar_current("docs-faq") %>>
+          <%= link_to 'Frequently Asked Questions', '/docs/faq.html' %>
+        </li>
+
+      </ul>
+    </div>
+  <% end %>
+
+  <%= yield %>
 <% end %>

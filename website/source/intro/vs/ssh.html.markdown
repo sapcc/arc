@@ -1,11 +1,11 @@
 ---
 layout: "intro"
-page_title: "Arc vs. MCollective"
-sidebar_current: "vs-other-mcollective"
+page_title: "Arc vs. SSH"
+sidebar_current: "vs-other-ssh"
 description: |-
  TBD
 ---
 
-# Arc vs. MCollective 
+# Arc vs. SSH
 
  TBD

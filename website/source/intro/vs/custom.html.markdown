@@ -1,6 +1,6 @@
 ---
 layout: "intro"
-page_title: "Consul vs. Custom Solutions"
+page_title: "Arc vs. Custom Solutions"
 sidebar_current: "vs-other-custom"
 description: |-
  TBD
