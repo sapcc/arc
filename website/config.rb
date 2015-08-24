@@ -18,17 +18,7 @@ configure :build do
 end
 
 activate :hashicorp do |h|
-  h.version         = "0.5.2"
-  h.bintray_enabled = ENV["BINTRAY_ENABLED"]
-  h.bintray_repo    = "mitchellh/consul"
-  h.bintray_user    = "mitchellh"
-  h.bintray_key     = ENV["BINTRAY_API_KEY"]
-
-  # Do not include the "web" in the default list of packages
-  h.bintray_exclude_proc = Proc.new do |os, filename|
-    os == "web"
-  end
-
+  h.bintray_enabled = false
   h.bintray_prefixed = false
 end
 
