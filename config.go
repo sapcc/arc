@@ -25,7 +25,7 @@ var (
 	appName           = "arc"
 	envPrefix         = "ARC_"
 	defaultConfigFile = path.Join(defaultConfigDir(), appName+".cfg")
-	config            arc_config.Config
+	config            = arc_config.New()
 )
 
 //returns the path to the config file we want to load

@@ -21,19 +21,28 @@ type Config struct {
 	LogLevel     string
 }
 
+func New() Config {
+	//FIXME: This is only for testing when running without a tls certificate
+	//Should be moved to test files at some point
+	return Config{
+		Identity:     runtime.GOOS,
+		Project:      "test-project",
+		Organization: "test-org",
+	}
+}
+
 func (config *Config) Load(c *cli.Context) error {
-	config.Endpoints = c.StringSlice("endpoint")
-	config.Transport = c.String("transport")
+	if len(c.StringSlice("endpoint")) > 0 {
+		config.Endpoints = c.StringSlice("endpoint")
+	}
+	if c.String("transport") != "" {
+		config.Transport = c.String("transport")
+	}
 
 	if c.String("tls-client-cert") != "" || c.String("tls-client-key") != "" || c.String("tls-ca-cert") != "" {
 		if err := config.loadTLSConfig(c.String("tls-client-cert"), c.String("tls-client-key"), c.String("tls-ca-cert")); err != nil {
 			return err
 		}
-	} else {
-		//This is only for testing when running without a tls certificate
-		config.Identity = runtime.GOOS
-		config.Project = "test-project"
-		config.Organization = "test-org"
 	}
 
 	config.LogLevel = c.GlobalString("log-level")

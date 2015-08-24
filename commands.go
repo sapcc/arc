@@ -31,6 +31,9 @@ var cliCommands = []cli.Command{
 		Name:   "server",
 		Usage:  "Run the Arc daemon",
 		Action: cmdServer,
+		Before: func(c *cli.Context) error {
+			return config.Load(c)
+		},
 		Flags: []cli.Flag{
 			optTransport,
 			optEndpoint,
@@ -55,6 +58,9 @@ var cliCommands = []cli.Command{
 			optIdentity,
 			optPayload,
 			optStdin,
+		},
+		Before: func(c *cli.Context) error {
+			return config.Load(c)
 		},
 		Action: cmdExecute,
 	},

@@ -22,7 +22,7 @@ const (
 	envPrefix = "ARC_"
 )
 
-var config arc_config.Config
+var config = arc_config.New()
 var db *sql.DB
 var tp transport.Transport
 
