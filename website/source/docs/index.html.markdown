@@ -11,4 +11,4 @@ description: |-
 Welcome to the Arc documentation! This documentation is more of a reference
 guide for all available features and options of Arc. If you're just getting
 started with Arc, please start with the
-[introduction and getting started guide](<%= url_for '/intro/index.html' %>) instead.
+[introduction and getting started guide](/intro/index.html) instead.
