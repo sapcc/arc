@@ -6,21 +6,21 @@ import (
 
 var optConfigFile = cli.StringFlag{
 	Name:   "config-file,c",
-	Usage:  "load config file",
+	Usage:  "Load config file",
 	Value:  defaultConfigFile,
 	EnvVar: envPrefix + "CONFIGFILE",
 }
 
 var optTransport = cli.StringFlag{
 	Name:   "transport,T",
-	Usage:  "transport backend driver",
+	Usage:  "Transport backend driver",
 	Value:  "mqtt",
 	EnvVar: envPrefix + "TRANSPORT",
 }
 
 var optEndpoint = cli.StringSliceFlag{
 	Name:   "endpoint,e",
-	Usage:  "endpoint url(s) for selected transport",
+	Usage:  "Endpoint url(s) for selected transport",
 	EnvVar: envPrefix + "ENDPOINT",
 	Value:  new(cli.StringSlice),
 }
@@ -45,7 +45,7 @@ var optTlsClientKey = cli.StringFlag{
 
 var optLogLevel = cli.StringFlag{
 	Name:   "log-level,l",
-	Usage:  "log level",
+	Usage:  "Log level",
 	EnvVar: envPrefix + "LOG_LEVEL",
 	Value:  "info",
 }
@@ -110,6 +110,6 @@ var optRegistrationUrl = cli.StringFlag{
 
 var optInstallDir = cli.StringFlag{
 	Name:  "install-dir,i",
-	Usage: "installation directory",
+	Usage: "Installation directory",
 	Value: defaultConfigDir(),
 }
