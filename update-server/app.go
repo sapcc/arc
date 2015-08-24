@@ -9,7 +9,6 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/gorilla/handlers"
 
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
@@ -18,7 +17,6 @@ const appName = "arc-update-server"
 var (
 	buildsRootPath string
 	templates      map[string]*template.Template
-	config         arc_config.Config
 )
 
 func main() {
@@ -56,15 +54,10 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		err := config.Load(c)
-		if err != nil {
-			log.Fatalf("Invalid configuration: %s\n", err.Error())
-			return err
-		}
 
-		lvl, err := log.ParseLevel(config.LogLevel)
+		lvl, err := log.ParseLevel(c.GlobalString("log-level"))
 		if err != nil {
-			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
+			log.Fatalf("Invalid log level: %s\n", c.GlobalString("log-level"))
 			return err
 		}
 		log.SetLevel(lvl)
@@ -77,7 +70,7 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
-	log.Infof("Starting update server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
+	log.Infof("Starting update server version %s.", version.Version)
 
 	// check mandatory params
 	buildsRootPath = c.GlobalString("path")
