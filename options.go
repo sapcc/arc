@@ -12,7 +12,7 @@ var optConfigFile = cli.StringFlag{
 }
 
 var optTransport = cli.StringFlag{
-	Name:   "transport,t",
+	Name:   "transport,T",
 	Usage:  "transport backend driver",
 	Value:  "mqtt",
 	EnvVar: envPrefix + "TRANSPORT",
