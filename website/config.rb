@@ -29,8 +29,6 @@ activate :hashicorp do |h|
     os == "web"
   end
 
-  # Consul packages are not prefixed with consul_ - they should be in the
-  # future though!
   h.bintray_prefixed = false
 end
 
