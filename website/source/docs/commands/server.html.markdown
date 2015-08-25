@@ -12,7 +12,7 @@ Command: `arc server`
 Run the Arc daemon.
 
 Due to the power and complexity of this command, the Arc server is documented in its own section.
-See the [Arc Server](docs/server/basics.html) section for more information on how to use this command and the options it has.
+See the [Arc Server](/docs/server/basics.html) section for more information on how to use this command and the options it has.
 
 ## Usage
 
