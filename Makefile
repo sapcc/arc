@@ -118,7 +118,10 @@ install-deps:
 
 .PHONY: cross
 cross:
+	@#built the container if its not already build
+	[ "`docker images -q gonative`" != "" ] || docker build -t gonative .
 	@# -w omit DWARF symbol table -> smaller
+	@# -s stip binary
 	docker run \
 		--rm \
 		-v $(CURDIR):/gonative/src/gitHub.***REMOVED***/monsoon/arc \
