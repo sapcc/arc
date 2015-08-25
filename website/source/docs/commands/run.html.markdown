@@ -28,7 +28,7 @@ the environment via the variable $ARC_TLS_CLIENT_KEY.
 * `--tls-ca-cert` - CA to verify transport endpoints. You can also have the default value set from the environment via
 the variable $ARC_TLS_CA_CERT.
 * `--timeout, -t` -  Timeout for executing the action. If this isn't set, the default timeout will be set to 60 seconds.
-* `--identity, -i` - Target system. To get the identity of the target system you can run the [`facts` command](/docs/commands/facts.html) on the
+* `--identity, -i` - Target system. To get the identity of the target system you can run the [facts command](/docs/commands/facts.html) on the
 remote system.
 * `--payload, -p` - Payload for action. [REFERENCE ACTIONS DOC PAGE FROM HERE]
 * `--stdin, -s` - Read action payload from stdin. [REFERENCE ACTIONS DOC PAGE FROM HERE]

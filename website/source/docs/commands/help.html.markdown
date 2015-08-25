@@ -15,7 +15,7 @@ The `help` command shows a list of commands or help for one specific command.
 
 Example: `arc update -help`
 
-It shows the help for the [`update` command](/docs/commands/update.html).
+It shows the help for the [update command](/docs/commands/update.html).
 
 ```text
 NAME:
