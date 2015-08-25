@@ -29,3 +29,4 @@ OPTIONS:
     --identity, -i      Target system
     --payload, -p       Payload for action
     --stdin, -s         Read payload from stdin
+```
