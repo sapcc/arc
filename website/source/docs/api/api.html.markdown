@@ -2,30 +2,31 @@
 layout: "docs"
 page_title: "Arc: Api"
 sidebar_current: "docs-api-api"
-description: |-
-  Arc
+description: The main interface to ARC is a RESTful HTTP API. The API can be used to perform operations or collect information from one or different Arc servers.
 ---
 
-# API
-### Definition:
+# HTTP API
 
-| URI                               | GET                                        | PUT                        | POST          | DELETE                    |
+The main interface to ARC is a RESTful HTTP API. The API can be used to perform operations or collect
+information from one or different Arc servers.
+
+## Definition
+
+| URL                               | GET                                        | PUT                        | POST          | DELETE                    |
 |:----------------------------------|:-------------------------------------------|:---------------------------|:--------------|:--------------------------|
-| /agents                           | List all agents (with attr: id)            | N/A                        | N/A           | N/A                       |
-| /agents/{agent-id}                | Gets the agent with agent-id               | N/A                        | N/A           | N/A                       |
-| /agents/{agent-id}/facts          | List all facts from an agent with agent-id | N/A                        | N/A           | N/A                       |
+| /agents                           | List all agents                            | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}                | Get an agent                               | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}/facts          | List all facts from an agent               | N/A                        | N/A           | N/A                       |
 | /jobs                             | List all jobs                              | N/A                        | Execute a job | N/A                       |
-| /jobs/{job-id}                    | Gets the job with the job-id               | N/A                        | N/A           | N/A                      |
-| /jobs/{job-id}/log                | Gets the log from the job with the job-id  | N/A                        | N/A           | N/A                       |
+| /jobs/{job-id}                    | Get a job                                  | N/A                        | N/A           | N/A                       |
+| /jobs/{job-id}/log                | Get a job log                              | N/A                        | N/A           | N/A                       |
 
-
-### Agents and facts:
-##### Get all agents
+## List all agents
 - Method: `GET`
 - URL: `/agents`
-- Response:
+- Example response:
 
-```javascript
+```text
 [
 	{
 		agent_id: "darwin",
@@ -36,12 +37,13 @@ description: |-
 ]
 ```
 
-##### Get an agent
+## Get an agent
 - Method: `GET`
-- URL: `/agents/darwin`
-- Response:
+- URL: `/agents/{agent-id}`
+- Example URL: `/agents/darwin`
+- Example response:
 
-```javascript
+```text
 {
 	agent_id: "darwin",
 	created_at: "2015-06-18T15:13:10.164307Z",
@@ -49,12 +51,13 @@ description: |-
 }
 ```
 
-##### Get agent facts:
+## List agent facts:
 - Method: `GET`
-- URL: `/agents/darwin/facts`
-- Response:
+- URL: `/agents/{agent-id}/facts`
+- Example: `/agents/darwin/facts`
+- Example response:
 
-```javascript
+```text
 {
 	os: "darwin",
 	online: true,
@@ -73,14 +76,12 @@ description: |-
 }
 ```
 
-### Jobs
-
-##### Get all jobs:
+## List all jobs:
 - Method: `GET`
 - URL: `/jobs`
-- Response:
+- Example response:
 
-```javascript
+```text
 [
 	{
 		request: {
@@ -101,12 +102,13 @@ description: |-
 ]
 ```
 
-##### Get a job:
+## Get a job:
 - Method: `GET`
-- URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca`
-- Response:
+- URL: `/jobs/{job-id}`
+- Example URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca`
+- Example response:
 
-```javascript
+```text
 {
 	request: {
 		version: 1,
@@ -124,12 +126,13 @@ description: |-
 }
 ```
 
-##### Get a job log:
+## Get a job log:
 - Method: `GET`
-- URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca/log`
-- Response:
+- URL: `/jobs/{job-id}/log`
+- Example URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca/log`
+- Example response:
 
-```javascript
+```text
 Reading package lists... Done
 Building dependency tree
 Reading state information... Done
@@ -158,12 +161,12 @@ Setting up unzip (6.0-9ubuntu1) ...
 Setting up zip (3.0-8) ...
 ```
 
-##### Execute a job:
+## Execute a job:
 - Method: `POST`
 - URL: `/jobs`
-- Body:
+- Example body:
 
-```javascript
+```text
 {
 	"to": "darwin",
 	"timeout": 60,
@@ -173,9 +176,9 @@ Setting up zip (3.0-8) ...
 }
 ```
 
-- Response:
+- Example response:
 
-```javascript
+```text
 {
 	request_id: "692f9dd9-f0f4-4332-89e9-ac556a343bd4"
 }

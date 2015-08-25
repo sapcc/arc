@@ -36,7 +36,6 @@ body.layout-intro{
 	margin-bottom: 30px;
 	margin-top: 50px;
 	margin-right: 4%;
-	//background-color: $light-purple;
 	border-radius: $el-border-radius;
 
 	a{
@@ -96,12 +95,6 @@ body.layout-intro{
 				> a{
 					-webkit-font-smoothing: antialiased;
 				}
-
-				/*> a:hover,
-				> a:focus {
-					font-weight: $font-weight-museo-xb;
-				}*/
-
 				.nav {
 					display: block;
 
@@ -225,6 +218,11 @@ body.layout-intro{
   .alert p {
 	margin-bottom: 0;
   }
+
+	table {
+		@extend .table;
+		@extend .table-striped;
+	}
 }
 
 
