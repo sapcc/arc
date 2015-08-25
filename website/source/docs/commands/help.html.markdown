@@ -13,20 +13,19 @@ The `help` command shows a list of commands or help for one specific command.
 
 ## Example
 
-Example: `arc execute -help`
+Example: `arc update -help`
 
-It shows the help for the command execute.
+It shows the help for the [`update` command](/docs/commands/update.html).
 
 ```text
 NAME:
-    execute - Execute remote agent action
+   update - Update current binary to the latest version
 
 USAGE:
-    command execute [command options] [arguments...]
+   command update [command options] [arguments...]
 
 OPTIONS:
-    --timeout, -t "60"  Timeout for executing the action
-    --identity, -i      Target system
-    --payload, -p       Payload for action
-    --stdin, -s         Read payload from stdin
+   --force, -f                                  No confirmation is needed
+   --update-uri "http://localhost:3000/updates" Update server uri [$ARC_UPDATE_URI]
+   --no-update, -n                              No update is triggered
 ```
