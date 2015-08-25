@@ -45,39 +45,54 @@ func main() {
 	app.Action = runServer
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "transport,t",
-			Usage:  "transport backend driver",
+			Name:   "transport,T",
+			Usage:  "Transport backend driver",
 			Value:  "mqtt",
 			EnvVar: envPrefix + "TRANSPORT",
 		},
 		cli.StringFlag{
 			Name:   "log-level,l",
-			Usage:  "log level",
+			Usage:  "Log level",
 			EnvVar: envPrefix + "LOG_LEVEL",
 			Value:  "info",
 		},
 		cli.StringSliceFlag{
 			Name:   "endpoint,e",
-			Usage:  "endpoint url(s) for selected transport",
+			Usage:  "Endpoint url(s) for selected transport",
 			EnvVar: envPrefix + "ENDPOINT",
 			Value:  new(cli.StringSlice),
 		},
 		cli.StringFlag{
 			Name:  "bind-address,b",
-			Usage: "listen address for the update server",
+			Usage: "Update server URL",
 			Value: "0.0.0.0:3000",
 		},
 		cli.StringFlag{
 			Name:   "env",
-			Usage:  "environment to use (development, test, production)",
+			Usage:  "Environment to use (development, test, production)",
 			Value:  "development",
 			EnvVar: envPrefix + "ENV",
 		},
 		cli.StringFlag{
 			Name:   "db-config,c",
-			Usage:  "database configuration file",
+			Usage:  "Database configuration file",
 			Value:  "db/dbconf.yml",
 			EnvVar: envPrefix + "DB_CONFIG",
+		},
+		cli.StringFlag{
+			Name:   "tls-ca-cert",
+			Usage:  "CA to verify transport endpoints",
+			EnvVar: envPrefix + "TLS_CA_CERT",
+		},
+		cli.StringFlag{
+			Name:   "tls-client-cert",
+			Usage:  "Client cert to use for TLS",
+			EnvVar: envPrefix + "TLS_CLIENT_CERT",
+		},
+		cli.StringFlag{
+			Name:   "tls-client-key",
+			Usage:  "Private key used in client TLS auth",
+			EnvVar: envPrefix + "TLS_CLIENT_KEY",
 		},
 	}
 
