@@ -4,3 +4,5 @@ chef/
 .gopath/
 .git/
 tmp/
+website/build
+website/vendor
