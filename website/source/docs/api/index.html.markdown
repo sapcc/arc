@@ -9,6 +9,11 @@ description: The API server, the main interface to Arc, offers a RESTful API ser
 
 The API server, the main interface to Arc, offers a RESTful API service, a job scheduler with log collections and supervision based on heartbeat.
 
+## HTTP API
+
+Due to the variety of options, the API is documented in its own section.
+See the [HTTP API](/docs/api/api.html) section for more information.
+
 ## Job scheduler
 
 Each job executed through the API Server will be persisted in the database. Due to the fact that the server subscribes to all
