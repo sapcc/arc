@@ -10,6 +10,21 @@ description: |-
 
 The API server offers a RESTful service to Arc, a job scheduler with log collections and supervision based on heartbeat.
 
+## Setup
+
+* Postgresql
+
+The API Server uses a Postgres database.
+Install from Brew
+
+* Goose
+
+The Goose
+Install Goose with
+Run migration
+
+## Routine Scheduler
+
 ## Running
 
 Usage: `api-server [global options] command [command options] [arguments...]`

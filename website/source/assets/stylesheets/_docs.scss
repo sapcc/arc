@@ -211,6 +211,11 @@ body.layout-intro{
 		margin-bottom: 16px;
 	}
 
+	h2 {
+		padding-top: 92px;
+		margin-top: -50px;
+	}
+
 	#graph {
 		margin-top: 30px;
 	}
@@ -222,6 +227,10 @@ body.layout-intro{
 	table {
 		@extend .table;
 		@extend .table-striped;
+		@extend .table-bordered;
+		td:first-child {
+			width: 1px;
+		}
 	}
 }
 
