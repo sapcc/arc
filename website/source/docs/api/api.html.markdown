@@ -10,6 +10,17 @@ description: The main interface to Arc is a RESTful HTTP API. The API can be use
 The main interface to Arc is a RESTful HTTP API. The API can be used to perform operations or collect
 information from one or different Arc servers.
 
+* [Definition](#definition)
+* [List all agents](#list_all_agents)
+* [Get an agent](#get_agent)
+* [Filtering Agents](#filter_agents)
+* [List agent facts](#list_agent_facts)
+* [List all jobs](#list_all_jobs)
+* [Get a job](#get_job)
+* [Get a job log](#get_job_log)
+* [Execute a job](#execute_job)
+
+<a name="definition"></a>
 ## Definition
 
 | URL                               | GET                                        | PUT                        | POST          | DELETE                    |
@@ -21,6 +32,7 @@ information from one or different Arc servers.
 | /jobs/{job-id}                    | Get a job                                  | N/A                        | N/A           | N/A                       |
 | /jobs/{job-id}/log                | Get a job log                              | N/A                        | N/A           | N/A                       |
 
+<a name="list_all_agents"></a>
 ## List all agents
 - Method: `GET`
 - URL: `/agents`
@@ -37,6 +49,7 @@ information from one or different Arc servers.
 ]
 ```
 
+<a name="get_agent"></a>
 ## Get an agent
 - Method: `GET`
 - URL: `/agents/{agent-id}`
@@ -51,7 +64,50 @@ information from one or different Arc servers.
 }
 ```
 
-## List agent facts:
+<a name="filter_agents"></a>
+## Filtering Agents
+We use a self written parser that transforms the filter syntax exposed by the API to a filter expression that can by used by the underlying fact storage system.
+
+<div class="filter-operators">
+
+| Comparison Operators      | Description                                |
+|:--------------------------|:-------------------------------------------|
+| =                         | Performs a equal-to comparison             |
+| !=                        | Performs a not-equal-to comparison         |
+
+</div>
+
+<div class="filter-operators">
+
+| Logical Operators         | Description                                |
+|:--------------------------|:-------------------------------------------|
+| OR                        | Performs a logical OR on the condition     |
+| AND                       | Performs a logical AND on the condition    |
+| NOT                       | Performs a logical NOT on the condition    |
+| ()                        | When parenthesized conditions are nested, the innermost condition is evaluated first |
+
+</div>
+
+- Method: `GET`
+- URL: `/agents?q={filter}`
+- Example URL: `/agents?q=os+%3D+"darwin"+AND+online%3D+"true"`
+- Example response:
+
+```text
+[
+	{
+		agent_id: "darwin",
+		project: "test-project",
+		organization: "test-org",
+		created_at: "2015-07-08T14:17:47.184796Z",
+		updated_at: "2015-08-26T10:07:06.310511Z"
+	},
+	...
+]
+```
+
+<a name="list_agent_facts"></a>
+## List agent facts
 - Method: `GET`
 - URL: `/agents/{agent-id}/facts`
 - Example: `/agents/darwin/facts`
@@ -75,8 +131,8 @@ information from one or different Arc servers.
 	memory_used_percent: 80
 }
 ```
-
-## List all jobs:
+<a name="list_all_jobs"></a>
+## List all jobs
 - Method: `GET`
 - URL: `/jobs`
 - Example response:
@@ -102,7 +158,8 @@ information from one or different Arc servers.
 ]
 ```
 
-## Get a job:
+<a name="get_job"></a>
+## Get a job
 - Method: `GET`
 - URL: `/jobs/{job-id}`
 - Example URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca`
@@ -126,7 +183,8 @@ information from one or different Arc servers.
 }
 ```
 
-## Get a job log:
+<a name="get_job_log"></a>
+## Get a job log
 - Method: `GET`
 - URL: `/jobs/{job-id}/log`
 - Example URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca/log`
@@ -161,7 +219,8 @@ Setting up unzip (6.0-9ubuntu1) ...
 Setting up zip (3.0-8) ...
 ```
 
-## Execute a job:
+<a name="execute_job"></a>
+## Execute a job
 - Method: `POST`
 - URL: `/jobs`
 - Example body:
