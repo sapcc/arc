@@ -2,13 +2,10 @@
 layout: "docs"
 page_title: "Arc Api Service"
 sidebar_current: "docs-api-basics"
-description: |-
-  Arc
+description: Arc
 ---
 
 # API Service
-
-The API server offers a RESTful service to Arc, a job scheduler with log collections and supervision based on heartbeat.
 
 ## Setup
 
@@ -23,9 +20,9 @@ The Goose
 Install Goose with
 Run migration
 
-## Routine Scheduler
-
 ## Running
+
+* path to the db
 
 Usage: `api-server [global options] command [command options] [arguments...]`
 
