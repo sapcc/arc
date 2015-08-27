@@ -1,64 +1,22 @@
 ---
 layout: "docs"
-page_title: "Arc Api Service"
+page_title: "Arc Api Service - Running and Stopping"
 sidebar_current: "docs-api-basics"
 description: Arc
 ---
 
 # API Service
 
-## Prerequisites
-
-* Postgres database
-
-    Install and configure a Postgres database. We recommend to install Postgres via homebrew:
-
-    ```text
-    brew install postgres
-    ```
-
-* Database migration with goose
-
-    goose is a database migration tool that allows you to manage your database's evolution by creating incremental SQL or Go scripts.
-Please visit [goose](https://bitbucket.org/liamstask/goose) own website for more detail.
-
-  * Install goose
-
-      ```text
-      go get bitbucket.org/liamstask/goose/cmd/goose
-      ```
-  * Create an `arc_dev` and `arc_test` database.
-
-  * Run migration from the api-server folder for all environments needed.
-
-      ```text
-      goose -env development up
-      ```
-
-      ```text
-      goose -env test up
-      ```
-
-      You should get similar output like this for each environment:
-
-      ```text
-      goose: migrating db environment 'development', current version: 0, target: 20150707152559
-      OK    20150624111545_CreateJobs.sql
-      OK    20150624112329_CreateLogs.sql
-      OK    20150624112740_CreateLogParts.sql
-      OK    20150624113227_CreateJsonReplaceFunc.sql
-      OK    20150707152559_CreateAgents.sql
-      ```
-
-
 ## Running
 
-It is important to set the mandatory parameters (endpoint and db configuration file) when running the API Server.
-Here is an example of how to run the api server:
+To run the `API Server` you will need to add the mandatory parameters `endpoint` and `db-config` like in the following
+example:
 
 ```text
 api-server -endpoint tcp://localhost:1883 -db-config api-server/db/dbconf.yml
 ```
+
+If you didn't setup a PostgreSQL or you didn't run the migration please visit following [section](/docs/api/prerequisites.html).
 
 Usage: `api-server [global options] command [command options] [arguments...]`
 

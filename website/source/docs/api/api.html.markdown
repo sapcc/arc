@@ -1,6 +1,6 @@
 ---
 layout: "docs"
-page_title: "Arc: Api"
+page_title: "Arc API Service - HTTP API"
 sidebar_current: "docs-api-api"
 description: The main interface to Arc is a RESTful HTTP API. The API can be used to perform operations or collect information from one or different Arc servers.
 ---

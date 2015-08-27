@@ -1,6 +1,6 @@
 ---
 layout: "docs"
-page_title: "Arc Api Service"
+page_title: "Arc Api Service - Index"
 sidebar_current: "docs-api"
 description: The API server, the main interface to Arc, offers a RESTful API service, a job scheduler with log collections and supervision based on heartbeat.
 ---
