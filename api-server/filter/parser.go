@@ -44,7 +44,6 @@ const yyErrCode = 2
 const yyMaxDepth = 200
 
 //line expr.y:105
-
 func stringKey(field string) string {
 	return fmt.Sprintf("%s->>'%s'", dbCol, field)
 }

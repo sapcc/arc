@@ -1,14 +1,15 @@
 package models
 
 import (
-	"code.google.com/p/go-uuid/uuid"
-	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/arc/arc"	
-
 	"database/sql"
 	"fmt"
 	"strings"
 	"time"
+
+	"code.google.com/p/go-uuid/uuid"
+	log "github.com/Sirupsen/logrus"
+
+	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
 type Request struct {
@@ -65,7 +66,7 @@ func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.T
 }
 
 func (job *Job) ExecuteScriptExample() {
-	job.CustomExecuteScriptExample(arc.Queued, time.Now().Add(-1 * time.Minute), 60)
+	job.CustomExecuteScriptExample(arc.Queued, time.Now().Add(-1*time.Minute), 60)
 }
 
 func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, number uint) {
@@ -87,9 +88,9 @@ func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, 
 func (req *Request) Example() {
 	req.Version = 1
 	req.Sender = "windows"
-	req.RequestID = uuid.New()	
-	req.To = "darwin"	
-	req.Timeout = 60	
+	req.RequestID = uuid.New()
+	req.To = "darwin"
+	req.Timeout = 60
 	req.Agent = "execute"
 	req.Action = "script"
 	req.Payload = "echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""
@@ -115,7 +116,8 @@ func (agent *Agent) Example() {
 func (agents *Agents) CreateAndSaveAgentExamples(db *sql.DB, number int) {
 	now := time.Now()
 	for i := 0; i < number; i++ {
-		agent := Agent{}; agent.Example()
+		agent := Agent{}
+		agent.Example()
 		agent.CreatedAt = now.Add(time.Duration(i) * time.Minute)
 		agent.UpdatedAt = now.Add(time.Duration(i) * time.Minute)
 		err := agent.Save(db)

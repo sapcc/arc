@@ -2,9 +2,9 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
-	"errors"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -13,36 +13,36 @@ import (
 )
 
 type Log struct {
-	JobID 			string		`json:"job_id"`
-	Content			string		`json:"content"`
-	CreatedAt   time.Time	`json:"created_at"`
-	UpdatedAt   time.Time	`json:"updated_at"`
+	JobID     string    `json:"job_id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (log *Log) Get(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("Db connection is nil")
 	}
-	
-	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)		
+
+	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
 func (log *Log) Save(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("Db connection is nil")
-	}	
-	
+	}
+
 	var lastInsertId string
 	err := db.QueryRow(ownDb.InsertLogQuery, log.JobID, log.Content, log.CreatedAt, log.UpdatedAt).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -50,20 +50,20 @@ func (log *Log) GetOrCollect(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("Db is nil")
 	}
-	
+
 	err := log.Get(db)
-	if err == sql.ErrNoRows {	
+	if err == sql.ErrNoRows {
 		// if no log entry collect all log parts
-		log_part := LogPart{JobID:log.JobID}		
+		log_part := LogPart{JobID: log.JobID}
 		content, err := log_part.Collect(db)
 		if err != nil {
 			return err
 		}
 		log.Content = *content
-	}	else if err != nil {
+	} else if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -75,7 +75,7 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
 	// save log part
 	if reply.Payload != "" {
 		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
-		
+
 		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
 		err := logPart.Save(db)
 		if err != nil {
@@ -95,7 +95,7 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
 	return nil
 }
 
-func CleanLogParts(db *sql.DB) error {	
+func CleanLogParts(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -106,7 +106,7 @@ func CleanLogParts(db *sql.DB) error {
 		return err
 	}
 	defer rows.Close()
-	
+
 	rowsCount := 0
 	var logPartID string
 	for rows.Next() {
@@ -114,11 +114,11 @@ func CleanLogParts(db *sql.DB) error {
 		err = rows.Scan(&logPartID)
 		if err != nil {
 			return err
-		}	
-			
+		}
+
 		// aggregate the log parts found to the log table
 		err = aggregateLogParts(db, logPartID)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 		rowsCount++

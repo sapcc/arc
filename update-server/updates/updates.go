@@ -1,15 +1,16 @@
 package updates
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"encoding/json"
 	"fmt"
-	"github.com/blang/semver"
-	"github.com/inconshreveable/go-update/check"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/blang/semver"
+	"github.com/inconshreveable/go-update/check"
 )
 
 var ArgumentError = fmt.Errorf("Update arguments are missing or wrong")
@@ -27,13 +28,13 @@ const buildRelativeUrl = "/builds/"
  * *check.Result, nil			-> There is an available update result to send back
  * nil, nil								-> No updates available
  */
-func New(req *http.Request, buildsRootPath string) (*check.Result, error) {	
+func New(req *http.Request, buildsRootPath string) (*check.Result, error) {
 	// check arguments
 	if len(buildsRootPath) == 0 || req == nil {
 		log.Errorf("Buildpath and/or request are empty or nil")
 		return nil, ArgumentError
 	}
-	
+
 	// get host url
 	hostUrl := getHostUrl(req)
 	if hostUrl == nil {

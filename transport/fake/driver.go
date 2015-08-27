@@ -3,14 +3,14 @@ package fake
 import (
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"	
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 )
 
 type FakeClient struct {
 	Name      string
 	Done      chan bool
 	ReplyChan chan *arc.Reply
-	RegChan 	chan *arc.Registration	
+	RegChan   chan *arc.Registration
 	ReqChan   chan *arc.Request
 }
 
@@ -41,7 +41,7 @@ func (c *FakeClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	return out, cancel
 }
 
-func (c *FakeClient) Request(msg *arc.Request) error {	
+func (c *FakeClient) Request(msg *arc.Request) error {
 	go func() {
 		log.Infof("Writing Request into the FAKE transport. %q", msg)
 		c.ReqChan <- msg

@@ -9,11 +9,11 @@ import (
 )
 
 type LogPart struct {
-	JobID 			string		`json:"job_id"`
-	Number 			uint			`json:"number"`
-	Content			string		`json:"content"`
-	Final				bool			`json:"final"`
-	CreatedAt   time.Time	`json:"created_at"`
+	JobID     string    `json:"job_id"`
+	Number    uint      `json:"number"`
+	Content   string    `json:"content"`
+	Final     bool      `json:"final"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (log_part *LogPart) Collect(db *sql.DB) (*string, error) {
@@ -36,12 +36,12 @@ func (log_part *LogPart) Get(db *sql.DB) error {
 		return errors.New("Db connection is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetLogPartQuery, log_part.JobID, log_part.Number).Scan(&log_part.JobID, &log_part.Number, &log_part.Content, &log_part.Final, &log_part.CreatedAt)		
+	err := db.QueryRow(ownDb.GetLogPartQuery, log_part.JobID, log_part.Number).Scan(&log_part.JobID, &log_part.Number, &log_part.Content, &log_part.Final, &log_part.CreatedAt)
 	if err != nil {
 		return err
 	}
 
-	return nil		
+	return nil
 }
 
 func (log_part *LogPart) Save(db *sql.DB) error {
@@ -55,5 +55,5 @@ func (log_part *LogPart) Save(db *sql.DB) error {
 		return err
 	}
 
-	return nil		
+	return nil
 }

@@ -3,14 +3,14 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"time"
 	"fmt"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/filter"
+	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
 var FilterError = fmt.Errorf("Filter query has a syntax error.")
@@ -45,7 +45,7 @@ func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 			log.Errorf(err.Error())
 			return FilterError
 		}
-		
+
 		log.Infof("Filtering Agents results with query %q and sql %q", filterQuery, filterQuerySql)
 		sqlQuery = fmt.Sprintf(ownDb.GetAgentsFilteredQuery, filterQuerySql)
 	}

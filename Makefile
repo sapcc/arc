@@ -60,10 +60,10 @@ integration: setup
 
 .PHONY: test-gofmt
 test-gofmt:
-	@fmt_fails=`gofmt -l **/*.go | grep -v '^Godep'`; \
+	@fmt_fails=`gofmt -l *.go */**/*.go | grep -v '^Godep'`; \
 		if [ -n "$$fmt_fails" ]; then \
 		echo The following files are not gofmt compatiable:; \
-		echo $$fmt_fails; \
+		printf '%s\n' $$fmt_fails; \
 		exit 1; \
 		fi;
 

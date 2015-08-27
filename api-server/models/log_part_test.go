@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"code.google.com/p/go-uuid/uuid"
 
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"code.google.com/p/go-uuid/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 )
 
 var _ = Describe("LogParts", func() {
@@ -30,7 +31,7 @@ var _ = Describe("LogParts", func() {
 			Expect(dbContent).To(Equal(res))
 			Expect(err).To(HaveOccurred())
 		})
-		
+
 		It("should collect all log chuncks", func() {
 			// add a job related to the log chuncks
 			newJob := Job{}
@@ -70,7 +71,7 @@ var _ = Describe("LogParts", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should not save a log part if the job with the same id does not exist", func() {			
+		It("should not save a log part if the job with the same id does not exist", func() {
 			// save chunck
 			logPart := LogPart{uuid.New(), 1, "the log chunck", false, time.Now()}
 			err := logPart.Save(db)
@@ -82,7 +83,7 @@ var _ = Describe("LogParts", func() {
 			newJob := Job{}
 			newJob.ExecuteScriptExample()
 			err := newJob.Save(db)
-			Expect(err).NotTo(HaveOccurred())			
+			Expect(err).NotTo(HaveOccurred())
 
 			// save chunck
 			logPart := LogPart{newJob.RequestID, 1, "the log chunck", false, time.Now()}

@@ -5,7 +5,7 @@ package models_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"	
+	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 
 	"database/sql"
 	"testing"

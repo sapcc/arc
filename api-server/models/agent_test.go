@@ -41,18 +41,18 @@ var _ = Describe("Agents", func() {
 			// insert facts / agent
 			dbAgents := Agents{}
 			err := dbAgents.Get(db, `os =`)
-			Expect(err).To(HaveOccurred())			
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("should return all agents filtered", func() {
 			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
-			os := []string{"darwin", "windows", "windows"}			
+			os := []string{"darwin", "windows", "windows"}
 			agents := Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
 			for i := 0; i < len(agents); i++ {
 				agents[i].Facts = fmt.Sprintf(facts, os[i])
 				err := agents[i].Update(db)
-				Expect(err).NotTo(HaveOccurred())			
+				Expect(err).NotTo(HaveOccurred())
 			}
 
 			// insert facts / agent
@@ -61,7 +61,7 @@ var _ = Describe("Agents", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(1))
 			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
-			
+
 			err = dbAgents.Get(db, `os = "windows"`)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))

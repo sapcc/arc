@@ -20,7 +20,7 @@ type Job struct {
 }
 
 type JobID struct {
-	RequestID string   `json:"request_id"`
+	RequestID string `json:"request_id"`
 }
 
 type Jobs []Job
@@ -54,7 +54,7 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 		return errors.New("Db is nil")
 	}
 
-	*jobs = make(Jobs,0)
+	*jobs = make(Jobs, 0)
 	rows, err := db.Query(ownDb.GetAllJobsQuery)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (job *Job) Get(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
-	
+
 	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 	if err != nil {
 		return err
@@ -91,14 +91,14 @@ func (job *Job) Save(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
 	}
-	
+
 	var lastInsertId string
 	err := db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
 
-	return nil	
+	return nil
 }
 
 func (job *Job) Update(db *sql.DB) (err error) {
@@ -111,7 +111,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	
+
 	defer func() {
 		if err != nil {
 			tx.Rollback()
@@ -121,11 +121,11 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	}()
 
 	// update job
-	res, err := tx.Exec(ownDb.UpdateJobQuery, job.Status, job.UpdatedAt, job.RequestID); 
+	res, err := tx.Exec(ownDb.UpdateJobQuery, job.Status, job.UpdatedAt, job.RequestID)
 	if err != nil {
 		return
 	}
-	affect, err := res.RowsAffected(); 
+	affect, err := res.RowsAffected()
 	if err != nil {
 		return
 	}
@@ -144,7 +144,7 @@ func CleanJobs(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Clean job: Db connection is nil")
 	}
-	
+
 	// clean jobs which no heartbeat was send back after created_at + 60 sec
 	res, err := db.Exec(ownDb.CleanJobsNonHeartbeatQuery, 60)
 	if err != nil {
@@ -170,6 +170,6 @@ func CleanJobs(db *sql.DB) error {
 	}
 
 	log.Infof("Clean job: %v timeout jobs where updated", affect)
-	
+
 	return nil
 }
