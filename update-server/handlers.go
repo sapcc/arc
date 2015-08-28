@@ -83,7 +83,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {	
-	fileName := r.URL.Query().Get("fileName")
+	fileName := r.URL.Query().Get("filename")
 	if len(fileName) == 0 {
 		checkErrAndReturnStatus(w, errors.New("No filename parameter found."), "", http.StatusBadRequest)
 		return
