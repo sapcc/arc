@@ -70,13 +70,14 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
-	log.Infof("Starting update server version %s.", version.Version)
 
 	// check mandatory params
 	buildsRootPath = c.GlobalString("path")
 	if buildsRootPath == "" {
 		log.Fatal("No path to update artifacts given.")
 	}
+	log.Infof("Starting update server version %s.", version.String())
+	log.Infof("Serving artificats from %s.", buildsRootPath)
 
 	// cache the templates
 	templates = getTemplates()
