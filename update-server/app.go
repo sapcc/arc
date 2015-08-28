@@ -38,18 +38,21 @@ func main() {
 	app.Action = runServer
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "log-level,l",
-			Usage: "log level",
-			Value: "info",
+			Name:   "log-level,l",
+			Usage:  "log level",
+			Value:  "info",
+			EnvVar: "LOG_LEVEL",
 		},
 		cli.StringFlag{
-			Name:  "path,p",
-			Usage: "Directory containig update artifacts",
+			Name:   "path,p",
+			Usage:  "Directory containig update artifacts",
+			EnvVar: "ARTIFACTS_PATH",
 		},
 		cli.StringFlag{
-			Name:  "bind-address,b",
-			Usage: "listen address for the update server",
-			Value: "0.0.0.0:3000",
+			Name:   "bind-address,b",
+			Usage:  "listen address for the update server",
+			Value:  "0.0.0.0:3000",
+			EnvVar: "BIND_ADDRESS",
 		},
 	}
 
