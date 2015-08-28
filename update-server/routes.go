@@ -18,6 +18,12 @@ func newRouter() *mux.Router {
 		Handler( http.HandlerFunc(serveAvailableUpdates) )
 
 	router.
+		Methods("POST").
+		Path("/upload").
+		Name("Upload files").
+		Handler( http.HandlerFunc(uploadHandler) )
+
+	router.
 		Methods("GET").
 		PathPrefix("/builds/").
 		Name("Serve build files").

@@ -5,8 +5,14 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"gitHub.***REMOVED***/monsoon/arc/version"
+
 	"net/http"
 	"strings"
+	"fmt"
+	"path"
+	"os"
+	"io"
+	"errors"
 )
 
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
@@ -73,3 +79,40 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func uploadHandler(w http.ResponseWriter, r *http.Request) {	
+	fileName := r.URL.Query().Get("fileName")
+	if len(fileName) == 0 {
+		checkErrAndReturnStatus(w, errors.New("No filename parameter found."), "", http.StatusBadRequest)
+		return
+	}
+
+	// create the file
+	path := path.Join(buildsRootPath, fileName)		
+	out, err := os.Create(path)
+	if err != nil {
+		checkErrAndReturnStatus(w, err, "Unable to create the file for writing.", http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
+
+	// write the content from POST to the file
+	_, err = io.Copy(out, r.Body)
+	if err != nil {
+		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
+		return
+	}
+	
+	fmt.Fprintf(w, "File uploaded successfully\n")	
+	return
+ }
+ 
+ // private
+
+ func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
+ 	if err != nil {
+ 		log.Errorf("Error, returning status %v. %s %s", status, msg, err.Error())
+ 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+ 		http.Error(w, http.StatusText(status), status)
+ 	}
+ }
