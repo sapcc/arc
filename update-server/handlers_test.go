@@ -43,21 +43,13 @@ func TestServeNonAvailableUpdates(t *testing.T) {
 func TestServeAvailableUpdatesError(t *testing.T) {
 	defer func() { buildsRootPath = "" }()
 
-	// Return 404 if the request is different then a POST
-	req, _ := http.NewRequest("GET", "http://0.0.0.0:3000/updates", bytes.NewBufferString(""))
-	w := httptest.NewRecorder()
-	serveAvailableUpdates(w, req)
-	if w.Code != 404 {
-		t.Error("Expected code to be '404'. Got ", w.Code)
-	}
-
 	// Return 500 if the there was a problem with the builds path or request
 	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`)
 	paths := []string{"", "/non/existing/path"}
 	for _, path := range paths {
 		buildsRootPath = path
-		req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-		w = httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+		w := httptest.NewRecorder()
 		serveAvailableUpdates(w, req)
 		if w.Code != 500 {
 			t.Error("Expected code to be '500'. Got ", w.Code)
@@ -76,8 +68,8 @@ func TestServeAvailableUpdatesError(t *testing.T) {
 	buildsRootPath = "/some/builds/path"
 	for _, item := range body {
 		jsonStr = []byte(item)
-		req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-		w = httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+		w := httptest.NewRecorder()
 		serveAvailableUpdates(w, req)
 		if w.Code != 400 {
 			t.Error("Expected code to be '400'. Got ", w.Code)

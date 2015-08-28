@@ -5,21 +5,35 @@ package main
 
 import (
 	"net/http"
+	"github.com/gorilla/mux"
 )
 
-func newRouter() http.Handler {
-	// api
-	http.HandleFunc("/updates", serveAvailableUpdates)
+func newRouter() *mux.Router {
+	router := mux.NewRouter().StrictSlash(true)
 
-	// serve build files
-	fs := http.FileServer(http.Dir(buildsRootPath))
-	http.Handle("/builds/", http.StripPrefix("/builds/", fs))
+	router.
+		Methods("POST").
+		Path("/updates").
+		Name("Get available updates").
+		Handler( http.HandlerFunc(serveAvailableUpdates) )
 
-	// serve static files
-	http.Handle("/static/", http.FileServer(FS(false)))
+	router.
+		Methods("GET").
+		PathPrefix("/builds/").
+		Name("Serve build files").
+		Handler( http.StripPrefix("/builds/", http.FileServer(http.Dir(buildsRootPath))) )
+		
+	router.
+		Methods("GET").
+		PathPrefix("/static/").
+		Name("Serve static files").
+		Handler(http.FileServer(FS(false)))
 
-	// serve templates
-	http.HandleFunc("/", serveTemplate)
+	router.
+		Methods("GET").
+		Path("/").
+		Name("Serve templates").
+		Handler( http.HandlerFunc(serveTemplate) )
 
-	return http.DefaultServeMux
+	return router
 }

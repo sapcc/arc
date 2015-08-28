@@ -11,27 +11,24 @@ import (
 
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	if r.Method == "POST" {
-		update, err := updates.New(r, buildsRootPath)
-		if err == updates.ArgumentError {
-			log.Errorf(err.Error())
-			http.Error(w, http.StatusText(500), 500)
-			return
-		} else if err != nil {
-			log.Errorf(err.Error())
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
-		if update == nil {
-			w.WriteHeader(204)
-			return
-		}
 
-		if err := json.NewEncoder(w).Encode(update); err != nil {
-			log.Errorf(err.Error())
-		}
-	} else {
-		http.NotFound(w, r)
+	update, err := updates.New(r, buildsRootPath)
+	if err == updates.ArgumentError {
+		log.Errorf(err.Error())
+		http.Error(w, http.StatusText(500), 500)
+		return
+	} else if err != nil {
+		log.Errorf(err.Error())
+		http.Error(w, http.StatusText(400), 400)
+		return
+	}
+	if update == nil {
+		w.WriteHeader(204)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(update); err != nil {
+		log.Errorf(err.Error())
 	}
 }
 
