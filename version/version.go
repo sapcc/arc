@@ -8,5 +8,5 @@ var (
 )
 
 func String() string {
-	return Version + "(" + GITCOMMIT + ")"
+	return Version + " (" + GITCOMMIT + ")"
 }
