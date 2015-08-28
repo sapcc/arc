@@ -29,7 +29,7 @@ func NewSubprocess(command string, args ...string) *Subprocess {
 
 func (s *Subprocess) Start() (<-chan string, error) {
 
-	s.cmd = exec.Command(s.Command[0], s.Command[1:]...)
+	s.cmd = s.prepareCmd()
 	outPipe, err := s.cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
