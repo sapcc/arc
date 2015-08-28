@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"os"
-	"path"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 const templatesPath = "/static/templates/"
@@ -54,47 +51,6 @@ func getTemplates() map[string]*template.Template {
 	}
 
 	return tmplCache
-}
-
-type Release struct {
-	Uid      string `json:"uid"`
-	Filename string `json:"filename"`
-	App      string `json:"app"`
-	Os       string `json:"os"`
-	Arch     string `json:"arch"`
-	Version  string `json:"version"`
-	Date     string `json:"date"`
-}
-
-func getReleasesConfigFile() ([]byte, error) {
-	releasesPath := path.Join(buildsRootPath, "releases.yml")
-
-	// check if path exists
-	if _, err := os.Stat(releasesPath); err != nil {
-		return nil, err
-	}
-
-	data, err := ioutil.ReadFile(releasesPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
-func getBuildExtraInfo() (map[string]Release, error) {
-	data, err := getReleasesConfigFile()
-	if err != nil {
-		return nil, err
-	}
-
-	releases := make(map[string]Release)
-	err = yaml.Unmarshal([]byte(data), &releases)
-	if err != nil {
-		return nil, err
-	}
-
-	return releases, nil
 }
 
 func getAllBuilds() *[]string {

@@ -62,7 +62,9 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buildsInfo, _ := getBuildExtraInfo()
+	// get builds information
+	buildsInfo := Releases{}
+	buildsInfo.Read()
 
 	// get build infos
 	data := tmplData{
