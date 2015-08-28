@@ -18,7 +18,7 @@ func TestGracefullShutdown(t *testing.T) {
 		return
 	}
 	//give the process some time to start
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	if sub.ProcessState() != nil {
 		t.Error("Process already dead", <-lines)
 		return
@@ -28,10 +28,7 @@ func TestGracefullShutdown(t *testing.T) {
 	<-sub.Done()
 	pstate := sub.ProcessState().Sys().(syscall.WaitStatus)
 	if pstate.ExitStatus() != 0 {
-		t.Error("Process didn't exit cleanly")
-	}
-	if pstate.ExitStatus() != 0 {
-		t.Error("Process didn't exit cleanly")
+		t.Errorf("Process didn't exit cleanly: %d", pstate.ExitStatus())
 	}
 
 }
@@ -47,7 +44,7 @@ func TestForcefullShutdown(t *testing.T) {
 		return
 	}
 	//give the process some time to start
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	if sub.ProcessState() != nil {
 		t.Error("Process already dead", <-lines)
 		return
