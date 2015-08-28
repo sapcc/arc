@@ -84,3 +84,67 @@ func TestGetReleasesYml(t *testing.T) {
 		t.Error("Date no match the one from the test")
 	}
 }
+
+func TestUpdateReleasesYml(t *testing.T) {
+	buildsRootPath, _ = ioutil.TempDir(os.TempDir(), "arc_builds_")
+	file, err := os.Create(path.Join(buildsRootPath, "releases.yml"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer func() {
+		file.Close()
+		os.Remove(file.Name())
+		os.Remove(buildsRootPath)
+		buildsRootPath = ""
+	}()
+
+	data := `arc_darwin_amd64_3.1.0-dev:
+  uid: arcdarwinamd64310dev
+  filename: arc_darwin_amd64_3.1.0-dev
+  app: arc
+  os: darwin
+  arch: amd64
+  version: 3.1.0-dev
+  date: 2015.07.15`
+
+	file.WriteString(data)
+	file.Sync()
+
+	release := Release{
+		Uid: "test",
+		Filename: "test",
+		App: "test",
+		Os: "test",
+		Arch: "test",
+		Version: "test",
+		Date: "test",
+	}
+
+	var releases Releases
+	releases.Update("arc_darwin_amd64_3.1.0-dev", release)
+	
+	releases.Read()
+	testRelease := releases["arc_darwin_amd64_3.1.0-dev"]
+	if testRelease.Uid != release.Uid {
+		t.Error("Uid no match the one from the test")
+	}
+	if testRelease.Filename != release.Filename {
+		t.Error("Filename no match the one from the test")
+	}
+	if testRelease.App != release.App {
+		t.Error("App no match the one from the test")
+	}
+	if testRelease.Os != release.Os {
+		t.Error("Os no match the one from the test")
+	}
+	if testRelease.Arch != release.Arch {
+		t.Error("Arch no match the one from the test")
+	}
+	if testRelease.Version != release.Version {
+		t.Error("Version no match the one from the test")
+	}	
+	if testRelease.Date != release.Date {
+		t.Error("Date no match the one from the test")
+	}		
+}

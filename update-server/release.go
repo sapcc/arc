@@ -3,6 +3,9 @@ package main
 import (
 	"io/ioutil"
 	"path"
+	"os"
+	"io"
+	"bytes"
 
 	//log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -20,10 +23,8 @@ type Release struct {
 
 type Releases map[string]Release
 
-func (releases *Releases) Read() error {
-	releasesConfigPath := path.Join(buildsRootPath, "releases.yml")
-	
-	data, err := ioutil.ReadFile(releasesConfigPath)
+func (releases *Releases) Read() error {	
+	data, err := ioutil.ReadFile(releasesConfigPath())
 	if err != nil {
 		return err
 	}
@@ -35,4 +36,39 @@ func (releases *Releases) Read() error {
 	}
 
 	return nil
+}
+
+func (releases *Releases) Update(key string, release Release) error {
+	err := releases.Read()
+	if err != nil {
+		return err
+	}
+	
+	(*releases)[key] = release
+	
+	// transform to string
+	text, err := yaml.Marshal(&releases)
+	if err != nil {
+		return err
+	}
+	
+	// create the file
+	out, err := os.Create(releasesConfigPath())
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	
+	_, err = io.Copy(out, bytes.NewBuffer(text))
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+// private
+
+func releasesConfigPath() string {
+	return path.Join(buildsRootPath, "releases.yml")
 }

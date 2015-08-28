@@ -89,7 +89,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create the file
+	// create the file if not exists
 	path := path.Join(buildsRootPath, fileName)		
 	out, err := os.Create(path)
 	if err != nil {
@@ -103,6 +103,22 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 		return
+	}
+	
+	release := Release{
+		Uid: r.URL.Query().Get("uid"),
+		Filename: r.URL.Query().Get("filename"),
+		App: r.URL.Query().Get("app"),
+		Os: r.URL.Query().Get("os"),
+		Arch: r.URL.Query().Get("arch"),
+		Version: r.URL.Query().Get("version"),
+		Date: r.URL.Query().Get("date"),
+	}
+	
+	var releases Releases
+	err = releases.Update(r.URL.Query().Get("filename"), release)
+	if err != nil {
+		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 	}
 	
 	fmt.Fprintf(w, "File uploaded successfully\n")	
