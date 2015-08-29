@@ -45,6 +45,6 @@ image: build-docker
 image: 
 	docker pull $(REPOSITORY):latest || true
 	docker build -t $(IMAGE) --rm . 
-	echo $(IMAGE) > build
+	echo $(IMAGE) > image 
 
 
