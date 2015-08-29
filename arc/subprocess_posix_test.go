@@ -10,17 +10,16 @@ import (
 
 func TestGracefullShutdown(t *testing.T) {
 
-	sub := NewSubprocess("/bin/bash", "-c", `trap 'exit 0' SIGTERM;/bin/sleep 1`)
+	sub := NewSubprocess("/bin/bash", "-c", `trap 'exit 0' SIGTERM; echo s;/bin/sleep 1`)
 
 	lines, err := sub.Start()
 	if err != nil {
 		t.Error("Failed to start process", err)
 		return
 	}
-	//give the process some time to start
-	time.Sleep(100 * time.Millisecond)
-	if sub.ProcessState() != nil {
-		t.Error("Process already dead", <-lines)
+	//give the process  time to start
+	if l := <-lines; l != "s\n" {
+		t.Errorf(`Expect "s" got %#v`, l)
 		return
 	}
 
@@ -34,7 +33,7 @@ func TestGracefullShutdown(t *testing.T) {
 }
 
 func TestForcefullShutdown(t *testing.T) {
-	sub := NewSubprocess("/bin/bash", "-c", `trap '' SIGTERM;/bin/sleep 3`)
+	sub := NewSubprocess("/bin/bash", "-c", `trap '' SIGTERM;echo s;/bin/sleep 3`)
 	//lower the timeout so that the test is not taking longer that neccessarry
 	subprocessShutdownTimeout = 100 * time.Millisecond
 
@@ -43,10 +42,9 @@ func TestForcefullShutdown(t *testing.T) {
 		t.Error("Failed to start process", err)
 		return
 	}
-	//give the process some time to start
-	time.Sleep(100 * time.Millisecond)
-	if sub.ProcessState() != nil {
-		t.Error("Process already dead", <-lines)
+	//give the process  time to start
+	if l := <-lines; l != "s\n" {
+		t.Errorf(`Expect "s" got %#v`, l)
 		return
 	}
 
