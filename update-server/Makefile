@@ -1,23 +1,29 @@
-GOPATH:=$(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
-ORG_PATH:=gitHub.***REMOVED***/monsoon
-REPO_PATH:=$(ORG_PATH)/arc
-GITVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+SHELL       := /bin/sh
+GOPATH      := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
+ORG_PATH    := gitHub.***REMOVED***/monsoon
+REPO_PATH   := $(ORG_PATH)/arc
+GITVERSION  := -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+REPOSITORY  := docker.***REMOVED***/monsoon/arc-update-site
+TAG         ?= latest
+IMAGE       := $(REPOSITORY):$(TAG)
 
 .PHONY: help 
 help:
 	@echo
 	@echo "Available targets:"
-	@echo "  * build           - build static binary, output to bin/update-site"
-	@echo "  * build-docker    - build static binary via golang container, output to bin/update-site"
+	@echo "  * build        - build static binary, output to bin/update-site"
+	@echo "  * build-docker - build static binary via golang container, output to bin/update-site"
+	@echo "  * image        - build docker image containing the update site"
 
 .PHONY: build
 build: setup
-	@mkdir -p bin/ 
+	mkdir -p bin/ 
 	CGO_ENABLED=0 go build -o bin/update-site -a --installsuffix cgo -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/update-server
 
 .PHONY: build-docker
 build-docker: setup
 	docker run \
+		--rm \
 		-v $(CURDIR)/..:/arc \
 		golang@1.4.2 \
 		make -f /arc/update-server/Makefile -C /arc/update-server build
@@ -33,3 +39,12 @@ setup: ../.gopath/src/$(REPO_PATH)
 ../.gopath/src/$(REPO_PATH):
 	mkdir -p ../.gopath/src/$(ORG_PATH)
 	ln -s ../../../.. ../.gopath/src/$(REPO_PATH)
+
+.PHONY: image
+image: build-docker 
+image: 
+	docker pull $(REPOSITORY):latest || true
+	docker build -t $(IMAGE) --rm . 
+	echo $(IMAGE) > build
+
+
