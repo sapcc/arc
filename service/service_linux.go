@@ -78,7 +78,7 @@ func (s service) Start() error {
 }
 
 func (s service) Stop() error {
-	return s.svCmd("start", "service").Run()
+	return s.svCmd("stop", "service").Run()
 }
 
 func (s service) Restart() error {
