@@ -41,10 +41,6 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 	}
 
-	if err := service.New(dir).Install(); err != nil {
-		return 1, fmt.Errorf("Failed to install service: %s", err)
-	}
-
 	if c.IsSet("registration-url") {
 		log.Infof("Generating %d bit private key", keySize)
 		key, err := rsa.GenerateKey(rand.Reader, keySize)
@@ -133,6 +129,10 @@ func Init(c *cli.Context, appName string) (int, error) {
 			return 1, fmt.Errorf("Failed to write config file: %v", err)
 		}
 
+	}
+
+	if err := service.New(dir).Install(); err != nil {
+		return 1, fmt.Errorf("Failed to install service: %s", err)
 	}
 	return 0, nil
 }
