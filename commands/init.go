@@ -121,6 +121,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 		templateVars := map[string]string{
 			"Cert":      path.Join(dir, "cert.pem"),
 			"Key":       path.Join(dir, "cert.key"),
+			"Ca":        path.Join(dir, "ca.pem"),
 			"Endpoint":  strings.Join(c.StringSlice("endpoint"), ","),
 			"Transport": c.String("transport"),
 		}
