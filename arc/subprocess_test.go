@@ -25,14 +25,13 @@ func TestSubprocess(t *testing.T) {
 	sub := NewSubprocess("echo", "tut")
 
 	lines, _ := sub.Start()
-
-	output := <-lines
-	if output != "tut\n" {
-		t.Error("Unexpected output: ", output)
-	}
 	<-sub.Done()
 	if sub.Error() != nil {
 		t.Error("Process didn't terminate cleanly")
+	}
+	output := <-lines
+	if output != "tut\n" {
+		t.Error("Unexpected output: ", output)
 	}
 	if !sub.Exited() {
 		t.Error("Process didn't exit")
