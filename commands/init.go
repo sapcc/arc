@@ -25,7 +25,7 @@ import (
 
 var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}
 {{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}
-{{end}}tls-client-cert: {{ .Cert }}	
+{{end}}tls-client-cert: {{ .Cert }}
 tls-client-key: {{ .Key }}
 {{if .Ca }}tls-ca-cert: {{ .Ca }}
 {{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}
