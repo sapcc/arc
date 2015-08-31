@@ -3,6 +3,8 @@
 package models_test
 
 import (
+	"os"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
@@ -22,7 +24,11 @@ func TestModels(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	db, err = NewConnection("../db/dbconf.yml", "test")
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "test"
+	}
+	db, err = NewConnection("../db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
 })
 

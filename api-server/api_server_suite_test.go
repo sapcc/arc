@@ -3,6 +3,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -20,7 +22,11 @@ func TestApiServer(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	db, err = NewConnection("db/dbconf.yml", "test")
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "test"
+	}
+	db, err = NewConnection("db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
 	router = newRouter()
 })
