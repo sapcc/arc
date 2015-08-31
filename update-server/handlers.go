@@ -64,7 +64,11 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// get builds information
 	buildsInfo := Releases{}
-	buildsInfo.Read()
+	err := buildsInfo.Read()
+	if err != nil {
+		log.Errorf("Error reading releases config file. Got %q", err)
+		http.Error(w, http.StatusText(500), 500)
+	}
 
 	// get build infos
 	data := tmplData{
@@ -115,13 +119,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		Date: r.URL.Query().Get("date"),
 	}
 	
-	var releases Releases
+	releases := Releases{}
 	err = releases.Update(r.URL.Query().Get("filename"), release)
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 	}
 	
-	fmt.Fprintf(w, "File uploaded successfully\n")	
+	fmt.Fprintf(w, "File uploaded successfully.\n")	
 	return
  }
  

@@ -24,11 +24,18 @@ type Release struct {
 type Releases map[string]Release
 
 func (releases *Releases) Read() error {	
+	// configuration file does not exist
+	if _, err := os.Stat(releasesConfigPath()); os.IsNotExist(err) {
+		return nil		
+	}
+	
+	// read config file
 	data, err := ioutil.ReadFile(releasesConfigPath())
 	if err != nil {
 		return err
 	}
 
+	// transform to releases strucs
 	*releases = make(Releases, 0)
 	err = yaml.Unmarshal([]byte(data), &releases)
 	if err != nil {
@@ -59,6 +66,7 @@ func (releases *Releases) Update(key string, release Release) error {
 	}
 	defer out.Close()
 	
+	// copy yml to file 
 	_, err = io.Copy(out, bytes.NewBuffer(text))
 	if err != nil {
 		return err

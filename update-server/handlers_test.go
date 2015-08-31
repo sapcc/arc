@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -75,4 +76,39 @@ func TestServeAvailableUpdatesError(t *testing.T) {
 			t.Error("Expected code to be '400'. Got ", w.Code)
 		}
 	}
+}
+
+func TestUploadFilenameMissing(t *testing.T) {
+	buildsRootPath, _ = ioutil.TempDir(os.TempDir(), "arc_builds_")
+	defer func() {
+		os.RemoveAll(buildsRootPath)
+		buildsRootPath = ""
+	}()
+	
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/upload", bytes.NewBuffer([]byte("binary file")))
+	w := httptest.NewRecorder()
+	uploadHandler(w, req)
+	if w.Code != 400 {
+		t.Error("Expected code to be '400'. Got ", w.Code)
+	}
+}
+
+func TestUpload(t *testing.T) {
+	buildsRootPath, _ = ioutil.TempDir(os.TempDir(), "arc_builds_")
+	defer func() {
+		os.RemoveAll(buildsRootPath)
+		buildsRootPath = ""
+	}()
+
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/upload?filename=test", bytes.NewBuffer([]byte("binary file")))
+	w := httptest.NewRecorder()
+	uploadHandler(w, req)
+	
+	buildPath := path.Join(buildsRootPath, "test")
+	if _, err := os.Stat(buildPath); os.IsNotExist(err) {
+		t.Error("Expected to find build file")
+	}	
+	if _, err := os.Stat(releasesConfigPath()); os.IsNotExist(err) {
+		t.Error("Expected to find releases config file")
+	}	
 }

@@ -32,9 +32,7 @@ func TestGetAllBuilds(t *testing.T) {
 	file1, _ := ioutil.TempFile(buildsRootPath, "arc_darwin_amd64_3.1.0-dev_")
 	file2, _ := ioutil.TempFile(buildsRootPath, "arc_windows_amd64_3.1.0-dev_")
 	defer func() {
-		os.Remove(file1.Name())
-		os.Remove(file2.Name())
-		os.Remove(buildsRootPath)
+		os.RemoveAll(buildsRootPath)
 		buildsRootPath = ""
 	}()
 
@@ -58,9 +56,7 @@ func TestGetAllBuildsFilter(t *testing.T) {
 	file2, _ := ioutil.TempFile(buildsRootPath, "arc_windows_amd64_3.1.0-dev_")
 	defer func() {
 		file1.Close()
-		os.Remove(file1.Name())
-		os.Remove(file2.Name())
-		os.Remove(buildsRootPath)
+		os.RemoveAll(buildsRootPath)
 		buildsRootPath = ""
 	}()
 
