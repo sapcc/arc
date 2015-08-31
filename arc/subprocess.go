@@ -77,9 +77,10 @@ func (s *Subprocess) ProcessState() *os.ProcessState {
 }
 
 func (s *Subprocess) waitForExit() {
+	s.wg.Wait() //Wait until stdout and stderr are closed
+	log.Debugf("stdout/stderr pipes closed")
 	s.exitError = s.cmd.Wait()
 	log.Debugf("Subprocess exited")
-	s.wg.Wait()
 	if s.done != nil {
 		close(s.done)
 	}
