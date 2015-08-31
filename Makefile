@@ -6,8 +6,8 @@ ARC_BINARY:=$(BUILD_DIR)/arc
 US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
 GITVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
-
 TARGETS:=linux/amd64 windows/amd64 darwin/amd64
+BUILD_IMAGE:=docker.***REMOVED***/monsoon/arc-build
 
 .PHONY: help 
 help:
@@ -116,17 +116,28 @@ setup: .gopath/src/$(REPO_PATH)
 install-deps:
 	jq -r .Deps[].ImportPath < Godeps/Godeps.json |xargs -L1 go install
 
+
+.PHONY: build-image
+build-image: gonative_linux
+	docker build -t $(BUILD_IMAGE) .
+
+gonative_linux:
+	docker run --rm -i -e https_proxy=http://proxy.***REMOVED***:8080 golang@1.4.2 bash -c "go get -u github.com/inconshreveable/gonative && cat /go/bin/gonative" > gonative_linux
+	chmod +x gonative_linux
+
 .PHONY: cross
 cross:
-	@#built the container if its not already build
-	[ "`docker images -q gonative`" != "" ] || docker build -t gonative .
 	@# -w omit DWARF symbol table -> smaller
 	@# -s stip binary
 	docker run \
 		--rm \
-		-v $(CURDIR):/gonative/src/gitHub.***REMOVED***/monsoon/arc \
-		gonative \
-		gox -osarch="$(TARGETS)" -output="bin/arc_{{.OS}}" -ldflags="-s -w $(GITVERSION)"
+		-v $(CURDIR):/arc \
+		$(BUILD_IMAGE) \
+		make -C /arc cross-compile TARGETS=$(TARGETS)
+
+.PHONY: cross-compile
+cross-compile: setup
+	gox -osarch="$(TARGETS)" -output="bin/arc_{{.OS}}" -ldflags="-s -w $(GITVERSION)"
 
 .PHONY: up
 up:

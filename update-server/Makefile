@@ -6,6 +6,7 @@ GITVERSION  := -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-pa
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-update-site
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
+BUILD_IMAGE := docker.***REMOVED***/monsoon/arc-build
 
 .PHONY: help 
 help:
@@ -21,13 +22,12 @@ build: setup
 	CGO_ENABLED=0 go build -o bin/update-site -a --installsuffix cgo -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/update-server
 
 .PHONY: build-docker
-build-docker: setup
+build-docker:
 	docker run \
 		--rm \
 		-v $(CURDIR)/..:/arc \
-		golang@1.4.2 \
-		make -f /arc/update-server/Makefile -C /arc/update-server build
-
+		$(BUILD_IMAGE) \
+		make -C /arc/update-server build
 
 .PHONY: gopath 
 gopath: setup
