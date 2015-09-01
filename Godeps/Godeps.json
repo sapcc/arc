@@ -80,6 +80,10 @@
 			"Rev": "a8d8d01c4f91602f876bf5aa210274e8203a6b45"
 		},
 		{
+			"ImportPath": "github.com/ncw/swift",
+			"Rev": "be2866a164e011a71567611051b9ca2fb121ba32"
+		},
+		{
 			"ImportPath": "github.com/onsi/ginkgo",
 			"Comment": "v1.2.0-6-gd981d36",
 			"Rev": "d981d36e9884231afa909627b9c275e4ba678f90"
