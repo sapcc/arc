@@ -48,15 +48,11 @@ build-api: setup
 build-all: build build-update-site build-api
 
 .PHONY: test
-test: test-gofmt unit integration 
+test: test-gofmt unit
 
 .PHONY: unit
 unit: setup
 	go test -v -timeout=4s ./...
-
-.PHONY: integration
-integration: setup
-	go test ./... -v -p=1 -timeout=30s -tags=integration
 
 .PHONY: test-gofmt
 test-gofmt:
