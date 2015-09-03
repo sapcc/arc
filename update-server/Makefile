@@ -47,4 +47,6 @@ image:
 	docker build -t $(IMAGE) --rm . 
 	echo $(IMAGE) > image 
 
-
+.PHONY: clean
+clean:
+	rm -f bin/update-site

@@ -89,3 +89,7 @@ postgres: WAIT_ID = $$(cat postgres)
 postgres: 
 	$(DOCKER) run -d postgres > postgres 
 	$(WAIT)
+
+.PHONY: clean
+clean:
+	rm -f bin/api-server
