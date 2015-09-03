@@ -9,6 +9,12 @@ GITVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse
 TARGETS:=linux/amd64 windows/amd64 darwin/amd64
 BUILD_IMAGE:=docker.***REMOVED***/monsoon/arc-build
 
+ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
+ifneq ("$(wildcard build-version)","")
+APPVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.Version `cat build-version`
+ARC_BIN_TPL:=arc_$(shell cat build-version)_{{.OS}}_{{.Arch}}
+endif
+
 .PHONY: help 
 help:
 	@echo
@@ -129,11 +135,11 @@ cross:
 		--rm \
 		-v $(CURDIR):/arc \
 		$(BUILD_IMAGE) \
-		make -C /arc cross-compile TARGETS=$(TARGETS)
+		make -C /arc cross-compile TARGETS="$(TARGETS)"
 
 .PHONY: cross-compile
 cross-compile: setup
-	gox -osarch="$(TARGETS)" -output="bin/arc_{{.OS}}" -ldflags="-s -w $(GITVERSION)"
+	gox -osarch="$(TARGETS)" -output="bin/$(ARC_BIN_TPL)" -ldflags="-s -w $(GITVERSION) $(APPVERSION)"
 
 .PHONY: up
 up:
