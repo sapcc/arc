@@ -10,9 +10,9 @@ TARGETS:=linux/amd64 windows/amd64
 BUILD_IMAGE:=docker.***REMOVED***/monsoon/arc-build
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
-ifneq ($(VERSION_FROM_FILE),)
-APPVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.Version `cat $(VERSION_FROM_FILE)`
-ARC_BIN_TPL:=arc_$(shell cat $(VERSION_FROM_FILE))_{{.OS}}_{{.Arch}}
+ifneq ($(BUILD_VERSION),)
+APPVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+ARC_BIN_TPL:=arc_$(BUILD_VERSION)_{{.OS}}_{{.Arch}}
 endif
 
 .PHONY: help 
@@ -135,7 +135,7 @@ cross:
 		--rm \
 		-v $(CURDIR):/arc \
 		$(BUILD_IMAGE) \
-		make -C /arc cross-compile TARGETS="$(TARGETS)" VERSION_FROM_FILE=$(VERSION_FROM_FILE)
+		make -C /arc cross-compile TARGETS="$(TARGETS)" BUILD_VERSION=$(BUILD_VERSION)
 
 .PHONY: cross-compile
 cross-compile: setup
