@@ -164,3 +164,9 @@ service/assets_windows/nssm.exe:
 .gopath/src/$(REPO_PATH):
 	mkdir -p .gopath/src/$(ORG_PATH)
 	ln -s ../../../.. .gopath/src/$(REPO_PATH)
+
+.PHONY: clean
+clean:
+	make -C api-server clean
+	make -C update-server clean
+	rm -f gonative_linux
