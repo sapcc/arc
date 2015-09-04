@@ -53,6 +53,10 @@
 			"Rev": "47e8f450ef38c857cdd922ec08862ca9d65a1c6d"
 		},
 		{
+			"ImportPath": "github.com/hashicorp/go-version",
+			"Rev": "999359b6b7a041ce16e695d51e92145b83f01087"
+		},
+		{
 			"ImportPath": "github.com/inconshreveable/go-update",
 			"Rev": "68f5725818189545231c1fd8694793d45f2fc529"
 		},

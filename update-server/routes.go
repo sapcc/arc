@@ -6,9 +6,10 @@ package main
 import (
 	"net/http"
 	"github.com/gorilla/mux"
+	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
 )
 
-func newRouter() *mux.Router {
+func newRouter(storageType storage.StorageType) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.
@@ -17,17 +18,23 @@ func newRouter() *mux.Router {
 		Name("Get available updates").
 		Handler( http.HandlerFunc(serveAvailableUpdates) )
 
-	router.
-		Methods("POST").
-		Path("/upload").
-		Name("Upload files").
-		Handler( http.HandlerFunc(uploadHandler) )
-
-	router.
-		Methods("GET").
-		PathPrefix("/builds/").
-		Name("Serve build files").
-		Handler( http.StripPrefix("/builds/", http.FileServer(http.Dir(buildsRootPath))) )
+	if storageType == storage.Local {
+		router.
+			Methods("POST").
+			Path("/upload").
+			Name("Upload files").
+			Handler( http.HandlerFunc(uploadHandler) )
+		
+		router.
+			Methods("GET").
+			PathPrefix("/builds/").
+			Name("Serve build files").
+			Handler( http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))) )	
+	}
+		
+	if storageType == storage.Swift	{
+		
+	}
 		
 	router.
 		Methods("GET").

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"io/ioutil"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -51,21 +49,4 @@ func getTemplates() map[string]*template.Template {
 	}
 
 	return tmplCache
-}
-
-func getAllBuilds() *[]string {
-	var fileNames []string
-	builds, _ := ioutil.ReadDir(buildsRootPath)
-	for _, f := range builds {
-		// filter config file
-		if strings.ToLower(f.Name()) != "releases.yml" {
-			fileNames = append(fileNames, f.Name())
-		}
-	}
-
-	if len(fileNames) == 0 {
-		fileNames = append(fileNames, "No files found")
-	}
-
-	return &fileNames
 }

@@ -7,7 +7,6 @@ import (
 	"io"
 	"bytes"
 
-	//log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -78,5 +77,5 @@ func (releases *Releases) Update(key string, release Release) error {
 // private
 
 func releasesConfigPath() string {
-	return path.Join(buildsRootPath, "releases.yml")
+	return path.Join(st.GetStoragePath(), "releases.yml")
 }

@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/arc/update-server/updates"
 	"gitHub.***REMOVED***/monsoon/arc/version"
+	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"		
 
 	"net/http"
 	"strings"
@@ -18,8 +18,8 @@ import (
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	update, err := updates.New(r, buildsRootPath)
-	if err == updates.ArgumentError {
+	update, err := st.GetAvailableUpdate(r)
+	if err == helpers.UpdateArgumentError {
 		log.Errorf(err.Error())
 		http.Error(w, http.StatusText(500), 500)
 		return
@@ -70,11 +70,17 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 	}
 
+	buildFilesNames, err := st.GetAllUpdates()
+	if err != nil {
+		log.Errorf("Error getting the build file names. Got %q", err)
+		http.Error(w, http.StatusText(500), 500)
+	}
+
 	// get build infos
 	data := tmplData{
 		AppName:    appName,
 		AppVersion: version.String(),
-		Files:      *getAllBuilds(),
+		Files:      *buildFilesNames,
 		BuildInfos: buildsInfo,
 	}
 
@@ -86,7 +92,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func uploadHandler(w http.ResponseWriter, r *http.Request) {	
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Query().Get("filename")
 	if len(fileName) == 0 {
 		checkErrAndReturnStatus(w, errors.New("No filename parameter found."), "", http.StatusBadRequest)
@@ -94,7 +100,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the file if not exists
-	path := path.Join(buildsRootPath, fileName)		
+	path := path.Join(st.GetStoragePath(), fileName)
 	out, err := os.Create(path)
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "Unable to create the file for writing.", http.StatusInternalServerError)
@@ -108,7 +114,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 		return
 	}
-	
+
 	release := Release{
 		Uid: r.URL.Query().Get("uid"),
 		Filename: r.URL.Query().Get("filename"),
@@ -118,17 +124,17 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		Version: r.URL.Query().Get("version"),
 		Date: r.URL.Query().Get("date"),
 	}
-	
+
 	releases := Releases{}
 	err = releases.Update(r.URL.Query().Get("filename"), release)
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 	}
-	
-	fmt.Fprintf(w, "File uploaded successfully.\n")	
+
+	fmt.Fprintf(w, "File uploaded successfully.\n")
 	return
  }
- 
+
  // private
 
  func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
