@@ -22,7 +22,7 @@ func TestApiServer(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	env := os.Getenv("ENV")
+	env := os.Getenv("ARC_ENV")
 	if env == "" {
 		env = "test"
 	}
