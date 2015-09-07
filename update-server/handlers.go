@@ -42,7 +42,6 @@ type tmplData struct {
 	AppName    string
 	AppVersion string
 	Files      []string
-	BuildInfos map[string]Release
 }
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
@@ -62,14 +61,6 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get builds information
-	buildsInfo := Releases{}
-	err := buildsInfo.Read()
-	if err != nil {
-		log.Errorf("Error reading releases config file. Got %q", err)
-		http.Error(w, http.StatusText(500), 500)
-	}
-
 	buildFilesNames, err := st.GetAllUpdates()
 	if err != nil {
 		log.Errorf("Error getting the build file names. Got %q", err)
@@ -81,7 +72,6 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		AppName:    appName,
 		AppVersion: version.String(),
 		Files:      *buildFilesNames,
-		BuildInfos: buildsInfo,
 	}
 
 	// render template
@@ -113,22 +103,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 		return
-	}
-
-	release := Release{
-		Uid: r.URL.Query().Get("uid"),
-		Filename: r.URL.Query().Get("filename"),
-		App: r.URL.Query().Get("app"),
-		Os: r.URL.Query().Get("os"),
-		Arch: r.URL.Query().Get("arch"),
-		Version: r.URL.Query().Get("version"),
-		Date: r.URL.Query().Get("date"),
-	}
-
-	releases := Releases{}
-	err = releases.Update(r.URL.Query().Get("filename"), release)
-	if err != nil {
-		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
 	}
 
 	fmt.Fprintf(w, "File uploaded successfully.\n")
