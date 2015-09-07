@@ -28,12 +28,16 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		router.
 			Methods("GET").
 			PathPrefix("/builds/").
-			Name("Serve build files").
+			Name("Serve local build files").
 			Handler( http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))) )	
 	}
 		
 	if storageType == storage.Swift	{
-		
+		router.
+			Methods("GET").
+			PathPrefix("/builds/").
+			Name("Serve build files from swift").
+			Handler( http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds)) )	
 	}
 		
 	router.

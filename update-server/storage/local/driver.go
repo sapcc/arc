@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"os"
+	"io"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -17,17 +19,20 @@ type LocalStorage struct {
 
 func New(c *cli.Context) (*LocalStorage, error) {
 	if c.String("path") == ""{
-		return nil, errors.New("Build root path is empty")
+		return nil, errors.New("Builds root path is empty")
 	}
 	
 	// check if path exits
+	if _, err := os.Stat(c.String("path")); os.IsNotExist(err) {
+		return nil, err
+	}
 	
 	return &LocalStorage{
 		BuildsRootPath: c.String("path"),
 	},nil
 }
 
-/* build file pattern			  -> appId, "_", appOs, "_", appArch, "_", appVersion
+/* build file pattern			  -> appId, "_", appVersion, "_", appOs, "_", appArch
  * Results:
  * nil, Error 					   	-> There is an error
  * Result, nil             	-> There is an available update
@@ -71,6 +76,10 @@ func (l *LocalStorage) GetAllUpdates() (*[]string, error) {
 	}
 
 	return &fileNames, nil
+}
+
+func (l *LocalStorage) GetUpdate(name string, writer io.Writer) (error) {
+	return nil
 }
 
 func (l *LocalStorage) GetStoragePath() string{

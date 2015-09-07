@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/codegangsta/cli"
@@ -21,6 +22,7 @@ const (
 type Storage interface {
 	GetAvailableUpdate(req *http.Request) (*check.Result, error)
 	GetAllUpdates() (*[]string, error)
+	GetUpdate(name string, writer io.Writer) error
 	GetStoragePath() string
 }
 

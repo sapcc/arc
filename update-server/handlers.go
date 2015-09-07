@@ -38,6 +38,14 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func serveSwiftBuilds(w http.ResponseWriter, r *http.Request) {
+	err := st.GetUpdate(r.URL.Path, w)
+	if err != nil {
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+}
+
 type tmplData struct {
 	AppName    string
 	AppVersion string

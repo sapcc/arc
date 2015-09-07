@@ -3,6 +3,7 @@ package swift
 import (
 	"errors"
 	"net/http"
+	"io"
 		
 	"github.com/codegangsta/cli"
 	"github.com/ncw/swift"
@@ -72,6 +73,14 @@ func (s *SwiftStorage) GetAllUpdates() (*[]string, error) {
 	}
 	
 	return &names, nil
+}
+
+func (s *SwiftStorage) GetUpdate(name string, writer io.Writer) (error) {
+	_, err := s.Connection.ObjectGet(s.Container, name, writer, false, nil)
+	if err != nil {
+		return err
+	}
+	return nil		
 }
 
 func (s *SwiftStorage) GetStoragePath() string {
