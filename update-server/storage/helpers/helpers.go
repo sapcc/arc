@@ -17,19 +17,6 @@ var UpdateArgumentError = fmt.Errorf("Update arguments are missing or wrong")
 
 const BuildRelativeUrl = "/builds/"
 
-// type Update struct {
-// 	Uid      string `json:"uid"`
-// 	Filename string `json:"filename"`
-// 	App      string `json:"app"`
-// 	Os       string `json:"os"`
-// 	Arch     string `json:"arch"`
-// 	Version  string `json:"version"`
-// 	Date     string `json:"date"`
-// }
-//
-// type Updates map[string]Update
-
-
 /*
  * Results:
  * nil, Error 						-> There is an error

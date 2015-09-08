@@ -5,14 +5,14 @@ package helpers
 import (
 	"github.com/inconshreveable/go-update/check"	
   "testing"
-	
-	// "bytes"
-	// "github.com/inconshreveable/go-update/check"
-	// "io/ioutil"
-	// "net/http"
-	// "os"
-	// "strings"
+	"bytes"
+	"crypto/tls"
+	"net/http"
 )
+
+//
+// IsRelease
+//
 
 func TestIsRelease(t *testing.T) {
 	windowsParams := check.Params{ AppId: "arc", Tags: map[string]string{ "os": "windows", "arch": "amd64", },}
@@ -40,6 +40,10 @@ func TestIsRelease(t *testing.T) {
 	
 }
 
+//
+// ExtractVersionFromRelease
+//
+
 func TestExtractVersionFromRelease(t *testing.T) {
 	windowsParams := check.Params{ AppId: "arc", Tags: map[string]string{ "os": "windows", "arch": "amd64", },}	
 	darwinParams := check.Params{ AppId: "arc", Tags: map[string]string{ "os": "darwin", "arch": "amd64", },}
@@ -65,6 +69,10 @@ func TestExtractVersionFromRelease(t *testing.T) {
 		t.Error("Expected to find version 20150903.10")
 	}
 }
+
+//
+// ShouldUpdate
+//
 
 func TestShouldUpdate(t *testing.T) {
 	// file version is greater than the app version and current version
@@ -95,111 +103,139 @@ func TestShouldUpdate(t *testing.T) {
 	}
 }
 
-// func TestUpdatesNewSuccess(t *testing.T) {
-// 	file, _ := ioutil.TempFile(os.TempDir(), "arc_darwin_amd64_3.1.0-dev_")
-// 	defer os.Remove(file.Name())
 //
-// 	// get a success update
-// 	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`)
-// 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-// 	update, err := New(req, os.TempDir())
-// 	if err != nil {
-// 		t.Error("Expected not get an error. Got ", err)
-// 	}
-// 	if update == nil {
-// 		t.Error("Expected update NOT to be nil. Got ", update)
-// 	}
+// GetHostUrl
 //
-// 	if update.Initiative != "automatically" {
-// 		t.Error("Expected Initiative to be 'automatically'. Got ", update.Initiative)
-// 	}
+
+func TestGetHostUrl(t *testing.T) {
+	req, _ := http.NewRequest("POST", "https://localhost:3000/updates", bytes.NewBufferString(""))
+	req.TLS = &tls.ConnectionState{}
+	url := getHostUrl(req)
+	
+	if url.String() != "https://localhost:3000" {
+		t.Error("Expected schema https and host localhost:3000")
+	}
+	
+	req2, _ := http.NewRequest("POST", "http://localhost:3000/updates", bytes.NewBufferString(""))
+	url2 := getHostUrl(req2)
+	if url2.String() != "http://localhost:3000" {
+		t.Error("Expected schema http and host localhost:3000")
+	}
+}
+
 //
-// 	if !strings.HasPrefix(update.Url, "http://0.0.0.0:3000/builds/arc_darwin_amd64_3.1.0-dev") {
-// 		t.Error("Expected url to be 'http://0.0.0.0:3000/builds/arc_darwin_amd64_3.1.0-dev'. Got ", update.Url)
-// 	}
+// ParseRequest()
 //
-// 	if update.Version != "3.1.0-dev" {
-// 		t.Error("Expected version to be '3.1.0-dev'. Got ", update.Version)
-// 	}
-// }
-//
-// func TestUpdatesNewReturnNil(t *testing.T) {
-// 	var update *check.Result
-// 	var req *http.Request
-// 	var err error
-//
-// 	// post request host is missing or wrong
-// 	hosts := []string{"", "miau"}
-// 	for _, h := range hosts {
-// 		req, _ = http.NewRequest("POST", h, bytes.NewBufferString(""))
-// 		update, err = New(req, "/some/build/path/")
-// 		if err == nil {
-// 			t.Error("Expected err to be nil when testing wrong hosts. Got ", err)
-// 		}
-// 		if update != nil {
-// 			t.Error("Expected update to be nil when testing wrong hosts. Got ", update)
-// 		}
-// 	}
-//
-// 	// post request body is empty
-// 	req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBufferString(""))
-// 	update, err = New(req, "/some/build/path/")
-// 	if err == nil {
-// 		t.Error("Expected err to be nil when testing empty body. Got ", err)
-// 	}
-// 	if update != nil {
-// 		t.Error("Expected update to be nil when testing empty body. Got ", update)
-// 	}
-//
-// 	// check that the body is json
-// 	req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBufferString("not json"))
-// 	update, err = New(req, "/some/build/path/")
-// 	if err == nil {
-// 		t.Error("Expected err to be nil when testing json body. Got ", err)
-// 	}
-// 	if update != nil {
-// 		t.Error("Expected update to be nil when testing json body. Got ", update)
-// 	}
-//
-// 	// check that the body has not the required params
-// 	requiredParams := []string{
-// 		`{"param1":"param1"}`,
-// 		`{"app_id":"arc"}`,
-// 		`{"app_id":"arc","app_version":"0.1.0-dev"}`,
-// 		`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"os":"darwin"}}`,
-// 	}
-// 	var jsonStr []byte
-// 	for _, p := range requiredParams {
-// 		jsonStr = []byte(p)
-// 		req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-// 		update, err = New(req, "/some/build/path/")
-// 		if err == nil {
-// 			t.Error("Expected err to be nil when testing required params. Got ", err)
-// 		}
-// 		if update != nil {
-// 			t.Error("Expected update to be nil when testing required params. Got ", update)
-// 		}
-// 	}
-//
-// 	// check wrong version format
-// 	jsonStr = []byte(`{"app_id":"arc","app_version":"miau","tags":{"arch":"amd64","os":"darwin"}}`) //
-// 	req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-// 	update, err = New(req, "/some/build/path/")
-// 	if err == nil {
-// 		t.Error("Expected err to be nil when testing wrong version format. Got ", err)
-// 	}
-// 	if update != nil {
-// 		t.Error("Expected update to be nil when wrong version format. Got ", update)
-// 	}
-//
-// 	// check wrong build path
-// 	jsonStr = []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`) //
-// 	req, _ = http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-// 	update, err = New(req, "/some/build/path/")
-// 	if err == nil {
-// 		t.Error("Expected err to be nil when testing wrong build path. Got ", err)
-// 	}
-// 	if update != nil {
-// 		t.Error("Expected update to be nil when wrong build path. Got ", update)
-// 	}
-// }
+
+func TestParseRequestRequestNil(t *testing.T) {
+	params, err := parseRequest(nil)
+	if err == nil {
+		t.Error("Expected to get an error")
+	}
+	if params != nil {
+		t.Error("Expected to nil params")
+	}
+}
+
+func TestParseRequestEmptyBody(t *testing.T) {
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBufferString(""))
+	params, err := parseRequest(req)
+	if err == nil {
+		t.Error("Expected get an error")
+	}
+	if params != nil {
+		t.Error("Expected to nil params")
+	}	
+}
+
+func TestParseRequestEmptyBodyNotJson(t *testing.T) {
+ 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBufferString("not json"))	
+	params, err := parseRequest(req)
+	if err == nil {
+		t.Error("Expected get an error")
+	}
+	if params != nil {
+		t.Error("Expected to nil params")
+	}	
+}
+
+func TestParseRequestcheckMissingParams(t *testing.T) {
+	// get a success update
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+	params, err := parseRequest(req)
+	if err == nil {
+		t.Error("Expected to get an error")
+	}
+	if params != nil {
+		t.Error("Expected to nil params")
+	}	
+}
+
+func TestParseRequestSuccessfulcheckParams(t *testing.T) {
+	// get a success update
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+	params, err := parseRequest(req)
+	if err != nil {
+		t.Error("Expected not to get an error")
+	}
+	if params.AppId != "arc" {
+		t.Error("Missing required post attribute 'app_id'")
+	}
+	if params.AppVersion != "0.1.0-dev" {
+		t.Error("Missing required post attribute 'app_version'")
+	}
+	if params.Tags["os"] != "darwin" {
+		t.Error("Missing required post attribute 'tags[os]'")
+	}
+	if params.Tags["arch"] != "amd64" {
+		t.Error("Missing required post attribute 'tags[arch]'")
+	}
+}
+
+// 
+// AvailableUpdate()
+// 
+
+func TestAvailableUpdate(t *testing.T) {
+	// get a success update
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+	releases := []string{"arc_20150903.10_linux_amd64", "arc_20150903.10_windows_amd64.exe", "arc_20150903.5_windows_amd64.exe", "arc_20150904.1_linux_amd64"}
+	
+	update, err := AvailableUpdate(req, &releases)
+	if err != nil {
+		t.Error("Expected not get an error. Got ", err)
+	}
+	if update == nil {
+		t.Error("Expected update NOT to be nil. Got ", update)
+	}
+
+	if update.Initiative != "automatically" {
+		t.Error("Expected Initiative to be 'automatically'. Got ", update.Initiative)
+	}
+
+	if update.Url != "http://0.0.0.0:3000/builds/arc_20150904.1_linux_amd64" {
+		t.Error("Expected url to be 'http://0.0.0.0:3000/builds/arc_20150904.1_linux_amd64'. Got ", update.Url)
+	}
+
+	if update.Version != "20150904.1" {
+		t.Error("Expected version to be '20150904.1'. Got ", update.Version)
+	}	
+}
+
+func TestNoAvailableUpdate(t *testing.T) {
+	// get a success update
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+	releases := []string{"arc_20150903.10_linux_amd64", "arc_20150903.10_windows_amd64.exe", "arc_20150903.5_windows_amd64.exe", "arc_20150902.1_linux_amd64"}
+	
+	update, err := AvailableUpdate(req, &releases)
+	if err != nil {
+		t.Error("Expected not get an error. Got ", err)
+	}
+	if update != nil {
+		t.Error("Expected update to be nil")
+	}
+}
