@@ -13,13 +13,15 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 )
 
+var emptyPathError = "Builds root path is empty"
+
 type LocalStorage struct {
 	BuildsRootPath string
 }
 
 func New(c *cli.Context) (*LocalStorage, error) {
 	if c.String("path") == ""{
-		return nil, errors.New("Builds root path is empty")
+		return nil, errors.New(emptyPathError)
 	}
 	
 	// check if path exits

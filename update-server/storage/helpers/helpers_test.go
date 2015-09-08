@@ -68,6 +68,14 @@ func TestExtractVersionFromRelease(t *testing.T) {
 	if result != "20150903.10" {
 		t.Error("Expected to find version 20150903.10")
 	}
+	
+	result, err = extractVersionFrom("arc_20150905.15_darwin_amd64_061430944", &darwinParams)
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	if result != "20150905.15" {
+		t.Error("Expected to find version 20150903.10")
+	}
 }
 
 //
