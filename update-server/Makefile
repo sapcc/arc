@@ -19,7 +19,7 @@ help:
 .PHONY: build
 build: setup
 	mkdir -p bin/ 
-	CGO_ENABLED=0 go build -o bin/update-site -a --installsuffix cgo -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/update-server
+	go build -o bin/update-site -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/update-server
 
 .PHONY: build-docker
 build-docker:

@@ -1,13 +1,15 @@
 package main
 
 import (
-	"os"
 	"net/http"
-	log "github.com/Sirupsen/logrus"	
+	"os"
+
+	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/gorilla/handlers"
-	"gitHub.***REMOVED***/monsoon/arc/version"	
+
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 var cliCommands = []cli.Command{
@@ -19,6 +21,7 @@ var cliCommands = []cli.Command{
 			cli.StringFlag{
 				Name:   "path,p",
 				Usage:  "Directory containig update artifacts",
+				Value:  "/var/lib/arc-update-site",
 				EnvVar: "ARTIFACTS_PATH",
 			},
 		},
@@ -52,29 +55,33 @@ var cliCommands = []cli.Command{
 				Name:   "container,c",
 				Usage:  "The Swift container",
 				EnvVar: "OS_CONTAINER",
-			},				
+			},
 		},
-	},	
+	},
 }
 
 func localStorage(c *cli.Context) {
 	var err error
-	
+
 	// check mandatory params
 	buildsRootPath := c.String("path")
 	if buildsRootPath == "" {
 		log.Fatal("No path to update artifacts given.")
 		return
-	}	
-	log.Infof("Serving artificats from %s.", buildsRootPath)
-	
+	}
+	if err = os.MkdirAll(buildsRootPath, 0755); err != nil {
+		log.Fatalf("Path to artificats %s does not exist and can't created: %s", buildsRootPath, err)
+		return
+	}
+	log.Infof("Serving artifacts from %s.", buildsRootPath)
+
 	// set the storage
 	st, err = storage.New(storage.Local, c)
 	if err != nil {
 		log.Fatal(err.Error())
 		return
 	}
-	
+
 	// run the server
 	runServer(c, storage.Local)
 }
@@ -83,18 +90,19 @@ func swiftStorage(c *cli.Context) {
 	var err error
 
 	// check mandatory params
-	if c.String("username") == "" ||  c.String("password") == "" ||  c.String("domain") == "" ||  c.String("auth_url") == "" || c.String("container") == "" {
+	if c.String("username") == "" || c.String("password") == "" || c.String("domain") == "" || c.String("auth_url") == "" || c.String("container") == "" {
 		log.Fatal("Not enough arguments in call swift command")
 		return
 	}
-	
+	log.Infof("Serving artifacts from Swift container %s.", c.String("container"))
+
 	// set the storage
 	st, err = storage.New(storage.Swift, c)
 	if err != nil {
 		log.Fatal(err.Error())
 		return
 	}
-	
+
 	// run the server
 	runServer(c, storage.Swift)
 }

@@ -6,15 +6,16 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+
+	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
 	"gitHub.***REMOVED***/monsoon/arc/version"
-	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"	
 )
 
 const appName = "arc-update-server"
 
 var (
-	st    				storage.Storage
-	templates     map[string]*template.Template
+	st        storage.Storage
+	templates map[string]*template.Template
 )
 
 func main() {

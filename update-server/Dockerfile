@@ -1,10 +1,10 @@
-FROM alpine@3.2
+FROM progrium/busybox
 
-ADD bin/update-site /update-site
 
-ENV ARTIFACTS_PATH=/artifacts \
-    BIND_ADDRESS=0.0.0.0:8080
+COPY env.sh /env.sh
+ENTRYPOINT ["/env.sh"]
 
-CMD ["/update-site"]
+ADD bin/update-site /usr/bin/update-site
 
+CMD ["update-site", "local"]
 
