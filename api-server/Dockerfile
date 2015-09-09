@@ -1,10 +1,17 @@
-FROM alpine@3.2
+FROM progrium/busybox
 
-ADD bin/api-server /api-server
+ADD https://gitHub.***REMOVED***/userID/goose/releases/download/0.1/goose_linux_amd64_static /usr/bin/goose
+RUN chmod +x /usr/bin/goose
 
-ENV ARTIFACTS_PATH=/artifacts \
-    BIND_ADDRESS=0.0.0.0:8080
+COPY env.sh /env.sh
+ENTRYPOINT ["/env.sh"]
 
-CMD ["/api-server"]
+ENV ARC_ENV=development \
+    DBHOST=postgres \
+    DBUSER=postgres
 
+WORKDIR /opt/api
+COPY db/ db/
+COPY bin/api-server /usr/bin/api-server
 
+CMD goose -env=$ARC_ENV status && goose -env=$ARC_ENV up && exec api-server
