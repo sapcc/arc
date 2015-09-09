@@ -9,7 +9,6 @@ import (
 	"regexp"	
 	
 	"github.com/hashicorp/go-version"
-	log "github.com/Sirupsen/logrus"
 	"github.com/inconshreveable/go-update/check"
 )
 
@@ -28,7 +27,7 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 	// get check.Params
 	reqParams, err := parseRequest(req)
 	if err != nil {
-		return nil, err
+		return nil, UpdateArgumentError
 	}
 	
 	// get host url
@@ -107,8 +106,7 @@ func extractVersionFrom(filename string, params *check.Params) (string, error) {
 func parseRequest(req *http.Request) (*check.Params, error) {
 	// check arguments
 	if req == nil {
-		log.Errorf("Request are empty or nil")
-		return nil, UpdateArgumentError
+		return nil, fmt.Errorf("Request are empty or nil")
 	}
 
 	// read body

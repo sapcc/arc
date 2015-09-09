@@ -234,7 +234,6 @@ func TestAvailableUpdate(t *testing.T) {
 }
 
 func TestNoAvailableUpdate(t *testing.T) {
-	// get a success update
 	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	releases := []string{"arc_20150903.10_linux_amd64", "arc_20150903.10_windows_amd64.exe", "arc_20150903.5_windows_amd64.exe", "arc_20150902.1_linux_amd64"}
@@ -245,5 +244,16 @@ func TestNoAvailableUpdate(t *testing.T) {
 	}
 	if update != nil {
 		t.Error("Expected update to be nil")
+	}
+}
+
+func TestAvailableUpdateArgumentError(t *testing.T) {
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64"}}`) // parse error (missing parameter) == UpdateArgumentError == 400
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+	releases := []string{}
+	
+	_, err := AvailableUpdate(req, &releases)
+	if err != UpdateArgumentError {
+		t.Error("Expected argument error")
 	}
 }
