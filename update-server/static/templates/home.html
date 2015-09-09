@@ -48,7 +48,7 @@
 						{{range $index, $value := .Files}}
 						<tr>
 							<td>{{$index}}</td>
-							<td>{{$value}}</td>
+							<td><a href="/builds/{{$value}}">{{$value}}</a></td>
 						</tr>
 						{{end}}
 					</tbody>
