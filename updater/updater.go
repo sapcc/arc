@@ -36,7 +36,7 @@ func (u *Updater) CheckAndUpdate() (bool, error) {
 	r, err := u.Check()
 	if err == check.NoUpdateAvailable {
 		// no content means no available update, http 204
-		log.Errorf("No update available")
+		log.Infof("No update available")
 		return false, err
 	} else if err != nil {
 		log.Errorf("Error while checking for update: %q", err.Error())
