@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"bytes"
+	"os"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
@@ -20,14 +21,24 @@ const (
 type Client struct {
 	Client        *http.Client
 	ApiServerUrl  string
-	UpdateSiteUrl string
+	UpdateServerUrl string
 }
 
 func NewTestClient() *Client {
+	apiServerUrl := "http://localhost:3000"
+	updateServerUrl := "http://localhost:3001"
+	
+	if os.Getenv("ARC_API_SERVER") != "" {
+		apiServerUrl = os.Getenv("ARC_API_SERVER")
+	}
+	if os.Getenv("ARC_UPDATE_SERVER") != "" {
+		updateServerUrl = os.Getenv("ARC_UPDATE_SERVER")
+	}
+	
 	return &Client{
-		Client:        &http.Client{},
-		ApiServerUrl:  "http://localhost:3000",
-		UpdateSiteUrl: "http://localhost:3001",
+		Client:          &http.Client{},
+		ApiServerUrl:    apiServerUrl,
+		UpdateServerUrl: updateServerUrl,
 	}
 }
 
@@ -89,7 +100,7 @@ func (c *Client) serverUrl(s ServerType) string {
 	case ApiServer:
 		return c.ApiServerUrl
 	case UpdateServer:
-		return c.UpdateSiteUrl
+		return c.UpdateServerUrl
 	}
 	return ""
 }
