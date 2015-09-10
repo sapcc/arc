@@ -6,8 +6,6 @@ if [ "$SSH_KEY" != "" ]; then
   echo "$SSH_KEY" > ~/.ssh/id_rsa #the quotes prevent word splitting
   chmod 600 ~/.ssh/id_rsa
 fi
-echo "~/.ssh/id_rsa:"
-cat ~/.ssh/id_rsa
 if [ "$1" = "" ]; then
   echo "usage: $0 [WEBSITE DIRECTORY]"
   exit 1
