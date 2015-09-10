@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"net/http"
+	"fmt"
 )
 
 //
@@ -256,4 +257,20 @@ func TestAvailableUpdateArgumentError(t *testing.T) {
 	if err != UpdateArgumentError {
 		t.Error("Expected argument error")
 	}
+}
+
+// 
+// Sort by Version
+// 
+
+func TestSortByVersion(t *testing.T) {
+	filenames := []string{"arc_20150903.5_windows_amd64.exe", "arc_20150803.5_linux_amd64", "arc_20151003.7_linux_amd64", "arc_201501003.8_linux_amd64", "arc_20151003.1_windows_amd64.exe"}
+	sortedFilenames := []string{"arc_201501003.8_linux_amd64", "arc_20151003.7_linux_amd64", "arc_20151003.1_windows_amd64.exe", "arc_20150903.5_windows_amd64.exe", "arc_20150803.5_linux_amd64"}	
+	SortByVersion(filenames)
+	
+  for i, file := range filenames {
+      if file != sortedFilenames[i] {
+          t.Error(fmt.Sprint("Expected sorted filenames. Got ", file, " and ", sortedFilenames[i]))
+      }
+  }
 }

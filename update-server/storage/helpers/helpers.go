@@ -2,12 +2,14 @@ package helpers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"fmt"
-	"regexp"	
-	
+	"regexp"
+	"sort"
+	"strings"
+
 	"github.com/hashicorp/go-version"
 	"github.com/inconshreveable/go-update/check"
 )
@@ -29,7 +31,7 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 	if err != nil {
 		return nil, UpdateArgumentError
 	}
-	
+
 	// get host url
 	hostUrl := getHostUrl(req)
 	if hostUrl == nil {
@@ -37,14 +39,14 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 	}
 
 	buildFile := ""
-	buildVersion := "20150101.01"	
+	buildVersion := "20150101.01"
 	// loop over the releases and compare versions
 	for _, f := range *releases {
 		if isReleaseFrom(f, reqParams) {
 			fileVersion, err := extractVersionFrom(f, reqParams)
 			if err != nil {
 				return nil, err
-			}			
+			}
 			result, err := shouldUpdate(reqParams.AppVersion, fileVersion, buildVersion)
 			if err != nil {
 				return nil, err
@@ -56,17 +58,20 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 		}
 	}
 
-	if len(buildFile) > 0 {		
+	if len(buildFile) > 0 {
 		return &check.Result{
 			Initiative: "automatically",
 			Url:        fmt.Sprint(hostUrl, BuildRelativeUrl, buildFile),
 			Version:    buildVersion,
-		}, nil		
+		}, nil
 	}
-	
+
 	return nil, nil
 }
 
+func SortByVersion(filenames []string) {
+	sort.Sort(ByVersion(filenames))
+}
 
 // private
 
@@ -82,7 +87,7 @@ func shouldUpdate(appVersion string, fileVersion string, currentVersion string) 
 	cv, err := version.NewVersion(currentVersion)
 	if err != nil {
 		return false, err
-	}	
+	}
 	if fv.GreaterThan(av) && fv.GreaterThan(cv) {
 		return true, nil
 	}
@@ -95,7 +100,7 @@ func isReleaseFrom(filename string, params *check.Params) bool {
 }
 
 func extractVersionFrom(filename string, params *check.Params) (string, error) {
-	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_(.+)_", params.Tags["os"], "_", params.Tags["arch"]))		
+	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_(.+)_", params.Tags["os"], "_", params.Tags["arch"]))
 	results := r.FindStringSubmatch(filename)
 	if len(results) < 1 {
 		return "", fmt.Errorf("Version could not be found.")
@@ -162,4 +167,36 @@ func getHostUrl(req *http.Request) *url.URL {
 	}
 
 	return &url.URL{Scheme: scheme, Host: host}
+}
+
+type ByVersion []string
+
+func (s ByVersion) Len() int {
+	return len(s)
+}
+
+func (s ByVersion) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s ByVersion) Less(i, j int) bool {
+	vStr1 := ""
+	vStr2 := ""
+	split1 := strings.Split(s[i], "_")
+	if len(split1) > 0 {
+		vStr1 = split1[1]
+	}
+	split2 := strings.Split(s[j], "_")
+	if len(split2) > 0 {
+		vStr2 = split2[1]
+	}
+	v1, err := version.NewVersion(vStr1)
+	if err != nil {
+		v1, _ = version.NewVersion("20150101.01")
+	}
+	v2, err := version.NewVersion(vStr2)
+	if err != nil {
+		v2, _ = version.NewVersion("20150101.01")
+	}
+	return v1.GreaterThan(v2)
 }

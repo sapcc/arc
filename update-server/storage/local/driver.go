@@ -1,12 +1,12 @@
 package local
 
 import (
-	"io/ioutil"
 	"errors"
-	"net/http"
-	"strings"
-	"os"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -20,18 +20,18 @@ type LocalStorage struct {
 }
 
 func New(c *cli.Context) (*LocalStorage, error) {
-	if c.String("path") == ""{
+	if c.String("path") == "" {
 		return nil, errors.New(emptyPathError)
 	}
-	
+
 	// check if path exits
 	if _, err := os.Stat(c.String("path")); os.IsNotExist(err) {
 		return nil, err
 	}
-	
+
 	return &LocalStorage{
 		BuildsRootPath: c.String("path"),
-	},nil
+	}, nil
 }
 
 /* build file pattern			  -> appId, "_", appVersion, "_", appOs, "_", appArch
@@ -45,7 +45,7 @@ func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// get check.Params
 	result, err := helpers.AvailableUpdate(req, releases)
 	if err != nil {
@@ -65,13 +65,16 @@ func (l *LocalStorage) GetAllUpdates() (*[]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, f := range builds {
 		// filter config file
 		if strings.ToLower(f.Name()) != "releases.yml" {
 			fileNames = append(fileNames, f.Name())
 		}
 	}
+
+	// sort releases by version
+	helpers.SortByVersion(fileNames)
 
 	if len(fileNames) == 0 {
 		fileNames = append(fileNames, "No files found")
@@ -80,10 +83,10 @@ func (l *LocalStorage) GetAllUpdates() (*[]string, error) {
 	return &fileNames, nil
 }
 
-func (l *LocalStorage) GetUpdate(name string, writer io.Writer) (error) {
+func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {
 	return nil
 }
 
-func (l *LocalStorage) GetStoragePath() string{
+func (l *LocalStorage) GetStoragePath() string {
 	return l.BuildsRootPath
 }
