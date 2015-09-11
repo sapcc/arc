@@ -104,18 +104,3 @@ func (c *Client) serverUrl(s ServerType) string {
 	}
 	return ""
 }
-
-// func main() {
-// 	client := NewTestClient()
-//
-// 	to := "darwin"
-// 	timeout := 60
-// 	agent := "execute"
-// 	action := "script"
-// 	payload := `"payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""`
-// 	data := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, agent, action, payload)
-// 	jsonStr := []byte(data)
-// 	statusCode, body = client.Post("/jobs", ApiServer, nil, jsonStr)
-// 	fmt.Println(statusCode)
-// 	fmt.Println(string(body))
-// }

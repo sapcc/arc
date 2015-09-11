@@ -1,4 +1,4 @@
-// +build integration
+// +build integration smoke
 
 package integration_tests
 
