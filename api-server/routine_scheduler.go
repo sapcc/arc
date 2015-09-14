@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -10,23 +9,22 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 )
 
-var routineSchedulerChan *time.Ticker
+func routineScheduler(db *sql.DB, duration time.Duration) {
 
-func routineScheduler(db *sql.DB, duration time.Duration) error {
-	if db == nil {
-		return fmt.Errorf("Db connection is nil")
-	}
-
-	routineSchedulerChan = time.NewTicker(duration)
+	routineSchedulerChan := time.NewTicker(duration)
 
 	for {
 		select {
 		case <-routineSchedulerChan.C:
-			cleanJobs(db)
-			cleanLogParts(db)
+			runRoutineTasks(db)
 		}
 	}
 
+}
+
+func runRoutineTasks(db *sql.DB) {
+	cleanJobs(db)
+	cleanLogParts(db)
 }
 
 func cleanJobs(db *sql.DB) {

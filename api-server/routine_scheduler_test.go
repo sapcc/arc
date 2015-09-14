@@ -18,21 +18,6 @@ var _ = Describe("Routine scheduler", func() {
 
 	})
 
-	It("should tick", func() {
-		// start routine scheduler
-		go routineScheduler(db, 100*time.Millisecond)
-
-		time.Sleep(200 * time.Millisecond)
-
-		schedulerTick := false
-		select {
-		case <-routineSchedulerChan.C:
-			schedulerTick = true
-		}
-
-		Expect(schedulerTick).To(Equal(true))
-	})
-
 	It("should clean jobs", func() {
 		// save a job
 		job := Job{}
@@ -40,8 +25,7 @@ var _ = Describe("Routine scheduler", func() {
 		err := job.Save(db)
 		Expect(err).NotTo(HaveOccurred())
 
-		go routineScheduler(db, 100*time.Millisecond)
-		time.Sleep(200 * time.Millisecond)
+		//runRoutineTasks(db)
 
 		// check job
 		dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
@@ -61,8 +45,7 @@ var _ = Describe("Routine scheduler", func() {
 		err := logPart.Save(db)
 		Expect(err).NotTo(HaveOccurred())
 
-		go routineScheduler(db, 100*time.Millisecond)
-		time.Sleep(200 * time.Millisecond)
+		runRoutineTasks(db)
 
 		// check log parts
 		dbLogPart := LogPart{JobID: job.RequestID}
