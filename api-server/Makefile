@@ -67,7 +67,7 @@ test: postgres migrate-test
 .PHONY: run-tests
 run-tests: setup
 	go test ./... -v
-	go test ./... -v -p=1 -timeout=30s -tags=integration
+	go test ./... -v -p=1 -timeout=60s -tags=integration
 
 .PHONY:
 migrate-%:
