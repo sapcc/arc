@@ -25,7 +25,7 @@ var _ = Describe("Routine scheduler", func() {
 		err := job.Save(db)
 		Expect(err).NotTo(HaveOccurred())
 
-		//runRoutineTasks(db)
+		runRoutineTasks(db)
 
 		// check job
 		dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
