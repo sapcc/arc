@@ -1,4 +1,4 @@
-package integration_tests
+package integrationTests
 
 import (
 	"bytes"
@@ -8,7 +8,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"flag"
 )
+
+var apiServerFlag = flag.String("api-server", "http://localhost:3000", "integration-test")
+var updateServerFlag = flag.String("update-server", "http://localhost:3001", "integration-test") 
 
 type ServerType int
 
@@ -24,21 +28,21 @@ type Client struct {
 	UpdateServerUrl string
 }
 
-func NewTestClient() *Client {
-	apiServerUrl := "http://localhost:3000"
-	updateServerUrl := "http://localhost:3001"
-	
+func NewTestClient() *Client {	
+	// override flags if enviroment variable exists
 	if os.Getenv("ARC_API_SERVER") != "" {
-		apiServerUrl = os.Getenv("ARC_API_SERVER")
+		apiServerUrl := os.Getenv("ARC_API_SERVER")
+		apiServerFlag = &apiServerUrl
 	}
 	if os.Getenv("ARC_UPDATE_SERVER") != "" {
-		updateServerUrl = os.Getenv("ARC_UPDATE_SERVER")
+		updateServerUrl := os.Getenv("ARC_UPDATE_SERVER")
+		updateServerFlag = &updateServerUrl
 	}
 	
 	return &Client{
 		Client:          &http.Client{},
-		ApiServerUrl:    apiServerUrl,
-		UpdateServerUrl: updateServerUrl,
+		ApiServerUrl:    *apiServerFlag,
+		UpdateServerUrl: *updateServerFlag,
 	}
 }
 

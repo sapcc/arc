@@ -1,6 +1,6 @@
-// +build integration smoke
+// +build integration
 
-package integration_tests
+package integrationTests
 
 import (
 	"testing"
