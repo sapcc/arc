@@ -38,11 +38,11 @@ func TestAgentsAreUpdated(t *testing.T) {
 		t.Error("Expected not to get an error unmarshaling")
 	}
 	
-	// check the version from all agents
+	// check the version from each agent
 	for i := 0; i < len(agents); i++ {
 		statusCode, body = client.Get(fmt.Sprint("/agents/", agents[i].AgentID, "/facts"), ApiServer)
 		if statusCode != "200 OK" {
-			t.Error(fmt.Sprint("Expected to get 200 response code for agent ", agents[i]))
+			t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent ", agents[i]))
 		}
 		
 		var factVersion factArcVersion
@@ -52,7 +52,7 @@ func TestAgentsAreUpdated(t *testing.T) {
 		}
 
 		if !strings.Contains(factVersion.Version, *arcDeployVersionFlag) {
-			t.Error(fmt.Sprint("Expected to match versions. Got ", arcDeployVersionFlag, " and ", factVersion.Version))
-		}		
+			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", arcDeployVersionFlag, " and ", factVersion.Version))
+		}
 	}
 }

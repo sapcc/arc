@@ -9,12 +9,13 @@ import (
 	"flag"
 	"encoding/json"
 	"time"
+	// log "github.com/Sirupsen/logrus"
 	
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-var serverIdentityFlag = flag.String("arc-server-identity", "darwin", "integration-test")
+var agentIdentityFlag = flag.String("arc-agent", "", "integration-test")
 
 type factArcVersion struct {
 	Version string `json:"arc_version"`
@@ -22,21 +23,22 @@ type factArcVersion struct {
 
 func TestRunJob(t *testing.T) {	
 	// override flags if enviroment variable exists
-	if os.Getenv("ARC_SERVER_IDENTITY") != "" {
-		serverIdentity := os.Getenv("ARC_SERVER_IDENTITY")
-		serverIdentityFlag = &serverIdentity
+	if os.Getenv("ARC_AGENT_IDENTITY") != "" {
+		agentIdentity := os.Getenv("ARC_AGENT_IDENTITY")
+		agentIdentityFlag = &agentIdentity
 	}
 
 	client := NewTestClient()	
-	to := *serverIdentityFlag
+	to := *agentIdentityFlag
 	timeout := 60
 	agent := "execute"
 	action := "script"
-	payload := `echo Script start; for i in {1..2}; do echo \$i; sleep 1s; done; echo Script done`
+	payload := `echo Script start; for i in {1..2}; do echo $i; sleep 1s; done; echo Script done`
 	data := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, agent, action, payload)
 	jsonStr := []byte(data)
 	
-	statusCode, body := client.Post("/jobs", ApiServer, nil, jsonStr)
+	// post the job
+	statusCode, body := client.Post("/jobs", ApiServer, nil, jsonStr)	
 	if statusCode != "200 OK" {
 		t.Error(fmt.Sprint("Expected to get 200 response code"))
 	}
@@ -44,40 +46,65 @@ func TestRunJob(t *testing.T) {
 	err := json.Unmarshal(*body, &jobId)
 	if err != nil {
 		t.Error("Expected not to get an error unmarshaling")
+		return
 	}	
-		
-	job, err := checkStatus(client, jobId)
+	
+	// check status
+	err = checkStatus(client, jobId, arc.Queued, 0)
 	if err != nil {
-		t.Error(fmt.Sprint("Expected not to get an error. Got ", err.Error()))
-	}
-	if job.Status != arc.Queued {
-		t.Error("Expected to get job in queued mode")
+		t.Error(err)
+		return
 	}
 	
-	time.Sleep(time.Second * 1)
-	
-	job, err = checkStatus(client, jobId)
+	err = checkStatus(client, jobId, arc.Executing, 3000)
 	if err != nil {
-		t.Error(fmt.Sprint("Expected not to get an error. Got ", err.Error()))
+		t.Error(err)
+		return
 	}
-	if job.Status != arc.Executing {
-		t.Error("Expected to get job in execution mode")
-	}
-
-	time.Sleep(time.Second * 2)
 	
-	job, err = checkStatus(client, jobId)
+	err = checkStatus(client, jobId, arc.Complete, 5000)
 	if err != nil {
-		t.Error(fmt.Sprint("Expected not to get an error. Got ", err.Error()))
+		t.Error(err)
+		return
 	}
-	if job.Status != arc.Complete {
-		t.Error("Expected to get job in complete mode")
+	
+	// check log
+	statusCode, body = client.Get(fmt.Sprint("/jobs/", jobId.RequestID, "/log"), ApiServer)
+	if statusCode != "200 OK" {
+		t.Error("Expected to get 200 response code getting the log")
+	}
+	if len(string(*body)) == 0 {
+		t.Error("Expected to get a log")		
 	}
 }
 
 // private
 
-func checkStatus(client *Client, jobId models.JobID) (*models.Job, error){
+func checkStatus(client *Client, jobId models.JobID, status arc.JobState, timeout int) error {
+	var job *models.Job
+	var err error
+	for {
+		job, err = getJobStatus(client, jobId)
+		if err != nil {
+			err = fmt.Errorf(fmt.Sprint("Expected not to get an error. Got ", err.Error()))
+			break
+		}
+		if job.Status == status {
+			break
+		}		
+		if timeout < 0 {
+			err = fmt.Errorf(fmt.Sprint("Timeout: Expected to get status ", status, ". Got ", job.Status))
+			break
+		}
+		
+		timeout = timeout - 100 
+		time.Sleep(time.Millisecond * 100)
+	}
+	
+	return err
+}
+
+func getJobStatus(client *Client, jobId models.JobID) (*models.Job, error){
 	var job models.Job
 	statusCode, body := client.Get(fmt.Sprint("/jobs/", jobId.RequestID), ApiServer)
 	if statusCode != "200 OK" {
