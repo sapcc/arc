@@ -24,7 +24,7 @@ type Facts struct {
 	PlatformVersion    string `json:"platform_version"`
 }
 
-func TestRunJob(t *testing.T) {
+func TestRunFacts(t *testing.T) {
 	client := NewTestClient()	
 	statusCode, body := client.Get(fmt.Sprint("/agents/", *serverIdentityFlag, "/facts"), ApiServer)
 	if statusCode != "200 OK" {
