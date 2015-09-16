@@ -5,6 +5,7 @@ import (
 	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 	"runtime"
+	"fmt"
 )
 
 type Updater struct {
@@ -35,20 +36,17 @@ func New(options map[string]string) *Updater {
 func (u *Updater) CheckAndUpdate() (bool, error) {
 	r, err := u.Check()
 	if err == check.NoUpdateAvailable {
-		// no content means no available update, http 204
 		log.Infof("No update available")
-		return false, err
-	} else if err != nil {
-		log.Errorf("Error while checking for update: %q", err.Error())
-		return false, err
+		return false, nil
+	} else if err != nil {		
+		return false, fmt.Errorf("Error while checking for update: %q", err.Error())
 	}
 	log.Infof("Updated version %q for app %q available ", r.Version, u.params.AppId)
 
-	// update
+	// replace binary
 	err = u.Update(r)
-	if err != nil {
-		log.Errorf("Failed to update: %q", err.Error())
-		return false, err
+	if err != nil {		
+		return false, fmt.Errorf("Failed to update: %q", err.Error())
 	}
 	log.Infof("Updated to version %q", r.Version)
 

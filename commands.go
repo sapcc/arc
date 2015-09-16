@@ -40,7 +40,6 @@ var cliCommands = []cli.Command{
 			optTlsClientCert,
 			optTlsClientKey,
 			optTlsCaCert,
-			optNoAutoUpdate,
 			optUpdateUri,
 			optUpdateInterval,
 		},
@@ -136,16 +135,22 @@ var cliCommands = []cli.Command{
 
 func cmdServer(c *cli.Context) {
 	log.Infof("Starting server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
-	// Ticker containing a channel that will send the time with a period
-	log.Debugf("Checking for updates every %d seconds.", c.Int("update-interval"))
+
+	// update object and ticker
+	var up *updater.Updater
 	tickChan := time.NewTicker(time.Second * time.Duration(c.Int("update-interval")))
-	// updater object
-	up := updater.New(map[string]string{
-		"version":   version.Version,
-		"appName":   appName,
-		"updateUri": c.String("update-uri"),
-	})
-	log.Infof("Updater setup with version %q, app name %q and update uri %q", version.Version, appName, c.String("update-uri"))
+	if c.String("update-uri") != "" {
+		// create update object
+		up = updater.New(map[string]string{
+			"version":   version.Version,
+			"appName":   appName,
+			"updateUri": c.String("update-uri"),
+		})
+		log.Infof("Updater setup with interval %v, version %q, app name %q and update uri %q", c.Int("update-interval"), version.Version, appName, c.String("update-uri"))
+	} else {
+		// ticker will be stoped if no update uri is given
+		tickChan.Stop()
+	}
 
 	tp, err := transport.New(config)
 	if err != nil {
@@ -170,14 +175,16 @@ func cmdServer(c *cli.Context) {
 		case <-server.Done():
 			os.Exit(0)
 		case <-tickChan.C:
-			if !c.Bool("no-auto-update") {
-				go func() {
-					if success, _ := up.CheckAndUpdate(); success {
-						server.GracefulShutdown()
-						tickChan.Stop()
-					}
-				}()
-			}
+			go func() {
+				success, err := up.CheckAndUpdate()
+				if err != nil {
+					log.Error(err)
+				}
+				if success {
+					server.GracefulShutdown()
+					tickChan.Stop()
+				}
+			}()
 		}
 	}
 

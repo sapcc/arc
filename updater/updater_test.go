@@ -39,9 +39,12 @@ func TestUpdaterCheckAndUpdateNotAvailable(t *testing.T) {
 	validOptions["updateUri"] = server.URL
 
 	up := New(validOptions)
-	_, err := up.CheckAndUpdate()
-	if err != check.NoUpdateAvailable {
-		t.Error("Expected get one error, got ", err)
+	success, err := up.CheckAndUpdate()
+	if success != false {
+		t.Error("Expected to be false")
+	}
+	if err != nil {
+		t.Error("Expected not get an error, got ", err)
 	}
 }
 
