@@ -21,7 +21,7 @@ Every option is optional:
 
 * `--force, -f` - Forces an update without any user confirmation.
 
-* `--update-uri` - Update server uri. If this isn't set, the default uri will be set to http<nolink>://localhost:3000/updates.
+* `--update-uri` - Update server uri.
 
 * `--no-update, -n` - Just return the last version available, no update is being triggered.
 

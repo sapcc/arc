@@ -20,6 +20,22 @@ import (
 var CheckResult = ""
 var responseExample = `{"initiative":"automatically","url":"MIAU://non_valid_url","patch_url":null,"patch_type":null,"version":"999","checksum":null,"signature":null}`
 
+func TestCmdUpdateMissingUri(t *testing.T) {
+	// prepare context flags
+	ctx := cli.NewContext(nil, flag.NewFlagSet("local", 0), flag.NewFlagSet("global", 0))
+	
+	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
+	if err == nil {
+		t.Error("Expected to have an error")
+	}
+	if code != 1 {
+		t.Error("Expected to have exit code 1")
+	}
+	if CheckResult != "" {
+		t.Error("Expected to not apply update")
+	}
+}
+
 func TestCmdUpdateYes(t *testing.T) {
 	// mock apply upload
 	origApplyUpdate := updater.ApplyUpdate
