@@ -118,12 +118,19 @@ func Init(c *cli.Context, appName string) (int, error) {
 			return 1, fmt.Errorf("Failed to create %s: %v", path.Join(dir, "arc.cfg"), err)
 		}
 
+		updateInterval := ""
+		if c.IsSet("update-interval") {
+			updateInterval = fmt.Sprintf("%d", c.Int("update-interval"))
+		}
+
 		templateVars := map[string]string{
-			"Cert":      path.Join(dir, "cert.pem"),
-			"Key":       path.Join(dir, "cert.key"),
-			"Ca":        path.Join(dir, "ca.pem"),
-			"Endpoint":  strings.Join(c.StringSlice("endpoint"), ","),
-			"Transport": c.String("transport"),
+			"Cert":           path.Join(dir, "cert.pem"),
+			"Key":            path.Join(dir, "cert.key"),
+			"Ca":             path.Join(dir, "ca.pem"),
+			"Endpoint":       strings.Join(c.StringSlice("endpoint"), ","),
+			"UpdateUri":      c.String("update-uri"),
+			"UpdateInterval": updateInterval,
+			"Transport":      c.String("transport"),
 		}
 		err = configTemplate.Execute(cfgFile, templateVars)
 		if err != nil {

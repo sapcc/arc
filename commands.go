@@ -94,6 +94,8 @@ var cliCommands = []cli.Command{
 			optTlsClientCert,
 			optTlsClientKey,
 			optTlsCaCert,
+			optUpdateUri,
+			optUpdateInterval,
 			optRegistrationUrl,
 			optInstallDir,
 		},
