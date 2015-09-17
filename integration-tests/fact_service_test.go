@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -25,6 +26,12 @@ type Facts struct {
 }
 
 func TestRunFacts(t *testing.T) {
+	// override flags if enviroment variable exists
+	if os.Getenv("ARC_AGENT_IDENTITY") != "" {
+		agentIdentity := os.Getenv("ARC_AGENT_IDENTITY")
+		agentIdentityFlag = &agentIdentity
+	}
+	
 	client := NewTestClient()
 
 	// get the facts for the given agent

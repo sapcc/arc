@@ -13,7 +13,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 )
 
-var arcDeployVersionFlag = flag.String("arc-deployed-version", "2015.01.01", "integration-test")
+var arcDeployVersionFlag = flag.String("arc-last-deployed-version", "2015.01.01", "integration-test")
 
 type factArcVersion struct {
 	Version string `json:"arc_version"`
@@ -21,8 +21,8 @@ type factArcVersion struct {
 
 func TestAgentsAreUpdated(t *testing.T) {
 	// override flags if enviroment variable exists
-	if os.Getenv("ARC_DEPLOY_VERSION") != "" {
-		deployVersion := os.Getenv("ARC_DEPLOY_VERSION")
+	if os.Getenv("ARC_LAST_DEPLOY_VERSION") != "" {
+		deployVersion := os.Getenv("ARC_LAST_DEPLOY_VERSION")
 		arcDeployVersionFlag = &deployVersion
 	}
 
@@ -57,7 +57,7 @@ func TestAgentsAreUpdated(t *testing.T) {
 		}
 
 		if !strings.Contains(factVersion.Version, *arcDeployVersionFlag) {
-			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", arcDeployVersionFlag, " and ", factVersion.Version))
+			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", *arcDeployVersionFlag, " and ", factVersion.Version))
 		}
 	}
 }
