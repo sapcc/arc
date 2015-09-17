@@ -3,46 +3,52 @@
 package integrationTests
 
 import (
-	"testing"
-	"fmt"
-	"flag"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"testing"
 )
 
-var serverIdentityFlag = flag.String("arc-server-identity", "darwin", "integration-test")
+var agentIdentityFlag = flag.String("arc-agent", "", "integration-test")
 
 type Facts struct {
-	Version            string `json:"arc_version"`
-	DefaultGateway     string `json:"default_gateway"`
-	DefaultInterface   string `json:"default_interface"`
-	Domain					   string `json:"domain"`
-	FQDN						   string `json:"fqdn"`
-	Hostname				   string `json:"hostname"`
-	IpAddress				   string `json:"ipaddress"`
-	Platform					 string `json:"platform"`
-	PlatformFamily		 string `json:"platform_family"`
-	PlatformVersion    string `json:"platform_version"`
+	Version          string `json:"arc_version"`
+	DefaultGateway   string `json:"default_gateway"`
+	DefaultInterface string `json:"default_interface"`
+	Domain           string `json:"domain"`
+	FQDN             string `json:"fqdn"`
+	Hostname         string `json:"hostname"`
+	IpAddress        string `json:"ipaddress"`
+	Platform         string `json:"platform"`
+	PlatformFamily   string `json:"platform_family"`
+	PlatformVersion  string `json:"platform_version"`
 }
 
 func TestRunFacts(t *testing.T) {
-	client := NewTestClient()	
-	statusCode, body := client.Get(fmt.Sprint("/agents/", *serverIdentityFlag, "/facts"), ApiServer)
+	client := NewTestClient()
+
+	// get the facts for the given agent
+	statusCode, body := client.Get(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
 	if statusCode != "200 OK" {
-		t.Error(fmt.Sprint("Expected to get 200 response code for agent ", *serverIdentityFlag))
+		t.Error(fmt.Sprint("Expected to get 200 response code for agent ", *agentIdentityFlag))
+		return
 	}
-	
+
+	// transform the body to facts struct
 	var facts Facts
 	err := json.Unmarshal(*body, &facts)
 	if err != nil {
 		t.Error("Expected not to get an error unmarshaling")
+		return
 	}
 
+	// check
 	if facts.Version == "" {
 		t.Error(fmt.Sprintf("Expected version to not be empty. Got %q", facts.Version))
-	}	
+	}
 	if facts.DefaultGateway == "" {
 		t.Error(fmt.Sprintf("Expected default gateway to not be empty. Got %q", facts.DefaultGateway))
-	}	
+	}
 	if facts.DefaultInterface == "" {
 		t.Error(fmt.Sprintf("Expected default interface to not be empty. Got %q", facts.DefaultInterface))
 	}
@@ -66,5 +72,5 @@ func TestRunFacts(t *testing.T) {
 	}
 	if facts.PlatformVersion == "" {
 		t.Error(fmt.Sprintf("Expected platform version to not be empty. Got %q", facts.PlatformVersion))
-	}	
+	}
 }
