@@ -572,5 +572,5 @@ var _ = Describe("Log Handlers", func() {
 // private
 
 func getUrl(url string) string {
-	return fmt.Sprint("/v1", url)
+	return fmt.Sprint("/api/v1", url)
 }

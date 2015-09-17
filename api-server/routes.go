@@ -79,7 +79,7 @@ func newRouter() *mux.Router {
 			Handler(r.HandlerFunc)
 	}
 	
-	v1SubRouter := router.PathPrefix("/v1").Subrouter()
+	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
 	for _, r := range v1RoutesDefinition {
 		v1SubRouter.
 			Methods(r.Method).
