@@ -9,7 +9,6 @@ import (
 	"flag"
 	"encoding/json"
 	"time"
-	// log "github.com/Sirupsen/logrus"
 	
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -17,8 +16,8 @@ import (
 
 var agentIdentityFlag = flag.String("arc-agent", "", "integration-test")
 
-type factArcVersion struct {
-	Version string `json:"arc_version"`
+type OsFact struct {
+	Os string `json:"os"`
 }
 
 func TestRunJob(t *testing.T) {	
@@ -29,21 +28,37 @@ func TestRunJob(t *testing.T) {
 	}
 
 	client := NewTestClient()	
+	
+	// get info about the agent
+	statusCode, body := client.Get(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
+	if statusCode != "200 OK" {
+		t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent ", *agentIdentityFlag))
+	}	
+	var osFact OsFact
+	err := json.Unmarshal(*body, &osFact)
+	if err != nil {
+		t.Error("Expected not to get an error unmarshaling")
+	}
+	
+	payload := `echo Script start; for i in {1..2}; do echo $i; sleep 1s; done; echo Script done`
+	if osFact.Os == "windows" {
+		payload = `echo "Script start"; for($i=1;$i -le 2;$i++){echo $i; sleep -seconds 1}; echo "Script done"`
+	}
+
 	to := *agentIdentityFlag
 	timeout := 60
 	agent := "execute"
 	action := "script"
-	payload := `echo Script start; for i in {1..2}; do echo $i; sleep 1s; done; echo Script done`
 	data := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, agent, action, payload)
 	jsonStr := []byte(data)
 	
 	// post the job
-	statusCode, body := client.Post("/jobs", ApiServer, nil, jsonStr)	
+	statusCode, body = client.Post("/jobs", ApiServer, nil, jsonStr)	
 	if statusCode != "200 OK" {
-		t.Error(fmt.Sprint("Expected to get 200 response code"))
+		t.Error(fmt.Sprint("Expected to get 200 response code posting the job"))
 	}
 	var jobId models.JobID
-	err := json.Unmarshal(*body, &jobId)
+	err = json.Unmarshal(*body, &jobId)
 	if err != nil {
 		t.Error("Expected not to get an error unmarshaling")
 		return
