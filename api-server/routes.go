@@ -15,13 +15,16 @@ type route struct {
 
 type routes []route
 
-var routesDefinition = routes{
+var standardRoutesDefinition = routes{
 	route{
 		"Root",
 		"GET",
 		"/",
 		root,
 	},
+}
+
+var v1RoutesDefinition = routes{
 	route{
 		"Jobs",
 		"GET",
@@ -68,8 +71,17 @@ var routesDefinition = routes{
 
 func newRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	for _, r := range routesDefinition {
+	for _, r := range standardRoutesDefinition {
 		router.
+			Methods(r.Method).
+			Path(r.Pattern).
+			Name(r.Name).
+			Handler(r.HandlerFunc)
+	}
+	
+	v1SubRouter := router.PathPrefix("/v1").Subrouter()
+	for _, r := range v1RoutesDefinition {
+		v1SubRouter.
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).

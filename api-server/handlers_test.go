@@ -34,7 +34,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := http.NewRequest("GET", "/jobs", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -46,7 +46,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns empty json arry if no jobs found", func() {
 			// make a request
-			req, err := http.NewRequest("GET", "/jobs", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -68,7 +68,7 @@ var _ = Describe("Job Handlers", func() {
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 
 			// make request
-			req, err := http.NewRequest("GET", "/jobs", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -101,7 +101,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns a 404 error if job not found", func() {
 			// make request
-			req, err := http.NewRequest("GET", "/jobs/non_existing_id", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/jobs/non_existing_id"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -117,7 +117,7 @@ var _ = Describe("Job Handlers", func() {
 			GetJobQuery = "SELECT * Wrong_Job_Table jobs WHERE id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -137,7 +137,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -149,7 +149,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("should return the job", func() {
 			// make a request
-			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -179,7 +179,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 400 error if request is wrong", func() {
 			jsonStr := []byte(`this is not json`)
 			// make a request
-			req, err := http.NewRequest("POST", "/jobs", bytes.NewBuffer(jsonStr))
+			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -196,7 +196,7 @@ var _ = Describe("Job Handlers", func() {
 
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := http.NewRequest("POST", "/jobs", bytes.NewBuffer(jsonStr))
+			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -212,7 +212,7 @@ var _ = Describe("Job Handlers", func() {
 		It("should save the job and return the unique id as JSON", func() {
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := http.NewRequest("POST", "/jobs", bytes.NewBuffer(jsonStr))
+			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -250,7 +250,7 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentsQuery = "SELECT DISTINCT agent_id,created_at,updated_at FROM Wrong_Facts order by updated_at"
 
 			// make a request
-			req, err := http.NewRequest("GET", "/agents", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -264,7 +264,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns empty json arry if no agents found", func() {
 			// make a request
-			req, err := http.NewRequest("GET", "/agents", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -285,7 +285,7 @@ var _ = Describe("Facts Handlers", func() {
 			agents.CreateAndSaveAgentExamples(db, 3)
 
 			// make a request
-			req, err := http.NewRequest("GET", "/agents", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -316,7 +316,7 @@ var _ = Describe("Facts Handlers", func() {
 			}
 
 			// make a request
-			req, err := http.NewRequest("GET", `/agents?q=os+%3D+"windows"`, bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(`/agents?q=os+%3D+"windows"`), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -334,7 +334,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns a 400 if the filter query is wrong", func() {
 			// make a request
-			req, err := http.NewRequest("GET", `/agents?q=os+%3D`, bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -361,7 +361,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := http.NewRequest("GET", "/agents/non_exisitng_id", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -377,7 +377,7 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/agents/", agent.AgentID), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -392,7 +392,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("return an angent", func() {
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/agents/", agent.AgentID), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -432,7 +432,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := http.NewRequest("GET", "/agents/non_existing_id/facts", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -447,7 +447,7 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/agents/", agent.AgentID, "/facts"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -461,7 +461,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns the facts from an agent", func() {
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/agents/", agent.AgentID, "/facts"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -496,7 +496,7 @@ var _ = Describe("Log Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := http.NewRequest("GET", "/jobs/non_existing_id/log", bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/jobs/non_existing_id/log"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -512,7 +512,7 @@ var _ = Describe("Log Handlers", func() {
 			GetLogQuery = "SELECT * Wrong_Log_Table logs WHERE job_id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID, "/log"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -533,7 +533,7 @@ var _ = Describe("Log Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID, "/log"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -552,7 +552,7 @@ var _ = Describe("Log Handlers", func() {
 			content := logpart.SaveLogPartExamples(db, job.RequestID)
 
 			// make request
-			req, err := http.NewRequest("GET", fmt.Sprint("/jobs/", job.RequestID, "/log"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -569,6 +569,8 @@ var _ = Describe("Log Handlers", func() {
 
 })
 
-var _ = Describe("root", func() {
+// private
 
-})
+func getUrl(url string) string {
+	return fmt.Sprint("/v1", url)
+}

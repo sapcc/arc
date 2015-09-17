@@ -47,7 +47,7 @@ func NewTestClient() *Client {
 }
 
 func (c *Client) Get(pathTo string, server ServerType) (string, *[]byte) {
-	url := fmt.Sprint(c.serverUrl(server), path.Join("/", pathTo))
+	url := fmt.Sprint(c.serverUrl(server), path.Join("/v1/", pathTo))
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -72,7 +72,7 @@ func (c *Client) Get(pathTo string, server ServerType) (string, *[]byte) {
 }
 
 func (c *Client) Post(pathTo string, server ServerType, headers map[string]string, jsonBody []byte) (string, *[]byte) {
-	url := fmt.Sprint(c.serverUrl(server), path.Join("/", pathTo))
+	url := fmt.Sprint(c.serverUrl(server), path.Join("/v1/", pathTo))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		panic(err)
