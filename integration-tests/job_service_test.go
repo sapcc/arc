@@ -16,8 +16,9 @@ import (
 
 var agentIdentityFlag = flag.String("arc-agent", "", "integration-test")
 
-type OsFact struct {
-	Os string `json:"os"`
+type systemFact struct {
+	Os  						string `json:"os"`
+	PlatformFamily  string `json:"platform_family"`
 }
 
 func TestRunJob(t *testing.T) {	
@@ -34,15 +35,15 @@ func TestRunJob(t *testing.T) {
 	if statusCode != "200 OK" {
 		t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent ", *agentIdentityFlag))
 	}	
-	var osFact OsFact
-	err := json.Unmarshal(*body, &osFact)
+	var sysFact systemFact
+	err := json.Unmarshal(*body, &sysFact)
 	if err != nil {
 		t.Error("Expected not to get an error unmarshaling")
 	}
 	
-	payload := `echo Script start; for i in {1..2}; do echo $i; sleep 1s; done; echo Script done`
-	if osFact.Os == "windows" {
-		payload = `echo "Script start"; for($i=1;$i -le 2;$i++){echo $i; sleep -seconds 1}; echo "Script done"`
+	payload := `echo Start; for i in {1..2}; do echo $i; sleep 1s; done; echo Done`
+	if sysFact.Os == "windows" ||  sysFact.PlatformFamily == "windows"{
+		payload = `echo Start; for($i=1;$i -le 2;$i++){echo $i; sleep -seconds 1}; echo Done`
 	}
 
 	to := *agentIdentityFlag
@@ -63,13 +64,6 @@ func TestRunJob(t *testing.T) {
 		t.Error("Expected not to get an error unmarshaling")
 		return
 	}	
-	
-	// check status
-	err = checkStatus(client, jobId, arc.Queued, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 	
 	err = checkStatus(client, jobId, arc.Executing, 3000)
 	if err != nil {
@@ -101,14 +95,13 @@ func checkStatus(client *Client, jobId models.JobID, status arc.JobState, timeou
 	for {
 		job, err = getJobStatus(client, jobId)
 		if err != nil {
-			err = fmt.Errorf(fmt.Sprint("Expected not to get an error. Got ", err.Error()))
 			break
 		}
 		if job.Status == status {
 			break
 		}		
 		if timeout < 0 {
-			err = fmt.Errorf(fmt.Sprint("Timeout: Expected to get status ", status, ". Got ", job.Status))
+			err = fmt.Errorf(fmt.Sprint("Timeout: Expected to get status ", status, " for job ", jobId.RequestID, ". Got status ", job.Status))
 			break
 		}
 		
@@ -123,7 +116,7 @@ func getJobStatus(client *Client, jobId models.JobID) (*models.Job, error){
 	var job models.Job
 	statusCode, body := client.Get(fmt.Sprint("/jobs/", jobId.RequestID), ApiServer)
 	if statusCode != "200 OK" {
-		return nil, fmt.Errorf("Expected to get 200 response code")
+		return nil, fmt.Errorf("Expected to get 200 response code getting job ", jobId.RequestID)
 	}
 	err := json.Unmarshal(*body, &job)
 	if err != nil {
