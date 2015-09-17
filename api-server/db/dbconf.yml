@@ -4,7 +4,7 @@ development:
 
 test:
   driver: postgres
-  open: dbname=arc_test sslmode=disable
+  open: host=postgres user=postgres dbname=arc_test sslmode=disable
 
 test-local:
   driver: postgres
