@@ -3,6 +3,8 @@ FROM progrium/busybox
 ADD https://gitHub.***REMOVED***/userID/goose/releases/download/0.1/goose_linux_amd64_static /usr/bin/goose
 RUN chmod +x /usr/bin/goose
 
+RUN http_proxy=http://proxy.***REMOVED***:8080 opkg-install bash curl bind-dig
+
 COPY env.sh /env.sh
 ENTRYPOINT ["/env.sh"]
 
