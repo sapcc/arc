@@ -29,13 +29,18 @@ build: setup
 	mkdir -p bin/ 
 	go build -o bin/api-server -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/api-server
 
+.PHONY: gencert
+gencert:
+	go get -d gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
+	go build -o bin/gencert -ldflags="-s -w" gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
+
 .PHONY: build-docker
 build-docker: setup
 	$(DOCKER) run \
 		--rm \
 		-v $(CURDIR)/..:/arc \
 		$(BUILD_IMAGE) \
-		make -C /arc/api-server build
+		make -C /arc/api-server build gencert
 
 .PHONY: gopath 
 gopath: setup
@@ -93,3 +98,4 @@ postgres:
 .PHONY: clean
 clean:
 	rm -f bin/api-server
+	rm -f bin/gencert
