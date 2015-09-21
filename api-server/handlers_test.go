@@ -6,6 +6,7 @@ import (
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/version"	
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -567,6 +568,44 @@ var _ = Describe("Log Handlers", func() {
 
 	})
 
+})
+
+var _ = Describe("Root Handler", func() {	
+	
+	It("returns the app name and version as plain text", func() {
+		// make request
+		req, err := http.NewRequest("GET", "/", bytes.NewBufferString(""))
+		Expect(err).NotTo(HaveOccurred())
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		
+		// check response code and header
+		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+		Expect(w.Code).To(Equal(200))
+		
+		// check json body response
+		Expect(w.Body.String()).To(Equal(fmt.Sprint("Arc api-server ", version.String())))			
+	})
+	
+})
+
+var _ = Describe("Healthcheck Handler", func() {
+	
+	It("returns the app name and version as plain text", func() {
+		// make request
+		req, err := http.NewRequest("GET", "/healthcheck", bytes.NewBufferString(""))
+		Expect(err).NotTo(HaveOccurred())
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		
+		// check response code and header
+		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+		Expect(w.Code).To(Equal(200))
+		
+		// check json body response
+		Expect(w.Body.String()).To(Equal(fmt.Sprint("Arc api-server ", version.String())))			
+	})
+	
 })
 
 // private

@@ -20,7 +20,13 @@ var standardRoutesDefinition = routes{
 		"Root",
 		"GET",
 		"/",
-		root,
+		serveVersion,
+	},
+	route{
+		"Healthcheck",
+		"GET",
+		"/healthcheck",
+		serveVersion,
 	},
 }
 

@@ -174,8 +174,8 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
  * Root
  */
 
-func root(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
+func serveVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte("Arc api-server " + version.String()))
 }
 
