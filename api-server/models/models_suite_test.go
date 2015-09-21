@@ -24,9 +24,9 @@ func TestModels(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	env := os.Getenv("ENV")
+	env := os.Getenv("ARC_ENV")
 	if env == "" {
-		env = "test"
+		env = "test-local"
 	}
 	db, err = NewConnection("../db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
