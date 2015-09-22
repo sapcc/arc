@@ -12,13 +12,23 @@ type FakeClient struct {
 	ReplyChan chan *arc.Reply
 	RegChan   chan *arc.Registration
 	ReqChan   chan *arc.Request
+	Connected bool
 }
 
 func New(config arc_config.Config) (*FakeClient, error) {
 	log.Infof("Using FAKE transport")
+	
+	// used to fake the connectivity
+	isConnected := true
+	if config.Organization == "no-connected" {
+		isConnected = false
+	}
+	
 	return &FakeClient{
 			Name: "fake",
-			Done: make(chan bool)},
+			Done: make(chan bool),
+			Connected: isConnected,
+		},
 		nil
 }
 
@@ -27,6 +37,10 @@ func (c *FakeClient) Connect() error {
 }
 
 func (c *FakeClient) Disconnect() {
+}
+
+func (c *FakeClient) IsConnected() bool {
+	return c.Connected
 }
 
 func (c *FakeClient) Subscribe(identity string) (<-chan *arc.Request, func()) {

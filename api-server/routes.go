@@ -28,6 +28,12 @@ var standardRoutesDefinition = routes{
 		"/healthcheck",
 		serveVersion,
 	},
+	route{
+		"Readiness",
+		"GET",
+		"/readiness",
+		serveReadiness,
+	},
 }
 
 var v1RoutesDefinition = routes{

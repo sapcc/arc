@@ -12,6 +12,7 @@ import (
 type Transport interface {
 	Connect() error
 	Disconnect()
+	IsConnected() bool
 	Request(msg *arc.Request) error
 	Registration(msg *arc.Registration) error
 	Reply(msg *arc.Reply) error

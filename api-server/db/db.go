@@ -32,6 +32,7 @@ func NewConnection(dbConfigFile, env string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	//connection is defered until the first query unless we ping
 	if err := db.Ping(); err != nil {
 		return nil, err

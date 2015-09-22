@@ -20,6 +20,7 @@ type MQTTClient struct {
 	identity     string
 	project      string
 	organization string
+	connected    bool
 }
 
 func New(config arc_config.Config) (*MQTTClient, error) {
@@ -43,6 +44,7 @@ func New(config arc_config.Config) (*MQTTClient, error) {
 		MQTT.DEBUG = log.New(w, "MQTT DEBUG ", 0)
 	}
 
+	// set option
 	opts := MQTT.NewClientOptions()
 	if len(config.Endpoints) == 0 {
 		return nil, fmt.Errorf("No transport endpoints given")
@@ -73,20 +75,22 @@ func New(config arc_config.Config) (*MQTTClient, error) {
 			opts.SetBinaryWill(registrationTopic(config.Organization, config.Project, config.Identity), j, 0, false)
 		}
 	}
-	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization}
-	if req, err := onlineMessage(config.Organization, config.Project, config.Identity); err == nil {
-		opts.OnConnect = func(_ *MQTT.Client) {
-			logrus.Info("Sending online Message")
-			transport.Registration(req)
-		}
-	} else {
-		logrus.Error("Failed to create 'online' registration message ", err)
-
-	}
 	opts.SetCleanSession(true)
+
+	// create own transport
+	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization, connected: false}
+
+	// set callbacks
+	opts.OnConnect = func(_ *MQTT.Client) {
+		transport.onConnect()
+	}
+	opts.OnConnectionLost = func(_ *MQTT.Client, err error) {
+		transport.onConnectionLost(err)
+	}
+
+	// create client
 	c := MQTT.NewClient(opts)
 	transport.client = c
-
 	return transport, nil
 }
 
@@ -105,6 +109,10 @@ func (c *MQTTClient) Disconnect() {
 		logrus.Error("Failed to create 'offline' registration message: ", err)
 	}
 	c.client.Disconnect(1000)
+}
+
+func (c *MQTTClient) IsConnected() bool {
+	return c.connected && c.client.IsConnected()
 }
 
 func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
@@ -253,6 +261,26 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 	c.client.Subscribe(topic, 0, messageCallback).Wait()
 	return out, cancel
 }
+
+// Callbacks
+
+func (c *MQTTClient) onConnect() {
+	c.connected = true
+}
+
+func (c *MQTTClient) onConnectionLost(err error) {
+	// send online message
+	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
+		logrus.Info("Sending online Message")
+		c.Registration(req)
+	} else {
+		logrus.Error("Failed to create 'online' registration message ", err)
+	}
+	// set private state to true
+	c.connected = false
+}
+
+// private
 
 func identityTopic(identity string) string {
 	return fmt.Sprintf("identity/%s", identity)

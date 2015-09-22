@@ -28,6 +28,7 @@ var CleanJobsNonHeartbeatQuery = `
 
 // Global
 var DeleteQuery = "DELETE FROM "
+var CheckConnection = "SELECT 1"
 
 // Log
 var GetLogQuery = "SELECT * FROM logs WHERE job_id=$1"
