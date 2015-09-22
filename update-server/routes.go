@@ -51,6 +51,12 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		Path("/healthcheck").
 		Name("Healthcheck").
 		Handler( http.HandlerFunc(serveVersion) )
+		
+	router.
+		Methods("GET").
+		Path("/readiness").
+		Name("Readiness").
+		Handler( http.HandlerFunc(serveReadiness) )
 
 	router.
 		Methods("GET").

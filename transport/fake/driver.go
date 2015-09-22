@@ -17,16 +17,16 @@ type FakeClient struct {
 
 func New(config arc_config.Config) (*FakeClient, error) {
 	log.Infof("Using FAKE transport")
-	
+
 	// used to fake the connectivity
 	isConnected := true
 	if config.Organization == "no-connected" {
 		isConnected = false
 	}
-	
+
 	return &FakeClient{
-			Name: "fake",
-			Done: make(chan bool),
+			Name:      "fake",
+			Done:      make(chan bool),
 			Connected: isConnected,
 		},
 		nil

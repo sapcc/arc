@@ -90,3 +90,12 @@ func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {
 func (l *LocalStorage) GetStoragePath() string {
 	return l.BuildsRootPath
 }
+
+// check if the path still exists
+func (s *LocalStorage) IsConnected() bool {
+	_, err := os.Stat(s.BuildsRootPath);
+  if os.IsNotExist(err) {
+      return false
+  }	
+	return true
+}

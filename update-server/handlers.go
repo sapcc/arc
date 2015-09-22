@@ -117,6 +117,38 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	return
  }
 
+
+ /*
+  * Readiness
+  */
+
+ type Readiness struct {
+ 	Status  int    `json:"status"`
+ 	Message string `json:"error"`
+ }
+
+ func serveReadiness(w http.ResponseWriter, r *http.Request) {
+ 	if !st.IsConnected() {
+ 		ready := Readiness{
+ 			Status: http.StatusBadGateway,
+ 			Message: "Storage not reachable",
+ 		}
+		
+ 		// convert struct to json
+ 		body, err := json.Marshal(ready)		
+ 		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+		
+ 		// return the error with json body
+ 		http.Error(w, string(body), ready.Status)
+ 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")				
+		
+ 		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
+ 		return
+ 	}
+ 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+ 	w.Write([]byte("Ready!!!"))
+ }
+
  /*
   * Healthcheck
   */

@@ -70,7 +70,7 @@ func localStorage(c *cli.Context) {
 		return
 	}
 	if err = os.MkdirAll(buildsRootPath, 0755); err != nil {
-		log.Fatalf("Path to artificats %s does not exist and can't created: %s", buildsRootPath, err)
+		log.Fatalf("Path to artificats %s does not exist and can't be created: %s", buildsRootPath, err)
 		return
 	}
 	log.Infof("Serving artifacts from %s.", buildsRootPath)

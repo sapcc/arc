@@ -90,6 +90,14 @@ func (s *SwiftStorage) GetStoragePath() string {
 	return s.Connection.AuthUrl
 }
 
+func (s *SwiftStorage) IsConnected() bool {
+	err := s.Connection.Authenticate()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // private
 
 func (s *SwiftStorage) CheckAndCreateContainer() error {

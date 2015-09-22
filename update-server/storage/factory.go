@@ -24,6 +24,7 @@ type Storage interface {
 	GetAllUpdates() (*[]string, error)
 	GetUpdate(name string, writer io.Writer) error
 	GetStoragePath() string
+	IsConnected() bool
 }
 
 func New(storage StorageType, c *cli.Context) (Storage, error) {
