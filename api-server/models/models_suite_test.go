@@ -26,7 +26,7 @@ var _ = BeforeSuite(func() {
 	var err error
 	env := os.Getenv("ARC_ENV")
 	if env == "" {
-		env = "test-local"
+		env = "test"
 	}
 	db, err = NewConnection("../db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
