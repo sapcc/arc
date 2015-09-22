@@ -9,10 +9,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"flag"
+	"fmt"
 	"path"
 	"testing"
 	"github.com/codegangsta/cli"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 // 
@@ -97,6 +99,30 @@ func TestServeAvailableError500(t *testing.T) {
 	serveAvailableUpdates(w, req)
 	if w.Code != 500 {
 		t.Error("Expected code to be '500'. Got ", w.Code)
+	}
+}
+
+// 
+// Healthcheck
+// 
+
+func TestHealthcheck(t *testing.T) {
+	// make request
+	req, err := http.NewRequest("GET", "/healthcheck", bytes.NewBufferString(""))
+	if err != nil {
+		t.Error("Expected not get an error")
+	}
+	w := httptest.NewRecorder()
+	serveVersion(w, req)
+	
+	if w.Code != 200 {
+		t.Error("Expected code to be '200'. Got ", w.Code)
+	}
+	if w.Header().Get("Content-Type") != "text/plain; charset=utf-8" {
+		t.Error("Expected to get text/plain; charset=utf-8")
+	}
+	if w.Body.String() != fmt.Sprint("Arc update-server ", version.String()) {
+		t.Error("Expected to get the health page")
 	}
 }
 

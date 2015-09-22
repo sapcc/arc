@@ -117,6 +117,15 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	return
  }
 
+ /*
+  * Healthcheck
+  */
+
+ func serveVersion(w http.ResponseWriter, r *http.Request) {
+ 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+ 	w.Write([]byte("Arc update-server " + version.String()))
+ }
+
  // private
 
  func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
