@@ -17,7 +17,7 @@ type SwiftStorage struct {
 }
 
 func New(c *cli.Context) (*SwiftStorage, error) {
-	if c.String("username") == "" || c.String("password") == "" || c.String("domain") == "" || c.String("auth_url") == "" || c.String("container") == "" {
+	if c.String("username") == "" || c.String("password") == "" || c.String("domain") == "" || c.String("auth-url") == "" || c.String("container") == "" {
 		return nil, errors.New("Not enough arguments in call swift new")
 	}
 

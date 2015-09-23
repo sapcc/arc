@@ -95,7 +95,7 @@ func swiftStorage(c *cli.Context) {
 	var err error
 
 	// check mandatory params
-	if c.String("username") == "" || c.String("password") == "" || c.String("domain") == "" || c.String("auth_url") == "" || c.String("container") == "" {
+	if c.String("username") == "" || c.String("password") == "" || c.String("domain") == "" || c.String("auth-url") == "" || c.String("container") == "" {
 		log.Fatal("Not enough arguments in call swift command")
 		return
 	}
