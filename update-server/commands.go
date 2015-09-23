@@ -47,7 +47,7 @@ var cliCommands = []cli.Command{
 				EnvVar: "OS_USER_DOMAIN_NAME",
 			},
 			cli.StringFlag{
-				Name:   "auth_url,a",
+				Name:   "auth-url,a",
 				Usage:  "Authentication URL for the swift authentication",
 				EnvVar: "OS_AUTH_URL",
 			},
@@ -55,6 +55,11 @@ var cliCommands = []cli.Command{
 				Name:   "container,c",
 				Usage:  "The Swift container",
 				EnvVar: "OS_CONTAINER",
+			},
+			cli.StringFlag{
+				Name:   "project-id",
+				Usage:  "The Swift container",
+				EnvVar: "OS_PROJECT_ID",
 			},
 		},
 	},

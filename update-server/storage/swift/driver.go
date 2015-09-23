@@ -28,6 +28,7 @@ func New(c *cli.Context) (*SwiftStorage, error) {
 			ApiKey:   c.String("password"),
 			AuthUrl:  c.String("auth_url"),
 			Domain:   c.String("domain"),
+			TenantId: c.String("project-id"),
 		},
 		c.String("container"),
 	}
