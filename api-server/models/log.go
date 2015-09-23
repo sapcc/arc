@@ -95,15 +95,15 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
 	return nil
 }
 
-func CleanLogParts(db *sql.DB) error {
+func CleanLogParts(db *sql.DB) (int, error) {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return 0, errors.New("Db connection is nil")
 	}
 
 	// get log parts to aggregate
 	rows, err := db.Query(ownDb.GetLogPartsToCleanQuery, 600, 84600) // 10 min and 1 day
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer rows.Close()
 
@@ -113,26 +113,24 @@ func CleanLogParts(db *sql.DB) error {
 		// scan row
 		err = rows.Scan(&logPartID)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		// aggregate the log parts found to the log table
 		err = aggregateLogParts(db, logPartID)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		rowsCount++
 	}
 
-	log.Infof("Clean log parts: %v aggregable log parts found", rowsCount)
-
 	err = rows.Err()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	rows.Close()
-	return nil
+	return rowsCount, nil
 }
 
 // private

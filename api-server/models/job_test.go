@@ -180,7 +180,7 @@ var _ = Describe("Job", func() {
 	Describe("CleanJobs", func() {
 
 		It("returns an error if no db connection is given", func() {
-			err := CleanJobs(nil)
+			_, _, err := CleanJobs(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -192,7 +192,10 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			CleanJobs(db)
+			occurHeartbeat, occurTimeOut, err := CleanJobs(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(occurHeartbeat).To(Equal(int64(1)))
+			Expect(occurTimeOut).To(Equal(int64(0)))
 
 			// check job
 			dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
@@ -214,7 +217,10 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			CleanJobs(db)
+			occurHeartbeat, occurTimeOut, err := CleanJobs(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(occurHeartbeat).To(Equal(int64(1))) // this overlap between hearbeat and timeout criteria
+			Expect(occurTimeOut).To(Equal(int64(1)))
 
 			// check job
 			dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}

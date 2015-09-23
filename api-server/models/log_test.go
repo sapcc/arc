@@ -214,8 +214,9 @@ var _ = Describe("Log", func() {
 	Describe("CleanLogParts", func() {
 
 		It("returns an error if no db connection is given", func() {
-			err := CleanLogParts(nil)
+			occurrencies, err := CleanLogParts(nil)
 			Expect(err).To(HaveOccurred())
+			Expect(occurrencies).To(Equal(0))
 		})
 
 		It("should clean log parts with final state which are longer then 10 min", func() {
@@ -239,8 +240,9 @@ var _ = Describe("Log", func() {
 			content := strings.Join(contentSlice[:], "")
 
 			// clean log parts
-			err := CleanLogParts(db)
+			occurrencies, err := CleanLogParts(db)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(occurrencies).To(Equal(1))
 
 			// check log parts
 			logPart := LogPart{JobID: job.RequestID}
@@ -272,8 +274,9 @@ var _ = Describe("Log", func() {
 			content := strings.Join(contentSlice[:], "")
 
 			// clean log parts
-			err := CleanLogParts(db)
+			occurrencies, err := CleanLogParts(db)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(occurrencies).To(Equal(1))
 
 			// check log parts
 			logPart := LogPart{JobID: job.RequestID}

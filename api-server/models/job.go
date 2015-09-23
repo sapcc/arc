@@ -140,36 +140,49 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	return
 }
 
-func CleanJobs(db *sql.DB) error {
+func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, err error) {
 	if db == nil {
-		return errors.New("Clean job: Db connection is nil")
+		return 0, 0, errors.New("Clean job routine: Db connection is nil")
 	}
+
+	// start transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}()
+
+	affectHeartbeatJobs = 0
+	affectTimeOutJobs = 0
 
 	// clean jobs which no heartbeat was send back after created_at + 60 sec
-	res, err := db.Exec(ownDb.CleanJobsNonHeartbeatQuery, 60)
+	res, err := tx.Exec(ownDb.CleanJobsNonHeartbeatQuery, 60)
 	if err != nil {
-		return err
+		return
 	}
 
-	affect, err := res.RowsAffected()
+	affectHeartbeatJobs, err = res.RowsAffected()
 	if err != nil {
-		return err
+		return
 	}
-
-	log.Infof("Clean job: %v jobs without heartbeat answer where updated", affect)
 
 	// clean jobs which the timeout + 60 sec has exceeded and still in queued or executing status
-	res, err = db.Exec(ownDb.CleanJobsTimeoutQuery, 60)
+	res, err = tx.Exec(ownDb.CleanJobsTimeoutQuery, 60)
 	if err != nil {
-		return err
+		return
 	}
 
-	affect, err = res.RowsAffected()
+	affectTimeOutJobs, err = res.RowsAffected()
 	if err != nil {
-		return err
+		return
 	}
 
-	log.Infof("Clean job: %v timeout jobs where updated", affect)
-
-	return nil
+	return
 }
