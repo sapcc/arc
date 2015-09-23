@@ -26,7 +26,7 @@ func New(c *cli.Context) (*SwiftStorage, error) {
 		swift.Connection{
 			UserName: c.String("username"),
 			ApiKey:   c.String("password"),
-			AuthUrl:  c.String("auth_url"),
+			AuthUrl:  c.String("auth-url"),
 			Domain:   c.String("domain"),
 			TenantId: c.String("project-id"),
 		},
