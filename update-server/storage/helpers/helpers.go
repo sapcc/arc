@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/go-version"
 	"github.com/inconshreveable/go-update/check"
 )
@@ -45,11 +46,13 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 		if isReleaseFrom(f, reqParams) {
 			fileVersion, err := extractVersionFrom(f, reqParams)
 			if err != nil {
-				return nil, err
+				log.Warn(err)
+				continue
 			}
 			result, err := shouldUpdate(reqParams.AppVersion, fileVersion, buildVersion)
 			if err != nil {
-				return nil, err
+				log.Warn(err)				
+				continue
 			}
 			if result == true {
 				buildFile = f
@@ -183,11 +186,11 @@ func (s ByVersion) Less(i, j int) bool {
 	vStr1 := ""
 	vStr2 := ""
 	split1 := strings.Split(s[i], "_")
-	if len(split1) > 0 {
+	if len(split1) > 1 {
 		vStr1 = split1[1]
 	}
 	split2 := strings.Split(s[j], "_")
-	if len(split2) > 0 {
+	if len(split2) > 1 {
 		vStr2 = split2[1]
 	}
 	v1, err := version.NewVersion(vStr1)

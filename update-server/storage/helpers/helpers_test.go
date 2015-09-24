@@ -259,6 +259,33 @@ func TestAvailableUpdateArgumentError(t *testing.T) {
 	}
 }
 
+func TestAvailableUpdateWithOtherFiles(t *testing.T) {
+	// get a success update
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+	releases := []string{"README.md", "Vagrantfile", "arc_test_linux_amd64", "arc_20150904.1_linux_amd64"}
+	
+	update, err := AvailableUpdate(req, &releases)
+	if err != nil {
+		t.Error("Expected not get an error. Got ", err)
+	}
+	if update == nil {
+		t.Error("Expected update NOT to be nil. Got ", update)
+	}
+
+	if update.Initiative != "automatically" {
+		t.Error("Expected Initiative to be 'automatically'. Got ", update.Initiative)
+	}
+
+	if update.Url != "http://0.0.0.0:3000/builds/arc_20150904.1_linux_amd64" {
+		t.Error("Expected url to be 'http://0.0.0.0:3000/builds/arc_20150904.1_linux_amd64'. Got ", update.Url)
+	}
+
+	if update.Version != "20150904.1" {
+		t.Error("Expected version to be '20150904.1'. Got ", update.Version)
+	}	
+}
+
 // 
 // Sort by Version
 // 
