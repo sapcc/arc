@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+  "github.com/gorilla/handlers"	
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -230,6 +233,21 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 	
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte("Ready!!!"))
+}
+
+func combineLogHandler(next http.Handler) http.Handler {
+	return handlers.CombinedLoggingHandler(os.Stdout, next)
+}
+
+func loggingHandler(next http.Handler) http.Handler {
+  fn := func(w http.ResponseWriter, r *http.Request) {
+    t1 := time.Now()
+    next.ServeHTTP(w, r)
+    t2 := time.Now()
+    log.Infof("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+  }
+
+  return http.HandlerFunc(fn)
 }
 
 // private

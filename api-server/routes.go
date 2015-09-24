@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 type route struct {
@@ -82,13 +83,15 @@ var v1RoutesDefinition = routes{
 }
 
 func newRouter() *mux.Router {
+	middlewareChain := alice.New(loggingHandler, combineLogHandler)
+
 	router := mux.NewRouter().StrictSlash(true)
 	for _, r := range standardRoutesDefinition {
 		router.
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).
-			Handler(r.HandlerFunc)
+			Handler(middlewareChain.ThenFunc(r.HandlerFunc))
 	}
 	
 	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
@@ -97,7 +100,7 @@ func newRouter() *mux.Router {
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).
-			Handler(r.HandlerFunc)
+			Handler(middlewareChain.ThenFunc(r.HandlerFunc))
 	}
 
 	return router
