@@ -199,7 +199,6 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 			Status: http.StatusBadGateway,
 			Message: "Ping to the DB failed",
 		}				
-		defer rows.Close()
 		
 		// convert struct to json
 		body, err := json.Marshal(ready)
@@ -212,6 +211,7 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
 		return
 	}
+	defer rows.Close()
 	
 	//check mosquitto transport connection
 	if !tp.IsConnected() {
