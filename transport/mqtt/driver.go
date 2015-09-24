@@ -267,20 +267,18 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 
 func (c *MQTTClient) onConnect() {
 	logrus.Debug("Callback: onConnect")
-	c.connected = true
-}
-
-func (c *MQTTClient) onConnectionLost(err error) {
-	logrus.Debug("Callback: onConnectionLost")
-
 	// send online message
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending online Message")
 		c.Registration(req)
 	} else {
 		logrus.Error("Failed to create 'online' registration message ", err)
-	}
-	// set private state to true
+	}	
+	c.connected = true
+}
+
+func (c *MQTTClient) onConnectionLost(err error) {
+	logrus.Debug("Callback: onConnectionLost")
 	c.connected = false
 }
 
