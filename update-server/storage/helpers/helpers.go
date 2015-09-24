@@ -17,7 +17,10 @@ import (
 
 var UpdateArgumentError = fmt.Errorf("Update arguments are missing or wrong")
 
-const BuildRelativeUrl = "/builds/"
+const (
+	BuildRelativeUrl = "/builds/"
+	FileNameRegex = `^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?`
+)
 
 /*
  * Results:

@@ -118,7 +118,26 @@ func TestGetAllUpdates(t *testing.T) {
 	}
 }
 
-// 
-// GetAllUpdates()
-//
+func TestGetAllUpdatesFilteredFiles(t *testing.T) {
+	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
+	ioutil.TempFile(buildsRootPath, "arc_20150905.15_linux_amd64_")
+	ioutil.TempFile(buildsRootPath, "readme.rm")	
+	ioutil.TempFile(buildsRootPath, "releases.yaml")	
+	defer func() {
+		os.RemoveAll(buildsRootPath)
+		buildsRootPath = ""
+	}()
+	
+	ls := LocalStorage{
+		BuildsRootPath: buildsRootPath,
+	}
+	updates, err := ls.GetAllUpdates()
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	
+	if len(*updates) != 1 {
+		t.Error("Expected to find two releases")
+	}	
+}
  

@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
+	"regexp"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -60,27 +60,28 @@ func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 }
 
 func (l *LocalStorage) GetAllUpdates() (*[]string, error) {
-	var fileNames []string
+	var filteredNames []string
 	builds, err := ioutil.ReadDir(l.BuildsRootPath)
 	if err != nil {
 		return nil, err
 	}
 
+	// filter files
 	for _, f := range builds {
-		// filter config file
-		if strings.ToLower(f.Name()) != "releases.yml" {
-			fileNames = append(fileNames, f.Name())
+		r := regexp.MustCompile(helpers.FileNameRegex)
+		if r.MatchString(f.Name()) {
+			filteredNames = append(filteredNames, f.Name())
 		}
 	}
 
 	// sort releases by version
-	helpers.SortByVersion(fileNames)
+	helpers.SortByVersion(filteredNames)
 
-	if len(fileNames) == 0 {
-		fileNames = append(fileNames, "No files found")
+	if len(filteredNames) == 0 {
+		filteredNames = append(filteredNames, "No files found")
 	}
 
-	return &fileNames, nil
+	return &filteredNames, nil
 }
 
 func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {

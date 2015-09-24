@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"regexp"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -68,13 +69,22 @@ func (s *SwiftStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 }
 
 func (s *SwiftStorage) GetAllUpdates() (*[]string, error) {
+	var filteredNames []string
 	names, err := s.Connection.ObjectNames(s.Container, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	// filter files
+	for _, name := range names {
+		r := regexp.MustCompile(helpers.FileNameRegex)
+		if r.MatchString(name) {
+			filteredNames = append(filteredNames, name)
+		}
+	}
+
 	// sort releases by version
-	helpers.SortByVersion(names)
+	helpers.SortByVersion(filteredNames)
 
 	return &names, nil
 }
