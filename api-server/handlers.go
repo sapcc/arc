@@ -194,11 +194,12 @@ type Readiness struct {
 
 func serveReadiness(w http.ResponseWriter, r *http.Request) {	
 	//check db connection
-	if _, err := db.Query(ownDb.CheckConnection); err != nil {		
+	if rows, err := db.Query(ownDb.CheckConnection); err != nil {		
 		ready := Readiness{
 			Status: http.StatusBadGateway,
 			Message: "Ping to the DB failed",
 		}				
+		defer rows.Close()
 		
 		// convert struct to json
 		body, err := json.Marshal(ready)
