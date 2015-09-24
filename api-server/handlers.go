@@ -194,7 +194,8 @@ type Readiness struct {
 
 func serveReadiness(w http.ResponseWriter, r *http.Request) {	
 	//check db connection
-	if rows, err := db.Query(ownDb.CheckConnection); err != nil {		
+	rows, err := db.Query(ownDb.CheckConnection)
+	if err != nil {
 		ready := Readiness{
 			Status: http.StatusBadGateway,
 			Message: "Ping to the DB failed",
