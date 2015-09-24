@@ -66,6 +66,10 @@
 			"Rev": "f6581828bb37238bc1ce8e561d9e4050630a304d"
 		},
 		{
+			"ImportPath": "github.com/justinas/alice",
+			"Rev": "82db91fe6d1db4c070fed544cb5d0b5cc08fe276"
+		},
+		{
 			"ImportPath": "github.com/kardianos/osext",
 			"Rev": "8fef92e41e22a70e700a96b29f066cda30ea24ef"
 		},

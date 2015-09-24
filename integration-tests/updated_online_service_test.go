@@ -15,11 +15,12 @@ import (
 
 var arcDeployVersionFlag = flag.String("arc-last-deployed-version", "2015.01.01", "integration-test")
 
-type factArcVersion struct {
+type checkFacts struct {
 	Version string `json:"arc_version"`
+	Online	bool `json:"online"`
 }
 
-func TestAgentsAreUpdated(t *testing.T) {
+func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 	// override flags if enviroment variable exists
 	if os.Getenv("ARC_LAST_DEPLOY_VERSION") != "" {
 		deployVersion := os.Getenv("ARC_LAST_DEPLOY_VERSION")
@@ -49,15 +50,21 @@ func TestAgentsAreUpdated(t *testing.T) {
 			continue
 		}
 
-		var factVersion factArcVersion
-		err = json.Unmarshal(*body, &factVersion)
+		var facts checkFacts
+		err = json.Unmarshal(*body, &facts)
 		if err != nil {
 			t.Error(fmt.Sprint("Expected not to get an error unmarshaling for agent ", agents[i]))
 			continue
 		}
 
-		if !strings.Contains(factVersion.Version, *arcDeployVersionFlag) {
-			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", *arcDeployVersionFlag, " and ", factVersion.Version))
+		// check version
+		if !strings.Contains(facts.Version, *arcDeployVersionFlag) {
+			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", *arcDeployVersionFlag, " and ", facts.Version))
+		}
+		
+		// check online
+		if facts.Online == false {
+			t.Error(fmt.Sprint("Expected agent ", agents[i].AgentID, " to be online."))
 		}
 	}
 }

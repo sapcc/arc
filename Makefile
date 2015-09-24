@@ -6,9 +6,9 @@ ARC_BINARY:=$(BUILD_DIR)/arc
 US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
 SMOKE_TESTER_BINARY:=$(BUILD_DIR)/smoke-tester
-UPDATE_TESTER_BINARY:=$(BUILD_DIR)/update-tester
+UPDATED_ONLINE_TESTER_BINARY:=$(BUILD_DIR)/updated-online-tester
 JOB_TESTER_BINARY:=$(BUILD_DIR)/job-tester
-FACTS_TESTER_BINARY:=$(BUILD_DIR)/facts-tester	
+FACTS_TESTER_BINARY:=$(BUILD_DIR)/facts-tester
 GITVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
 BUILD_IMAGE:=docker.***REMOVED***/monsoon/arc-build
@@ -59,7 +59,7 @@ build-api: setup
 build-testers: setup	
 	@mkdir -p $(BUILD_DIR)
 	go test -c $(CURDIR)/integration-tests/smoke_test.go $(CURDIR)/integration-tests/helper.go -o $(SMOKE_TESTER_BINARY)
-	go test -c $(CURDIR)/integration-tests/update_service_test.go $(CURDIR)/integration-tests/helper.go -o $(UPDATE_TESTER_BINARY)
+	go test -c $(CURDIR)/integration-tests/updated_online_service_test.go $(CURDIR)/integration-tests/helper.go -o $(UPDATED_ONLINE_TESTER_BINARY)
 	go test -c $(CURDIR)/integration-tests/job_service_test.go $(CURDIR)/integration-tests/helper.go -o $(JOB_TESTER_BINARY)
 	go test -c $(CURDIR)/integration-tests/fact_service_test.go $(CURDIR)/integration-tests/helper.go -o $(FACTS_TESTER_BINARY)
 
