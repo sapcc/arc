@@ -98,12 +98,12 @@ func shouldUpdate(appVersion string, fileVersion string, currentVersion string) 
 }
 
 func isReleaseFrom(filename string, params *check.Params) bool {
-	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_(.+)_", params.Tags["os"], "_", params.Tags["arch"]))
+	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_([.0-9]+)_", params.Tags["os"], "_", params.Tags["arch"]))
 	return r.MatchString(filename)
 }
 
 func extractVersionFrom(filename string, params *check.Params) (string, error) {
-	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_(.+)_", params.Tags["os"], "_", params.Tags["arch"]))
+	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_([.0-9]+)_", params.Tags["os"], "_", params.Tags["arch"]))
 	results := r.FindStringSubmatch(filename)
 	if len(results) < 1 {
 		return "", fmt.Errorf("Version could not be found.")
