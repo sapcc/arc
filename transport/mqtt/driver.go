@@ -112,6 +112,7 @@ func (c *MQTTClient) Disconnect() {
 }
 
 func (c *MQTTClient) IsConnected() bool {
+	logrus.Debugf("IsConnected: c.connected %v and c.client.IsConnected() is %v", c.connected, c.client.IsConnected())
 	return c.connected && c.client.IsConnected()
 }
 
@@ -265,10 +266,13 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 // Callbacks
 
 func (c *MQTTClient) onConnect() {
+	logrus.Debug("Callback: onConnect")
 	c.connected = true
 }
 
 func (c *MQTTClient) onConnectionLost(err error) {
+	logrus.Debug("Callback: onConnectionLost")
+	
 	// send online message
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending online Message")
