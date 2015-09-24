@@ -272,7 +272,7 @@ func (c *MQTTClient) onConnect() {
 
 func (c *MQTTClient) onConnectionLost(err error) {
 	logrus.Debug("Callback: onConnectionLost")
-	
+
 	// send online message
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending online Message")
