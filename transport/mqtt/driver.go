@@ -273,7 +273,7 @@ func (c *MQTTClient) onConnect() {
 		c.Registration(req)
 	} else {
 		logrus.Error("Failed to create 'online' registration message ", err)
-	}	
+	}
 	c.connected = true
 }
 
