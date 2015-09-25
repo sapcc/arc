@@ -6,3 +6,4 @@ chef/cookbooks
 tmp/
 service/assets_linux/
 service/assets_windows/
+gonative_linux
