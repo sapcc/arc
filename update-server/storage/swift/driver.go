@@ -86,7 +86,7 @@ func (s *SwiftStorage) GetAllUpdates() (*[]string, error) {
 	// sort releases by version
 	helpers.SortByVersion(filteredNames)
 
-	return &names, nil
+	return &filteredNames, nil
 }
 
 func (s *SwiftStorage) GetUpdate(name string, writer io.Writer) error {
