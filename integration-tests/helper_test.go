@@ -4,15 +4,24 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
+	"testing"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var apiServerFlag = flag.String("api-server", "http://localhost:3000", "integration-test")
 var updateServerFlag = flag.String("update-server", "http://localhost:3001", "integration-test")
+
+var GITCOMMIT = "HEAD"
+
+func TestMain(m *testing.M) {
+	fmt.Printf("Git Revision of tests: %s\n", GITCOMMIT)
+	os.Exit(m.Run())
+}
 
 type ServerType int
 
