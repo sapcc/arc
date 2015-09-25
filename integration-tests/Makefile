@@ -1,4 +1,7 @@
 SHELL       := /bin/sh
+GOPATH      := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
+ORG_PATH    := gitHub.***REMOVED***/monsoon
+REPO_PATH   := $(ORG_PATH)/arc
 GITVERSION  := -X command-line-arguments.GITCOMMIT `git rev-parse --short HEAD`
 LDFLAGS     := -w -s $(GITVERSION)
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-test
@@ -43,4 +46,15 @@ image:
 .PHONY: clean
 clean:
 	rm -f bin/*
-	rm -f image
+	rm image
+
+.PHONY: gopath 
+gopath: setup
+	@echo $(GOPATH)
+
+.PHONY: setup
+setup: ../.gopath/src/$(REPO_PATH)
+
+../.gopath/src/$(REPO_PATH):
+	mkdir -p ../.gopath/src/$(ORG_PATH)
+	ln -s ../../../.. ../.gopath/src/$(REPO_PATH)
