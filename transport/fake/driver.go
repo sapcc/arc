@@ -15,7 +15,7 @@ type FakeClient struct {
 	Connected bool
 }
 
-func New(config arc_config.Config) (*FakeClient, error) {
+func New(config arc_config.Config, reportStateChanges bool) (*FakeClient, error) {
 	log.Infof("Using FAKE transport")
 
 	// used to fake the connectivity

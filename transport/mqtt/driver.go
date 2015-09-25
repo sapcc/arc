@@ -16,14 +16,15 @@ import (
 )
 
 type MQTTClient struct {
-	client       *MQTT.Client
-	identity     string
-	project      string
-	organization string
-	connected    bool
+	client             *MQTT.Client
+	identity           string
+	project            string
+	organization       string
+	connected          bool
+	reportStateChanges bool
 }
 
-func New(config arc_config.Config) (*MQTTClient, error) {
+func New(config arc_config.Config, reportStateChanges bool) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
 	logger := logrus.New()
 	logger.Out = stdLogger.Out
@@ -69,16 +70,18 @@ func New(config arc_config.Config) (*MQTTClient, error) {
 		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
 	}
-	if reg, err := offlineMessage(config.Organization, config.Project, config.Identity); err == nil {
-		if j, err := reg.ToJSON(); err == nil {
-			logrus.Infof("Setting last will delivering to %s", registrationTopic(config.Organization, config.Project, config.Identity))
-			opts.SetBinaryWill(registrationTopic(config.Organization, config.Project, config.Identity), j, 0, false)
+	if reportStateChanges {
+		if reg, err := offlineMessage(config.Organization, config.Project, config.Identity); err == nil {
+			if j, err := reg.ToJSON(); err == nil {
+				logrus.Infof("Setting last will delivering to %s", registrationTopic(config.Organization, config.Project, config.Identity))
+				opts.SetBinaryWill(registrationTopic(config.Organization, config.Project, config.Identity), j, 0, false)
+			}
 		}
 	}
 	opts.SetCleanSession(true)
 
 	// create own transport
-	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization, connected: false}
+	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization, connected: false, reportStateChanges: reportStateChanges}
 
 	// set callbacks
 	opts.OnConnect = func(_ *MQTT.Client) {
@@ -102,11 +105,13 @@ func (c *MQTTClient) Connect() error {
 }
 
 func (c *MQTTClient) Disconnect() {
-	if reg, err := offlineMessage(c.organization, c.project, c.identity); err == nil {
-		logrus.Info("Sending offline message")
-		c.Registration(reg)
-	} else {
-		logrus.Error("Failed to create 'offline' registration message: ", err)
+	if c.reportStateChanges {
+		if reg, err := offlineMessage(c.organization, c.project, c.identity); err == nil {
+			logrus.Info("Sending offline message")
+			c.Registration(reg)
+		} else {
+			logrus.Error("Failed to create 'offline' registration message: ", err)
+		}
 	}
 	c.client.Disconnect(1000)
 }
@@ -267,14 +272,18 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 
 func (c *MQTTClient) onConnect() {
 	logrus.Debug("Callback: onConnect")
+	c.connected = true
+
 	// send online message
+	if !c.reportStateChanges {
+		return
+	}
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending online Message")
 		c.Registration(req)
 	} else {
 		logrus.Error("Failed to create 'online' registration message ", err)
 	}
-	c.connected = true
 }
 
 func (c *MQTTClient) onConnectionLost(err error) {

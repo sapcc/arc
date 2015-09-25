@@ -18,7 +18,7 @@ import (
  */
 func arcNewConnection(config arc_config.Config) (transport.Transport, error) {
 	// get transport
-	tp, err := transport.New(config)
+	tp, err := transport.New(config, false)
 	if err != nil {
 		return nil, err
 	}

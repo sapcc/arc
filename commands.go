@@ -152,7 +152,7 @@ func cmdServer(c *cli.Context) {
 		tickChan.Stop()
 	}
 
-	tp, err := transport.New(config)
+	tp, err := transport.New(config, true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -191,7 +191,7 @@ func cmdServer(c *cli.Context) {
 }
 
 func cmdExecute(c *cli.Context) {
-	tp, err := transport.New(config)
+	tp, err := transport.New(config, false)
 	if err != nil {
 		log.Fatal(err)
 	}

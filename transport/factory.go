@@ -22,12 +22,12 @@ type Transport interface {
 	SubscribeRegistrations() (messages <-chan *arc.Registration, cancel func())
 }
 
-func New(config arc_config.Config) (Transport, error) {
+func New(config arc_config.Config, reportStateChanges bool) (Transport, error) {
 	switch config.Transport {
 	case "mqtt":
-		return mqtt.New(config)
+		return mqtt.New(config, reportStateChanges)
 	case "fake":
-		return fake.New(config)
+		return fake.New(config, reportStateChanges)
 	}
 	return nil, errors.New("Invalid transport")
 }
