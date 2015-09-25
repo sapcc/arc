@@ -39,12 +39,12 @@ type Client struct {
 
 func NewTestClient() *Client {
 	// override flags if enviroment variable exists
-	if os.Getenv("ARC_API_SERVER") != "" {
-		apiServerUrl := os.Getenv("ARC_API_SERVER")
+	if os.Getenv("API_SERVER") != "" {
+		apiServerUrl := os.Getenv("API_SERVER")
 		apiServerFlag = &apiServerUrl
 	}
-	if os.Getenv("ARC_UPDATE_SERVER") != "" {
-		updateServerUrl := os.Getenv("ARC_UPDATE_SERVER")
+	if os.Getenv("UPDATE_SERVER") != "" {
+		updateServerUrl := os.Getenv("UPDATE_SERVER")
 		updateServerFlag = &updateServerUrl
 	}
 

@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-var agentIdentityFlag = flag.String("arc-agent", "", "integration-test")
+var agentIdentityFlag = flag.String("agent-identity", "", "integration-test")
 
 type Facts struct {
 	Version          string `json:"arc_version"`
@@ -27,11 +27,11 @@ type Facts struct {
 
 func TestRunFacts(t *testing.T) {
 	// override flags if enviroment variable exists
-	if os.Getenv("ARC_AGENT_IDENTITY") != "" {
-		agentIdentity := os.Getenv("ARC_AGENT_IDENTITY")
+	if os.Getenv("AGENT_IDENTITY") != "" {
+		agentIdentity := os.Getenv("AGENT_IDENTITY")
 		agentIdentityFlag = &agentIdentity
 	}
-	
+
 	client := NewTestClient()
 
 	// get the facts for the given agent

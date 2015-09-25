@@ -13,17 +13,17 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 )
 
-var arcDeployVersionFlag = flag.String("arc-last-deployed-version", "2015.01.01", "integration-test")
+var arcDeployVersionFlag = flag.String("latest-version", "2015.01.01", "integration-test")
 
 type checkFacts struct {
 	Version string `json:"arc_version"`
-	Online	bool `json:"online"`
+	Online  bool   `json:"online"`
 }
 
 func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 	// override flags if enviroment variable exists
-	if os.Getenv("ARC_LAST_DEPLOY_VERSION") != "" {
-		deployVersion := os.Getenv("ARC_LAST_DEPLOY_VERSION")
+	if os.Getenv("LASTEST_VERSION") != "" {
+		deployVersion := os.Getenv("LASTEST_VERSION")
 		arcDeployVersionFlag = &deployVersion
 	}
 
@@ -61,7 +61,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 		if !strings.Contains(facts.Version, *arcDeployVersionFlag) {
 			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", *arcDeployVersionFlag, " and ", facts.Version))
 		}
-		
+
 		// check online
 		if facts.Online == false {
 			t.Error(fmt.Sprint("Expected agent ", agents[i].AgentID, " to be online."))

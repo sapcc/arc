@@ -14,7 +14,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-var agentIdentityFlag = flag.String("arc-agent", "", "integration-test")
+var agentIdentityFlag = flag.String("agent-identity", "", "integration-test")
 
 type systemFact struct {
 	Os             string `json:"os"`
@@ -23,8 +23,8 @@ type systemFact struct {
 
 func TestRunJob(t *testing.T) {
 	// override flags if enviroment variable exists
-	if os.Getenv("ARC_AGENT_IDENTITY") != "" {
-		agentIdentity := os.Getenv("ARC_AGENT_IDENTITY")
+	if os.Getenv("AGENT_IDENTITY") != "" {
+		agentIdentity := os.Getenv("AGENT_IDENTITY")
 		agentIdentityFlag = &agentIdentity
 	}
 
