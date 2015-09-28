@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y \
 		--no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
+RUN curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt | \
+    tr -d '\r' > /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt && \
+    update-ca-certificates 
+
 COPY gonative_linux /usr/bin/gonative
 
 RUN gonative build -version 1.4.2 -target=/usr/local/go -platforms "linux_amd64 windows_amd64"
