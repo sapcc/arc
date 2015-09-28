@@ -10,8 +10,9 @@ func TestApiServerIsUp(t *testing.T) {
 	client := NewTestClient()
 	statusCode, _ := client.Get("/", ApiServer)
 
-	if statusCode != "200 OK" {
-		t.Error("Expected to get 200 response code for the ApiServer")
+	expected := "200 OK"
+	if statusCode != expected {
+		t.Errorf("Expected to get %#v code for the ApiServer. Got %#v", expected, statusCode)
 	}
 }
 
@@ -19,7 +20,8 @@ func TestUpdateServerIsUp(t *testing.T) {
 	client := NewTestClient()
 	statusCode, _ := client.Get("/", UpdateServer)
 
-	if statusCode != "200 OK" {
-		t.Error("Expected to get 200 response code for the UpdateServer")
+	expected := "200 OK"
+	if statusCode != expected {
+		t.Errorf("Expected to get %#v code for the UpdateServer. Got %#v", expected, statusCode)
 	}
 }
