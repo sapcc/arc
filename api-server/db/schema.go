@@ -33,7 +33,6 @@ var CheckConnection = "SELECT 1"
 // Log
 var GetLogQuery = "SELECT * FROM logs WHERE job_id=$1"
 var InsertLogQuery = "INSERT INTO logs(job_id,content,created_at,updated_at) VALUES($1,$2,$3,$4) returning job_id"
-var UpdateLogQuery = "UPDATE logs SET content=$1,updated_at=$2 WHERE job_id=$3"
 
 // Log parts
 var GetLogPartQuery = `SELECT * FROM log_parts WHERE job_id=$1 AND number=$2`

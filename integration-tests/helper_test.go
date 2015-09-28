@@ -81,8 +81,7 @@ func (c *Client) Get(pathTo string, server ServerType) (string, *[]byte) {
 }
 
 func (c *Client) GetApiV1(pathTo string, server ServerType) (string, *[]byte) {
-	v1PathTo := fmt.Sprint(c.serverUrl(server), path.Join("/api/v1/", pathTo))
-	return c.Get(v1PathTo, server)
+	return c.Get(path.Join("/api/v1/", pathTo), server)
 }
 
 func (c *Client) Post(pathTo string, server ServerType, headers map[string]string, jsonBody []byte) (string, *[]byte) {
@@ -114,8 +113,7 @@ func (c *Client) Post(pathTo string, server ServerType, headers map[string]strin
 }
 
 func (c *Client) PostApiV1(pathTo string, server ServerType, headers map[string]string, jsonBody []byte) (string, *[]byte) {
-	v1PathTo := fmt.Sprint(c.serverUrl(server), path.Join("/api/v1/", pathTo))
-	return c.Post(v1PathTo, server, headers, jsonBody)
+	return c.Post(path.Join("/api/v1/", pathTo), server, headers, jsonBody)
 }
 
 func (c *Client) serverUrl(s ServerType) string {
