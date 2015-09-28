@@ -13,8 +13,11 @@ import (
 )
 
 type Win32_OperatingSystem struct {
-	Version     string
-	CSDVersion  string
+	Version string
+
+	//yields: wmi: cannot load field "CSDVersion" into a "string": unsupported type (<nil>) on windows 2012
+	//CSDVersion  string
+
 	OSType      uint16
 	Caption     string
 	BuildNumber string
@@ -22,6 +25,13 @@ type Win32_OperatingSystem struct {
 
 func (h Source) Facts() (map[string]interface{}, error) {
 	facts := make(map[string]interface{})
+	facts["hostname"] = nil
+	facts["fqdn"] = nil
+	facts["domain"] = nil
+	facts["platform"] = "windows"
+	facts["platform_family"] = "windows"
+	facts["platform_version"] = nil
+
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = strings.ToLower(hostname)
 		if hostent, err := syscall.GetHostByName(hostname); err == nil {
@@ -34,8 +44,6 @@ func (h Source) Facts() (map[string]interface{}, error) {
 		}
 	}
 
-	facts["platform"] = "windows"
-	facts["platform_family"] = "windows"
 	var win32_os []Win32_OperatingSystem
 	q := wmi.CreateQuery(&win32_os, "")
 	if wmi.Query(q, &win32_os) == nil {
