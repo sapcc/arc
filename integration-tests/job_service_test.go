@@ -33,7 +33,7 @@ func TestRunJob(t *testing.T) {
 	// get info about the agent
 	statusCode, body := client.GetApiV1(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
 	if statusCode != "200 OK" {
-		t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent ", *agentIdentityFlag))
+		t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent id ", *agentIdentityFlag))
 		return
 	}
 
@@ -86,7 +86,7 @@ func TestRunJob(t *testing.T) {
 	// check log
 	statusCode, body = client.GetApiV1(fmt.Sprint("/jobs/", jobId.RequestID, "/log"), ApiServer)
 	if statusCode != "200 OK" {
-		t.Error("Expected to get 200 response code getting the log")
+		t.Error(fmt.Sprint("Expected to get 200 response code getting the log for job id ", jobId.RequestID))
 	}
 	if len(string(*body)) == 0 {
 		t.Error("Expected to get a log")
