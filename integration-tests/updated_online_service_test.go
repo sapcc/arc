@@ -22,8 +22,8 @@ type checkFacts struct {
 
 func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 	// override flags if enviroment variable exists
-	if os.Getenv("LASTEST_VERSION") != "" {
-		deployVersion := os.Getenv("LASTEST_VERSION")
+	if os.Getenv("LATEST_VERSION") != "" {
+		deployVersion := os.Getenv("LATEST_VERSION")
 		arcDeployVersionFlag = &deployVersion
 	}
 
