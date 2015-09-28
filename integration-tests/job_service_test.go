@@ -77,7 +77,7 @@ func TestRunJob(t *testing.T) {
 		return
 	}
 
-	err = checkStatus(client, jobId, arc.Complete, 5000)
+	err = checkStatus(client, jobId, arc.Complete, 8000)
 	if err != nil {
 		t.Error(err)
 		return
