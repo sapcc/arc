@@ -16,7 +16,7 @@ RUN curl http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt | \
 
 COPY gonative_linux /usr/bin/gonative
 
-RUN gonative build -version 1.4.2 -target=/usr/local/go -platforms "linux_amd64 windows_amd64"
+RUN gonative build -version 1.4.3 -target=/usr/local/go -platforms "linux_amd64 windows_amd64"
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
