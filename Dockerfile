@@ -2,7 +2,7 @@ FROM buildpack-deps:wheezy-scm
 
 ENV http_proxy=http://proxy.***REMOVED***:8080 \
     https_proxy=http://proxy.***REMOVED***:8080 \
-    no_proy***REMOVED***,localhost,127.0.0.1
+    no_proxy=***REMOVED***,localhost,127.0.0.1
 
 # gcc for cgo
 RUN apt-get update && apt-get install -y \
