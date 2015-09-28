@@ -35,7 +35,7 @@ func TestRunFacts(t *testing.T) {
 	client := NewTestClient()
 
 	// get the facts for the given agent
-	statusCode, body := client.Get(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
+	statusCode, body := client.GetApiV1(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
 	if statusCode != "200 OK" {
 		t.Error(fmt.Sprint("Expected to get 200 response code for agent ", *agentIdentityFlag))
 		return

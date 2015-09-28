@@ -31,7 +31,7 @@ func TestRunJob(t *testing.T) {
 	client := NewTestClient()
 
 	// get info about the agent
-	statusCode, body := client.Get(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
+	statusCode, body := client.GetApiV1(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
 	if statusCode != "200 OK" {
 		t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent ", *agentIdentityFlag))
 		return
@@ -58,7 +58,7 @@ func TestRunJob(t *testing.T) {
 	jsonStr := []byte(data)
 
 	// post the job
-	statusCode, body = client.Post("/jobs", ApiServer, nil, jsonStr)
+	statusCode, body = client.PostApiV1("/jobs", ApiServer, nil, jsonStr)
 	if statusCode != "200 OK" {
 		t.Error(fmt.Sprint("Expected to get 200 response code posting the job"))
 		return
@@ -84,7 +84,7 @@ func TestRunJob(t *testing.T) {
 	}
 
 	// check log
-	statusCode, body = client.Get(fmt.Sprint("/jobs/", jobId.RequestID, "/log"), ApiServer)
+	statusCode, body = client.GetApiV1(fmt.Sprint("/jobs/", jobId.RequestID, "/log"), ApiServer)
 	if statusCode != "200 OK" {
 		t.Error("Expected to get 200 response code getting the log")
 	}
@@ -120,7 +120,7 @@ func checkStatus(client *Client, jobId models.JobID, status arc.JobState, timeou
 
 func getJobStatus(client *Client, jobId models.JobID) (*models.Job, error) {
 	var job models.Job
-	statusCode, body := client.Get(fmt.Sprint("/jobs/", jobId.RequestID), ApiServer)
+	statusCode, body := client.GetApiV1(fmt.Sprint("/jobs/", jobId.RequestID), ApiServer)
 	if statusCode != "200 OK" {
 		return nil, fmt.Errorf("Expected to get 200 response code getting job ", jobId.RequestID)
 	}

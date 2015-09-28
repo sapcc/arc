@@ -29,7 +29,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 
 	// get the logged agents
 	client := NewTestClient()
-	statusCode, body := client.Get("/agents", ApiServer)
+	statusCode, body := client.GetApiV1("/agents", ApiServer)
 	if statusCode != "200 OK" {
 		t.Error("Expected to get 200 response code getting all agents")
 		return
@@ -44,7 +44,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 
 	// check the version from each agent
 	for i := 0; i < len(agents); i++ {
-		statusCode, body = client.Get(fmt.Sprint("/agents/", agents[i].AgentID, "/facts"), ApiServer)
+		statusCode, body = client.GetApiV1(fmt.Sprint("/agents/", agents[i].AgentID, "/facts"), ApiServer)
 		if statusCode != "200 OK" {
 			t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent ", agents[i]))
 			continue
