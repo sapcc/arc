@@ -25,9 +25,10 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = strings.ToLower(hostname)
 		if hostent, err := syscall.GetHostByName(hostname); err == nil {
-			facts["fqdn"] = strings.ToLower(gopsutil.BytePtrToString(hostent.Name))
+			fqdn := strings.ToLower(gopsutil.BytePtrToString(hostent.Name))
+			facts["fqdn"] = fqdn
 			domain_regexp := regexp.MustCompile(`.*?\.(.+)$`)
-			if m := domain_regexp.FindStringSubmatch(facts["fqdn"]); m != nil {
+			if m := domain_regexp.FindStringSubmatch(fqdn); m != nil {
 				facts["domain"] = m[1]
 			}
 		}
