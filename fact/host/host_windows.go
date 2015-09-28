@@ -2,6 +2,7 @@ package host
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -25,6 +26,10 @@ func (h Source) Facts() (map[string]interface{}, error) {
 		facts["hostname"] = strings.ToLower(hostname)
 		if hostent, err := syscall.GetHostByName(hostname); err == nil {
 			facts["fqdn"] = strings.ToLower(gopsutil.BytePtrToString(hostent.Name))
+			domain_regexp := regexp.MustCompile(`.*?\.(.+)$`)
+			if m := domain_regexp.FindStringSubmatch(facts["fqdn"]); m != nil {
+				facts["domain"] = m[1]
+			}
 		}
 	}
 
