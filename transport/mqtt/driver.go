@@ -78,7 +78,7 @@ func New(config arc_config.Config, reportStateChanges bool) (*MQTTClient, error)
 			}
 		}
 	}
-	opts.SetCleanSession(false)
+	opts.SetCleanSession(true)
 
 	// create own transport
 	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization, connected: false, reportStateChanges: reportStateChanges}
