@@ -59,7 +59,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 
 		// check version
 		if !strings.Contains(facts.Version, *arcDeployVersionFlag) {
-			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got ", *arcDeployVersionFlag, " and ", facts.Version))
+			t.Error(fmt.Sprint("Expected to match versions for agent ", agents[i].AgentID, ". Got environment version ", *arcDeployVersionFlag, " and fact version ", facts.Version))
 		}
 
 		// check online
