@@ -16,15 +16,22 @@ import (
 )
 
 type MQTTClient struct {
-	client             *MQTT.Client
-	identity           string
-	project            string
-	organization       string
-	connected          bool
-	reportStateChanges bool
+	client        *MQTT.Client
+	identity      string
+	project       string
+	organization  string
+	connected     bool
+	isServer      bool
+	subscriptions map[string]subscription
 }
 
-func New(config arc_config.Config, reportStateChanges bool) (*MQTTClient, error) {
+type subscription struct {
+	topic    string
+	callback MQTT.MessageHandler
+	qos      byte
+}
+
+func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
 	logger := logrus.New()
 	logger.Out = stdLogger.Out
@@ -70,7 +77,7 @@ func New(config arc_config.Config, reportStateChanges bool) (*MQTTClient, error)
 		logrus.Info("Using MQTT broker ", endpoint)
 		opts.AddBroker(endpoint)
 	}
-	if reportStateChanges {
+	if isServer {
 		if reg, err := offlineMessage(config.Organization, config.Project, config.Identity); err == nil {
 			if j, err := reg.ToJSON(); err == nil {
 				logrus.Infof("Setting last will delivering to %s", registrationTopic(config.Organization, config.Project, config.Identity))
@@ -81,7 +88,14 @@ func New(config arc_config.Config, reportStateChanges bool) (*MQTTClient, error)
 	opts.SetCleanSession(true)
 
 	// create own transport
-	transport := &MQTTClient{identity: config.Identity, project: config.Project, organization: config.Organization, connected: false, reportStateChanges: reportStateChanges}
+	transport := &MQTTClient{
+		identity:      config.Identity,
+		project:       config.Project,
+		organization:  config.Organization,
+		connected:     false,
+		isServer:      isServer,
+		subscriptions: make(map[string]subscription),
+	}
 
 	// set callbacks
 	opts.OnConnect = func(_ *MQTT.Client) {
@@ -105,7 +119,7 @@ func (c *MQTTClient) Connect() error {
 }
 
 func (c *MQTTClient) Disconnect() {
-	if c.reportStateChanges {
+	if c.isServer {
 		if reg, err := offlineMessage(c.organization, c.project, c.identity); err == nil {
 			logrus.Info("Sending offline message")
 			c.Registration(reg)
@@ -119,6 +133,20 @@ func (c *MQTTClient) Disconnect() {
 func (c *MQTTClient) IsConnected() bool {
 	logrus.Debugf("IsConnected: c.connected %v and c.client.IsConnected() is %v", c.connected, c.client.IsConnected())
 	return c.connected && c.client.IsConnected()
+}
+
+func (c *MQTTClient) subscribe(topic string, qos byte, cb MQTT.MessageHandler) {
+	c.subscriptions[topic] = subscription{
+		topic:    topic,
+		callback: cb,
+		qos:      qos,
+	}
+	c.client.Subscribe(topic, 0, cb).Wait()
+}
+
+func (c *MQTTClient) unsubscribe(topic string) {
+	delete(c.subscriptions, topic)
+	c.client.Unsubscribe(topic).Wait()
 }
 
 func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
@@ -143,14 +171,14 @@ func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	}
 
 	cancel := func() {
-		c.client.Unsubscribe(topic).Wait()
+		c.unsubscribe(topic)
 		close(canceled)
 		mutex.Lock()
 		close(msgChan)
 		mutex.Unlock()
 	}
 
-	c.client.Subscribe(topic, 0, messageCallback).Wait()
+	c.subscribe(topic, 0, messageCallback)
 	return msgChan, cancel
 }
 
@@ -201,14 +229,14 @@ func (c *MQTTClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) 
 		mutex.Unlock()
 	}
 	cancel := func() {
-		c.client.Unsubscribe(topic).Wait()
+		c.unsubscribe(topic)
 		close(canceled)
 		mutex.Lock()
 		close(out)
 		mutex.Unlock()
 	}
 
-	c.client.Subscribe(topic, 0, messageCallback).Wait()
+	c.subscribe(topic, 0, messageCallback)
 	return out, cancel
 }
 
@@ -257,14 +285,14 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 		mutex.Unlock()
 	}
 	cancel := func() {
-		c.client.Unsubscribe(topic).Wait()
+		c.unsubscribe(topic)
 		close(canceled)
 		mutex.Lock()
 		close(out)
 		mutex.Unlock()
 	}
 
-	c.client.Subscribe(topic, 0, messageCallback).Wait()
+	c.subscribe(topic, 0, messageCallback)
 	return out, cancel
 }
 
@@ -274,8 +302,12 @@ func (c *MQTTClient) onConnect() {
 	logrus.Debug("Callback: onConnect")
 	c.connected = true
 
+	for _, sub := range c.subscriptions {
+		logrus.Infof("Renewing subscription for %s", sub.topic)
+		c.client.Subscribe(sub.topic, sub.qos, sub.callback)
+	}
 	// send online message
-	if !c.reportStateChanges {
+	if !c.isServer {
 		return
 	}
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
