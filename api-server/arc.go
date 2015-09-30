@@ -41,13 +41,14 @@ func arcSubscribeReplies(tp transport.Transport) error {
 	for {
 		select {
 		case registry := <-regChan:
-			log.Infof("Got registry from %q with data %q", registry.Sender, registry.Payload)
+			log.Infof("Got registration from %q with id %q and data %q", registry.Sender, registry.RegistrationID, registry.Payload)
 
 			agent := models.Agent{}
-			err := agent.ProcessRegistration(db, registry)
-			if err != nil {
-				log.Errorf("Error updating fact %q. Got %q", registry, err.Error())
-				continue
+			err := agent.ProcessRegistration(db, registry, tp.IdentityInformation()["identity"])			
+			if err == models.RegistrationExistsError {
+				log.Info(models.RegistrationExistsError, " Registration id ", registry.RegistrationID)
+			} else if err != nil {
+				log.Errorf("Error updating registration %q. Got %q", registry.RegistrationID, err.Error())
 			}
 
 			// send done signal (for testing)

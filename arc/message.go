@@ -31,11 +31,12 @@ type Reply struct {
 }
 
 type Registration struct {
-	Version      int    `json:"version"`
-	Sender       string `json:"sender"`
-	Organization string `json:"organization"`
-	Project      string `json:"project"`
-	Payload      string `json:"payload"`
+	RegistrationID string `json:"registration_id"`
+	Version        int    `json:"version"`
+	Sender         string `json:"sender"`
+	Organization   string `json:"organization"`
+	Project        string `json:"project"`
+	Payload        string `json:"payload"`
 }
 
 func (r *Request) ToJSON() ([]byte, error) {
@@ -98,11 +99,12 @@ func CreateRequest(agent string, action string, identity string, to string, time
 
 func CreateRegistration(organization, project, identity, payload string) (*Registration, error) {
 	registration := Registration{
-		Version:      1,
-		Project:      project,
-		Organization: organization,
-		Sender:       identity,
-		Payload:      payload,
+		RegistrationID: uuid.New(),
+		Version:        1,
+		Project:        project,
+		Organization:   organization,
+		Sender:         identity,
+		Payload:        payload,
 	}
 
 	return &registration, nil

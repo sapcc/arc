@@ -108,6 +108,10 @@ func (c *FakeClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 	return out, cancel
 }
 
+func (c *FakeClient) IdentityInformation() map[string]string {
+	return map[string]string{}
+}
+
 func (c *FakeClient) DoneSignal() {
 	c.Done <- true
 }

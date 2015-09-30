@@ -296,6 +296,14 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 	return out, cancel
 }
 
+func (c *MQTTClient) IdentityInformation() map[string]string {
+	return map[string]string{
+		"identity":     c.identity,
+		"project":      c.project,
+		"organization": c.organization,
+	}
+}
+
 // Callbacks
 
 func (c *MQTTClient) onConnect() {

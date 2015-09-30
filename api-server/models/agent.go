@@ -14,6 +14,7 @@ import (
 )
 
 var FilterError = fmt.Errorf("Filter query has a syntax error.")
+var RegistrationExistsError = fmt.Errorf("Registration message already handeled.")
 
 type Db interface {
 	QueryRow(query string, args ...interface{}) *sql.Row
@@ -27,6 +28,8 @@ type Agent struct {
 	Facts        string    `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	UpdatedWith  string    `json:"updated_with"`
+	UpdatedBy    string    `json:"updated_by"`
 }
 
 type Agents []Agent
@@ -59,7 +62,7 @@ func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 
 	var agent Agent
 	for rows.Next() {
-		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt)
+		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
 		if err != nil {
 			log.Errorf("Error scaning agent results. Got ", err.Error())
 			continue
@@ -76,7 +79,7 @@ func (agent *Agent) Get(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt)
+	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
 	if err != nil {
 		return err
 	}
@@ -89,11 +92,11 @@ func (agent *Agent) Save(db Db) error {
 	}
 
 	var lastInsertId string
-	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, agent.Facts, agent.CreatedAt, agent.UpdatedAt).Scan(&lastInsertId); err != nil {
+	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, agent.Facts, agent.CreatedAt, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy).Scan(&lastInsertId); err != nil {
 		return err
 	}
 
-	log.Infof("New agent with id %q saved.", agent.AgentID)
+	log.Infof("New agent with id %q and registration id %q was saved.", agent.AgentID, agent.UpdatedWith)
 
 	return nil
 }
@@ -103,24 +106,23 @@ func (agent *Agent) Update(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
-	res, err := db.Exec(ownDb.UpdateAgent, agent.AgentID, agent.Project, agent.Organization, agent.Facts, agent.UpdatedAt)
+	res, err := db.Exec(ownDb.UpdateAgent, agent.AgentID, agent.Project, agent.Organization, agent.Facts, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Agent with id %q updated.", agent.AgentID)
+	log.Infof("Agent with id %q and registration id %q was updated", agent.AgentID, agent.UpdatedWith)
 
 	affect, err := res.RowsAffected()
 	if err != nil {
 		return err
 	}
-
-	log.Infof("%v rows where updated agent id %q", affect, agent.AgentID)
+	log.Infof("%v row(s) where updated for agent id %q and registratrion reply id %q", affect, agent.AgentID, agent.UpdatedWith)
 
 	return nil
 }
 
-func (agent *Agent) FromRegistration(reg *arc.Registration) {
+func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) {
 	if reg == nil {
 		return
 	}
@@ -130,43 +132,54 @@ func (agent *Agent) FromRegistration(reg *arc.Registration) {
 	agent.Facts = reg.Payload
 	agent.CreatedAt = time.Now()
 	agent.UpdatedAt = time.Now()
+	agent.UpdatedWith = reg.RegistrationID
+	agent.UpdatedBy = agentId
 	return
 }
 
-func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration) (err error) {
+func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string) (err error) {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
 
-	// cast to agent
-	agent.FromRegistration(reg)
+	// cast registration to agent
+	agent.FromRegistration(reg, agentId)
 
-	// start transaction
-	tx, err := db.Begin()
-	if err != nil {
-		return
-	}
+	// save regitry id to check if the message is alredy handeled
+	registry := Registry{RegistryID: agent.UpdatedWith, AgentID: agentId}
+	isDuplicateError := registry.Save(db)
+	if isDuplicateError == nil {
 
-	defer func() {
+		// create transaction
+		tx, err := db.Begin()
 		if err != nil {
-			tx.Rollback()
-			return
-		}
-		err = tx.Commit()
-	}()
-
-	checkAgent := Agent{AgentID: agent.AgentID}
-	err = checkAgent.Get(tx)
-	if err == sql.ErrNoRows { // fact not found
-		if err = agent.Save(tx); err != nil {
 			return err
 		}
-	} else if err != nil { // something wrong happned
-		return
-	} else {
-		if err = agent.Update(tx); err != nil {
-			return
+
+		defer func() {
+			if err != nil {
+				tx.Rollback()
+				return
+			}
+			err = tx.Commit()
+		}()
+
+		// check if the agent already exists
+		checkAgent := Agent{AgentID: agent.AgentID}
+		existAgentError := checkAgent.Get(tx)
+		if existAgentError == sql.ErrNoRows { // agent not found, new agent entry
+			if err = agent.Save(tx); err != nil {
+				return err
+			}
+		} else if existAgentError != nil { // something wrong happned
+			return existAgentError
+		} else { // update the agent
+			if err = agent.Update(tx); err != nil {
+				return err
+			}
 		}
+	} else {
+		return RegistrationExistsError
 	}
 
 	return
