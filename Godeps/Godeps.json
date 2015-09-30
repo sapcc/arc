@@ -6,19 +6,9 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/go-uuid/uuid",
-			"Comment": "null-15",
-			"Rev": "35bc42037350f0078e3c974c6ea690f1926603ab"
-		},
-		{
-			"ImportPath": "code.google.com/p/go.net/websocket",
-			"Comment": "null-240",
-			"Rev": "937a34c9de13c766c814510f76bca091dee06028"
-		},
-		{
 			"ImportPath": "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git",
-			"Comment": "v0.9.1-9-gefdb79c",
-			"Rev": "efdb79c97e13aee279571215e6fe4030059447ce"
+			"Comment": "v0.9.1-14-g546c47a",
+			"Rev": "546c47a6d0e9492e77f6f37473d59c36a708e08b"
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -102,6 +92,10 @@
 			"Rev": "d6c945f9fdbf6cad99e85b0feff591caa268e0db"
 		},
 		{
+			"ImportPath": "github.com/pborman/uuid",
+			"Rev": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655"
+		},
+		{
 			"ImportPath": "github.com/shirou/gopsutil/common",
 			"Comment": "1.0.0-70-gc71f9ee",
 			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
@@ -118,7 +112,11 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "a8c61998a557a37435f719980da368469c10bfed"
+			"Rev": "c2528b2dd8352441850638a8bb678c2ad056fd3e"
+		},
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Rev": "c2528b2dd8352441850638a8bb678c2ad056fd3e"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

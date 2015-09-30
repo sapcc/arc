@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 )
 
 type Request struct {

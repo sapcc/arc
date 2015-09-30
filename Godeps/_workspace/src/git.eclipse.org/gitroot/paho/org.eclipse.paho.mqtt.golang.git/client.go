@@ -134,7 +134,7 @@ func (c *Client) Connect() Token {
 		for _, broker := range c.options.Servers {
 		CONN:
 			DEBUG.Println(CLI, "about to write new connect msg")
-			c.conn, err = openConnection(broker, &c.options.TLSConfig)
+			c.conn, err = openConnection(broker, &c.options.TLSConfig, c.options.ConnectTimeout)
 			if err == nil {
 				DEBUG.Println(CLI, "socket connected to broker")
 				switch c.options.ProtocolVersion {
@@ -243,7 +243,7 @@ func (c *Client) reconnect() {
 		for _, broker := range c.options.Servers {
 		CONN:
 			DEBUG.Println(CLI, "about to write new connect msg")
-			c.conn, err = openConnection(broker, &c.options.TLSConfig)
+			c.conn, err = openConnection(broker, &c.options.TLSConfig, c.options.ConnectTimeout)
 			if err == nil {
 				DEBUG.Println(CLI, "socket connected to broker")
 				switch c.options.ProtocolVersion {
@@ -385,12 +385,13 @@ func (c *Client) internalConnLost(err error) {
 func (c *Client) disconnect() {
 	select {
 	case <-c.stop:
+		//someone else has already closed the channel, must be error
 	default:
 		close(c.stop)
 	}
-	//Wait for all workers to finish before closing connection
-	c.workers.Wait()
 	c.conn.Close()
+	c.workers.Wait()
+	close(c.stopRouter)
 	DEBUG.Println(CLI, "disconnected")
 	c.persist.Close()
 }

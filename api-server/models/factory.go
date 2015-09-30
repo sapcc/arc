@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/go-uuid/uuid"
 	log "github.com/Sirupsen/logrus"
+	"github.com/pborman/uuid"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )

@@ -15,17 +15,17 @@
 package mqtt
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"crypto/tls"
 	"errors"
 	"git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git/packets"
+	"golang.org/x/net/websocket"
 	"net"
 	"net/url"
 	"reflect"
 	"time"
 )
 
-func openConnection(uri *url.URL, tlsc *tls.Config) (net.Conn, error) {
+func openConnection(uri *url.URL, tlsc *tls.Config, timeout time.Duration) (net.Conn, error) {
 	switch uri.Scheme {
 	case "ws":
 		conn, err := websocket.Dial(uri.String(), "mqtt", "ws://localhost")
@@ -45,7 +45,7 @@ func openConnection(uri *url.URL, tlsc *tls.Config) (net.Conn, error) {
 		conn.PayloadType = websocket.BinaryFrame
 		return conn, err
 	case "tcp":
-		conn, err := net.Dial("tcp", uri.Host)
+		conn, err := net.DialTimeout("tcp", uri.Host, timeout)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +55,7 @@ func openConnection(uri *url.URL, tlsc *tls.Config) (net.Conn, error) {
 	case "tls":
 		fallthrough
 	case "tcps":
-		conn, err := tls.Dial("tcp", uri.Host, tlsc)
+		conn, err := tls.DialWithDialer(&net.Dialer{Timeout: timeout}, "tcp", uri.Host, tlsc)
 		if err != nil {
 			return nil, err
 		}
