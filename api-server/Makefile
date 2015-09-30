@@ -99,3 +99,4 @@ postgres:
 clean:
 	rm -f bin/api-server
 	rm -f bin/gencert
+	rm -f postgres

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/go-uuid/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pborman/uuid"
 
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
