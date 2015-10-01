@@ -101,8 +101,8 @@ func (s *SwiftStorage) GetStoragePath() string {
 	return s.Connection.AuthUrl
 }
 
-func (s *SwiftStorage) IsConnected() bool {
-	err := s.Connection.Authenticate()
+func (s *SwiftStorage) IsConnected() bool {	
+	_, _, err := s.Connection.Container(s.Container) 
 	if err != nil {
 		return false
 	}
