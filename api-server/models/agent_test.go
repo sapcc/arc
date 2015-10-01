@@ -168,7 +168,7 @@ var _ = Describe("Agent", func() {
 
 		It("returns an error if no db connection is given", func() {
 			newAgent := Agent{AgentID: uuid.New()}
-			err := newAgent.ProcessRegistration(nil, nil, "darwin")
+			err := newAgent.ProcessRegistration(nil, nil, "darwin", true)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -179,7 +179,7 @@ var _ = Describe("Agent", func() {
 
 			// process the registration
 			agent := Agent{}
-			err := agent.ProcessRegistration(db, &reg.Registration, "darwin")
+			err := agent.ProcessRegistration(db, &reg.Registration, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check
@@ -214,7 +214,7 @@ var _ = Describe("Agent", func() {
 
 			// process the request
 			updateAgent := Agent{}
-			err = updateAgent.ProcessRegistration(db, &newReg, agentId)
+			err = updateAgent.ProcessRegistration(db, &newReg, agentId, true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check
@@ -227,7 +227,7 @@ var _ = Describe("Agent", func() {
 			Expect(dbAgent.Organization).To(Equal(newOrg))
 		})
 
-		It("should do anything if the registry is already handeled by another api server", func() {
+		It("should check concurrency safe", func() {
 			proj := "huhu project"
 			org := "huhu organization"
 			agentId := "darwin"
@@ -237,7 +237,7 @@ var _ = Describe("Agent", func() {
 			// save agent with facts
 			reg := arc.Registration{RegistrationID: registrationId, Sender: uuid.New(), Project: proj, Organization: org, Payload: facts}
 			agent := Agent{}
-			err := agent.ProcessRegistration(db, &reg, agentId)
+			err := agent.ProcessRegistration(db, &reg, agentId, true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// build a new registration with same id
@@ -250,8 +250,35 @@ var _ = Describe("Agent", func() {
 
 			// process the request
 			updateAgent := Agent{}
-			err = updateAgent.ProcessRegistration(db, &newReg, agentId)
-			Expect(err).To(HaveOccurred())
+			err = updateAgent.ProcessRegistration(db, &newReg, agentId, true)
+			Expect(err).To(Equal(RegistrationExistsError))
+		})
+
+		It("should NOT check concurrency safe", func() {
+			proj := "huhu project"
+			org := "huhu organization"
+			agentId := "darwin"
+			registrationId := uuid.New()
+			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
+
+			// save agent with facts
+			reg := arc.Registration{RegistrationID: registrationId, Sender: uuid.New(), Project: proj, Organization: org, Payload: facts}
+			agent := Agent{}
+			err := agent.ProcessRegistration(db, &reg, agentId, false)
+			Expect(err).NotTo(HaveOccurred())
+
+			// build a new registration with same id
+			memory_used := 666666
+			memory_total := 55555
+			newProj := "Miao project"
+			newOrg := "Miao organization"
+			newFacts := fmt.Sprintf(`{"memory_used": %v, "memory_total": %v}`, memory_used, memory_total)
+			newReg := arc.Registration{RegistrationID: registrationId, Sender: agent.AgentID, Project: newProj, Organization: newOrg, Payload: newFacts}
+
+			// process the request
+			updateAgent := Agent{}
+			err = updateAgent.ProcessRegistration(db, &newReg, agentId, false)
+			Expect(err).NotTo(HaveOccurred()) // it is updated twice
 		})
 
 	})

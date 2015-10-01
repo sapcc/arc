@@ -16,11 +16,6 @@ import (
 var FilterError = fmt.Errorf("Filter query has a syntax error.")
 var RegistrationExistsError = fmt.Errorf("Registration message already handeled.")
 
-type Db interface {
-	QueryRow(query string, args ...interface{}) *sql.Row
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
 type Agent struct {
 	AgentID      string    `json:"agent_id"`
 	Project      string    `json:"project"`
@@ -137,7 +132,7 @@ func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) {
 	return
 }
 
-func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string) (err error) {
+func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, concurrencySafe bool) (err error) {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -145,41 +140,52 @@ func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agent
 	// cast registration to agent
 	agent.FromRegistration(reg, agentId)
 
-	// save regitry id to check if the message is alredy handeled
-	lock := Lock{LockID: agent.UpdatedWith, AgentID: agentId}
-	isDuplicateError := lock.Save(db)
-	if isDuplicateError == nil {
-
-		// create transaction
-		tx, err := db.Begin()
+	// should check concurrency
+	if concurrencySafe {
+		safe, err := IsConcurrencySafe(db, agent.UpdatedWith, agentId)
 		if err != nil {
 			return err
 		}
-
-		defer func() {
-			if err != nil {
-				tx.Rollback()
-				return
-			}
-			err = tx.Commit()
-		}()
-
-		// check if the agent already exists
-		checkAgent := Agent{AgentID: agent.AgentID}
-		existAgentError := checkAgent.Get(tx)
-		if existAgentError == sql.ErrNoRows { // agent not found, new agent entry
-			if err = agent.Save(tx); err != nil {
-				return err
-			}
-		} else if existAgentError != nil { // something wrong happned
-			return existAgentError
-		} else { // update the agent
-			if err = agent.Update(tx); err != nil {
-				return err
-			}
+		if safe {
+			return processRegistration(db, agent, agentId)
+		} else {
+			return RegistrationExistsError
 		}
 	} else {
-		return RegistrationExistsError
+		return processRegistration(db, agent, agentId)
+	}
+
+	return
+}
+
+func processRegistration(db *sql.DB, agent *Agent, agentId string) (err error) {
+	// create transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}()
+
+	// check if the agent already exists
+	checkAgent := Agent{AgentID: agent.AgentID}
+	existAgentError := checkAgent.Get(tx)
+	if existAgentError == sql.ErrNoRows { // agent not found, new agent entry
+		if err = agent.Save(tx); err != nil {
+			return err
+		}
+	} else if existAgentError != nil { // something wrong happned
+		return existAgentError
+	} else { // update the agent
+		if err = agent.Update(tx); err != nil {
+			return err
+		}
 	}
 
 	return

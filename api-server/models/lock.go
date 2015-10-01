@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
+	"github.com/lib/pq"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"time"
 )
@@ -39,4 +40,18 @@ func (l *Lock) Save(db Db) error {
 	log.Infof("New lock with id %q was saved.", l.LockID)
 
 	return nil
+}
+
+func IsConcurrencySafe(db Db, messageId string, agentId string) (bool, error) {
+	lock := Lock{LockID: messageId, AgentID: agentId}
+	err := lock.Save(db)
+	if pg_err, ok := err.(*pq.Error); ok {
+		if pg_err.Code == "23505" { // FOREIGN KEY VIOLATION
+			return false, nil
+		}
+	} else if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

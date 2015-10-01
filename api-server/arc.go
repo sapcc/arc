@@ -38,13 +38,15 @@ func arcSubscribeReplies(tp transport.Transport) error {
 	msgChan, cancelRepliesSubscription := tp.SubscribeReplies()
 	defer cancelRepliesSubscription()
 
+	concurrencySafe := true	
+
 	for {
 		select {
 		case registry := <-regChan:
 			log.Infof("Got registration from %q with id %q and data %q", registry.Sender, registry.RegistrationID, registry.Payload)
 
 			agent := models.Agent{}
-			err := agent.ProcessRegistration(db, registry, tp.IdentityInformation()["identity"])			
+			err := agent.ProcessRegistration(db, registry, tp.IdentityInformation()["identity"], concurrencySafe)			
 			if err == models.RegistrationExistsError {
 				log.Info(models.RegistrationExistsError, " Registration id ", registry.RegistrationID)
 			} else if err != nil {
