@@ -2,6 +2,7 @@ package swift
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"regexp"
@@ -25,11 +26,13 @@ func New(c *cli.Context) (*SwiftStorage, error) {
 	// create object
 	swiftStorage := SwiftStorage{
 		swift.Connection{
-			UserName: c.String("username"),
-			ApiKey:   c.String("password"),
-			AuthUrl:  c.String("auth-url"),
-			Domain:   c.String("domain"),
-			TenantId: c.String("project-id"),
+			UserName:  c.String("username"),
+			ApiKey:    c.String("password"),
+			AuthUrl:   c.String("auth-url"),
+			Domain:    c.String("domain"),
+			TenantId:  c.String("project-id"),
+			Retries:   1,
+			UserAgent: fmt.Sprintf("%s (arc update-site; container: %s)", swift.DefaultUserAgent, c.String("container")),
 		},
 		c.String("container"),
 	}
