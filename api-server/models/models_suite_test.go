@@ -41,5 +41,5 @@ var _ = BeforeEach(func() {
 	DeleteAllRowsFromTable(db, "agents")
 	DeleteAllRowsFromTable(db, "logs")
 	DeleteAllRowsFromTable(db, "log_parts")
-	DeleteAllRowsFromTable(db, "registries")
+	DeleteAllRowsFromTable(db, "locks")
 })

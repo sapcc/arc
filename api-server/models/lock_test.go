@@ -9,31 +9,31 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Registry", func() {
+var _ = Describe("Lock", func() {
 
 	Describe("Get and Save", func() {
 
 		It("returns an error if no db connection is given", func() {
-			registry := Registry{}
-			err := registry.Get(nil)
+			lock := Lock{}
+			err := lock.Get(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("returns an error if no registry found", func() {
-			registry := Registry{}
-			registry.Example()
-			err := registry.Get(db)
+		It("returns an error if no lock found", func() {
+			lock := Lock{}
+			lock.Example()
+			err := lock.Get(db)
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("return a registry", func() {
-			registry := Registry{}
-			registry.Example()
-			err := registry.Save(db)
+		It("return a lock", func() {
+			lock := Lock{}
+			lock.Example()
+			err := lock.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 
-			dbRegistry := Registry{RegistryID: registry.RegistryID}
-			err = dbRegistry.Get(db)
+			dbLock := Lock{LockID: lock.LockID}
+			err = dbLock.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 		})
 

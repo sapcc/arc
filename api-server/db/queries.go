@@ -53,6 +53,6 @@ var GetAgentQuery = "SELECT * FROM agents WHERE agent_id=$1"
 var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at,updated_with,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) returning agent_id`
 var UpdateAgent = `UPDATE agents SET project=$2,organization=$3,facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$4::json)::jsonb,updated_at=$5,updated_with=$6,updated_by=$7 WHERE agent_id=$1`
 
-// Registries
-var GetRegistryQuery = "SELECT * FROM registries WHERE registry_id=$1"
-var InsertRegistryQuery = `INSERT INTO registries(registry_id,agent_id) VALUES($1,$2) returning registry_id`
+// Locks
+var GetLockQuery = "SELECT * FROM locks WHERE lock_id=$1"
+var InsertLockQuery = `INSERT INTO locks(lock_id,agent_id) VALUES($1,$2) returning lock_id`

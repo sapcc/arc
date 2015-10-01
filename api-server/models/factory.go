@@ -104,9 +104,9 @@ func (reg *Registration) Example() {
 	reg.Payload = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 }
 
-func (reg *Registry) Example() {
-	reg.RegistryID = uuid.New()
-	reg.AgentID = "darwin"
+func (l *Lock) Example() {
+	l.LockID = uuid.New()
+	l.AgentID = "darwin"
 }
 
 func (agent *Agent) Example() {

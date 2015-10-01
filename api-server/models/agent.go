@@ -146,8 +146,8 @@ func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agent
 	agent.FromRegistration(reg, agentId)
 
 	// save regitry id to check if the message is alredy handeled
-	registry := Registry{RegistryID: agent.UpdatedWith, AgentID: agentId}
-	isDuplicateError := registry.Save(db)
+	lock := Lock{LockID: agent.UpdatedWith, AgentID: agentId}
+	isDuplicateError := lock.Save(db)
 	if isDuplicateError == nil {
 
 		// create transaction
