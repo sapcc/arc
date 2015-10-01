@@ -71,12 +71,12 @@ type v3AuthResponse struct {
 	Token struct {
 		Expires_At, Issued_At string
 		Methods               []string
-    Roles                 []struct {
-      Id, Name string
-      Links    struct {
-        Self string
-      }
-    }
+		Roles                 []struct {
+			Id, Name string
+			Links    struct {
+				Self string
+			}
+		}
 
 		Project struct {
 			Domain struct {

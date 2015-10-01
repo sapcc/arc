@@ -79,7 +79,7 @@
 		},
 		{
 			"ImportPath": "github.com/ncw/swift",
-			"Rev": "be2866a164e011a71567611051b9ca2fb121ba32"
+			"Rev": "958ad62bfb2b21a988034c9c54467ce88103e255"
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
