@@ -1,5 +1,5 @@
 //go:generate go run main.go -o ../../descriptions.go
-//go:generate gofmt -w ../../descriptions.go
+//go:generate goimports -w ../../descriptions.go
 
 package main
 

@@ -93,7 +93,7 @@ func newRouter() *mux.Router {
 			Name(r.Name).
 			Handler(middlewareChain.ThenFunc(r.HandlerFunc))
 	}
-	
+
 	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
 	for _, r := range v1RoutesDefinition {
 		v1SubRouter.

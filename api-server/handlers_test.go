@@ -3,20 +3,20 @@
 package main
 
 import (
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/version"	
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"bytes"
-	"os"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 var _ = Describe("Job Handlers", func() {
@@ -571,52 +571,52 @@ var _ = Describe("Log Handlers", func() {
 
 })
 
-var _ = Describe("Root Handler", func() {	
-	
+var _ = Describe("Root Handler", func() {
+
 	It("returns the app name and version as plain text", func() {
 		// make request
 		req, err := http.NewRequest("GET", "/", bytes.NewBufferString(""))
 		Expect(err).NotTo(HaveOccurred())
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
-		
+
 		// check response code and header
 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
 		Expect(w.Code).To(Equal(200))
-		
+
 		// check json body response
-		Expect(w.Body.String()).To(Equal(fmt.Sprint("Arc api-server ", version.String())))			
+		Expect(w.Body.String()).To(Equal(fmt.Sprint("Arc api-server ", version.String())))
 	})
-	
+
 })
 
 var _ = Describe("Healthcheck Handler", func() {
-	
+
 	It("returns the app name and version as plain text", func() {
 		// make request
 		req, err := http.NewRequest("GET", "/healthcheck", bytes.NewBufferString(""))
 		Expect(err).NotTo(HaveOccurred())
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
-		
+
 		// check response code and header
 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
 		Expect(w.Code).To(Equal(200))
-		
+
 		// check json body response
-		Expect(w.Body.String()).To(Equal(fmt.Sprint("Arc api-server ", version.String())))			
+		Expect(w.Body.String()).To(Equal(fmt.Sprint("Arc api-server ", version.String())))
 	})
-	
+
 })
 
 var _ = Describe("Readiness Handler", func() {
-	
+
 	Describe("DB not reachable", func() {
-		
+
 		JustBeforeEach(func() {
 			db.Close()
 		})
-	
+
 		AfterEach(func() {
 			var err error
 			env := os.Getenv("ARC_ENV")
@@ -626,26 +626,26 @@ var _ = Describe("Readiness Handler", func() {
 			db, err = NewConnection("db/dbconf.yml", env)
 			Expect(err).NotTo(HaveOccurred())
 		})
-		
+
 		It("returns 502 if the db is not reachable", func() {
 			// make request
 			req, err := http.NewRequest("GET", "/readiness", bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)			
-				
+			router.ServeHTTP(w, req)
+
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
 			Expect(w.Code).To(Equal(502))
-		
+
 			// check json body response
 			var jsonBody Readiness
 			err = json.Unmarshal(w.Body.Bytes(), &jsonBody)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(jsonBody.Status).To(Equal(502))
-			Expect(jsonBody.Message).To(ContainSubstring("DB"))	
+			Expect(jsonBody.Message).To(ContainSubstring("DB"))
 		})
-		
+
 	})
 
 	Describe("Lost MQTT connection", func() {
@@ -658,7 +658,7 @@ var _ = Describe("Readiness Handler", func() {
 			tp, err = arcNewConnection(config)
 			Expect(err).NotTo(HaveOccurred())
 		})
-	
+
 		AfterEach(func() {
 			config.Identity = "darwin"
 			config.Transport = "fake"
@@ -667,40 +667,40 @@ var _ = Describe("Readiness Handler", func() {
 			tp, err = arcNewConnection(config)
 			Expect(err).NotTo(HaveOccurred())
 		})
-	
-		It("returns 502 if the connection to MQTT is broken", func() {							
+
+		It("returns 502 if the connection to MQTT is broken", func() {
 			// make request
 			req, err := http.NewRequest("GET", "/readiness", bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)			
-					
+			router.ServeHTTP(w, req)
+
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
 			Expect(w.Code).To(Equal(502))
-			
+
 			// check json body response
 			var jsonBody Readiness
 			err = json.Unmarshal(w.Body.Bytes(), &jsonBody)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(jsonBody.Status).To(Equal(502))
-			Expect(jsonBody.Message).To(ContainSubstring("transport"))			
-		})	
-		
+			Expect(jsonBody.Message).To(ContainSubstring("transport"))
+		})
+
 	})
-	
+
 	It("returns 200 if DB and MQTT are reachable or connected", func() {
 		// make request
 		req, err := http.NewRequest("GET", "/readiness", bytes.NewBufferString(""))
 		Expect(err).NotTo(HaveOccurred())
 		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)			
-				
+		router.ServeHTTP(w, req)
+
 		// check response code and header
 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-		Expect(w.Code).To(Equal(200))		
+		Expect(w.Code).To(Equal(200))
 	})
-	
+
 })
 
 // private

@@ -1,7 +1,5 @@
 package main
 
-import ()
-
 var cmdDescription = map[string]string{
 	"docs-commands-facts":  "Discover and list facts on this system.",
 	"docs-commands-help":   "The `help` shows a list of commands or help for one command.",

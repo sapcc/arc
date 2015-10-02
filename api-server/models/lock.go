@@ -2,10 +2,11 @@ package models
 
 import (
 	"errors"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/lib/pq"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"time"
 )
 
 type Lock struct {

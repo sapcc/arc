@@ -1,9 +1,9 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"errors"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -15,8 +15,8 @@ import (
 func Update(c *cli.Context, options map[string]interface{}) (int, error) {
 	if c.String("update-uri") == "" {
 		return 1, errors.New("Not enough arguments in call update command. Option update-uri is missing.")
-	}	
-	
+	}
+
 	up := updater.New(map[string]string{
 		"version":   version.Version,
 		"appName":   options["appName"].(string),

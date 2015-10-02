@@ -23,7 +23,7 @@ var responseExample = `{"initiative":"automatically","url":"MIAU://non_valid_url
 func TestCmdUpdateMissingUri(t *testing.T) {
 	// prepare context flags
 	ctx := cli.NewContext(nil, flag.NewFlagSet("local", 0), flag.NewFlagSet("global", 0))
-	
+
 	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err == nil {
 		t.Error("Expected to have an error")

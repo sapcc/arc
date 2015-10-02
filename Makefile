@@ -54,20 +54,16 @@ build-api: setup
 build-all: build build-update-site build-api
 
 .PHONY: test
-test: test-gofmt unit
+test: fmt unit
 
 .PHONY: unit
 unit: setup
 	go test -v -timeout=4s ./...
 
-.PHONY: test-gofmt
-test-gofmt:
-	@fmt_fails=`gofmt -l *.go */**/*.go | grep -v '^Godep'`; \
-		if [ -n "$$fmt_fails" ]; then \
-		echo The following files are not gofmt compatiable:; \
-		printf '%s\n' $$fmt_fails; \
-		exit 1; \
-		fi;
+.PHONY: fmt
+fmt:
+	dirs=`go list -f "{{.Dir}}" ./...|grep -v update-server`; \
+		test -z "`for d in $$dirs; do goimports -l $$d/*.go | tee /dev/stderr; done`"
 
 
 .PHONY: test-win

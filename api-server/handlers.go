@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"os"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-  "github.com/gorilla/handlers"	
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -188,51 +188,51 @@ func serveVersion(w http.ResponseWriter, r *http.Request) {
  */
 
 type Readiness struct {
-	Status   int  `json:"status"`
-	Message	 string  `json:"error"`
+	Status  int    `json:"status"`
+	Message string `json:"error"`
 }
 
-func serveReadiness(w http.ResponseWriter, r *http.Request) {	
+func serveReadiness(w http.ResponseWriter, r *http.Request) {
 	//check db connection
 	rows, err := db.Query(ownDb.CheckConnection)
 	if err != nil {
 		ready := Readiness{
-			Status: http.StatusBadGateway,
+			Status:  http.StatusBadGateway,
 			Message: "Ping to the DB failed",
-		}				
-		
+		}
+
 		// convert struct to json
 		body, err := json.Marshal(ready)
 		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
 
 		// return the error with json body
 		http.Error(w, string(body), ready.Status)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")		
-		
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
 		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
 		return
 	}
 	defer rows.Close()
-	
+
 	//check mosquitto transport connection
 	if !tp.IsConnected() {
 		ready := Readiness{
-			Status: http.StatusBadGateway,
+			Status:  http.StatusBadGateway,
 			Message: "Ping to the transport failed",
 		}
-		
+
 		// convert struct to json
 		body, err := json.Marshal(ready)
 		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
-		
+
 		// return the error with json body
 		http.Error(w, string(body), ready.Status)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")				
-		
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
 		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte("Ready!!!"))
 }
@@ -242,14 +242,14 @@ func combineLogHandler(next http.Handler) http.Handler {
 }
 
 func loggingHandler(next http.Handler) http.Handler {
-  fn := func(w http.ResponseWriter, r *http.Request) {
-    t1 := time.Now()
-    next.ServeHTTP(w, r)
-    t2 := time.Now()
-    log.Infof("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
-  }
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		t1 := time.Now()
+		next.ServeHTTP(w, r)
+		t2 := time.Now()
+		log.Infof("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+	}
 
-  return http.HandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // private

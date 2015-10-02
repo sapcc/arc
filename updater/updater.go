@@ -1,11 +1,12 @@
 package updater
 
 import (
+	"fmt"
+	"runtime"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
-	"runtime"
-	"fmt"
 )
 
 type Updater struct {
@@ -38,14 +39,14 @@ func (u *Updater) CheckAndUpdate() (bool, error) {
 	if err == check.NoUpdateAvailable {
 		log.Infof("No update available")
 		return false, nil
-	} else if err != nil {		
+	} else if err != nil {
 		return false, fmt.Errorf("Error while checking for update: %q", err.Error())
 	}
 	log.Infof("Updated version %q for app %q available ", r.Version, u.params.AppId)
 
 	// replace binary
 	err = u.Update(r)
-	if err != nil {		
+	if err != nil {
 		return false, fmt.Errorf("Failed to update: %q", err.Error())
 	}
 	log.Infof("Updated to version %q", r.Version)
