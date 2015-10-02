@@ -49,8 +49,16 @@ image:
 
 .PHONY: fmt
 fmt:
+	which goimports > /dev/null
 	dirs=`go list -f "{{.Dir}}" ./...`; \
 		test -z "`for d in $$dirs; do goimports -l $$d/*.go | tee /dev/stderr; done`"
+
+.PHONY: test
+test: fmt unit
+
+.PHONY: unit
+unit: setup
+	go test -v -timeout=4s ./...
 
 .PHONY: clean
 clean:

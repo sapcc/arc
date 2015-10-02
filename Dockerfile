@@ -29,3 +29,4 @@ RUN go get bitbucket.org/liamstask/goose/cmd/goose
 RUN go get github.com/mjibson/esc 
 RUN go get github.com/blynn/nex 
 RUN go get github.com/constabulary/gb/cmd/gb
+RUN go get golang.org/x/tools/cmd/goimports 
