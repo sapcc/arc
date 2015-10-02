@@ -62,6 +62,7 @@ unit: setup
 
 .PHONY: fmt
 fmt:
+	which goimports > /dev/null
 	dirs=`go list -f "{{.Dir}}" ./...|grep -v update-server`; \
 		test -z "`for d in $$dirs; do goimports -l $$d/*.go | tee /dev/stderr; done`"
 
