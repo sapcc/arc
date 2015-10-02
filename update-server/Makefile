@@ -2,11 +2,15 @@ SHELL       := /bin/sh
 GOPATH      := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
 ORG_PATH    := gitHub.***REMOVED***/monsoon
 REPO_PATH   := $(ORG_PATH)/arc
-GITVERSION  := -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-update-site
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
 BUILD_IMAGE := docker.***REMOVED***/monsoon/arc-build
+
+ifneq ($(BUILD_VERSION),)
+LDFLAGS:=$(LDFLAGS) -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+endif
 
 .PHONY: help 
 help:
@@ -19,7 +23,7 @@ help:
 .PHONY: build
 build: setup
 	mkdir -p bin/ 
-	go build -o bin/update-site -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/update-server
+	go build -o bin/update-site -ldflags="$(LDFLAGS)" $(REPO_PATH)/update-server
 
 .PHONY: build-docker
 build-docker:

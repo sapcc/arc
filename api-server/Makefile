@@ -2,11 +2,15 @@ SHELL       := /bin/sh
 GOPATH      := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
 ORG_PATH    := gitHub.***REMOVED***/monsoon
 REPO_PATH   := $(ORG_PATH)/arc
-GITVERSION  := -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
 BUILD_IMAGE := docker.***REMOVED***/monsoon/arc-build
+
+ifneq ($(BUILD_VERSION),)
+LDFLAGS:=$(LDFLAGS) -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+endif
 
 DOCKER = docker
 WAIT   = $(DOCKER) run --rm --link $(WAIT_ID):wait  \
@@ -27,7 +31,7 @@ help:
 .PHONY: build
 build: setup
 	mkdir -p bin/ 
-	go build -o bin/api-server -ldflags="-w -s $(GITVERSION)" $(REPO_PATH)/api-server
+	go build -o bin/api-server -ldflags="$(LDFLAGS)" $(REPO_PATH)/api-server
 
 .PHONY: gencert
 gencert:
