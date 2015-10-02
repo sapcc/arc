@@ -10,6 +10,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
 	"github.com/ncw/swift"
+
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 )
 
@@ -104,8 +105,8 @@ func (s *SwiftStorage) GetStoragePath() string {
 	return s.Connection.AuthUrl
 }
 
-func (s *SwiftStorage) IsConnected() bool {	
-	_, _, err := s.Connection.Container(s.Container) 
+func (s *SwiftStorage) IsConnected() bool {
+	_, _, err := s.Connection.Container(s.Container)
 	if err != nil {
 		return false
 	}

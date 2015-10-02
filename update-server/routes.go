@@ -5,7 +5,9 @@ package main
 
 import (
 	"net/http"
+
 	"github.com/gorilla/mux"
+
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
 )
 
@@ -16,30 +18,30 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		Methods("POST").
 		Path("/updates").
 		Name("Get available updates").
-		Handler( http.HandlerFunc(serveAvailableUpdates) )
+		Handler(http.HandlerFunc(serveAvailableUpdates))
 
 	if storageType == storage.Local {
 		router.
 			Methods("POST").
 			Path("/upload").
 			Name("Upload files").
-			Handler( http.HandlerFunc(uploadHandler) )
-		
+			Handler(http.HandlerFunc(uploadHandler))
+
 		router.
 			Methods("GET").
 			PathPrefix("/builds/").
 			Name("Serve local build files").
-			Handler( http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))) )	
+			Handler(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))))
 	}
-		
-	if storageType == storage.Swift	{
+
+	if storageType == storage.Swift {
 		router.
 			Methods("GET").
 			PathPrefix("/builds/").
 			Name("Serve build files from swift").
-			Handler( http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds)) )	
+			Handler(http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds)))
 	}
-		
+
 	router.
 		Methods("GET").
 		PathPrefix("/static/").
@@ -50,19 +52,19 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		Methods("GET").
 		Path("/healthcheck").
 		Name("Healthcheck").
-		Handler( http.HandlerFunc(serveVersion) )
-		
+		Handler(http.HandlerFunc(serveVersion))
+
 	router.
 		Methods("GET").
 		Path("/readiness").
 		Name("Readiness").
-		Handler( http.HandlerFunc(serveReadiness) )
+		Handler(http.HandlerFunc(serveReadiness))
 
 	router.
 		Methods("GET").
 		Path("/").
 		Name("Serve templates").
-		Handler( http.HandlerFunc(serveTemplate) )
+		Handler(http.HandlerFunc(serveTemplate))
 
 	return router
 }

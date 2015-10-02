@@ -4,22 +4,24 @@ package main
 
 import (
 	"bytes"
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"flag"
-	"fmt"
 	"path"
 	"testing"
+
 	"github.com/codegangsta/cli"
+
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-// 
+//
 // Local storage - AvailableUpdate
-// 
+//
 
 func TestServeAvailableUpdates(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
@@ -43,7 +45,7 @@ func TestServeAvailableUpdates(t *testing.T) {
 }
 
 func TestServeNonAvailableUpdates(t *testing.T) {
-	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")	
+	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 	}()
@@ -63,16 +65,16 @@ func TestServeNonAvailableUpdates(t *testing.T) {
 }
 
 func TestServeAvailableUpdatesError(t *testing.T) {
-	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")	
+	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 	}()
-	
+
 	set := flag.NewFlagSet("test", 0)
 	set.String("path", buildsRootPath, "local")
 	c := cli.NewContext(nil, set, nil)
 	st, _ = storage.New(storage.Local, c)
-	
+
 	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64"}}`) // missing tag
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	w := httptest.NewRecorder()
@@ -83,18 +85,18 @@ func TestServeAvailableUpdatesError(t *testing.T) {
 }
 
 func TestServeAvailableError500(t *testing.T) {
-	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")	
+	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 	}()
-	
+
 	set := flag.NewFlagSet("test", 0)
 	set.String("path", buildsRootPath, "local")
 	c := cli.NewContext(nil, set, nil)
 	st, _ = storage.New(storage.Local, c)
-	
+
 	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`) // missing tag
-	req, _ := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr)) // fails with 500 generating the host url for the available update
+	req, _ := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))                                       // fails with 500 generating the host url for the available update
 	w := httptest.NewRecorder()
 	serveAvailableUpdates(w, req)
 	if w.Code != 500 {
@@ -102,9 +104,9 @@ func TestServeAvailableError500(t *testing.T) {
 	}
 }
 
-// 
+//
 // Healthcheck
-// 
+//
 
 func TestHealthcheck(t *testing.T) {
 	// make request
@@ -114,7 +116,7 @@ func TestHealthcheck(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	serveVersion(w, req)
-	
+
 	if w.Code != 200 {
 		t.Error("Expected code to be '200'. Got ", w.Code)
 	}
@@ -126,9 +128,9 @@ func TestHealthcheck(t *testing.T) {
 	}
 }
 
-// 
+//
 // Local storage - Upload
-// 
+//
 
 func TestUploadFilenameMissing(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")

@@ -10,6 +10,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
+
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 )
 
@@ -94,9 +95,9 @@ func (l *LocalStorage) GetStoragePath() string {
 
 // check if the path still exists
 func (s *LocalStorage) IsConnected() bool {
-	_, err := os.Stat(s.BuildsRootPath);
-  if os.IsNotExist(err) {
-      return false
-  }	
+	_, err := os.Stat(s.BuildsRootPath)
+	if os.IsNotExist(err) {
+		return false
+	}
 	return true
 }

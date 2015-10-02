@@ -2,17 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/arc/version"
-	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"		
-
-	"net/http"
-	"strings"
-	"fmt"
-	"path"
-	"os"
-	"io"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
+	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
@@ -115,55 +115,54 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "File uploaded successfully.\n")
 	return
- }
+}
 
+/*
+ * Readiness
+ */
 
- /*
-  * Readiness
-  */
+type Readiness struct {
+	Status  int    `json:"status"`
+	Message string `json:"error"`
+}
 
- type Readiness struct {
- 	Status  int    `json:"status"`
- 	Message string `json:"error"`
- }
+func serveReadiness(w http.ResponseWriter, r *http.Request) {
+	if !st.IsConnected() {
+		ready := Readiness{
+			Status:  http.StatusBadGateway,
+			Message: "Storage not reachable",
+		}
 
- func serveReadiness(w http.ResponseWriter, r *http.Request) {
- 	if !st.IsConnected() {
- 		ready := Readiness{
- 			Status: http.StatusBadGateway,
- 			Message: "Storage not reachable",
- 		}
-		
- 		// convert struct to json
- 		body, err := json.Marshal(ready)		
- 		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
-		
- 		// return the error with json body
- 		http.Error(w, string(body), ready.Status)
- 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")				
-		
- 		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
- 		return
- 	}
- 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
- 	w.Write([]byte("Ready!!!"))
- }
+		// convert struct to json
+		body, err := json.Marshal(ready)
+		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
 
- /*
-  * Healthcheck
-  */
+		// return the error with json body
+		http.Error(w, string(body), ready.Status)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
- func serveVersion(w http.ResponseWriter, r *http.Request) {
- 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
- 	w.Write([]byte("Arc update-server " + version.String()))
- }
+		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte("Ready!!!"))
+}
 
- // private
+/*
+ * Healthcheck
+ */
 
- func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
- 	if err != nil {
- 		log.Errorf("Error, returning status %v. %s %s", status, msg, err.Error())
- 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
- 		http.Error(w, http.StatusText(status), status)
- 	}
- }
+func serveVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte("Arc update-server " + version.String()))
+}
+
+// private
+
+func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
+	if err != nil {
+		log.Errorf("Error, returning status %v. %s %s", status, msg, err.Error())
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.Error(w, http.StatusText(status), status)
+	}
+}

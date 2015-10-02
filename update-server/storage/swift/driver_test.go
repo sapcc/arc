@@ -3,21 +3,21 @@
 package swift
 
 import (
-  "testing"
 	"flag"
-	
+	"testing"
+
 	"github.com/codegangsta/cli"
 )
 
-// 
+//
 // New()
-// 
+//
 
 func TestNewMissingParams(t *testing.T) {
 	localSet := flag.NewFlagSet("test", 0)
 	ctx := cli.NewContext(nil, localSet, nil)
-	
-	storage, err := New(ctx)	
+
+	storage, err := New(ctx)
 	if err == nil {
 		t.Error("Expected to have an error")
 	}

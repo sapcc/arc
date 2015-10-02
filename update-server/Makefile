@@ -47,6 +47,11 @@ image:
 	docker build -t $(IMAGE) --rm . 
 	echo $(IMAGE) > image 
 
+.PHONY: fmt
+fmt:
+	dirs=`go list -f "{{.Dir}}" ./...`; \
+		test -z "`for d in $$dirs; do goimports -l $$d/*.go | tee /dev/stderr; done`"
+
 .PHONY: clean
 clean:
 	rm -f bin/update-site

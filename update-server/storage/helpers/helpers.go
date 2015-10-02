@@ -19,7 +19,7 @@ var UpdateArgumentError = fmt.Errorf("Update arguments are missing or wrong")
 
 const (
 	BuildRelativeUrl = "/builds/"
-	FileNameRegex = `^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?`
+	FileNameRegex    = `^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?`
 )
 
 /*
@@ -54,7 +54,7 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 			}
 			result, err := shouldUpdate(reqParams.AppVersion, fileVersion, buildVersion)
 			if err != nil {
-				log.Warn(err)				
+				log.Warn(err)
 				continue
 			}
 			if result == true {
