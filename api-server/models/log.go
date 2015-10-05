@@ -80,12 +80,12 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 			return err
 		}
 		if safe {
-			return logReply(db, reply)
+			return processLogReply(db, reply)
 		} else {
 			return ReplyExistsError
 		}
 	} else {
-		return logReply(db, reply)
+		return processLogReply(db, reply)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func CleanLogParts(db *sql.DB) (int, error) {
 
 // private
 
-func logReply(db *sql.DB, reply *arc.Reply) error {
+func processLogReply(db *sql.DB, reply *arc.Reply) error {
 	// update job
 	job := Job{Request: arc.Request{RequestID: reply.RequestID}, Status: reply.State, UpdatedAt: time.Now()}
 	err := job.Update(db)

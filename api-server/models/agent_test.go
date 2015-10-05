@@ -167,8 +167,7 @@ var _ = Describe("Agent", func() {
 	Describe("ProcessRegistry", func() {
 
 		It("returns an error if no db connection is given", func() {
-			newAgent := Agent{AgentID: uuid.New()}
-			err := newAgent.ProcessRegistration(nil, nil, "darwin", true)
+			err := ProcessRegistration(nil, nil, "darwin", true)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -178,8 +177,7 @@ var _ = Describe("Agent", func() {
 			reg.Example()
 
 			// process the registration
-			agent := Agent{}
-			err := agent.ProcessRegistration(db, &reg.Registration, "darwin", true)
+			err := ProcessRegistration(db, &reg.Registration, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check
@@ -213,8 +211,7 @@ var _ = Describe("Agent", func() {
 			newReg := arc.Registration{RegistrationID: uuid.New(), Sender: agent.AgentID, Project: newProj, Organization: newOrg, Payload: newFacts}
 
 			// process the request
-			updateAgent := Agent{}
-			err = updateAgent.ProcessRegistration(db, &newReg, agentId, true)
+			err = ProcessRegistration(db, &newReg, agentId, true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check
@@ -236,8 +233,7 @@ var _ = Describe("Agent", func() {
 
 			// save agent with facts
 			reg := arc.Registration{RegistrationID: registrationId, Sender: uuid.New(), Project: proj, Organization: org, Payload: facts}
-			agent := Agent{}
-			err := agent.ProcessRegistration(db, &reg, agentId, true)
+			err := ProcessRegistration(db, &reg, agentId, true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// build a new registration with same id
@@ -246,11 +242,10 @@ var _ = Describe("Agent", func() {
 			newProj := "Miao project"
 			newOrg := "Miao organization"
 			newFacts := fmt.Sprintf(`{"memory_used": %v, "memory_total": %v}`, memory_used, memory_total)
-			newReg := arc.Registration{RegistrationID: registrationId, Sender: agent.AgentID, Project: newProj, Organization: newOrg, Payload: newFacts}
+			newReg := arc.Registration{RegistrationID: registrationId, Sender: agentId, Project: newProj, Organization: newOrg, Payload: newFacts}
 
 			// process the request
-			updateAgent := Agent{}
-			err = updateAgent.ProcessRegistration(db, &newReg, agentId, true)
+			err = ProcessRegistration(db, &newReg, agentId, true)
 			Expect(err).To(Equal(RegistrationExistsError))
 		})
 
@@ -260,11 +255,11 @@ var _ = Describe("Agent", func() {
 			agentId := "darwin"
 			registrationId := uuid.New()
 			facts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "%s"}`, proj, org)
+			sender := uuid.New()
 
 			// save agent with facts
-			reg := arc.Registration{RegistrationID: registrationId, Sender: uuid.New(), Project: proj, Organization: org, Payload: facts}
-			agent := Agent{}
-			err := agent.ProcessRegistration(db, &reg, agentId, false)
+			reg := arc.Registration{RegistrationID: registrationId, Sender: sender, Project: proj, Organization: org, Payload: facts}
+			err := ProcessRegistration(db, &reg, agentId, false)
 			Expect(err).NotTo(HaveOccurred())
 
 			// build a new registration with same id
@@ -273,11 +268,10 @@ var _ = Describe("Agent", func() {
 			newProj := "Miao project"
 			newOrg := "Miao organization"
 			newFacts := fmt.Sprintf(`{"memory_used": %v, "memory_total": %v}`, memory_used, memory_total)
-			newReg := arc.Registration{RegistrationID: registrationId, Sender: agent.AgentID, Project: newProj, Organization: newOrg, Payload: newFacts}
+			newReg := arc.Registration{RegistrationID: registrationId, Sender: sender, Project: newProj, Organization: newOrg, Payload: newFacts}
 
 			// process the request
-			updateAgent := Agent{}
-			err = updateAgent.ProcessRegistration(db, &newReg, agentId, false)
+			err = ProcessRegistration(db, &newReg, agentId, false)
 			Expect(err).NotTo(HaveOccurred()) // it is updated twice
 		})
 

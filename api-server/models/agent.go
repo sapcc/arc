@@ -132,12 +132,13 @@ func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) {
 	return
 }
 
-func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, concurrencySafe bool) (err error) {
+func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, concurrencySafe bool) (err error) {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
 
 	// cast registration to agent
+	agent := Agent{}
 	agent.FromRegistration(reg, agentId)
 
 	// should check concurrency
@@ -147,12 +148,12 @@ func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agent
 			return err
 		}
 		if safe {
-			return processRegistration(db, agent)
+			return processRegistration(db, &agent)
 		} else {
 			return RegistrationExistsError
 		}
 	} else {
-		return processRegistration(db, agent)
+		return processRegistration(db, &agent)
 	}
 
 	return
