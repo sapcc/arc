@@ -116,23 +116,28 @@ var _ = Describe("Log", func() {
 
 		It("returns an error if no db connection is given", func() {
 			reply := arc.Reply{RequestID: uuid.New()}
-			err := ProcessLogReply(nil, &reply)
+			err := ProcessLogReply(nil, &reply, "darwin", true)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should not save a log part entry if the payload is empty", func() {
-			job_id := uuid.New()
-			reply := arc.Reply{RequestID: job_id, Payload: "", Final: false}
-			err := ProcessLogReply(db, &reply)
+			// add a job related to the log
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
+			err := newJob.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			reply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: "", Final: false}
+			err = ProcessLogReply(db, &reply, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check log
-			newLog := Log{JobID: job_id}
+			newLog := Log{JobID: newJob.RequestID}
 			err = newLog.Get(db)
 			Expect(err).To(HaveOccurred())
 
 			// check log parts
-			logPart := LogPart{JobID: job_id}
+			logPart := LogPart{JobID: newJob.RequestID}
 			_, err = logPart.Collect(db)
 			Expect(err).To(HaveOccurred())
 		})
@@ -148,7 +153,7 @@ var _ = Describe("Log", func() {
 
 			// process reply
 			reply := arc.Reply{RequestID: newJob.RequestID, Payload: chunck, Final: false}
-			err = ProcessLogReply(db, &reply)
+			err = ProcessLogReply(db, &reply, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check log
@@ -174,7 +179,7 @@ var _ = Describe("Log", func() {
 
 			// process reply
 			reply := arc.Reply{RequestID: newJob.RequestID, Payload: chunck, Final: true}
-			err = ProcessLogReply(db, &reply)
+			err = ProcessLogReply(db, &reply, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// check log parts
@@ -189,13 +194,13 @@ var _ = Describe("Log", func() {
 			Expect(newLog.Content).To(Equal(chunck))
 		})
 
-		It("should get an error if no job with the same id does not exist", func() {
+		It("should get an error if no job with the same id exists", func() {
 			job_id := uuid.New()
 			chunck := "This is a chunck log"
 
 			// process reply
 			reply := arc.Reply{RequestID: job_id, Payload: chunck}
-			err := ProcessLogReply(db, &reply)
+			err := ProcessLogReply(db, &reply, "darwin", true)
 			Expect(err).To(HaveOccurred())
 
 			// check log parts
@@ -207,6 +212,49 @@ var _ = Describe("Log", func() {
 			newLog := Log{JobID: job_id}
 			err = newLog.Get(db)
 			Expect(err).To(HaveOccurred())
+		})
+
+		It("should check concurrency safe", func() {
+			chunck := "This is a chunck log 1"
+			chunck2 := "This is a chunck log 2"
+
+			// add a job related to the log
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
+			err := newJob.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// process reply
+			reply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: chunck, Final: false}
+			err = ProcessLogReply(db, &reply, "darwin", true)
+			Expect(err).NotTo(HaveOccurred())
+
+			// process new reply
+			newReply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: chunck2, Final: false}
+			err = ProcessLogReply(db, &newReply, "darwin", true)
+			Expect(err).To(Equal(ReplyExistsError))
+		})
+
+		It("should not check concurrency safe", func() {
+			chunck := "This is a chunck log 1"
+			chunck2 := "This is a chunck log 2"
+
+			// add a job related to the log
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
+			err := newJob.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// process reply
+			reply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: chunck, Final: false}
+			err = ProcessLogReply(db, &reply, "darwin", false)
+			Expect(err).NotTo(HaveOccurred())
+
+			// process new reply
+			newReply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: chunck2, Final: false}
+			err = ProcessLogReply(db, &newReply, "darwin", false)
+			Expect(err).To(HaveOccurred())
+			Expect(err).NotTo(Equal(ReplyExistsError))
 		})
 
 	})

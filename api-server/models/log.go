@@ -12,6 +12,8 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
+var ReplyExistsError = fmt.Errorf("Reply message already handeled.")
+
 type Log struct {
 	JobID     string    `json:"job_id"`
 	Content   string    `json:"content"`
@@ -67,29 +69,23 @@ func (log *Log) GetOrCollect(db *sql.DB) error {
 	return nil
 }
 
-func ProcessLogReply(db *sql.DB, reply *arc.Reply) error {
+func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySafe bool) error {
 	if db == nil {
 		return fmt.Errorf("Db connection is nil")
 	}
 
-	// save log part
-	if reply.Payload != "" {
-		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
-
-		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
-		err := logPart.Save(db)
+	if concurrencySafe {
+		safe, err := IsConcurrencySafe(db, fmt.Sprint(reply.RequestID, "_", reply.Number), agentId)
 		if err != nil {
-			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
+			return err
 		}
-	}
-
-	// collect log parts and save an entire log text
-	if reply.Final == true {
-		err := aggregateLogParts(db, reply.RequestID)
-		if err != nil {
-			return fmt.Errorf("Error aggregating log parts to log. Got %q", err.Error())
+		if safe {
+			return logReply(db, reply)
+		} else {
+			return ReplyExistsError
 		}
-		log.Infof("Aggregated log parts to log with id %q", reply.RequestID)
+	} else {
+		return logReply(db, reply)
 	}
 
 	return nil
@@ -134,6 +130,37 @@ func CleanLogParts(db *sql.DB) (int, error) {
 }
 
 // private
+
+func logReply(db *sql.DB, reply *arc.Reply) error {
+	// update job
+	job := Job{Request: arc.Request{RequestID: reply.RequestID}, Status: reply.State, UpdatedAt: time.Now()}
+	err := job.Update(db)
+	if err != nil {
+		return fmt.Errorf("Error updating job %q. Got %q", reply.RequestID, err.Error())
+	}
+
+	// save log part
+	if reply.Payload != "" {
+		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
+
+		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
+		err := logPart.Save(db)
+		if err != nil {
+			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
+		}
+	}
+
+	// collect log parts and save an entire log text
+	if reply.Final == true {
+		err := aggregateLogParts(db, reply.RequestID)
+		if err != nil {
+			return fmt.Errorf("Error aggregating log parts to log. Got %q", err.Error())
+		}
+		log.Infof("Aggregated log parts to log with id %q", reply.RequestID)
+	}
+
+	return nil
+}
 
 func aggregateLogParts(db *sql.DB, id string) (err error) {
 	tx, err := db.Begin()

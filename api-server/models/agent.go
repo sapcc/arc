@@ -147,18 +147,20 @@ func (agent *Agent) ProcessRegistration(db *sql.DB, reg *arc.Registration, agent
 			return err
 		}
 		if safe {
-			return processRegistration(db, agent, agentId)
+			return processRegistration(db, agent)
 		} else {
 			return RegistrationExistsError
 		}
 	} else {
-		return processRegistration(db, agent, agentId)
+		return processRegistration(db, agent)
 	}
 
 	return
 }
 
-func processRegistration(db *sql.DB, agent *Agent, agentId string) (err error) {
+// private
+
+func processRegistration(db *sql.DB, agent *Agent) (err error) {
 	// create transaction
 	tx, err := db.Begin()
 	if err != nil {

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
@@ -61,17 +59,11 @@ func arcSubscribeReplies(tp transport.Transport) error {
 		case reply := <-msgChan:
 			log.Infof("Got reply with id %q and status %q", reply.RequestID, reply.State)
 
-			// update job
-			job := models.Job{Request: arc.Request{RequestID: reply.RequestID}, Status: reply.State, UpdatedAt: time.Now()}
-			err := job.Update(db)
-			if err != nil {
-				log.Errorf("Error updating job %q. Got %q", reply.RequestID, err.Error())
-				continue
-			}
-
 			// add log
-			err = models.ProcessLogReply(db, reply)
-			if err != nil {
+			err := models.ProcessLogReply(db, reply, tp.IdentityInformation()["identity"], concurrencySafe)
+			if err == models.ReplyExistsError {
+				log.Info(models.ReplyExistsError, " Reply id ", reply.RequestID)
+			} else if err != nil {
 				log.Error(err)
 				continue
 			}

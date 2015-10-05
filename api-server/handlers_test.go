@@ -531,7 +531,7 @@ var _ = Describe("Log Handlers", func() {
 			// save log for the job
 			reply := models.Reply{}
 			reply.ExecuteScriptExample(job.RequestID, true, "Log text", 1)
-			err := models.ProcessLogReply(db, &reply.Reply)
+			err := models.ProcessLogReply(db, &reply.Reply, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request

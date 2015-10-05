@@ -139,7 +139,7 @@ func (logpart *LogPart) SaveLogPartExamples(db *sql.DB, id string) string {
 	for i := 0; i < 3; i++ {
 		chunk := fmt.Sprint("Log chunk ", i)
 		reply.ExecuteScriptExample(id, false, chunk, uint(i))
-		err := ProcessLogReply(db, &reply.Reply)
+		err := ProcessLogReply(db, &reply.Reply, "darwin", true)
 		if err != nil {
 			log.Error(err)
 		}
