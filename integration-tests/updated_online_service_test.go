@@ -70,7 +70,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 
 			// check version
 			if !strings.Contains(facts.Version, *arcLatestVersion) {
-				fmt.Printf("Agent %s is running version %s, expected %s\n", agent.AgentID, *arcLatestVersion, facts.Version)
+				fmt.Printf("Agent %s is running version %#v, expected %#v\n", agent.AgentID, facts.Version, *arcLatestVersion)
 				continue
 			}
 
