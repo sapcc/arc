@@ -55,4 +55,13 @@ var UpdateAgent = `UPDATE agents SET project=$2,organization=$3,facts=json_repla
 
 // Locks
 var GetLockQuery = "SELECT * FROM locks WHERE lock_id=$1"
-var InsertLockQuery = `INSERT INTO locks(lock_id,agent_id) VALUES($1,$2) returning lock_id`
+var InsertLockQuery = `INSERT INTO locks(lock_id,agent_id,created_at) VALUES($1,$2,$3) returning lock_id`
+var CleanLocksQuery = `
+	DELETE FROM locks
+	WHERE lock_id IN
+	(
+		SELECT DISTINCT lock_id
+		FROM locks
+		WHERE (created_at <= NOW() - INTERVAL '1 seconds' * $1)
+	)
+`

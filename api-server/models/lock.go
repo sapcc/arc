@@ -34,7 +34,7 @@ func (l *Lock) Save(db Db) error {
 	}
 
 	var lastInsertId string
-	if err := db.QueryRow(ownDb.InsertLockQuery, l.LockID, l.AgentID).Scan(&lastInsertId); err != nil {
+	if err := db.QueryRow(ownDb.InsertLockQuery, l.LockID, l.AgentID, l.CreatedAt).Scan(&lastInsertId); err != nil {
 		return err
 	}
 
@@ -55,4 +55,26 @@ func IsConcurrencySafe(db Db, messageId string, agentId string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func CleanLocks(db Db) (int64, error) {
+	if db == nil {
+		return 0, errors.New("Db connection is nil")
+	}
+
+	var affectedLocks int64
+	affectedLocks = 0
+
+	// get log parts to aggregate
+	res, err := db.Exec(ownDb.CleanLocksQuery, 300) // 5 min
+	if err != nil {
+		return affectedLocks, err
+	}
+
+	affectedLocks, err = res.RowsAffected()
+	if err != nil {
+		return affectedLocks, err
+	}
+
+	return affectedLocks, nil
 }

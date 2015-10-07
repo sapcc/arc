@@ -107,6 +107,7 @@ func (reg *Registration) Example() {
 func (l *Lock) Example() {
 	l.LockID = uuid.New()
 	l.AgentID = "darwin"
+	l.CreatedAt = time.Now()
 }
 
 func (agent *Agent) Example() {

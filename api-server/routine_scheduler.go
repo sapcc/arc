@@ -42,3 +42,11 @@ func cleanLogParts(db *sql.DB) {
 	}
 	log.Infof("Clean log parts routine: %v aggregable log parts found", rowsCount)
 }
+
+func cleanLocks(db *sql.DB) {
+	affectedLocks, err := models.CleanLocks(db)
+	if err != nil {
+		log.Error("Clean locks routine: ", err.Error())
+	}
+	log.Infof("Clean locks routine: %v old (6 min) locks removed from the db", affectedLocks)
+}
