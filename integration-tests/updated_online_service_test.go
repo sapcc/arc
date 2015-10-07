@@ -50,13 +50,18 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 
 	// check the version from each agent
 
+	results := make(map[int]bool, len(agents))
 	for i := 0; i < *timeout; i++ {
 
-		for i, agent := range agents {
+		for idx, agent := range agents {
+			if _, ok := results[idx]; ok {
+				//skip finished agents
+				continue
+			}
 			statusCode, body = client.GetApiV1(fmt.Sprint("/agents/", agent.AgentID, "/facts"), ApiServer)
 			if statusCode != "200 OK" {
 				t.Error("Expected to get 200 response code getting facts for agent ", agent)
-				agents = append(agents[:i], agents[i+1:]...)
+				results[idx] = false
 				continue
 			}
 
@@ -64,7 +69,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 			err = json.Unmarshal(*body, &facts)
 			if err != nil {
 				t.Error("Error unmarshaling response for ", agent)
-				agents = append(agents[:i], agents[i+1:]...)
+				results[idx] = false
 				continue
 			}
 
@@ -79,12 +84,15 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 				t.Error(fmt.Sprint("Expected agent ", agent.AgentID, " to be online."))
 			}
 			fmt.Printf("Agent %s is online and updated\n", agent.AgentID)
-			agents = append(agents[:i], agents[i+1:]...)
+			results[idx] = true
+			fmt.Println("agents ", agents)
 		}
 		fmt.Println("Sleeping for 1 second...")
 		time.Sleep(1 * time.Second)
 	}
-	for _, agent := range agents {
-		t.Errorf("Agent %s failed to update before %ds timeout was reached", agent.AgentID, *timeout)
+	for i, agent := range agents {
+		if _, ok := results[i]; !ok {
+			t.Errorf("Agent %s failed to update before %ds timeout was reached", agent.AgentID, *timeout)
+		}
 	}
 }
