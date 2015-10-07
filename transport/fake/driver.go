@@ -4,6 +4,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
 )
 
 type FakeClient struct {
@@ -108,8 +109,13 @@ func (c *FakeClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 	return out, cancel
 }
 
-func (c *FakeClient) IdentityInformation() map[string]string {
-	return map[string]string{}
+func (c *FakeClient) IdentityInformation() helpers.TransportIdentity {
+	return helpers.TransportIdentity{
+		Identity:     "Fake",
+		Project:      "Fake",
+		Organization: "Fake",
+		Transport:    helpers.Fake,
+	}
 }
 
 func (c *FakeClient) DoneSignal() {

@@ -13,6 +13,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
 )
 
 type MQTTClient struct {
@@ -296,11 +297,12 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 	return out, cancel
 }
 
-func (c *MQTTClient) IdentityInformation() map[string]string {
-	return map[string]string{
-		"identity":     c.identity,
-		"project":      c.project,
-		"organization": c.organization,
+func (c *MQTTClient) IdentityInformation() helpers.TransportIdentity {
+	return helpers.TransportIdentity{
+		Identity:     c.identity,
+		Project:      c.project,
+		Organization: c.organization,
+		Transport:    helpers.MQTT,
 	}
 }
 

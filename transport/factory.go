@@ -6,6 +6,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
+	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
 	"gitHub.***REMOVED***/monsoon/arc/transport/mqtt"
 )
 
@@ -20,14 +21,14 @@ type Transport interface {
 	SubscribeJob(requestId string) (messages <-chan *arc.Reply, cancel func())
 	SubscribeReplies() (messages <-chan *arc.Reply, cancel func())
 	SubscribeRegistrations() (messages <-chan *arc.Registration, cancel func())
-	IdentityInformation() map[string]string
+	IdentityInformation() helpers.TransportIdentity
 }
 
 func New(config arc_config.Config, server bool) (Transport, error) {
-	switch config.Transport {
-	case "mqtt":
+	switch helpers.TransportType(config.Transport) {
+	case helpers.MQTT:
 		return mqtt.New(config, server)
-	case "fake":
+	case helpers.Fake:
 		return fake.New(config, server)
 	}
 	return nil, errors.New("Invalid transport")

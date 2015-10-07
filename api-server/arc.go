@@ -8,6 +8,7 @@ import (
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
+	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"	
 )
 
 /*
@@ -36,14 +37,18 @@ func arcSubscribeReplies(tp transport.Transport) error {
 	msgChan, cancelRepliesSubscription := tp.SubscribeReplies()
 	defer cancelRepliesSubscription()
 
-	concurrencySafe := true
+	concurrencySafe := false
+	if tp.IdentityInformation().Transport == helpers.MQTT {
+		log.Info("Concurrency safe mode on")
+		concurrencySafe = true
+	}
 
 	for {
 		select {
 		case registry := <-regChan:
 			log.Infof("Got registration from %q with id %q and data %q", registry.Sender, registry.RegistrationID, registry.Payload)
 
-			err := models.ProcessRegistration(db, registry, tp.IdentityInformation()["identity"], concurrencySafe)
+			err := models.ProcessRegistration(db, registry, tp.IdentityInformation().Identity, concurrencySafe)
 			if err == models.RegistrationExistsError {
 				log.Info(models.RegistrationExistsError, " Registration id ", registry.RegistrationID)
 			} else if err != nil {
@@ -59,7 +64,7 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			log.Infof("Got reply with id %q and status %q", reply.RequestID, reply.State)
 
 			// add log
-			err := models.ProcessLogReply(db, reply, tp.IdentityInformation()["identity"], concurrencySafe)
+			err := models.ProcessLogReply(db, reply, tp.IdentityInformation().Identity, concurrencySafe)
 			if err == models.ReplyExistsError {
 				log.Info(models.ReplyExistsError, " Reply id ", reply.RequestID)
 			} else if err != nil {
