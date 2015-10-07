@@ -56,7 +56,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 			statusCode, body = client.GetApiV1(fmt.Sprint("/agents/", agent.AgentID, "/facts"), ApiServer)
 			if statusCode != "200 OK" {
 				t.Error("Expected to get 200 response code getting facts for agent ", agent)
-				agents = append(agents[:i], agents[:i+1]...)
+				agents = append(agents[:i], agents[i+1:]...)
 				continue
 			}
 
@@ -64,7 +64,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 			err = json.Unmarshal(*body, &facts)
 			if err != nil {
 				t.Error("Error unmarshaling response for ", agent)
-				agents = append(agents[:i], agents[:i+1]...)
+				agents = append(agents[:i], agents[i+1:]...)
 				continue
 			}
 
@@ -79,7 +79,7 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 				t.Error(fmt.Sprint("Expected agent ", agent.AgentID, " to be online."))
 			}
 			fmt.Printf("Agent %s is online and updated\n", agent.AgentID)
-			agents = append(agents[:i], agents[:i+1]...)
+			agents = append(agents[:i], agents[i+1:]...)
 		}
 		fmt.Println("Sleeping for 1 second...")
 		time.Sleep(1 * time.Second)
