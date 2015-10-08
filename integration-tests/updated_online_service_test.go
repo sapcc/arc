@@ -87,6 +87,9 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 			results[idx] = true
 			fmt.Println("agents ", agents)
 		}
+		if len(results) == len(agents) {
+			break
+		}
 		fmt.Println("Sleeping for 1 second...")
 		time.Sleep(1 * time.Second)
 	}
