@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/filter"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
@@ -69,6 +70,28 @@ func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 	return nil
 }
 
+func (filteredAgents *Agents) GetAuthorized(db *sql.DB, filterQuery string, authorization *auth.Authorization) error {
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get all agents
+	agents := Agents{}
+	agents.Get(db, filterQuery)
+
+	// check project
+	for _, agent := range agents {
+		if agent.Project != authorization.ProjectId {
+			continue
+		}
+		*filteredAgents = append(*filteredAgents, agent)
+	}
+
+	return nil
+}
+
 func (agent *Agent) Get(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
@@ -78,6 +101,25 @@ func (agent *Agent) Get(db Db) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (agent *Agent) GetAuthorized(db Db, authorization *auth.Authorization) error {
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get the agent
+	agent.Get(db)
+
+	// check project
+	if agent.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
 	return nil
 }
 
