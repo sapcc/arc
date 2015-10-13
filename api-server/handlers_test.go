@@ -435,7 +435,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := http.NewRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -450,7 +450,7 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -464,7 +464,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns the facts from an agent", func() {
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)

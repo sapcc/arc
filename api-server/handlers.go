@@ -115,7 +115,7 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
- * Agents
+ * Agents with authorization
  */
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
@@ -172,13 +172,21 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
  */
 
 func serveFacts(w http.ResponseWriter, r *http.Request) {
+	// check authentication
+	authorization := auth.GetIdentity(r)
+
+	// get the agent id
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
+	// get the agent
 	agent := models.Agent{AgentID: agentId}
-	err := agent.Get(db)
+	err := agent.GetAuthorized(db, authorization)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
 		return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
