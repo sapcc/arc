@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -12,11 +13,15 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
+var JobTargetAgentNotFoundError = fmt.Errorf("Target agent where the job has to be executed not found.")
+var JobBadRequestError = fmt.Errorf("Error unmarschaling or creating/validating the arc request.")
+
 type Job struct {
 	arc.Request `json:"request"`
 	Status      arc.JobState `json:"status"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
+	Project     string       `json:"project"`
 }
 
 type JobID struct {
@@ -27,17 +32,30 @@ type Jobs []Job
 
 type Status string
 
-func CreateJob(data *[]byte, identity string) (*Job, error) {
-	var tmpReq arc.Request
-	// unmarshal
-	err := json.Unmarshal(*data, &tmpReq)
-	if err != nil {
-		return nil, err
+func CreateJob(db *sql.DB, data *[]byte, identity string) (*Job, error) {
+	if db == nil {
+		return nil, errors.New("Db is nil")
 	}
 
-	// create a valid request
+	// unmarshal data
+	var tmpReq arc.Request
+	err := json.Unmarshal(*data, &tmpReq)
+	if err != nil {
+		return nil, JobBadRequestError
+	}
+
+	// create a validate request
 	request, err := arc.CreateRequest(tmpReq.Agent, tmpReq.Action, identity, tmpReq.To, tmpReq.Timeout, tmpReq.Payload)
 	if err != nil {
+		return nil, JobBadRequestError
+	}
+
+	// check and get the target project id
+	agent := Agent{AgentID: tmpReq.To}
+	err = agent.Get(db)
+	if err == sql.ErrNoRows {
+		return nil, JobTargetAgentNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -46,6 +64,7 @@ func CreateJob(data *[]byte, identity string) (*Job, error) {
 		arc.Queued,
 		time.Now(),
 		time.Now(),
+		agent.Project,
 	}, nil
 }
 
@@ -63,7 +82,7 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 
 	var job Job
 	for rows.Next() {
-		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
+		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project)
 		if err != nil {
 			log.Errorf("Error scaning job results. Got ", err.Error())
 			continue
@@ -80,7 +99,7 @@ func (job *Job) Get(db *sql.DB) error {
 		return errors.New("Db is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt)
+	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project)
 	if err != nil {
 		return err
 	}
@@ -93,7 +112,7 @@ func (job *Job) Save(db *sql.DB) error {
 	}
 
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt).Scan(&lastInsertId)
+	err := db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt, job.Project).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
@@ -131,7 +150,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	}
 
 	// update object data
-	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt); err != nil {
+	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project); err != nil {
 		return
 	}
 

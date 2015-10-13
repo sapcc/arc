@@ -45,10 +45,18 @@ var _ = Describe("Job", func() {
 
 	Describe("CreateJob", func() {
 
+		JustBeforeEach(func() {
+			agent := Agent{}
+			agent.Example()
+			agent.AgentID = "darwin"
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
 		It("returns an error data is no json conform", func() {
 			noValidJson := `"to":"darwin"`
 			strSlice := []byte(noValidJson)
-			job, err := CreateJob(&strSlice, uuid.New())
+			job, err := CreateJob(db, &strSlice, uuid.New())
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
@@ -57,7 +65,7 @@ var _ = Describe("Job", func() {
 		It("returns an error data is not valid", func() {
 			noValidData := `{"to":"darwin","timeout":60,"agent":"execute","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}` // action is missing
 			strSlice := []byte(noValidData)
-			job, err := CreateJob(&strSlice, uuid.New())
+			job, err := CreateJob(db, &strSlice, uuid.New())
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
@@ -71,7 +79,7 @@ var _ = Describe("Job", func() {
 			payload := `"payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""`
 			noValidData := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, agent, action, payload)
 			strSlice := []byte(noValidData)
-			job, err := CreateJob(&strSlice, uuid.New())
+			job, err := CreateJob(db, &strSlice, uuid.New())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(job.To).To(Equal(to))
 			Expect(job.Timeout).To(Equal(timeout))

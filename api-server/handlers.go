@@ -56,14 +56,20 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 func executeJob(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error creating a job", http.StatusBadRequest)
+		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusBadRequest)
 		return
 	}
 
 	// create job
-	job, err := models.CreateJob(&data, config.Identity)
-	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error creating a job", http.StatusBadRequest)
+	job, err := models.CreateJob(db, &data, config.Identity)
+	if err == models.JobTargetAgentNotFoundError {
+		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusNotFound)
+		return
+	} else if err == models.JobBadRequestError {
+		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusBadRequest)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusInternalServerError)
 		return
 	}
 

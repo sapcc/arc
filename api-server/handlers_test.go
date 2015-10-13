@@ -172,10 +172,17 @@ var _ = Describe("Job Handlers", func() {
 	Describe("executeJob", func() {
 
 		JustBeforeEach(func() {
+			// override transport
 			config.Identity = "darwin"
 			config.Transport = "fake"
 			var err error
 			tp, err = arcNewConnection(config)
+			Expect(err).NotTo(HaveOccurred())
+			// create an agent
+			agent := models.Agent{}
+			agent.Example()
+			agent.AgentID = "darwin"
+			err = agent.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -210,6 +217,19 @@ var _ = Describe("Job Handlers", func() {
 
 			// set the pointer back to the db
 			db = db_copy
+		})
+
+		It("returns a 404 error if the targe agent does not exist", func() {
+			jsonStr := []byte(`{"to":"non_existing_agent","timeout":60,"agent":"rpc","action":"version"}`)
+			// make a request
+			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
 		})
 
 		It("should save the job and return the unique id as JSON", func() {
