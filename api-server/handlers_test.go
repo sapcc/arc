@@ -6,8 +6,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"io"	
 	"net/http/httptest"
 	"os"
 
@@ -706,7 +706,7 @@ var _ = Describe("Readiness Handler", func() {
 
 // private
 
-func newAuthorizedRequest(method, urlStr string, body io.Reader) (*http.Request, error){
+func newAuthorizedRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err

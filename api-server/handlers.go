@@ -129,9 +129,9 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	if err == models.FilterError {
 		checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
 		return
-		} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-			return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+		return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError)
 		return
@@ -154,9 +154,9 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
 		return
-		} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-			return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+		return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
 		return
