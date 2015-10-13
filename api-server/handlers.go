@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	// auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
@@ -120,19 +120,18 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 
 func serveAgents(w http.ResponseWriter, r *http.Request) {
 	// get authentication
-	// authorization := auth.GetIdentity(r)
+	authorization := auth.GetIdentity(r)
 
 	// get agents
 	agents := models.Agents{}
-	// err := agents.GetAuthorized(db, r.URL.Query().Get("q"), authorization)
-	err := agents.Get(db, r.URL.Query().Get("q"))
+	err := agents.GetAuthorized(db, r.URL.Query().Get("q"), authorization)
 
 	if err == models.FilterError {
 		checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
 		return
-		// } else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		// 	logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		// 	return
+		} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError)
 		return
@@ -144,21 +143,20 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 
 func serveAgent(w http.ResponseWriter, r *http.Request) {
 	// check authentication
-	// authorization := auth.GetIdentity(r)
+	authorization := auth.GetIdentity(r)
 
 	// get agent
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
 	agent := models.Agent{AgentID: agentId}
-	// err := agent.GetAuthorized(db, authorization)
-	err := agent.Get(db)
+	err := agent.GetAuthorized(db, authorization)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
 		return
-		// } else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		// 	logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		// 	return
+		} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
 		return

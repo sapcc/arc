@@ -79,7 +79,10 @@ func (filteredAgents *Agents) GetAuthorized(db *sql.DB, filterQuery string, auth
 
 	// get all agents
 	agents := Agents{}
-	agents.Get(db, filterQuery)
+	err = agents.Get(db, filterQuery)
+	if err != nil {
+		return err
+	}
 
 	// check project
 	for _, agent := range agents {
@@ -113,7 +116,10 @@ func (agent *Agent) GetAuthorized(db Db, authorization *auth.Authorization) erro
 	}
 
 	// get the agent
-	agent.Get(db)
+	err = agent.Get(db)
+	if err != nil {
+		return err
+	}
 
 	// check project
 	if agent.Project != authorization.ProjectId {

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"io"	
 	"net/http/httptest"
 	"os"
 
@@ -252,7 +253,7 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentsQuery = "SELECT DISTINCT agent_id,created_at,updated_at FROM Wrong_Facts order by updated_at"
 
 			// make a request
-			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -266,7 +267,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns empty json arry if no agents found", func() {
 			// make a request
-			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -287,7 +288,7 @@ var _ = Describe("Facts Handlers", func() {
 			agents.CreateAndSaveAgentExamples(db, 3)
 
 			// make a request
-			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -318,7 +319,7 @@ var _ = Describe("Facts Handlers", func() {
 			}
 
 			// make a request
-			req, err := http.NewRequest("GET", getUrl(`/agents?q=os+%3D+"windows"`), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"`), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -336,7 +337,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns a 400 if the filter query is wrong", func() {
 			// make a request
-			req, err := http.NewRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -363,7 +364,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := http.NewRequest("GET", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -379,7 +380,7 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -394,7 +395,7 @@ var _ = Describe("Facts Handlers", func() {
 
 		It("return an angent", func() {
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -704,6 +705,16 @@ var _ = Describe("Readiness Handler", func() {
 })
 
 // private
+
+func newAuthorizedRequest(method, urlStr string, body io.Reader) (*http.Request, error){
+	req, err := http.NewRequest(method, urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("X-Identity-Status", `Confirmed`)
+	req.Header.Add("X-Project-Id", `test-project`)
+	return req, nil
+}
 
 func getUrl(url string) string {
 	return fmt.Sprint("/api/v1", url)
