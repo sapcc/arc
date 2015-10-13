@@ -83,7 +83,7 @@ var v1RoutesDefinition = routes{
 }
 
 func newRouter() *mux.Router {
-	middlewareChain := alice.New(loggingHandler, combineLogHandler)
+	middlewareChain := alice.New(loggingHandler, combineLogHandler, servedByHandler)
 
 	router := mux.NewRouter().StrictSlash(true)
 	for _, r := range standardRoutesDefinition {
