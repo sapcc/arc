@@ -85,7 +85,6 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 			}
 			fmt.Printf("Agent %s is online and updated\n", agent.AgentID)
 			results[idx] = true
-			fmt.Println("agents ", agents)
 		}
 		if len(results) == len(agents) {
 			break
