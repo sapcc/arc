@@ -58,13 +58,13 @@ func NewTestClient() *Client {
 func (c *Client) Get(pathTo string, server ServerType) (string, *[]byte) {
 	url := fmt.Sprint(c.serverUrl(server), pathTo)
 
-	req, err := http.NewRequest("GET", url, nil)	
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Error(err)
 		return "", nil
 	}
 	req.Header.Add("X-Identity-Status", `Confirmed`)
-	req.Header.Add("X-Project-Id", `test-project`)	
+	req.Header.Add("X-Project-Id", `test-project`)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
@@ -88,7 +88,7 @@ func (c *Client) GetApiV1(pathTo string, server ServerType) (string, *[]byte) {
 
 func (c *Client) Post(pathTo string, server ServerType, headers map[string]string, jsonBody []byte) (string, *[]byte) {
 	url := fmt.Sprint(c.serverUrl(server), pathTo)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))	
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +98,7 @@ func (c *Client) Post(pathTo string, server ServerType, headers map[string]strin
 		}
 	}
 	req.Header.Add("X-Identity-Status", `Confirmed`)
-	req.Header.Add("X-Project-Id", `test-project`)	
+	req.Header.Add("X-Project-Id", `test-project`)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
