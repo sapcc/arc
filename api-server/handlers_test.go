@@ -577,25 +577,13 @@ var _ = Describe("Log Handlers", func() {
 
 	Describe("serveJobLog", func() {
 
-		It("returns a 404 error if Agent not found", func() {
-			// make request
-			req, err := http.NewRequest("GET", getUrl("/jobs/non_existing_id/log"), bytes.NewBufferString(""))
-			Expect(err).NotTo(HaveOccurred())
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			// check response code and header
-			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(404))
-		})
-
 		It("returns a 500 error if something is wrong with the query", func() {
 			// wrong query
 			tmp_GetLogQuery := GetLogQuery
 			GetLogQuery = "SELECT * Wrong_Log_Table logs WHERE job_id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -608,6 +596,29 @@ var _ = Describe("Log Handlers", func() {
 			GetLogQuery = tmp_GetLogQuery
 		})
 
+		It("returns a 404 error if Agent not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id/log"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			// save log for the job
+			reply := models.Reply{}
+			reply.ExecuteScriptExample(job.RequestID, true, "Log text", 1)
+			err := models.ProcessLogReply(db, &reply.Reply, "darwin", true)
+			Expect(err).NotTo(HaveOccurred())
+						
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), "")
+		})
+
 		It("returns the log from the log table", func() {
 			// save log for the job
 			reply := models.Reply{}
@@ -616,7 +627,7 @@ var _ = Describe("Log Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -635,7 +646,7 @@ var _ = Describe("Log Handlers", func() {
 			content := logpart.SaveLogPartExamples(db, job.RequestID)
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)

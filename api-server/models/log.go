@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
@@ -66,6 +67,30 @@ func (log *Log) GetOrCollect(db *sql.DB) error {
 		return err
 	}
 
+	return nil
+}
+
+func (log *Log) GetOrCollectAuthorized(db *sql.DB, authorization *auth.Authorization) error {
+	if db == nil {
+		return fmt.Errorf("Db is nil")
+	}
+	
+	// get the log
+	err := log.GetOrCollect(db)
+	if err != nil {
+		return err
+	}
+	
+	// check project
+	job := Job{Request: arc.Request{RequestID: log.JobID}}
+	err = job.Get(db)
+	if err != nil {
+		return err
+	}
+	if job.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+	
 	return nil
 }
 

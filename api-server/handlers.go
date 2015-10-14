@@ -121,14 +121,22 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
  */
 
 func serveJobLog(w http.ResponseWriter, r *http.Request) {
+	// get authentication
+	authorization := auth.GetIdentity(r)
+	
+	// get the job id
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
+	// get the log
 	logEntry := models.Log{JobID: jobId}
-	err := logEntry.GetOrCollect(db)
+	err := logEntry.GetOrCollectAuthorized(db, authorization)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound)
 		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
+		return		
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError)
 		return
