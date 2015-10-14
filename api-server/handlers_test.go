@@ -37,7 +37,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -47,9 +47,28 @@ var _ = Describe("Job Handlers", func() {
 			Expect(w.Code).To(Equal(500))
 		})
 
-		It("returns empty json arry if no jobs found", func() {
-			// make a request
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("GET", getUrl("/jobs"), "")
+
+			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
 			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			req.Header.Add("X-Identity-Status", `Confirmed`)
+			req.Header.Add("X-Project-Id", `some_different_project`)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+			// check no jobs returned
+			dbJobs := make(models.Jobs, 0)
+			err = json.Unmarshal(w.Body.Bytes(), &dbJobs)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(0))
+		})
+
+		It("returns empty arry if no jobs found", func() {
+			// make a request
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -71,7 +90,7 @@ var _ = Describe("Job Handlers", func() {
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -102,25 +121,13 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("returns a 404 error if job not found", func() {
-			// make request
-			req, err := http.NewRequest("GET", getUrl("/jobs/non_existing_id"), bytes.NewBufferString(""))
-			Expect(err).NotTo(HaveOccurred())
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			// check response code and header
-			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(404))
-		})
-
 		It("returns a 500 error if something is wrong with the query", func() {
 			// wrong query
 			tmp_GetJobQuery := GetJobQuery
 			GetJobQuery = "SELECT * Wrong_Job_Table jobs WHERE id=$1"
 
 			// make request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -140,7 +147,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -150,9 +157,26 @@ var _ = Describe("Job Handlers", func() {
 			Expect(w.Code).To(Equal(500))
 		})
 
+		It("returns a 404 error if job not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), "")
+		})
+
 		It("should return the job", func() {
 			// make a request
-			req, err := http.NewRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -172,7 +196,7 @@ var _ = Describe("Job Handlers", func() {
 	Describe("executeJob", func() {
 
 		JustBeforeEach(func() {
-			// override transport
+			// setting up the transport
 			config.Identity = "darwin"
 			config.Transport = "fake"
 			var err error
@@ -189,7 +213,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 400 error if request is wrong", func() {
 			jsonStr := []byte(`this is not json`)
 			// make a request
-			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -206,7 +230,7 @@ var _ = Describe("Job Handlers", func() {
 
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -222,7 +246,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 404 error if the targe agent does not exist", func() {
 			jsonStr := []byte(`{"to":"non_existing_agent","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -232,10 +256,15 @@ var _ = Describe("Job Handlers", func() {
 			Expect(w.Code).To(Equal(404))
 		})
 
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("POST", getUrl("/jobs"), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
+			checkNonAuthorizeProjectRequest("POST", getUrl("/jobs"), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
+		})
+
 		It("should save the job and return the unique id as JSON", func() {
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := http.NewRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -260,7 +289,7 @@ var _ = Describe("Job Handlers", func() {
 
 })
 
-var _ = Describe("Facts Handlers", func() {
+var _ = Describe("Agent Handlers", func() {
 
 	Describe("serveAgents", func() {
 
@@ -283,6 +312,39 @@ var _ = Describe("Facts Handlers", func() {
 			Expect(w.Code).To(Equal(500))
 
 			GetAgentsQuery = tmp_GetAgentsQuery
+		})
+
+		It("returns a 400 if the filter query is wrong", func() {
+			// make a request
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(400))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("GET", getUrl("/agents"), "")
+
+			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
+			agents := models.Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
+			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			req.Header.Add("X-Identity-Status", `Confirmed`)
+			req.Header.Add("X-Project-Id", `some_different_project`)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+			// check no agents returned
+			dbAgents := make(models.Agents, 0)
+			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(0))
 		})
 
 		It("returns empty json arry if no agents found", func() {
@@ -355,18 +417,6 @@ var _ = Describe("Facts Handlers", func() {
 			Expect(len(dbAgents)).To(Equal(2))
 		})
 
-		It("returns a 400 if the filter query is wrong", func() {
-			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""))
-			Expect(err).NotTo(HaveOccurred())
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			// check response code and header
-			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(400))
-		})
-
 	})
 
 	Describe("serveAgent", func() {
@@ -413,6 +463,11 @@ var _ = Describe("Facts Handlers", func() {
 			GetAgentQuery = tmp_GetAgentQuery
 		})
 
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
+		})
+
 		It("return an angent", func() {
 			// make request
 			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
@@ -453,18 +508,6 @@ var _ = Describe("Facts Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("returns a 404 error if Agent not found", func() {
-			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""))
-			Expect(err).NotTo(HaveOccurred())
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			// check response code and header
-			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(404))
-		})
-
 		It("returns a 500 error if something is wrong with the query", func() {
 			tmp_GetAgentQuery := GetAgentQuery
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
@@ -480,6 +523,23 @@ var _ = Describe("Facts Handlers", func() {
 			Expect(w.Code).To(Equal(500))
 
 			GetAgentQuery = tmp_GetAgentQuery
+		})
+
+		It("returns a 404 error if Agent not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), "")
 		})
 
 		It("returns the facts from an agent", func() {
@@ -725,6 +785,37 @@ var _ = Describe("Readiness Handler", func() {
 })
 
 // private
+
+func checkIdentityInvalidRequest(method, urlStr string, body string) {
+	// make a request without any authorization header
+	req, err := http.NewRequest(method, urlStr, bytes.NewBufferString(body))
+	Expect(err).NotTo(HaveOccurred())
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+	Expect(w.Code).To(Equal(401))
+
+	// make a request with X-Identity-Status different from Confirmed
+	req, err = http.NewRequest(method, urlStr, bytes.NewBufferString(body))
+	Expect(err).NotTo(HaveOccurred())
+	req.Header.Add("X-Identity-Status", `something_different_from_confirmed`)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+	Expect(w.Code).To(Equal(401))
+}
+
+func checkNonAuthorizeProjectRequest(method, urlStr string, body string) {
+	// make a request with X-Identity-Status to Confirmed and X-Project-Id with a different project
+	req, err := http.NewRequest(method, urlStr, bytes.NewBufferString(body))
+	req.Header.Add("X-Identity-Status", `Confirmed`)
+	req.Header.Add("X-Project-Id", `some_different_project`)
+	Expect(err).NotTo(HaveOccurred())
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+	Expect(w.Code).To(Equal(401))
+}
 
 func newAuthorizedRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(method, urlStr, body)

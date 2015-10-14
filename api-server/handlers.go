@@ -22,26 +22,40 @@ import (
  */
 
 func serveJobs(w http.ResponseWriter, r *http.Request) {
+	// get authentication
+	authorization := auth.GetIdentity(r)
+
+	// read jobs
 	jobs := models.Jobs{}
-	if err := jobs.Get(db); err != nil {
-		checkErrAndReturnStatus(w, err, "Error getting all jobs", http.StatusInternalServerError)
+	err := jobs.GetAuthorized(db, authorization)
+	if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, "Error getting all jobs. ", http.StatusInternalServerError)
 		return
 	}
 
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	err := json.NewEncoder(w).Encode(jobs)
+	err = json.NewEncoder(w).Encode(jobs)
 	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
+	// get authentication
+	authorization := auth.GetIdentity(r)
+
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
 	job := models.Job{Request: arc.Request{RequestID: jobId}}
-	err := job.Get(db)
+	err := job.GetAuthorized(db, authorization)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized)
 		return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusInternalServerError)
@@ -54,6 +68,10 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
+	// get authentication
+	authorization := auth.GetIdentity(r)
+
+	// read request body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusBadRequest)
@@ -61,9 +79,12 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create job
-	job, err := models.CreateJob(db, &data, config.Identity)
+	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)
 	if err == models.JobTargetAgentNotFoundError {
 		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "Error creating a job. ", http.StatusUnauthorized)
 		return
 	} else if err == models.JobBadRequestError {
 		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusBadRequest)
@@ -76,14 +97,14 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	// save db
 	err = job.Save(db)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error saving job", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusInternalServerError)
 		return
 	}
 
 	// create a mqtt request
 	err = arcSendRequest(&job.Request)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error saving job", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusInternalServerError)
 		return
 	}
 

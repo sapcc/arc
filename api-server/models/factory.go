@@ -49,6 +49,7 @@ func (job *Job) RpcVersionExample() {
 	job.Status = arc.Queued
 	job.CreatedAt = time.Now().Add(-1 * time.Minute)
 	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
+	job.Project = "test-project"
 }
 
 func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.Time, timeout int) {

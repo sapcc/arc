@@ -109,6 +109,10 @@ func (agent *Agent) Get(db Db) error {
 }
 
 func (agent *Agent) GetAuthorized(db Db, authorization *auth.Authorization) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {

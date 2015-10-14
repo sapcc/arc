@@ -9,6 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
@@ -68,6 +69,26 @@ func CreateJob(db *sql.DB, data *[]byte, identity string) (*Job, error) {
 	}, nil
 }
 
+func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorization *auth.Authorization) (*Job, error) {
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	job, err := CreateJob(db, data, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	// check project
+	if job.Project != authorization.ProjectId {
+		return nil, auth.NotAuthorized
+	}
+
+	return job, nil
+}
+
 func (jobs *Jobs) Get(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
@@ -94,6 +115,34 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 	return nil
 }
 
+func (filteredJobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	jobs := Jobs{}
+	err = jobs.Get(db)
+	if err != nil {
+		return err
+	}
+
+	// check project
+	for _, job := range jobs {
+		if job.Project != authorization.ProjectId {
+			continue
+		}
+		*filteredJobs = append(*filteredJobs, job)
+	}
+
+	return nil
+}
+
 func (job *Job) Get(db *sql.DB) error {
 	if db == nil {
 		return errors.New("Db is nil")
@@ -103,6 +152,31 @@ func (job *Job) Get(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (job *Job) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get the job
+	err = job.Get(db)
+	if err != nil {
+		return err
+	}
+
+	// check project
+	if job.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
 	return nil
 }
 
