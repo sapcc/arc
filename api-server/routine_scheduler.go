@@ -25,6 +25,7 @@ func routineScheduler(db *sql.DB, duration time.Duration) {
 func runRoutineTasks(db *sql.DB) {
 	cleanJobs(db)
 	cleanLogParts(db)
+	cleanLocks(db)
 }
 
 func cleanJobs(db *sql.DB) {
@@ -48,5 +49,5 @@ func cleanLocks(db *sql.DB) {
 	if err != nil {
 		log.Error("Clean locks routine: ", err.Error())
 	}
-	log.Infof("Clean locks routine: %v old (6 min) locks removed from the db", affectedLocks)
+	log.Infof("Clean locks routine: %v old (5 min) locks removed from the db", affectedLocks)
 }
