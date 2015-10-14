@@ -614,7 +614,7 @@ var _ = Describe("Log Handlers", func() {
 			reply.ExecuteScriptExample(job.RequestID, true, "Log text", 1)
 			err := models.ProcessLogReply(db, &reply.Reply, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
-						
+
 			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), "")
 			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), "")
 		})

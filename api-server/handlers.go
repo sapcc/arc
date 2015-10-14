@@ -123,7 +123,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	// get authentication
 	authorization := auth.GetIdentity(r)
-	
+
 	// get the job id
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
@@ -136,7 +136,7 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
 		logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
-		return		
+		return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError)
 		return

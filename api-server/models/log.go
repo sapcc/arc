@@ -74,13 +74,13 @@ func (log *Log) GetOrCollectAuthorized(db *sql.DB, authorization *auth.Authoriza
 	if db == nil {
 		return fmt.Errorf("Db is nil")
 	}
-	
+
 	// get the log
 	err := log.GetOrCollect(db)
 	if err != nil {
 		return err
 	}
-	
+
 	// check project
 	job := Job{Request: arc.Request{RequestID: log.JobID}}
 	err = job.Get(db)
@@ -90,7 +90,7 @@ func (log *Log) GetOrCollectAuthorized(db *sql.DB, authorization *auth.Authoriza
 	if job.Project != authorization.ProjectId {
 		return auth.NotAuthorized
 	}
-	
+
 	return nil
 }
 
