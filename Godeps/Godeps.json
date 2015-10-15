@@ -26,6 +26,10 @@
 			"Rev": "942282e931e8286aa802a30b01fa7e16befb50f3"
 		},
 		{
+			"ImportPath": "github.com/databus23/keystone",
+			"Rev": "da300d2fe98ed10eea5d9d86ba155393d824fa8c"
+		},
+		{
 			"ImportPath": "github.com/go-ole/go-ole",
 			"Comment": "v1.1.1-13-g487c37e",
 			"Rev": "487c37e10823c9d5e647262f01f51a12331525f2"

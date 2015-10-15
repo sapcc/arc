@@ -22,13 +22,13 @@ func TestApiServer(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	env := os.Getenv("ARC_ENV")
+	env = os.Getenv("ARC_ENV")
 	if env == "" {
 		env = "test"
 	}
 	db, err = NewConnection("db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
-	router = newRouter()
+	router = newRouter(env)
 })
 
 var _ = AfterSuite(func() {

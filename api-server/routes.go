@@ -82,8 +82,14 @@ var v1RoutesDefinition = routes{
 	},
 }
 
-func newRouter() *mux.Router {
+func newRouter(env string) *mux.Router {
 	middlewareChain := alice.New(loggingHandler, combineLogHandler, servedByHandler)
+	middlewareChainApiV1 := alice.New(loggingHandler, combineLogHandler, servedByHandler)
+
+	// remove keystone handler for test and test-local
+	if env != "test" && env != "test-local" && ks.Endpoint != "" {
+		middlewareChainApiV1 = alice.New(loggingHandler, combineLogHandler, servedByHandler, ks.Handler)
+	}
 
 	router := mux.NewRouter().StrictSlash(true)
 	for _, r := range standardRoutesDefinition {
@@ -100,7 +106,7 @@ func newRouter() *mux.Router {
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).
-			Handler(middlewareChain.ThenFunc(r.HandlerFunc))
+			Handler(middlewareChainApiV1.ThenFunc(r.HandlerFunc))
 	}
 
 	return router

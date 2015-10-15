@@ -9,6 +9,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/databus23/keystone"
+	"github.com/databus23/keystone/cache/postgres"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
@@ -21,9 +23,13 @@ const (
 	envPrefix = "ARC_"
 )
 
-var config = arc_config.New()
-var db *sql.DB
-var tp transport.Transport
+var (
+	config = arc_config.New()
+	db     *sql.DB
+	tp     transport.Transport
+	ks     = keystone.Auth{}
+	env    string
+)
 
 func main() {
 	app := cli.NewApp()
@@ -93,6 +99,11 @@ func main() {
 			Usage:  "Private key used in client TLS auth",
 			EnvVar: envPrefix + "TLS_CLIENT_KEY",
 		},
+		cli.StringFlag{
+			Name:   "keystone-endpoint, ke",
+			Usage:  "Endpoint url for Keystone",
+			EnvVar: envPrefix + "KEYSTONE_ENDPOINT",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -117,7 +128,9 @@ func main() {
 // private
 
 func runServer(c *cli.Context) {
-	log.Infof("Starting api server version %s. Environment: %s", version.Version, c.GlobalString("env"))
+	// save the environment
+	env = c.GlobalString("env")
+	log.Infof("Starting api server version %s. Environment: %s", version.Version, env)
 
 	// check endpoint
 	if len(config.Endpoints) == 0 {
@@ -125,7 +138,7 @@ func runServer(c *cli.Context) {
 	}
 
 	var err error
-	db, err = ownDb.NewConnection(c.GlobalString("db-config"), c.GlobalString("env"))
+	db, err = ownDb.NewConnection(c.GlobalString("db-config"), env)
 	checkErrAndPanic(err, "Error connecting to the DB:")
 	defer db.Close()
 
@@ -134,6 +147,13 @@ func runServer(c *cli.Context) {
 	checkErrAndPanic(err, "")
 	defer tp.Disconnect()
 
+	// keystone initialization
+	if c.GlobalString("keystone-endpoint") != "" {
+		ks.Endpoint = c.GlobalString("keystone-endpoint")
+		ks.TokenCache = postgres.New(db, 30*time.Second, "token_cache")
+		log.Infof("Keystone binded. Endpoint %q", c.GlobalString("keystone-endpoint"))
+	}
+
 	// subscribe to all replies
 	go arcSubscribeReplies(tp)
 
@@ -141,7 +161,7 @@ func runServer(c *cli.Context) {
 	go routineScheduler(db, 60*time.Second)
 
 	// init the router
-	router := newRouter()
+	router := newRouter(env)
 
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
