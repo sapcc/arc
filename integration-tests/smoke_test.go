@@ -7,7 +7,10 @@ import (
 )
 
 func TestApiServerIsUp(t *testing.T) {
-	client := NewTestClient()
+	client, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 	statusCode, _ := client.Get("/", ApiServer)
 
 	expected := "200 OK"
@@ -17,7 +20,10 @@ func TestApiServerIsUp(t *testing.T) {
 }
 
 func TestUpdateServerIsUp(t *testing.T) {
-	client := NewTestClient()
+	client, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 	statusCode, _ := client.Get("/", UpdateServer)
 
 	expected := "200 OK"

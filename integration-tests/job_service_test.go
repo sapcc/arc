@@ -28,7 +28,10 @@ func TestRunJob(t *testing.T) {
 		agentIdentityFlag = &agentIdentity
 	}
 
-	client := NewTestClient()
+	client, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// get info about the agent
 	statusCode, body := client.GetApiV1(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
@@ -39,9 +42,8 @@ func TestRunJob(t *testing.T) {
 
 	// transform the body to system facts struct
 	var sysFact systemFact
-	err := json.Unmarshal(*body, &sysFact)
-	if err != nil {
-		t.Error("Expected not to get an error unmarshaling")
+	if err := json.Unmarshal(*body, &sysFact); err != nil {
+		t.Error("Expected not to get an error unmarshaling: ", err)
 		return
 	}
 

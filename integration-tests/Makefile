@@ -20,12 +20,20 @@ help:
 	@echo "  * image        - build docker image containing the update site"
 
 .PHONY: build
-build: 
-	mkdir -p bin/ 
-	go test -c $(CURDIR)/smoke_test.go $(CURDIR)/helper_test.go -ldflags="$(LDFLAGS)" -o bin/smoke 
-	go test -c $(CURDIR)/updated_online_service_test.go $(CURDIR)/helper_test.go  -ldflags="$(LDFLAGS)" -o bin/updated-test
-	go test -c $(CURDIR)/job_service_test.go $(CURDIR)/helper_test.go -ldflags="$(LDFLAGS)" -o bin/job-test
-	go test -c $(CURDIR)/fact_service_test.go $(CURDIR)/helper_test.go  -ldflags="$(LDFLAGS)" -o bin/fact-test 
+build:  bin/smoke bin/updated-test bin/job-test bin/fact-test
+
+bin/smoke: helper_test.go
+	@mkdir -p bin/ 
+	go test -c smoke_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/smoke 
+bin/updated-test: helper_test.go
+	@mkdir -p bin/
+	go test -c updated_online_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/updated-test
+bin/job-test: helper_test.go
+	@mkdir -p bin/
+	go test -c job_service_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/job-test
+bin/fact-test: helper_test.go
+	@mkdir -p bin/
+	go test -c fact_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/fact-test
 
 .PHONY: build-docker
 build-docker: setup

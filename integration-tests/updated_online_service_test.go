@@ -34,15 +34,19 @@ func TestAgentsAreUpdatedAndOnline(t *testing.T) {
 	}
 
 	// get the logged agents
-	client := NewTestClient()
+	client, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	statusCode, body := client.GetApiV1("/agents", ApiServer)
 	if statusCode != "200 OK" {
-		t.Error("Expected to get 200 response code getting all agents")
+		t.Errorf("Expected to get 200 response code getting all agents, got %s", statusCode)
 		return
 	}
 
 	var agents models.Agents
-	err := json.Unmarshal(*body, &agents)
+	err = json.Unmarshal(*body, &agents)
 	if err != nil {
 		t.Error("Expected not to get an error unmarshaling agents")
 		return
