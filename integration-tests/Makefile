@@ -22,16 +22,16 @@ help:
 .PHONY: build
 build:  bin/smoke bin/updated-test bin/job-test bin/fact-test
 
-bin/smoke: helper_test.go
+bin/smoke: smoke_test.go helper_test.go
 	@mkdir -p bin/ 
 	go test -c smoke_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/smoke 
-bin/updated-test: helper_test.go
+bin/updated-test: updated_online_service_test.go  helper_test.go
 	@mkdir -p bin/
 	go test -c updated_online_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/updated-test
-bin/job-test: helper_test.go
+bin/job-test: job_service_test.go helper_test.go
 	@mkdir -p bin/
 	go test -c job_service_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/job-test
-bin/fact-test: helper_test.go
+bin/fact-test: fact_service_test.go helper_test.go
 	@mkdir -p bin/
 	go test -c fact_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/fact-test
 

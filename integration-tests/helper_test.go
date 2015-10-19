@@ -17,8 +17,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-var apiServerFlag = flag.String("api-server", "http://localhost:3000", "integration-test")
-var updateServerFlag = flag.String("update-server", "http://localhost:3001", "integration-test")
+var apiServer = flag.String("api-server", "http://localhost:3000", "integration-test")
+var updateServer = flag.String("update-server", "http://localhost:3001", "integration-test")
+var token = flag.String("token", "", "Valid auth token")
 var keystoneEndpoint = flag.String("keystone-endpoint", "", "Authentication endpoint for aquiring auth tokens")
 var username = flag.String("username", "arc_test", "Username for keystone authentication")
 var password = flag.String("password", "", "Password")
@@ -49,48 +50,45 @@ type Client struct {
 
 func NewTestClient() (*Client, error) {
 	// override flags if enviroment variable exists
-	if os.Getenv("API_SERVER") != "" {
-		apiServerUrl := os.Getenv("API_SERVER")
-		apiServerFlag = &apiServerUrl
+	if e := os.Getenv("API_SERVER"); e != "" {
+		apiServer = &e
 	}
-	if os.Getenv("UPDATE_SERVER") != "" {
-		updateServerUrl := os.Getenv("UPDATE_SERVER")
-		updateServerFlag = &updateServerUrl
+	if e := os.Getenv("UPDATE_SERVER"); e != "" {
+		updateServer = &e
 	}
-
-	if os.Getenv("KEYSTONE_ENDPOINT") != "" {
-		e := os.Getenv("KEYSTONE_ENDPOINT")
+	if e := os.Getenv("KEYSTONE_ENDPOINT"); e != "" {
 		keystoneEndpoint = &e
 	}
-	if os.Getenv("USERNAME") != "" {
-		e := os.Getenv("USERNAME")
+	if e := os.Getenv("USERNAME"); e != "" {
 		username = &e
 	}
-	if os.Getenv("PASSWORD") != "" {
-		e := os.Getenv("PASSWORD")
+	if e := os.Getenv("PASSWORD"); e != "" {
 		password = &e
 	}
-	if os.Getenv("PROJECT") != "" {
-		e := os.Getenv("PROJECT")
+	if e := os.Getenv("PROJECT"); e != "" {
 		project = &e
 	}
-	if os.Getenv("DOMAIN") != "" {
-		e := os.Getenv("DOMAIN")
+	if e := os.Getenv("DOMAIN"); e != "" {
 		domain = &e
 	}
-	var authToken string
-	if *keystoneEndpoint != "" {
+	if e := os.Getenv("TOKEN"); e != "" {
+		token = &e
+	}
+
+	if *token == "" && *keystoneEndpoint != "" {
 		var err error
+		var authToken string
 		if authToken, err = getToken(); err != nil {
 			return nil, fmt.Errorf("Failed to get token from keystone: %s ", err)
 		}
+		token = &authToken
 	}
 
 	c := &Client{
 		Client:          &http.Client{},
-		ApiServerUrl:    *apiServerFlag,
-		UpdateServerUrl: *updateServerFlag,
-		Token:           authToken,
+		ApiServerUrl:    *apiServer,
+		UpdateServerUrl: *updateServer,
+		Token:           *token,
 	}
 	return c, nil
 }
