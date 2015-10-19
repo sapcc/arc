@@ -184,13 +184,13 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	agent := models.Agent{AgentID: agentId}
 	err := agent.GetAuthorized(db, authorization)
 	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. ", agentId), http.StatusNotFound)
 		return
 	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
 		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error getting agent with id %q. ", agentId), http.StatusInternalServerError)
 		return
 	}
 
@@ -199,8 +199,33 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
 }
 
+func deleteAgent(w http.ResponseWriter, r *http.Request) {
+	// check authentication
+	authorization := auth.GetIdentity(r)
+
+	// get agent
+	vars := mux.Vars(r)
+	agentId := vars["agentId"]
+
+	agent := models.Agent{AgentID: agentId}
+	err := agent.DeleteAuthorized(db, authorization)
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error deleten agent with id %q. ", agentId), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(fmt.Sprintf("Agent with id %q deleted. ", agentId)))
+}
+
 /*
- * Facts
+ * Facts with authorization
  */
 
 func serveFacts(w http.ResponseWriter, r *http.Request) {

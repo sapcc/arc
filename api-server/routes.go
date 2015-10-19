@@ -75,6 +75,12 @@ var v1RoutesDefinition = routes{
 		serveAgent,
 	},
 	route{
+		"Delete Agent",
+		"DELETE",
+		"/agents/{agentId}",
+		deleteAgent,
+	},
+	route{
 		"Facts",
 		"GET",
 		"/agents/{agentId}/facts",

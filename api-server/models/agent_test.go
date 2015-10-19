@@ -3,6 +3,7 @@
 package models_test
 
 import (
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 
@@ -108,6 +109,64 @@ var _ = Describe("Agent", func() {
 			Expect(agent.Facts).To(Equal(newAgent.Facts))
 			Expect(agent.CreatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(newAgent.CreatedAt.Format("2006-01-02 15:04:05.99")))
 			Expect(agent.UpdatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(newAgent.UpdatedAt.Format("2006-01-02 15:04:05.99")))
+		})
+
+	})
+
+	Describe("Delete authorized", func() {
+
+		var (
+			agent = Agent{}
+		)
+
+		JustBeforeEach(func() {
+			// insert facts / agent
+			agent.Example()
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should return an identity authorization error", func() {
+			authorization := auth.Authorization{
+				IdentityStatus: "Something different from Confirmed",
+				UserId:         "userID",
+				ProjectId:      agent.Project,
+			}
+
+			// delete agent
+			err := agent.DeleteAuthorized(db, &authorization)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+		})
+
+		It("should return a project authorization error", func() {
+			authorization := auth.Authorization{
+				IdentityStatus: "Confirmed",
+				UserId:         "userID",
+				ProjectId:      "Some other project",
+			}
+
+			// delete agent
+			err := agent.DeleteAuthorized(db, &authorization)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.NotAuthorized))
+		})
+
+		It("should delete an agent", func() {
+			authorization := auth.Authorization{
+				IdentityStatus: "Confirmed",
+				UserId:         "userID",
+				ProjectId:      agent.Project,
+			}
+
+			// delete agent
+			err := agent.DeleteAuthorized(db, &authorization)
+			Expect(err).NotTo(HaveOccurred())
+
+			// check agent deleted agent
+			newAgent := Agent{AgentID: agent.AgentID}
+			err = newAgent.Get(db)
+			Expect(err).To(HaveOccurred())
 		})
 
 	})

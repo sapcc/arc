@@ -133,6 +133,42 @@ func (agent *Agent) GetAuthorized(db Db, authorization *auth.Authorization) erro
 	return nil
 }
 
+func (agent *Agent) DeleteAuthorized(db Db, authorization *auth.Authorization) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get the agent
+	err = agent.Get(db)
+	if err != nil {
+		return err
+	}
+
+	// check project
+	if agent.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
+	res, err := db.Exec(ownDb.DeleteAgentQuery, agent.AgentID)
+	if err != nil {
+		return err
+	}
+	affect, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Agent with id %q is removed. %v row(s) where updated.", agent.AgentID, affect)
+
+	return nil
+}
+
 func (agent *Agent) Save(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")

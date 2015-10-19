@@ -495,6 +495,69 @@ var _ = Describe("Agent Handlers", func() {
 
 	})
 
+	Describe("deleteAgent", func() {
+
+		var (
+			agent models.Agent
+		)
+
+		JustBeforeEach(func() {
+			agent = models.Agent{}
+			agent.Example()
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns a 404 error if Agent not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns a 500 error if something is wrong happens", func() {
+			// wrong query
+			tmp_DeleteAgentQuery := DeleteAgentQuery
+			DeleteAgentQuery = `DELETE FROM miaus WHERE agent_id=$1`
+
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(500))
+
+			// copy back the query defenition
+			DeleteAgentQuery = tmp_DeleteAgentQuery
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
+			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
+		})
+
+		It("Delete an angent", func() {
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(200))
+		})
+
+	})
+
 	Describe("serveFacts", func() {
 
 		var (
