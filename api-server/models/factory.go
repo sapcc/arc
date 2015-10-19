@@ -64,6 +64,7 @@ func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.T
 	job.Status = status
 	job.CreatedAt = createdAt
 	job.UpdatedAt = createdAt
+	job.Project = "test-project"
 }
 
 func (job *Job) ExecuteScriptExample() {

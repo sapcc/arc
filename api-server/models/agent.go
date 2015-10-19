@@ -31,12 +31,8 @@ type Agent struct {
 type Agents []Agent
 
 func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
-	if db == nil {
-		return errors.New("Db connection is nil")
-	}
-
 	// select the query
-	sqlQuery := ownDb.GetAgentsQuery
+	sqlQuery := fmt.Sprintf(ownDb.GetAgentsQuery, "")
 	if filterQuery != "" {
 		// query string to sql query
 		filterQuerySql, err := filter.Postgresql(filterQuery)
@@ -44,55 +40,34 @@ func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 			log.Errorf(err.Error())
 			return FilterError
 		}
-
 		log.Infof("Filtering Agents results with query %q and sql %q", filterQuery, filterQuerySql)
-		sqlQuery = fmt.Sprintf(ownDb.GetAgentsFilteredQuery, filterQuerySql)
+		sqlQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", filterQuerySql))
 	}
 
-	*agents = make(Agents, 0)
-	rows, err := db.Query(sqlQuery)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var agent Agent
-	for rows.Next() {
-		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
-		if err != nil {
-			log.Errorf("Error scaning agent results. Got ", err.Error())
-			continue
-		}
-		*agents = append(*agents, agent)
-	}
-
-	rows.Close()
-	return nil
+	return agents.getAllAgents(db, sqlQuery)
 }
 
-func (filteredAgents *Agents) GetAuthorized(db *sql.DB, filterQuery string, authorization *auth.Authorization) error {
+func (agents *Agents) GetAuthorized(db *sql.DB, filterQuery string, authorization *auth.Authorization) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
 		return err
 	}
 
-	// get all agents
-	agents := Agents{}
-	err = agents.Get(db, filterQuery)
-	if err != nil {
-		return err
-	}
-
-	// check project
-	for _, agent := range agents {
-		if agent.Project != authorization.ProjectId {
-			continue
+	// select the query
+	sqlQuery := fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprintf(`WHERE project='%s'`, authorization.ProjectId))
+	if filterQuery != "" {
+		// query string to sql query
+		filterQuerySql, err := filter.Postgresql(filterQuery)
+		if err != nil {
+			log.Errorf(err.Error())
+			return FilterError
 		}
-		*filteredAgents = append(*filteredAgents, agent)
+		log.Infof("Filtering Agents results with query %q and sql %q", filterQuery, filterQuerySql)
+		sqlQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprintf(`WHERE project='%s' AND (%s)`, authorization.ProjectId, filterQuerySql))
 	}
 
-	return nil
+	return agents.getAllAgents(db, sqlQuery)
 }
 
 func (agent *Agent) Get(db Db) error {
@@ -248,6 +223,32 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 }
 
 // private
+
+func (agents *Agents) getAllAgents(db *sql.DB, query string) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	*agents = make(Agents, 0)
+	rows, err := db.Query(query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var agent Agent
+	for rows.Next() {
+		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
+		if err != nil {
+			log.Errorf("Error scaning agent results. Got ", err.Error())
+			continue
+		}
+		*agents = append(*agents, agent)
+	}
+
+	rows.Close()
+	return nil
+}
 
 func processRegistration(db *sql.DB, agent *Agent) (err error) {
 	// create transaction

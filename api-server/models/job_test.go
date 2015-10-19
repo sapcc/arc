@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
@@ -35,6 +36,63 @@ var _ = Describe("Jobs", func() {
 			Expect(dbJobs[0].RequestID).To(Equal(jobs[0].RequestID))
 			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
 			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))
+		})
+
+	})
+
+	Describe("GetAuthorized", func() {
+
+		var (
+			authorization = auth.Authorization{}
+		)
+
+		JustBeforeEach(func() {
+			jobs := Jobs{}
+			jobs.CreateAndSaveRpcVersionExamples(db, 3) // create jobs and agents
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = "userID"
+			authorization.ProjectId = "test-project"
+		})
+
+		It("returns an error if no db connection is given", func() {
+			job := Job{}
+			err := job.GetAuthorized(nil, &authorization)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("should return all jobs where with same project", func() {
+			// add a new job
+			job := Job{}
+			job.ExecuteScriptExample()
+			job.Project = "miau"
+			err := job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// change authorization
+			authorization.ProjectId = "miau"
+
+			dbJobs := Jobs{}
+			err = dbJobs.GetAuthorized(db, &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(1))
+		})
+
+		It("should return an identity authorization error", func() {
+			authorization.IdentityStatus = "Something different from Confirmed"
+
+			dbJobs := Jobs{}
+			err := dbJobs.GetAuthorized(db, &authorization)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+		})
+
+		It("should return a project authorization error", func() {
+			authorization.ProjectId = "Some other project"
+
+			dbJobs := Jobs{}
+			err := dbJobs.GetAuthorized(db, &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(0))
 		})
 
 	})

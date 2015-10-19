@@ -90,57 +90,17 @@ func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorizatio
 }
 
 func (jobs *Jobs) Get(db *sql.DB) error {
-	if db == nil {
-		return errors.New("Db is nil")
-	}
-
-	*jobs = make(Jobs, 0)
-	rows, err := db.Query(ownDb.GetAllJobsQuery)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var job Job
-	for rows.Next() {
-		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project)
-		if err != nil {
-			log.Errorf("Error scaning job results. Got ", err.Error())
-			continue
-		}
-		*jobs = append(*jobs, job)
-	}
-
-	rows.Close()
-	return nil
+	return jobs.getAllJobs(db, fmt.Sprintf(ownDb.GetAllJobsQuery, ""))
 }
 
-func (filteredJobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
-	if db == nil {
-		return errors.New("Db is nil")
-	}
-
+func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
 		return err
 	}
 
-	jobs := Jobs{}
-	err = jobs.Get(db)
-	if err != nil {
-		return err
-	}
-
-	// check project
-	for _, job := range jobs {
-		if job.Project != authorization.ProjectId {
-			continue
-		}
-		*filteredJobs = append(*filteredJobs, job)
-	}
-
-	return nil
+	return jobs.getAllJobs(db, fmt.Sprintf(ownDb.GetAllJobsQuery, fmt.Sprintf(`WHERE project='%s'`, authorization.ProjectId)))
 }
 
 func (job *Job) Get(db *sql.DB) error {
@@ -278,4 +238,32 @@ func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, 
 	}
 
 	return
+}
+
+// private
+
+func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
+	if db == nil {
+		return errors.New("Db is nil")
+	}
+
+	*jobs = make(Jobs, 0)
+	rows, err := db.Query(query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var job Job
+	for rows.Next() {
+		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project)
+		if err != nil {
+			log.Errorf("Error scaning job results. Got ", err.Error())
+			continue
+		}
+		*jobs = append(*jobs, job)
+	}
+
+	rows.Close()
+	return nil
 }

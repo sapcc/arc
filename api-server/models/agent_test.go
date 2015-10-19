@@ -72,6 +72,101 @@ var _ = Describe("Agents", func() {
 
 	})
 
+	Describe("GetAuthorized", func() {
+
+		var (
+			agents        = Agents{}
+			authorization = auth.Authorization{}
+		)
+
+		JustBeforeEach(func() {
+			agents.CreateAndSaveAgentExamples(db, 3)
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = "userID"
+			authorization.ProjectId = "test-project"
+		})
+
+		It("returns an error if no db connection is given", func() {
+			agents := Agents{}
+			err := agents.GetAuthorized(nil, "", &authorization)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("should return all agents where with same project", func() {
+			// add a new agent
+			agent := Agent{}
+			agent.Example()
+			agent.Project = "miau"
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// change authorization
+			authorization.ProjectId = "miau"
+
+			// insert facts / agent
+			dbAgents := Agents{}
+			err = dbAgents.GetAuthorized(db, "", &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(1))
+			Expect(dbAgents[0].Project).To(Equal(authorization.ProjectId))
+		})
+
+		It("should return an error if the filter syntax is wrong", func() {
+			// insert facts / agent
+			dbAgents := Agents{}
+			err := dbAgents.GetAuthorized(db, `os =`, &authorization)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("should return all agents filtered with same project", func() {
+			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			os := []string{"darwin", "windows", "windows"}
+			agents := Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
+			for i := 0; i < len(agents); i++ {
+				agents[i].Facts = fmt.Sprintf(facts, os[i])
+				agents[i].Project = "miau"
+				err := agents[i].Update(db)
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			// change authorization
+			authorization.ProjectId = "miau"
+
+			// insert facts / agent
+			dbAgents := Agents{}
+			err := dbAgents.GetAuthorized(db, `os = "darwin"`, &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(1))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
+
+			err = dbAgents.GetAuthorized(db, `os = "windows"`, &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(2))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
+			Expect(dbAgents[1].AgentID).To(Equal(agents[2].AgentID))
+		})
+
+		It("should return an identity authorization error", func() {
+			authorization.IdentityStatus = "Something different from Confirmed"
+
+			dbAgents := Agents{}
+			err := dbAgents.GetAuthorized(db, "", &authorization)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+		})
+
+		It("should return a project authorization error", func() {
+			authorization.ProjectId = "Some other project"
+
+			dbAgents := Agents{}
+			err := dbAgents.GetAuthorized(db, "", &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(0))
+		})
+
+	})
+
 })
 
 var _ = Describe("Agent", func() {
