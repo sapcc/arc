@@ -13,7 +13,8 @@ information from one or different Arc servers.
 * [Definition](#definition)
 * [List all agents](#list_all_agents)
 * [Get an agent](#get_agent)
-* [Filtering Agents](#filter_agents)
+* [Delete an agent](#delete_agent)
+* [Filtering agents](#filter_agents)
 * [List agent facts](#list_agent_facts)
 * [List all jobs](#list_all_jobs)
 * [Get a job](#get_job)
@@ -26,7 +27,7 @@ information from one or different Arc servers.
 | URL                               | GET                                        | PUT                        | POST          | DELETE                    |
 |:----------------------------------|:-------------------------------------------|:---------------------------|:--------------|:--------------------------|
 | /agents                           | List all agents                            | N/A                        | N/A           | N/A                       |
-| /agents/{agent-id}                | Get an agent                               | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}                | Get an agent                               | N/A                        | N/A           | Delete an Agent           |
 | /agents/{agent-id}/facts          | List all facts from an agent               | N/A                        | N/A           | N/A                       |
 | /jobs                             | List all jobs                              | N/A                        | Execute a job | N/A                       |
 | /jobs/{job-id}                    | Get a job                                  | N/A                        | N/A           | N/A                       |
@@ -62,6 +63,17 @@ information from one or different Arc servers.
 	created_at: "2015-06-18T15:13:10.164307Z",
 	updated_at: "2015-06-18T15:13:10.164307Z"
 }
+```
+
+<a name="delete_agent"></a>
+## Delete an agent
+- Method: `DELETE`
+- URL: `/agents/{agent-id}`
+- Example URL: `/agents/darwin`
+- Example response:
+
+```text
+Agent with id "darwin" deleted. 
 ```
 
 <a name="filter_agents"></a>
