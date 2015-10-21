@@ -9,7 +9,7 @@ IMAGE       := $(REPOSITORY):$(TAG)
 BUILD_IMAGE := docker.***REMOVED***/monsoon/arc-build
 
 ifneq ($(BUILD_VERSION),)
-LDFLAGS:=$(LDFLAGS) -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
 endif
 
 DOCKER = docker
@@ -44,7 +44,7 @@ build-docker: setup
 		--rm \
 		-v $(CURDIR)/..:/arc \
 		$(BUILD_IMAGE) \
-		make -C /arc/api-server build gencert
+		make -C /arc/api-server build gencert BUILD_VERSION=$(BUILD_VERSION)
 
 .PHONY: gopath 
 gopath: setup
