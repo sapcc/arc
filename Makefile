@@ -5,13 +5,13 @@ BUILD_DIR:=bin
 ARC_BINARY:=$(BUILD_DIR)/arc
 US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
-GITVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
 BUILD_IMAGE:=docker.***REMOVED***/monsoon/arc-build
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
 ifneq ($(BUILD_VERSION),)
-APPVERSION:=-X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
 ARC_BIN_TPL:=arc_$(BUILD_VERSION)_{{.OS}}_{{.Arch}}
 endif
 
@@ -38,7 +38,7 @@ help:
 .PHONY: build
 build: setup
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(ARC_BINARY) -ldflags="$(GITVERSION)" $(REPO_PATH)
+	go build -o $(ARC_BINARY) -ldflags="$(LDFLAGS)" $(REPO_PATH)
 
 .PHONY: build-update-site
 build-update-site: setup
@@ -48,7 +48,7 @@ build-update-site: setup
 .PHONY: build-api
 build-api: setup
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(API_BINARY) -ldflags="$(GITVERSION)" $(REPO_PATH)/api-server
+	go build -o $(API_BINARY) -ldflags="$(LDFLAGS)" $(REPO_PATH)/api-server
 
 .PHONY: build-all
 build-all: build build-update-site build-api
@@ -136,7 +136,7 @@ cross:
 
 .PHONY: cross-compile
 cross-compile: setup
-	gox -osarch="$(TARGETS)" -output="bin/$(ARC_BIN_TPL)" -ldflags="-s -w $(GITVERSION) $(APPVERSION)"
+	gox -osarch="$(TARGETS)" -output="bin/$(ARC_BIN_TPL)" -ldflags="$(LDFLAGS)"
 
 .PHONY: up
 up:
