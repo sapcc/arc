@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -23,14 +24,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}
-{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}
-{{end}}tls-client-cert: {{ .Cert }}
-tls-client-key: {{ .Key }}
-{{if .Ca }}tls-ca-cert: {{ .Ca }}
-{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}
-{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}
-{{end}}`))
+var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{.Eol}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}`))
 
 func Init(c *cli.Context, appName string) (int, error) {
 	keySize := 2048
@@ -123,6 +117,11 @@ func Init(c *cli.Context, appName string) (int, error) {
 			updateInterval = fmt.Sprintf("%d", c.Int("update-interval"))
 		}
 
+		eol := "\n"
+		if runtime.GOOS == "windows" {
+			eol = "\r\n"
+		}
+
 		templateVars := map[string]string{
 			"Cert":           path.Join(dir, "cert.pem"),
 			"Key":            path.Join(dir, "cert.key"),
@@ -131,6 +130,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 			"UpdateUri":      c.String("update-uri"),
 			"UpdateInterval": updateInterval,
 			"Transport":      c.String("transport"),
+			"Eol":            eol,
 		}
 		err = configTemplate.Execute(cfgFile, templateVars)
 		if err != nil {
