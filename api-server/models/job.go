@@ -18,11 +18,11 @@ var JobTargetAgentNotFoundError = fmt.Errorf("Target agent where the job has to 
 var JobBadRequestError = fmt.Errorf("Error unmarschaling or creating/validating the arc request.")
 
 type Job struct {
-	arc.Request `json:"request"`
-	Status      arc.JobState `json:"status"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
-	Project     string       `json:"project"`
+	arc.Request
+	Status    arc.JobState `json:"status"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	Project   string       `json:"project"`
 }
 
 type JobID struct {
