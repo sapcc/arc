@@ -32,7 +32,7 @@ func TestApiServerIsUp(t *testing.T) {
 
 	bodystring := bytes.NewBuffer(*body).String()
 	if !strings.Contains(bodystring, *arcLatestVersion) {
-		fmt.Printf("ApiServer is running version %#v, expected %#v\n", bodystring, *arcLatestVersion)
+		t.Errorf("ApiServer is running version %#v, expected %#v", bodystring, *arcLatestVersion)
 	}
 
 }
