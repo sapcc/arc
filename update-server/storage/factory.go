@@ -23,8 +23,10 @@ const (
 type Storage interface {
 	GetAvailableUpdate(req *http.Request) (*check.Result, error)
 	GetAllUpdates() (*[]string, error)
+	GetWebUpdates() (*[]string, *[]string, error)
 	GetUpdate(name string, writer io.Writer) error
 	GetStoragePath() string
+	GetLastestUpdate(params *check.Params) (string, error)
 	IsConnected() bool
 }
 

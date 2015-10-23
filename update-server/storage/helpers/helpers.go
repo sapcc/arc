@@ -16,6 +16,7 @@ import (
 )
 
 var UpdateArgumentError = fmt.Errorf("Update arguments are missing or wrong")
+var ObjectNotFoundError = fmt.Errorf("Object not found.")
 
 const (
 	BuildRelativeUrl = "/builds/"
@@ -77,6 +78,47 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 
 func SortByVersion(filenames []string) {
 	sort.Sort(ByVersion(filenames))
+}
+
+func ExtractVersion(filename string) (string, error) {
+	r := regexp.MustCompile(`^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?`)
+	results := r.FindStringSubmatch(filename)
+	if len(results) < 3 {
+		return "", fmt.Errorf("Version could not be found.")
+	}
+	return results[2], nil
+}
+
+func GetLatestVersion(releases *[]string) (string, error) {
+	// sort releases by version
+	SortByVersion(*releases)
+	
+	// get las version
+	latestVersion := ""
+	var err error
+	if len(*releases) > 0 {
+		latestVersion, err = ExtractVersion((*releases)[0])
+		if err != nil {
+			return "", err
+		}
+	}
+	return latestVersion, nil
+}
+
+func GetLatestReleaseFrom(releases *[]string, params *check.Params) (string) {
+	// sort releases by version
+	SortByVersion(*releases)
+	
+	// take the first relases that match the params
+	lastRelease := ""
+	for _, release := range *releases {		
+		found := isReleaseFrom(release, params)
+		if found == true {
+			lastRelease = release
+			break
+		}
+	}	
+	return lastRelease
 }
 
 // private

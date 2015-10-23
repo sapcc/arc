@@ -43,7 +43,7 @@ func TestIsRelease(t *testing.T) {
 }
 
 //
-// ExtractVersionFromRelease
+// Versioning
 //
 
 func TestExtractVersionFromRelease(t *testing.T) {
@@ -77,6 +77,77 @@ func TestExtractVersionFromRelease(t *testing.T) {
 	}
 	if result != "20150905.15" {
 		t.Error("Expected to find version 20150903.10")
+	}
+}
+
+func TestExtractVersion(t *testing.T) {
+	_, err := ExtractVersion("arc_20150903.10_windows_amd64.exe")
+	if err != nil {
+		t.Error("Expected to have an error")
+	}
+
+	result, err := ExtractVersion("arc_20150903.10_darwin_amd64")
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	if result != "20150903.10" {
+		t.Error("Expected to find version 20150903.10")
+	}
+
+	result, err = ExtractVersion("arc_20150903.10_windows_amd64")
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	if result != "20150903.10" {
+		t.Error("Expected to find version 20150903.10")
+	}
+
+	result, err = ExtractVersion("arc_20150905.15_darwin_amd64_061430944")
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	if result != "20150905.15" {
+		t.Error("Expected to find version 20150903.10")
+	}
+}
+
+func TestGetLatestVersion(t *testing.T) {
+	releases := []string{
+		"arc_20150905.10_linux_amd64",
+		"arc_20150905.10_windows_amd64.exe",
+		"arc_20150906.07_linux_amd64",
+		"arc_20150906.07_windows_amd64.exe",
+		"arc_20150805.15_linux_amd64",
+		"arc_20150805.15_windows_amd64.exe"}
+	
+	latestVersion, err := GetLatestVersion(&releases)
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	if latestVersion != "20150906.07" {
+		t.Error("Expected to get version 20150906.07")
+	}
+}
+
+func TestGetLatestReleaseFrom(t *testing.T) {
+	releases := []string{
+		"arc_20150905.10_linux_amd64",
+		"arc_20150905.10_windows_amd64.exe",
+		"arc_20150906.07_linux_amd64",
+		"arc_20150906.07_windows_amd64.exe",
+		"arc_20150805.15_linux_amd64",
+		"arc_20150805.15_windows_amd64.exe"}
+		
+	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
+	lastWindowsRelease := GetLatestReleaseFrom(&releases, &windowsParams)	
+	if lastWindowsRelease != "arc_20150906.07_windows_amd64.exe" {
+		t.Error(fmt.Sprint("Expected to get last release arc_20150906.07_windows_amd64.exe. Got ", lastWindowsRelease))
+	}
+
+	linuxParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "linux", "arch": "amd64"}}
+	lastLinuxRelease := GetLatestReleaseFrom(&releases, &linuxParams)	
+	if lastLinuxRelease != "arc_20150906.07_linux_amd64" {
+		t.Error(fmt.Sprint("Expected to get last release arc_20150906.07_linux_amd64. Got ", lastLinuxRelease))
 	}
 }
 

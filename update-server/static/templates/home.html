@@ -35,7 +35,26 @@
 
 	<div class="container">
 			<div class="content">
-				<h1>Releases</h1>
+				<h1>Latest Release</h1>
+
+				<table class="table table-striped release-table">
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Filename</th>
+						</tr>
+					</thead>
+					<tbody>
+						{{range $index, $value := .LastUpdates}}
+						<tr>
+							<td>{{$index}}</td>
+							<td><a href="/builds/{{$value}}">{{$value}}</a></td>
+						</tr>
+						{{end}}
+					</tbody>
+				</table>
+				
+				<h1>All Releases</h1>
 				
 				<table class="table table-striped release-table">
 					<thead>
@@ -45,7 +64,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{{range $index, $value := .Files}}
+						{{range $index, $value := .AllUpdates}}
 						<tr>
 							<td>{{$index}}</td>
 							<td><a href="/builds/{{$value}}">{{$value}}</a></td>

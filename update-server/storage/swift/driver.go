@@ -93,9 +93,50 @@ func (s *SwiftStorage) GetAllUpdates() (*[]string, error) {
 	return &filteredNames, nil
 }
 
+func (s *SwiftStorage) GetWebUpdates() (*[]string, *[]string, error) {
+	// get all updates sorted by verison (latest first)
+	updates, err := s.GetAllUpdates()
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	// get latest version
+	latestVersion, err := helpers.GetLatestVersion(updates)
+
+	var latestUpdates []string
+	var allUpdates []string
+
+	for _, update := range *updates {
+		version, err := helpers.ExtractVersion(update)
+		if err != nil {
+			continue
+		}
+		if latestVersion == version {
+			latestUpdates = append(latestUpdates, update)
+		} else {
+			allUpdates = append(allUpdates, update)
+		}
+	}
+
+	return &latestUpdates, &allUpdates, nil
+}
+
+func (s *SwiftStorage) GetLastestUpdate(params *check.Params) (string, error) {
+	// get all updates sorted by verison (latest first)
+	updates, err := s.GetAllUpdates()
+	if err != nil {
+		return "", err
+	}
+	
+	latestUpdate := helpers.GetLatestReleaseFrom(updates, params)
+	return latestUpdate, nil
+}
+
 func (s *SwiftStorage) GetUpdate(name string, writer io.Writer) error {
 	_, err := s.Connection.ObjectGet(s.Container, name, writer, false, nil)
-	if err != nil {
+	if err == swift.ObjectNotFound {
+		return helpers.ObjectNotFoundError
+	} else if err != nil {
 		return err
 	}
 	return nil

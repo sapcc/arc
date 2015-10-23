@@ -26,22 +26,7 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 			Path("/upload").
 			Name("Upload files").
 			Handler(http.HandlerFunc(uploadHandler))
-
-		router.
-			Methods("GET").
-			PathPrefix("/builds/").
-			Name("Serve local build files").
-			Handler(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))))
 	}
-
-	if storageType == storage.Swift {
-		router.
-			Methods("GET").
-			PathPrefix("/builds/").
-			Name("Serve build files from swift").
-			Handler(http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds)))
-	}
-
 	router.
 		Methods("GET").
 		PathPrefix("/static/").
@@ -65,6 +50,30 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		Path("/").
 		Name("Serve templates").
 		Handler(http.HandlerFunc(serveTemplate))
+
+	//
+	// builds subrouter
+	//
+	buildsSubRouter := router.PathPrefix("/builds").Subrouter()
+	buildsSubRouter.
+		Methods("GET").
+		PathPrefix("/latest/").
+		Name("Serve latest version").
+		Handler(http.StripPrefix("/builds/latest/", http.HandlerFunc(serveLatestBuild)))
+			
+	if storageType == storage.Swift {
+		buildsSubRouter.
+			Methods("GET").
+			PathPrefix("/").
+			Name("Serve build files from swift").
+			Handler(http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds)))
+	} else if storageType == storage.Local {
+		buildsSubRouter.
+			Methods("GET").
+			PathPrefix("/").
+			Name("Serve local build files").
+			Handler(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))))	
+	}
 
 	return router
 }

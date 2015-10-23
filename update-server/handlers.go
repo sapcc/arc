@@ -13,6 +13,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/inconshreveable/go-update/check"
 )
 
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
@@ -40,16 +41,57 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 
 func serveSwiftBuilds(w http.ResponseWriter, r *http.Request) {
 	err := st.GetUpdate(r.URL.Path, w)
-	if err != nil {
+	if err == helpers.ObjectNotFoundError {
+		checkErrAndReturnStatus(w, err, "Error getting swift update. ", http.StatusNotFound)
+		return				
+	} else if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
 }
 
+func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	uriSegments := strings.Split(path, "/")	
+	if len(uriSegments) != 3 {
+		checkErrAndReturnStatus(w, fmt.Errorf("Error getting lastest update. Not enough arguments."), "", http.StatusNotFound)
+		return		
+	}
+	
+	// save params
+	app := uriSegments[0]
+	os := uriSegments[1]
+	arch := uriSegments[2]	
+	
+	params := check.Params{AppId: app, Tags: map[string]string{"os": os, "arch": arch}}
+	latestUpdate, err := st.GetLastestUpdate(&params)
+	if err != nil {
+		checkErrAndReturnStatus(w, err, "Error getting latest update. ", http.StatusInternalServerError)
+		return
+	}
+	
+	if latestUpdate == "" {
+		checkErrAndReturnStatus(w, fmt.Errorf("Error getting lastest update. No latest update available for this configuration."), "", http.StatusNotFound)
+		return
+	}
+
+	// set header for the filename
+	w.Header().Set("Content-disposition", fmt.Sprint("attachment; filename=", latestUpdate))
+	err = st.GetUpdate(latestUpdate, w)
+	if err == helpers.ObjectNotFoundError {
+		checkErrAndReturnStatus(w, err, "Error serving latest update. ", http.StatusNotFound)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, "Error serving latest update. ", http.StatusInternalServerError)
+		return
+	}
+}
+
 type tmplData struct {
-	AppName    string
-	AppVersion string
-	Files      []string
+	AppName     string
+	AppVersion  string
+	LastUpdates []string
+	AllUpdates  []string
 }
 
 func serveTemplate(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +111,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buildFilesNames, err := st.GetAllUpdates()
+	lastUpdates, allUpdates, err := st.GetWebUpdates()
 	if err != nil {
 		log.Errorf("Error getting the build file names. Got %q", err)
 		http.Error(w, http.StatusText(500), 500)
@@ -77,9 +119,10 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// get build infos
 	data := tmplData{
-		AppName:    appName,
-		AppVersion: version.String(),
-		Files:      *buildFilesNames,
+		AppName:     appName,
+		AppVersion:  version.String(),
+		LastUpdates: *lastUpdates,
+		AllUpdates:  *allUpdates,
 	}
 
 	// render template

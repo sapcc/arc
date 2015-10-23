@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"path"
+	"fmt"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -85,7 +87,61 @@ func (l *LocalStorage) GetAllUpdates() (*[]string, error) {
 	return &filteredNames, nil
 }
 
+func (l *LocalStorage) GetWebUpdates() (*[]string, *[]string, error) {
+	// get all updates sorted by verison (latest first)
+	updates, err := l.GetAllUpdates()
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	// get latest version
+	latestVersion, err := helpers.GetLatestVersion(updates)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	var latestUpdates []string
+	var allUpdates []string
+
+	for _, update := range *updates {
+		version, err := helpers.ExtractVersion(update)
+		if err != nil {
+			continue
+		}
+		if latestVersion == version {
+			latestUpdates = append(latestUpdates, update)
+		} else {
+			allUpdates = append(allUpdates, update)
+		}
+	}
+
+	return &latestUpdates, &allUpdates, nil
+}
+
+func (l *LocalStorage) GetLastestUpdate(params *check.Params) (string, error) {
+	// get all updates sorted by verison (latest first)
+	updates, err := l.GetAllUpdates()
+	if err != nil {
+		return "", err
+	}
+	
+	latestUpdate := helpers.GetLatestReleaseFrom(updates, params)
+	return latestUpdate, nil
+}
+
 func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {
+	// check if file exists
+	path := path.Join(l.GetStoragePath(), name)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+    return helpers.ObjectNotFoundError
+	}  
+	
+	body, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	fmt.Fprint(writer, string(body))
+	
 	return nil
 }
 
