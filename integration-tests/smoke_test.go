@@ -5,18 +5,21 @@ package integrationTests
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
 )
 
-var arcLatestVersion = flag.String("latest-version", "2015.01.01", "integration-test")
+var updateSiteVersion = flag.String("update-site-version", "2015.01.01", "Expected version of Update Site")
+var apiVersion = flag.String("api-version", "2015.01.01", "Expected version of Api Server")
 
 func TestApiServerIsUp(t *testing.T) {
 	// override flags if enviroment variable exists
-	if e := os.Getenv("LATEST_VERSION"); e != "" {
-		arcLatestVersion = &e
+	if e := os.Getenv("API_VERSION"); e != "" {
+		apiVersion = &e
+	}
+	if e := os.Getenv("UPDATE_SITE_VERSION"); e != "" {
+		updateSiteVersion = &e
 	}
 
 	client, err := NewTestClient()
@@ -31,8 +34,8 @@ func TestApiServerIsUp(t *testing.T) {
 	}
 
 	bodystring := bytes.NewBuffer(*body).String()
-	if !strings.Contains(bodystring, *arcLatestVersion) {
-		t.Errorf("ApiServer is running version %#v, expected %#v", bodystring, *arcLatestVersion)
+	if !strings.Contains(bodystring, *apiVersion) {
+		t.Errorf("ApiServer is running version %#v, expected %#v", bodystring, *apiVersion)
 	}
 
 }
@@ -50,7 +53,7 @@ func TestUpdateServerIsUp(t *testing.T) {
 	}
 
 	bodystring := bytes.NewBuffer(*body).String()
-	if !strings.Contains(bodystring, *arcLatestVersion) {
-		fmt.Printf("UpdateServer is running version %#v, expected %#v\n", bodystring, *arcLatestVersion)
+	if !strings.Contains(bodystring, *updateSiteVersion) {
+		t.Errorf("UpdateServer is running version %#v, expected %#v", bodystring, *updateSiteVersion)
 	}
 }
