@@ -36,7 +36,7 @@ func TestRunJob(t *testing.T) {
 	// get info about the agent
 	statusCode, body := client.GetApiV1(fmt.Sprint("/agents/", *agentIdentityFlag, "/facts"), ApiServer)
 	if statusCode != "200 OK" {
-		t.Error(fmt.Sprint("Expected to get 200 response code getting facts for agent id ", *agentIdentityFlag))
+		t.Errorf("Expected to get 200 response code getting facts for agent %s got %s ", *agentIdentityFlag, statusCode)
 		return
 	}
 
@@ -62,14 +62,14 @@ func TestRunJob(t *testing.T) {
 	// post the job
 	statusCode, body = client.PostApiV1("/jobs", ApiServer, nil, jsonStr)
 	if statusCode != "200 OK" {
-		t.Error(fmt.Sprint("Expected to get 200 response code posting the job"))
+		t.Errorf("Expected to get 200 response code posting the job, got %s", statusCode)
 		return
 	}
 
 	var jobId models.JobID
 	err = json.Unmarshal(*body, &jobId)
 	if err != nil {
-		t.Error("Expected not to get an error unmarshaling")
+		t.Error("Error unmarshalling jobs reply: ", err)
 		return
 	}
 
@@ -88,7 +88,7 @@ func TestRunJob(t *testing.T) {
 	// check log
 	statusCode, body = client.GetApiV1(fmt.Sprint("/jobs/", jobId.RequestID, "/log"), ApiServer)
 	if statusCode != "200 OK" {
-		t.Error(fmt.Sprint("Expected to get 200 response code getting the log for job id ", jobId.RequestID))
+		t.Error("Expected to get 200 response code for job %s, got %s", jobId.RequestID, statusCode)
 	}
 	if len(string(*body)) == 0 {
 		t.Error("Expected to get a log")
