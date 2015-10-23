@@ -2,13 +2,13 @@ package local
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"regexp"
 	"path"
-	"fmt"
+	"regexp"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -93,13 +93,13 @@ func (l *LocalStorage) GetWebUpdates() (*[]string, *[]string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// get latest version
 	latestVersion, err := helpers.GetLatestVersion(updates)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	var latestUpdates []string
 	var allUpdates []string
 
@@ -124,7 +124,7 @@ func (l *LocalStorage) GetLastestUpdate(params *check.Params) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	latestUpdate := helpers.GetLatestReleaseFrom(updates, params)
 	return latestUpdate, nil
 }
@@ -133,15 +133,15 @@ func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {
 	// check if file exists
 	path := path.Join(l.GetStoragePath(), name)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-    return helpers.ObjectNotFoundError
-	}  
-	
+		return helpers.ObjectNotFoundError
+	}
+
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	fmt.Fprint(writer, string(body))
-	
+
 	return nil
 }
 

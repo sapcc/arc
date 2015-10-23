@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/inconshreveable/go-update/check"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 	"gitHub.***REMOVED***/monsoon/arc/version"
-	"github.com/inconshreveable/go-update/check"
 )
 
 func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func serveSwiftBuilds(w http.ResponseWriter, r *http.Request) {
 	err := st.GetUpdate(r.URL.Path, w)
 	if err == helpers.ObjectNotFoundError {
 		checkErrAndReturnStatus(w, err, "Error getting swift update. ", http.StatusNotFound)
-		return				
+		return
 	} else if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
@@ -52,24 +52,24 @@ func serveSwiftBuilds(w http.ResponseWriter, r *http.Request) {
 
 func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	uriSegments := strings.Split(path, "/")	
+	uriSegments := strings.Split(path, "/")
 	if len(uriSegments) != 3 {
 		checkErrAndReturnStatus(w, fmt.Errorf("Error getting lastest update. Not enough arguments."), "", http.StatusNotFound)
-		return		
+		return
 	}
-	
+
 	// save params
 	app := uriSegments[0]
 	os := uriSegments[1]
-	arch := uriSegments[2]	
-	
+	arch := uriSegments[2]
+
 	params := check.Params{AppId: app, Tags: map[string]string{"os": os, "arch": arch}}
 	latestUpdate, err := st.GetLastestUpdate(&params)
 	if err != nil {
 		checkErrAndReturnStatus(w, err, "Error getting latest update. ", http.StatusInternalServerError)
 		return
 	}
-	
+
 	if latestUpdate == "" {
 		checkErrAndReturnStatus(w, fmt.Errorf("Error getting lastest update. No latest update available for this configuration."), "", http.StatusNotFound)
 		return

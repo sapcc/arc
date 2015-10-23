@@ -92,7 +92,7 @@ func ExtractVersion(filename string) (string, error) {
 func GetLatestVersion(releases *[]string) (string, error) {
 	// sort releases by version
 	SortByVersion(*releases)
-	
+
 	// get las version
 	latestVersion := ""
 	var err error
@@ -105,19 +105,19 @@ func GetLatestVersion(releases *[]string) (string, error) {
 	return latestVersion, nil
 }
 
-func GetLatestReleaseFrom(releases *[]string, params *check.Params) (string) {
+func GetLatestReleaseFrom(releases *[]string, params *check.Params) string {
 	// sort releases by version
 	SortByVersion(*releases)
-	
+
 	// take the first relases that match the params
 	lastRelease := ""
-	for _, release := range *releases {		
+	for _, release := range *releases {
 		found := isReleaseFrom(release, params)
 		if found == true {
 			lastRelease = release
 			break
 		}
-	}	
+	}
 	return lastRelease
 }
 

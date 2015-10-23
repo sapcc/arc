@@ -119,7 +119,7 @@ func TestGetLatestVersion(t *testing.T) {
 		"arc_20150906.07_windows_amd64.exe",
 		"arc_20150805.15_linux_amd64",
 		"arc_20150805.15_windows_amd64.exe"}
-	
+
 	latestVersion, err := GetLatestVersion(&releases)
 	if err != nil {
 		t.Error("Expected to not have an error")
@@ -137,15 +137,15 @@ func TestGetLatestReleaseFrom(t *testing.T) {
 		"arc_20150906.07_windows_amd64.exe",
 		"arc_20150805.15_linux_amd64",
 		"arc_20150805.15_windows_amd64.exe"}
-		
+
 	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
-	lastWindowsRelease := GetLatestReleaseFrom(&releases, &windowsParams)	
+	lastWindowsRelease := GetLatestReleaseFrom(&releases, &windowsParams)
 	if lastWindowsRelease != "arc_20150906.07_windows_amd64.exe" {
 		t.Error(fmt.Sprint("Expected to get last release arc_20150906.07_windows_amd64.exe. Got ", lastWindowsRelease))
 	}
 
 	linuxParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "linux", "arch": "amd64"}}
-	lastLinuxRelease := GetLatestReleaseFrom(&releases, &linuxParams)	
+	lastLinuxRelease := GetLatestReleaseFrom(&releases, &linuxParams)
 	if lastLinuxRelease != "arc_20150906.07_linux_amd64" {
 		t.Error(fmt.Sprint("Expected to get last release arc_20150906.07_linux_amd64. Got ", lastLinuxRelease))
 	}

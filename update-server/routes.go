@@ -60,7 +60,7 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		PathPrefix("/latest/").
 		Name("Serve latest version").
 		Handler(http.StripPrefix("/builds/latest/", http.HandlerFunc(serveLatestBuild)))
-			
+
 	if storageType == storage.Swift {
 		buildsSubRouter.
 			Methods("GET").
@@ -72,7 +72,7 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 			Methods("GET").
 			PathPrefix("/").
 			Name("Serve local build files").
-			Handler(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))))	
+			Handler(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))))
 	}
 
 	return router

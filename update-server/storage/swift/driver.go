@@ -99,7 +99,7 @@ func (s *SwiftStorage) GetWebUpdates() (*[]string, *[]string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// get latest version
 	latestVersion, err := helpers.GetLatestVersion(updates)
 
@@ -127,7 +127,7 @@ func (s *SwiftStorage) GetLastestUpdate(params *check.Params) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	latestUpdate := helpers.GetLatestReleaseFrom(updates, params)
 	return latestUpdate, nil
 }
