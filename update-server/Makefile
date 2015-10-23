@@ -31,7 +31,7 @@ build-docker:
 		--rm \
 		-v $(CURDIR)/..:/arc \
 		$(BUILD_IMAGE) \
-		make -C /arc/update-server build
+		make -C /arc/update-server build BUILD_VERSION=$(BUILD_VERSION) 
 
 .PHONY: gopath 
 gopath: setup
