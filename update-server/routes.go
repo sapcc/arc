@@ -7,49 +7,51 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
 )
 
 func newRouter(storageType storage.StorageType) *mux.Router {
+	middlewareChain := alice.New(loggingHandler, combineLogHandler, servedByHandler)
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.
 		Methods("POST").
 		Path("/updates").
 		Name("Get available updates").
-		Handler(http.HandlerFunc(serveAvailableUpdates))
+		Handler(middlewareChain.ThenFunc(http.HandlerFunc(serveAvailableUpdates)))
 
 	if storageType == storage.Local {
 		router.
 			Methods("POST").
 			Path("/upload").
 			Name("Upload files").
-			Handler(http.HandlerFunc(uploadHandler))
+			Handler(middlewareChain.ThenFunc(http.HandlerFunc(uploadHandler)))
 	}
 	router.
 		Methods("GET").
 		PathPrefix("/static/").
 		Name("Serve static files").
-		Handler(http.FileServer(FS(false)))
+		Handler(middlewareChain.Then(http.FileServer(FS(false))))
 
 	router.
 		Methods("GET").
 		Path("/healthcheck").
 		Name("Healthcheck").
-		Handler(http.HandlerFunc(serveVersion))
+		Handler(middlewareChain.ThenFunc(http.HandlerFunc(serveVersion)))
 
 	router.
 		Methods("GET").
 		Path("/readiness").
 		Name("Readiness").
-		Handler(http.HandlerFunc(serveReadiness))
+		Handler(middlewareChain.ThenFunc(http.HandlerFunc(serveReadiness)))
 
 	router.
 		Methods("GET").
 		Path("/").
 		Name("Serve templates").
-		Handler(http.HandlerFunc(serveTemplate))
+		Handler(middlewareChain.ThenFunc(http.HandlerFunc(serveTemplate)))
 
 	//
 	// builds subrouter
@@ -59,20 +61,20 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		Methods("GET").
 		PathPrefix("/latest/").
 		Name("Serve latest version").
-		Handler(http.StripPrefix("/builds/latest/", http.HandlerFunc(serveLatestBuild)))
+		Handler(middlewareChain.Then(http.StripPrefix("/builds/latest/", http.HandlerFunc(serveLatestBuild))))
 
 	if storageType == storage.Swift {
 		buildsSubRouter.
 			Methods("GET").
 			PathPrefix("/").
 			Name("Serve build files from swift").
-			Handler(http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds)))
+			Handler(middlewareChain.Then(http.StripPrefix("/builds/", http.HandlerFunc(serveSwiftBuilds))))
 	} else if storageType == storage.Local {
 		buildsSubRouter.
 			Methods("GET").
 			PathPrefix("/").
 			Name("Serve local build files").
-			Handler(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath()))))
+			Handler(middlewareChain.Then(http.StripPrefix("/builds/", http.FileServer(http.Dir(st.GetStoragePath())))))
 	}
 
 	return router

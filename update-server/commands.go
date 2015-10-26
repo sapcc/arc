@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"github.com/gorilla/handlers"
 
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage"
 	"gitHub.***REMOVED***/monsoon/arc/version"
@@ -74,18 +74,14 @@ func localStorage(c *cli.Context) {
 		log.Fatal("No path to update artifacts given.")
 		return
 	}
-	if err = os.MkdirAll(buildsRootPath, 0755); err != nil {
-		log.Fatalf("Path to artificats %s does not exist and can't be created: %s", buildsRootPath, err)
-		return
-	}
+	err = os.MkdirAll(buildsRootPath, 0755)
+	checkErrAndPanic(err, fmt.Sprintf("Path to artificats %s does not exist and can't be created: %s. ", buildsRootPath))
+
 	log.Infof("Serving artifacts from %s.", buildsRootPath)
 
 	// set the storage
 	st, err = storage.New(storage.Local, c)
-	if err != nil {
-		log.Fatal(err.Error())
-		return
-	}
+	checkErrAndPanic(err, "Error creating creating the swift storage conection. ")
 
 	// run the server
 	runServer(c, storage.Local)
@@ -103,10 +99,7 @@ func swiftStorage(c *cli.Context) {
 
 	// set the storage
 	st, err = storage.New(storage.Swift, c)
-	if err != nil {
-		log.Fatal(err.Error())
-		return
-	}
+	checkErrAndPanic(err, "Error creating creating the swift storage conection. ")
 
 	// run the server
 	runServer(c, storage.Swift)
@@ -123,8 +116,12 @@ func runServer(c *cli.Context, storageType storage.StorageType) {
 
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
-	accessLogger := handlers.CombinedLoggingHandler(os.Stdout, router)
-	if err := http.ListenAndServe(c.GlobalString("bind-address"), accessLogger); err != nil {
-		log.Fatalf("Failed to bind on %s: %s", c.GlobalString("bind-address"), err)
+	err := http.ListenAndServe(c.GlobalString("bind-address"), router)
+	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")))
+}
+
+func checkErrAndPanic(err error, msg string) {
+	if err != nil {
+		log.Fatalf(msg, err)
 	}
 }
