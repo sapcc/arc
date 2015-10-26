@@ -21,12 +21,10 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 
 	update, err := st.GetAvailableUpdate(r)
 	if err == helpers.UpdateArgumentError {
-		log.Errorf(err.Error())
-		http.Error(w, http.StatusText(400), 400)
+		logInfoAndReturnHttpErrStatus(w, err, "Error serving available updates. ", http.StatusBadRequest)
 		return
 	} else if err != nil {
-		log.Errorf(err.Error())
-		http.Error(w, http.StatusText(500), 500)
+		checkErrAndReturnStatus(w, err, "Error serving available updates. ", http.StatusInternalServerError)
 		return
 	}
 	if update == nil {
@@ -42,10 +40,10 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 func serveSwiftBuilds(w http.ResponseWriter, r *http.Request) {
 	err := st.GetUpdate(r.URL.Path, w)
 	if err == helpers.ObjectNotFoundError {
-		checkErrAndReturnStatus(w, err, "Error getting swift update. ", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, err, "Error getting swift update. ", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(w, http.StatusText(500), 500)
+		checkErrAndReturnStatus(w, err, "Error getting swift update. ", http.StatusInternalServerError)
 		return
 	}
 }
@@ -54,7 +52,7 @@ func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	uriSegments := strings.Split(path, "/")
 	if len(uriSegments) != 3 {
-		checkErrAndReturnStatus(w, fmt.Errorf("Error getting lastest update. Not enough arguments."), "", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, fmt.Errorf("Error getting lastest update. Not enough arguments."), "", http.StatusNotFound)
 		return
 	}
 
@@ -71,7 +69,7 @@ func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if latestUpdate == "" {
-		checkErrAndReturnStatus(w, fmt.Errorf("Error getting lastest update. No latest update available for this configuration."), "", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, fmt.Errorf("Error getting lastest update. No latest update available for this configuration."), "", http.StatusNotFound)
 		return
 	}
 
@@ -79,7 +77,7 @@ func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-disposition", fmt.Sprint("attachment; filename=", latestUpdate))
 	err = st.GetUpdate(latestUpdate, w)
 	if err == helpers.ObjectNotFoundError {
-		checkErrAndReturnStatus(w, err, "Error serving latest update. ", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, err, "Error serving latest update. ", http.StatusNotFound)
 		return
 	} else if err != nil {
 		checkErrAndReturnStatus(w, err, "Error serving latest update. ", http.StatusInternalServerError)
@@ -113,8 +111,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	lastUpdates, allUpdates, err := st.GetWebUpdates()
 	if err != nil {
-		log.Errorf("Error getting the build file names. Got %q", err)
-		http.Error(w, http.StatusText(500), 500)
+		checkErrAndReturnStatus(w, err, "Error serving tempate. ", http.StatusInternalServerError)
 	}
 
 	// get build infos
@@ -127,8 +124,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// render template
 	if err := tmpl.ExecuteTemplate(w, "layout", data); err != nil {
-		log.Errorf("Error executing template. Got %q", err)
-		http.Error(w, http.StatusText(500), 500)
+		checkErrAndReturnStatus(w, err, "Error serving tempate. ", http.StatusInternalServerError)
 		return
 	}
 }
@@ -136,7 +132,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Query().Get("filename")
 	if len(fileName) == 0 {
-		checkErrAndReturnStatus(w, errors.New("No filename parameter found."), "", http.StatusBadRequest)
+		checkErrAndReturnStatus(w, errors.New("Error uploading a file. No filename parameter found. "), "", http.StatusBadRequest)
 		return
 	}
 
@@ -144,7 +140,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	path := path.Join(st.GetStoragePath(), fileName)
 	out, err := os.Create(path)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Unable to create the file for writing.", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error uploading a file. Unable to create the file for writing. ", http.StatusInternalServerError)
 		return
 	}
 	defer out.Close()
@@ -178,13 +174,16 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 
 		// convert struct to json
 		body, err := json.Marshal(ready)
-		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+		if err != nil {
+			checkErrAndReturnStatus(w, err, "Error checking readiness. Error encoding Agent to JSON. ", http.StatusInternalServerError)
+			return
+		}
 
 		// return the error with json body
 		http.Error(w, string(body), ready.Status)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		log.Errorf("Error, returning status %v. %s", ready.Status, ready.Message)
+		log.Errorf("Error checking readiness. Rheturning status %v. %s", ready.Status, ready.Message)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -201,6 +200,14 @@ func serveVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 // private
+
+func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int) {
+	if err != nil {
+		log.Infof("Error, returning status %v. %s %s", status, msg, err.Error())
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	http.Error(w, http.StatusText(status), status)
+}
 
 func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
 	if err != nil {
