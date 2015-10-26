@@ -3,12 +3,14 @@
 package local
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -96,8 +98,37 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 }
 
 //
-// GetAllUpdates()
+// Get updates
 //
+
+func TestGetUpdate(t *testing.T) {
+	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
+	file, _ := ioutil.TempFile(buildsRootPath, "arc_20150905.15_linux_amd64_")
+	target, _ := ioutil.TempFile(buildsRootPath, "target_file_")
+	defer func() {
+		os.RemoveAll(buildsRootPath)
+		buildsRootPath = ""
+	}()
+
+	data := "Some interesting data"
+	file.WriteString(data)
+	w := bufio.NewWriter(target)
+	ls := LocalStorage{
+		BuildsRootPath: buildsRootPath,
+	}
+
+	_, filename := path.Split(file.Name())
+	err := ls.GetUpdate(filename, w)
+	if err != nil {
+		t.Error("Expected to not have an error")
+	}
+	w.Flush() //ensure all buffered operations have been applied to the underlying writer
+
+	content, _ := ioutil.ReadFile(target.Name())
+	if string(content) != data {
+		t.Error("Expected to get the source data in the target file")
+	}
+}
 
 func TestGetAllUpdates(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")

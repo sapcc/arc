@@ -2,7 +2,6 @@ package local
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -136,11 +135,17 @@ func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {
 		return helpers.ObjectNotFoundError
 	}
 
-	body, err := ioutil.ReadFile(path)
+	// reader
+	reader, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	fmt.Fprint(writer, string(body))
+
+	// copy data from reader to writer
+	_, err = io.Copy(writer, reader)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
