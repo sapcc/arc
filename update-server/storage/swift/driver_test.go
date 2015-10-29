@@ -24,8 +24,6 @@ var (
 
 const (
 	CONTAINER = "arc_releases_test"
-	CONTENTS  = "12345"
-	CONTENTS2 = "56789"
 )
 
 //

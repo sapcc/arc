@@ -122,6 +122,6 @@ func runServer(c *cli.Context, storageType storage.StorageType) {
 
 func checkErrAndPanic(err error, msg string) {
 	if err != nil {
-		log.Fatalf(msg, err)
+		log.Fatal(msg, err)
 	}
 }
