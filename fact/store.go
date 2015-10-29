@@ -27,17 +27,18 @@ type Store struct {
 	updateChan  chan (map[string]interface{})
 	initialized bool
 	mu          sync.Mutex
+	interval    time.Duration
 }
 
 func NewStore() *Store {
 	return &Store{
 		sources:     make(map[string]factSource),
 		initialized: false,
+		interval:    30 * time.Minute,
 	}
 }
 
 func (fs *Store) AddSource(plugin FactSource, interval time.Duration) {
-
 	source := factSource{plugin: plugin, facts: make(map[string]interface{})}
 
 	fs.sources[plugin.Name()] = source
@@ -63,12 +64,23 @@ func (fs *Store) Updates() <-chan map[string]interface{} {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
 	if fs.updateChan == nil {
+		// setup update chanel
 		fs.updateChan = make(chan map[string]interface{})
 		go func() {
 			fs.Wait()
 			fs.updateChan <- fs.Facts()
 			fs.initialized = true
 		}()
+
+		// setup the global full update ticker
+		if fs.interval > 0 {
+			go func() {
+				fullUpdateTicker := time.Tick(fs.interval)
+				for range fullUpdateTicker {
+					fs.FullUpdate()
+				}
+			}()
+		}
 	}
 	return fs.updateChan
 }
@@ -89,7 +101,6 @@ func (fs *Store) Facts() map[string]interface{} {
 }
 
 func (fs *Store) update(name string) error {
-
 	source, ok := fs.sources[name]
 	if !ok {
 		return fmt.Errorf("Unknown fact source %s", name)
@@ -118,4 +129,13 @@ func (fs *Store) update(name string) error {
 		}
 	}
 	return nil
+}
+
+func (fs *Store) FullUpdate() {
+	if fs.initialized {
+		fs.mu.Lock()
+		defer fs.mu.Unlock()
+		fs.updateChan <- fs.Facts()
+	}
+	return
 }
