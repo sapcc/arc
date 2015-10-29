@@ -135,10 +135,7 @@ func (fs *Store) FullUpdate() {
 	if fs.initialized {
 		fs.mu.Lock()
 		defer fs.mu.Unlock()
-		go func() {
-			fs.Wait()
-			fs.updateChan <- fs.Facts()
-		}()
+		fs.updateChan <- fs.Facts()
 	}
 	return
 }
