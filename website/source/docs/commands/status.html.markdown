@@ -9,5 +9,7 @@ description: The `status` command gives the service status.
 
 Command: `arc status`
 
+## Description
+
 Coming soon...
 

@@ -28,12 +28,9 @@ import (
 
 var cliCommands = []cli.Command{
 	{
-		Name:   "server",
-		Usage:  "Run the Arc daemon",
-		Action: cmdServer,
-		Before: func(c *cli.Context) error {
-			return config.Load(c)
-		},
+		Name:        "server",
+		Usage:       cmdUsage["docs-commands-server"],
+		Description: cmdDescription["docs-commands-server"],
 		Flags: []cli.Flag{
 			optTransport,
 			optEndpoint,
@@ -43,10 +40,15 @@ var cliCommands = []cli.Command{
 			optUpdateUri,
 			optUpdateInterval,
 		},
+		Before: func(c *cli.Context) error {
+			return config.Load(c)
+		},
+		Action: cmdServer,
 	},
 	{
-		Name:  "run",
-		Usage: "Execute an agent action on a remote Arc server",
+		Name:        "run",
+		Usage:       cmdUsage["docs-commands-run"],
+		Description: cmdDescription["docs-commands-run"],
 		Flags: []cli.Flag{
 			optTransport,
 			optEndpoint,
@@ -64,18 +66,21 @@ var cliCommands = []cli.Command{
 		Action: cmdExecute,
 	},
 	{
-		Name:   "list",
-		Usage:  "List available agents and actions",
-		Action: cmdList,
+		Name:        "list",
+		Usage:       cmdUsage["docs-commands-list"],
+		Description: cmdDescription["docs-commands-list"],
+		Action:      cmdList,
 	},
 	{
-		Name:   "facts",
-		Usage:  "Discover and list facts on this system",
-		Action: cmdFacts,
+		Name:        "facts",
+		Usage:       cmdUsage["docs-commands-facts"],
+		Description: cmdDescription["docs-commands-facts"],
+		Action:      cmdFacts,
 	},
 	{
-		Name:  "update",
-		Usage: "Update current binary to the latest version",
+		Name:        "update",
+		Usage:       cmdUsage["docs-commands-update"],
+		Description: cmdDescription["docs-commands-update"],
 		Flags: []cli.Flag{
 			optForce,
 			optUpdateUri,
@@ -84,9 +89,10 @@ var cliCommands = []cli.Command{
 		Action: cmdUpdate,
 	},
 	{
-		Name:   "init",
-		Usage:  "Initialize server configuration",
-		Action: cmdInit,
+		Name:        "init",
+		Usage:       cmdUsage["docs-commands-init"],
+		Description: cmdDescription["docs-commands-init"],
+		Action:      cmdInit,
 		Flags: []cli.Flag{
 			optTransport,
 			optEndpoint,
@@ -100,9 +106,10 @@ var cliCommands = []cli.Command{
 		},
 	},
 	{
-		Name:   "status",
-		Usage:  "Service status",
-		Action: cmdStatus,
+		Name:        "status",
+		Usage:       cmdUsage["docs-commands-status"],
+		Description: cmdDescription["docs-commands-status"],
+		Action:      cmdStatus,
 		Flags: []cli.Flag{
 			optInstallDir,
 		},

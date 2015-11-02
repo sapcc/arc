@@ -9,6 +9,8 @@ description: Run the Arc daemon.
 
 Command: `arc server`
 
+## Description
+
 Run the Arc daemon.
 
 Due to the power and complexity of this command, the Arc server is documented in its own section.

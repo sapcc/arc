@@ -22,7 +22,7 @@ var responseExample = `{"initiative":"automatically","url":"MIAU://non_valid_url
 
 func TestCmdUpdateMissingUri(t *testing.T) {
 	// prepare context flags
-	ctx := cli.NewContext(nil, flag.NewFlagSet("local", 0), flag.NewFlagSet("global", 0))
+	ctx := cli.NewContext(nil, flag.NewFlagSet("local", 0), getParentCtx())
 
 	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err == nil {
@@ -46,7 +46,7 @@ func TestCmdUpdateYes(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(false, false, server.URL), getGlobalSet())
+	ctx := cli.NewContext(nil, getLocalSet(false, false, server.URL), getParentCtx())
 
 	// mock input to yes
 	in, err := mockConfirmStdInput("yes")
@@ -84,7 +84,7 @@ func TestCmdUpdateNo(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(false, false, server.URL), getGlobalSet())
+	ctx := cli.NewContext(nil, getLocalSet(false, false, server.URL), getParentCtx())
 
 	// mock input to no
 	in, err := mockConfirmStdInput("no")
@@ -123,7 +123,7 @@ func TestCmdUpdateForce(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(false, true, server.URL), getGlobalSet())
+	ctx := cli.NewContext(nil, getLocalSet(false, true, server.URL), getParentCtx())
 
 	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
@@ -153,7 +153,7 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 	defer server.Close()
 
 	// prepare context flags
-	ctx := cli.NewContext(nil, getLocalSet(true, false, server.URL), getGlobalSet())
+	ctx := cli.NewContext(nil, getLocalSet(true, false, server.URL), getParentCtx())
 
 	code, err := Update(ctx, map[string]interface{}{"appName": "test"})
 	if err != nil {
@@ -175,9 +175,10 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 
 // private
 
-func getGlobalSet() *flag.FlagSet {
+func getParentCtx() *cli.Context {
 	flagSet := flag.NewFlagSet("global", 0)
-	return flagSet
+	globalContext := cli.NewContext(nil, flagSet, nil)
+	return globalContext
 }
 
 func getLocalSet(noUpdate bool, force bool, serverUrl string) *flag.FlagSet {

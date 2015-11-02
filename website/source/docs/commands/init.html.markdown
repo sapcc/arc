@@ -9,5 +9,7 @@ description: The `init` command initializes server configuration.
 
 Command: `arc init`
 
+## Description
+
 Coming soon...
 

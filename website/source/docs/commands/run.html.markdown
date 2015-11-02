@@ -9,6 +9,8 @@ description: The `arc run` execute an agent action [REFERENCE ACTIONS DOC PAGE F
 
 Command: `arc run`
 
+## Description
+
 The `arc run` execute an agent action [REFERENCE ACTIONS DOC PAGE FROM HERE] on a remote Arc server.
 
 ## Usage
@@ -39,35 +41,29 @@ Example: `arc run -endpoint tcp://localhost:1883 -identity darwin rpc version`
 
 It prints the current version of the Arc running on the remote server with the identity `darwin`.
 
-```text
-0.1.0-dev(ae07667)
-```
+    0.1.0-dev(ae07667)
 
 Example: `arc run -endpoint tcp://localhost:1883 -identity darwin -payload "echo Script start; for i in {1..5}; do echo \$i; sleep 1s; done; echo Script done" execute script`
 
-```text
-Script start
-1
-2
-3
-4
-5
-Script done
-```
+    Script start
+    1
+    2
+    3
+    4
+    5
+    Script done
 
 It runs the script given as a payload on the remote server with identity `darwin`. If the script gets to complicated or too long to give it as a payload, there is possibility to
 write a bash script file and give it to the `run` command as the following example:
 
 Example: `arc run -endpoint tcp://localhost:1883 -identity darwin -stdin execute script < script.sh`
 
-```text
-#!/bin/bash
-# script.sh
+    #!/bin/bash
+    # script.sh
 
-echo Scritp start
-for i in {1..5}; do
-	echo $i
-	sleep 1s
-done
-echo Scritp done
-```
+    echo Scritp start
+    for i in {1..5}; do
+    	echo $i
+    	sleep 1s
+    done
+    echo Scritp done

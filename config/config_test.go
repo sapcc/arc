@@ -20,12 +20,13 @@ var _ = Describe("Config", func() {
 		globalSet.String("tls-client-key", "", "test")
 		globalSet.String("tls-ca-cert", "", "test")
 		globalSet.String("log-level", "info", "test")
+		globalContext := cli.NewContext(nil, globalSet, nil)
 
 		stringSlice := cli.StringSlice{}
 		stringSlice.Set("tcp://localhost:1883")
 		flag := cli.StringSliceFlag{Name: "endpoint", Value: &stringSlice}
 		flag.Apply(globalSet)
-		ctx := cli.NewContext(nil, globalSet, globalSet)
+		ctx := cli.NewContext(nil, globalSet, globalContext)
 
 		// load context to the config
 		conf := Config{}

@@ -6,9 +6,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -20,7 +22,6 @@ const (
 import (
 )
 
-var cmdDescription = map[string]string{
 `
 )
 
@@ -43,6 +44,57 @@ func main() {
 
 	fmt.Fprint(w, header)
 
+	generateUsage(w)
+
+	fmt.Fprint(w, "\n")
+
+	generateDescription(w)
+}
+
+func generateUsage(w io.Writer) {
+	fmt.Fprint(w, `var cmdUsage = map[string]string{`)
+	fmt.Fprint(w, "\n")
+
+	mapGenerator(w,
+		func(data string) string {
+			ymlData := make(map[string]string)
+			err := yaml.Unmarshal([]byte(data), &ymlData)
+			if err != nil {
+				log.Fatal(err)
+			}
+			parsedData := strings.Replace(ymlData["description"], "`", `"`, -1)
+			return parsedData
+		})
+
+	fmt.Fprint(w, "}\n")
+}
+
+func generateDescription(w io.Writer) {
+	fmt.Fprint(w, `var cmdDescription = map[string]string{`)
+	fmt.Fprint(w, "\n")
+
+	mapGenerator(w,
+		func(data string) string {
+			description := strExtract(data, "## Description", "##", 1)
+			examples := strExtract(data, "## Examples", "##", 1)
+
+			parsedDesc := strings.Replace(description, "`", `"`, -1)
+			parsedDesc = strings.TrimSpace(parsedDesc)
+			parsedExam := strings.Replace(examples, "`", `"`, -1)
+			parsedExam = strings.TrimSpace(parsedExam)
+
+			// add a break if examples
+			if parsedExam != "" {
+				parsedExam = fmt.Sprint("\n\n", parsedExam)
+			}
+
+			return fmt.Sprint(parsedDesc, parsedExam)
+		})
+
+	fmt.Fprint(w, "}\n")
+}
+
+func mapGenerator(w io.Writer, callback func(data string) string) {
 	// check if dir exits
 	d, err := os.Open(cmdDir)
 	if err != nil {
@@ -68,16 +120,32 @@ func main() {
 			}
 
 			ymlData := make(map[string]string)
-
 			err = yaml.Unmarshal([]byte(data), &ymlData)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			fmt.Fprint(w, "  \"", ymlData["sidebar_current"], "\": \"", ymlData["description"], "\",")
+			item := callback(string(data))
+
+			fmt.Fprint(w, "  \"", ymlData["sidebar_current"], "\": `", item, "`,")
 			fmt.Fprint(w, "\n")
 		}
 	}
+}
 
-	fmt.Fprint(w, "}\n")
+func strExtract(sExper, sAdelim, sCdelim string, nOccur int) string {
+	aExper := strings.Split(sExper, sAdelim)
+
+	if len(aExper) <= nOccur {
+		return ""
+	}
+
+	sMember := aExper[nOccur]
+	aExper = strings.Split(sMember, sCdelim)
+
+	if len(aExper) == 1 {
+		return sMember
+	}
+
+	return aExper[0]
 }
