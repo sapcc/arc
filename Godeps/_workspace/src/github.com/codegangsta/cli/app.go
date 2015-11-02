@@ -201,6 +201,12 @@ func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 		}
 	}
 
+	// add help to the own command
+	a.Commands = append(a.Commands, helpCommand)
+	if (HelpFlag != BoolFlag{}) {
+		a.appendFlag(HelpFlag)
+	}
+
 	newCmds := []Command{}
 	for _, c := range a.Commands {
 		if c.HelpName == "" {
@@ -245,8 +251,13 @@ func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 	}
 
 	if len(a.Commands) > 0 {
-		if checkSubcommandHelp(context) {
+		if len(a.Commands) == 1 && checkHelp(context){
+			ShowSubcommandHelp(context)
 			return nil
+		} else {
+			if checkSubcommandHelp(context) {
+				return nil
+			}	
 		}
 	} else {
 		if checkCommandHelp(ctx, context.Args().First()) {
