@@ -115,25 +115,28 @@ var cliCommands = []cli.Command{
 		},
 	},
 	{
-		Name:   "start",
-		Usage:  "Start agent service",
-		Action: cmdStart,
+		Name:        "start",
+		Usage:       cmdUsage["docs-commands-start"],
+		Description: cmdDescription["docs-commands-start"],
+		Action:      cmdStart,
 		Flags: []cli.Flag{
 			optInstallDir,
 		},
 	},
 	{
-		Name:   "stop",
-		Usage:  "Stop agent service",
-		Action: cmdStop,
+		Name:        "stop",
+		Usage:       cmdUsage["docs-commands-stop"],
+		Description: cmdDescription["docs-commands-stop"],
+		Action:      cmdStop,
 		Flags: []cli.Flag{
 			optInstallDir,
 		},
 	},
 	{
-		Name:   "restart",
-		Usage:  "Restart agent service",
-		Action: cmdRestart,
+		Name:        "restart",
+		Usage:       cmdUsage["docs-commands-restart"],
+		Description: cmdDescription["docs-commands-restart"],
+		Action:      cmdRestart,
 		Flags: []cli.Flag{
 			optInstallDir,
 		},
