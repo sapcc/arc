@@ -69,9 +69,15 @@ func (s *server) Run() {
 	defer close(s.doneChan)
 
 	s.transport.Connect()
-	defer s.transport.Disconnect()
+	defer func() {
+		log.Info("Disconnecting transport")
+		s.transport.Disconnect()
+	}()
 	incomingChan, cancelSubscription := s.transport.Subscribe(s.config.Identity)
-	defer cancelSubscription()
+	defer func() {
+		log.Info("Cancelling subscription")
+		cancelSubscription()
+	}()
 
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
 	done := s.rootContext.Done()
@@ -81,6 +87,7 @@ func (s *server) Run() {
 	for {
 		select {
 		case <-done:
+			log.Info("Exiting sever run loop")
 			return
 		case update := <-s.factStore.Updates():
 			j, err := json.Marshal(update)
