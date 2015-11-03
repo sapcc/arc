@@ -37,7 +37,6 @@ func New(options map[string]string) *Updater {
 func (u *Updater) CheckAndUpdate() (bool, error) {
 	r, err := u.Check()
 	if err == check.NoUpdateAvailable {
-		log.Infof("No update available")
 		return false, nil
 	} else if err != nil {
 		return false, fmt.Errorf("Error while checking for update: %q", err.Error())
