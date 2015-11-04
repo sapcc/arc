@@ -32,16 +32,9 @@ type Agents []Agent
 
 func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 	// select the query
-	sqlQuery := fmt.Sprintf(ownDb.GetAgentsQuery, "")
-	if filterQuery != "" {
-		// query string to sql query
-		filterQuerySql, err := filter.Postgresql(filterQuery)
-		if err != nil {
-			log.Errorf(err.Error())
-			return FilterError
-		}
-		log.Infof("Filtering Agents results with query %q and sql %q", filterQuery, filterQuerySql)
-		sqlQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", filterQuerySql))
+	sqlQuery, err := buildAgentsQuery("", filterQuery)
+	if err != nil {
+		return err
 	}
 
 	return agents.getAllAgents(db, sqlQuery)
@@ -55,16 +48,9 @@ func (agents *Agents) GetAuthorized(db *sql.DB, filterQuery string, authorizatio
 	}
 
 	// select the query
-	sqlQuery := fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprintf(`WHERE project='%s'`, authorization.ProjectId))
-	if filterQuery != "" {
-		// query string to sql query
-		filterQuerySql, err := filter.Postgresql(filterQuery)
-		if err != nil {
-			log.Errorf(err.Error())
-			return FilterError
-		}
-		log.Infof("Filtering Agents results with query %q and sql %q", filterQuery, filterQuerySql)
-		sqlQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprintf(`WHERE project='%s' AND (%s)`, authorization.ProjectId, filterQuerySql))
+	sqlQuery, err := buildAgentsQuery(authorization.ProjectId, filterQuery)
+	if err != nil {
+		return err
 	}
 
 	return agents.getAllAgents(db, sqlQuery)
@@ -248,6 +234,48 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string) error {
 
 	rows.Close()
 	return nil
+}
+
+func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
+	var err error
+	resultQuery := fmt.Sprintf(ownDb.GetAgentsQuery, "")
+	authQuery := ""
+	filterQuery := ""
+
+	if authProjectId != "" {
+		authQuery = fmt.Sprintf(`project='%s'`, authProjectId)
+	}
+
+	if filterParam != "" {
+		// query string to sql query
+		filterQuery, err = filter.Postgresql(filterParam)
+		if err != nil {
+			return "", FilterError
+		}
+	}
+
+	log.Info("****")
+	log.Info(authProjectId)
+	log.Info(filterParam)
+	log.Info(filterQuery)
+	log.Info("****")
+
+	if authQuery != "" {
+		resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", authQuery))
+		if filterQuery != "" {
+			resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprintf(`WHERE %s AND (%s)`, authQuery, filterQuery))
+		}
+	} else {
+		if filterQuery != "" {
+			resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", filterQuery))
+		}
+	}
+
+	log.Info("####")
+	log.Info(resultQuery)
+	log.Info("####")
+
+	return resultQuery, nil
 }
 
 func processRegistration(db *sql.DB, agent *Agent) (err error) {
