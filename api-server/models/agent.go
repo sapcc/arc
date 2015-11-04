@@ -254,12 +254,6 @@ func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
 		}
 	}
 
-	log.Info("****")
-	log.Info(authProjectId)
-	log.Info(filterParam)
-	log.Info(filterQuery)
-	log.Info("****")
-
 	if authQuery != "" {
 		resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", authQuery))
 		if filterQuery != "" {
@@ -270,10 +264,6 @@ func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
 			resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", filterQuery))
 		}
 	}
-
-	log.Info("####")
-	log.Info(resultQuery)
-	log.Info("####")
 
 	return resultQuery, nil
 }
