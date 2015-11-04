@@ -114,7 +114,7 @@ func (s *server) Run() {
 }
 
 func (s *server) Stop() {
-	log.Info("Stopping Server")
+	log.Info("Stopping Server ", s.rootContext.Err())
 	s.cancel()
 }
 
