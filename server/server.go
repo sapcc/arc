@@ -79,8 +79,14 @@ func (s *server) Run() {
 		cancelSubscription()
 	}()
 
-	s.rootContext, s.cancel = context.WithCancel(context.Background())
-	done := s.rootContext.Done()
+	rootContext, cancel := context.WithCancel(context.Background())
+	s.rootContext = rootContext
+	s.cancel = func() {
+		log.Info("Calling root method cancel method")
+		cancel()
+	}
+
+	done := rootContext.Done()
 
 	s.factStore = s.setupFactStore()
 
