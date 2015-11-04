@@ -91,11 +91,13 @@ func (s *server) Run() {
 	s.factStore = s.setupFactStore()
 
 	for {
+		log.Debug("Waiting on something to do")
 		select {
 		case <-done:
 			log.Info("Exiting sever run loop")
 			return
 		case update := <-s.factStore.Updates():
+			log.Debug("Processing fact update")
 			j, err := json.Marshal(update)
 			if err == nil {
 				if req, err := arc.CreateRegistration(s.config.Organization, s.config.Project, s.config.Identity, string(j)); err == nil {
@@ -107,6 +109,7 @@ func (s *server) Run() {
 				log.Warn("Failed to serialize fact update: ", err)
 			}
 		case msg := <-incomingChan:
+			log.Debug("Processing incoming Message")
 			go s.handleJob(msg)
 		}
 	}
