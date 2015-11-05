@@ -70,33 +70,27 @@ func (s *server) Run() {
 
 	s.transport.Connect()
 	defer func() {
-		log.Info("Disconnecting transport")
+		log.Debug("Disconnecting transport")
 		s.transport.Disconnect()
 	}()
 	incomingChan, cancelSubscription := s.transport.Subscribe(s.config.Identity)
 	defer func() {
-		log.Info("Cancelling subscription")
+		log.Debug("Cancelling subscriptions")
 		cancelSubscription()
 	}()
 
-	rootContext, cancel := context.WithCancel(context.Background())
-	s.rootContext = rootContext
-	s.cancel = func() {
-		log.Info("Calling root method cancel method")
-		cancel()
-	}
-
-	done := rootContext.Done()
+	s.rootContext, s.cancel = context.WithCancel(context.Background())
+	done := s.rootContext.Done()
 
 	s.factStore = s.setupFactStore()
+	factUpdates := s.factStore.Updates()
 
 	for {
-		log.Debug("Waiting on something to do")
 		select {
 		case <-done:
-			log.Info("Exiting sever run loop")
+			log.Debug("Exiting sever run loop")
 			return
-		case update := <-s.factStore.Updates():
+		case update := <-factUpdates:
 			log.Debug("Processing fact update")
 			j, err := json.Marshal(update)
 			if err == nil {
@@ -109,7 +103,6 @@ func (s *server) Run() {
 				log.Warn("Failed to serialize fact update: ", err)
 			}
 		case msg := <-incomingChan:
-			log.Debug("Processing incoming Message")
 			go s.handleJob(msg)
 		}
 	}
@@ -117,7 +110,7 @@ func (s *server) Run() {
 }
 
 func (s *server) Stop() {
-	log.Info("Stopping Server ", s.rootContext.Err())
+	log.Info("Stopping Server")
 	s.cancel()
 }
 

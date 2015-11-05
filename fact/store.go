@@ -134,8 +134,9 @@ func (fs *Store) update(name string) error {
 func (fs *Store) FullUpdate() {
 	if fs.initialized {
 		fs.mu.Lock()
-		defer fs.mu.Unlock()
-		fs.updateChan <- fs.Facts()
+		f := fs.Facts()
+		fs.mu.Unlock()
+		fs.updateChan <- f
 	}
 	return
 }
