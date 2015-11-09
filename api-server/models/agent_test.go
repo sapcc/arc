@@ -205,6 +205,15 @@ var _ = Describe("Agents", func() {
 				Expect(len(currentAgent.Facts)).To(Equal(1))
 			}
 
+			// get agent with all existing agents
+			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"all"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(3))
+			for i := 0; i < len(dbAgents); i++ {
+				currentAgent := dbAgents[i]
+				Expect(len(currentAgent.Facts)).To(BeNumerically(">=", 10))
+			}
+
 			// get agents with no facts
 			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
@@ -276,6 +285,41 @@ var _ = Describe("Agent", func() {
 			authorization.ProjectId = "test-project"
 		})
 
+		It("should return an agent with same authorization project id", func() {
+			// add a new agent
+			newAgent := Agent{}
+			newAgent.Example()
+			newAgent.Project = "miau"
+			err := newAgent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// change authorization
+			authorization.ProjectId = "miau"
+
+			// insert facts / agent
+			dbAgent := Agent{AgentID: newAgent.AgentID}
+			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbAgent.Project).To(Equal(authorization.ProjectId))
+		})
+
+		It("should return an identity authorization error", func() {
+			authorization.IdentityStatus = "Something different from Confirmed"
+
+			dbAgent := Agent{AgentID: agent.AgentID}
+			err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+		})
+
+		It("should return a project authorization error", func() {
+			authorization.ProjectId = "Some other project"
+
+			dbAgent := Agent{AgentID: agent.AgentID}
+			err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+			Expect(err).To(HaveOccurred())
+		})
+
 		It("should return all agents with the given facts", func() {
 			// authorization
 			authorization.ProjectId = "test-project"
@@ -294,6 +338,11 @@ var _ = Describe("Agent", func() {
 			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "bup"})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgent.Facts)).To(Equal(1))
+
+			// get agent with all existing agents
+			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"all"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgent.Facts)).To(BeNumerically(">=", 10))
 
 			// get agent with no facts
 			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})

@@ -248,7 +248,7 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 
 	// get the agent
 	agent := models.Agent{AgentID: agentId}
-	err := agent.GetAuthorized(db, authorization)
+	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{"all"})
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
 		return

@@ -72,31 +72,6 @@ func (agent *Agent) Get(db Db) error {
 	return nil
 }
 
-func (agent *Agent) GetAuthorized(db Db, authorization *auth.Authorization) error {
-	if db == nil {
-		return errors.New("Db connection is nil")
-	}
-
-	// check the identity status
-	err := authorization.CheckIdentity()
-	if err != nil {
-		return err
-	}
-
-	// get the agent
-	err = agent.Get(db)
-	if err != nil {
-		return err
-	}
-
-	// check project
-	if agent.Project != authorization.ProjectId {
-		return auth.NotAuthorized
-	}
-
-	return nil
-}
-
 func (agent *Agent) GetAuthorizedAndShowFacts(db Db, authorization *auth.Authorization, showFacts []string) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
@@ -299,6 +274,10 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) err
 	return nil
 }
 
+//
+// Key word "all", when no other facts are added in the showFacts array, will show
+// all existing facts
+//
 func filterFacts(facts map[string]interface{}, showFacts []string) (JSONB, error) {
 	// check if there is facts to filter out
 	if len(facts) == 0 {
@@ -306,9 +285,17 @@ func filterFacts(facts map[string]interface{}, showFacts []string) (JSONB, error
 	}
 
 	target := make(JSONB)
-	for _, item := range showFacts {
-		if val, ok := facts[item]; ok {
-			target[item] = val
+
+	// check if there is just the "all" key word
+	if len(showFacts) == 1 && showFacts[0] == "all" {
+		for key, value := range facts {
+			target[key] = value
+		}
+	} else {
+		for _, item := range showFacts {
+			if val, ok := facts[item]; ok {
+				target[item] = val
+			}
 		}
 	}
 
@@ -319,6 +306,9 @@ func filterFacts(facts map[string]interface{}, showFacts []string) (JSONB, error
 	return target, nil
 }
 
+//
+// Builds a sql query based on the facts filter and the authorization project id
+//
 func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
 	var err error
 	resultQuery := fmt.Sprintf(ownDb.GetAgentsQuery, "")
