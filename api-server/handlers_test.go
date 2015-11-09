@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -395,8 +396,11 @@ var _ = Describe("Agent Handlers", func() {
 			agents := models.Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
 			for i := 0; i < len(agents); i++ {
-				agents[i].Facts = fmt.Sprintf(facts, os[i])
-				err := agents[i].Update(db)
+				currentAgent := agents[i]
+				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
+					Expect(err).NotTo(HaveOccurred())
+				}
+				err := currentAgent.Update(db)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -415,6 +419,45 @@ var _ = Describe("Agent Handlers", func() {
 			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
+		})
+
+		It("should show facts", func() {
+			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			os := []string{"darwin", "windows", "windows"}
+			agents := models.Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
+			for i := 0; i < len(agents); i++ {
+				currentAgent := agents[i]
+				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
+					Expect(err).NotTo(HaveOccurred())
+				}
+				err := currentAgent.Update(db)
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			// make a request
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"&facts=os,online`), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			// Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check json body response
+			dbAgents := make(models.Agents, 0)
+			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(2))
+			for i := 0; i < len(dbAgents); i++ {
+				currentAgent := dbAgents[i]
+				Expect(len(currentAgent.Facts)).To(Equal(2))
+				_, ok := currentAgent.Facts["os"]
+				Expect(ok).To(Equal(true))
+				_, ok = currentAgent.Facts["online"]
+				Expect(ok).To(Equal(true))
+			}
 		})
 
 	})
@@ -491,6 +534,29 @@ var _ = Describe("Agent Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 			var nilJson *json.RawMessage
 			Expect(objmap["facts"]).To(Equal(nilJson))
+		})
+
+		It("should show facts", func() {
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "?facts=os,online")), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check json body response
+			var dbAgent models.Agent
+			err = json.Unmarshal(w.Body.Bytes(), &dbAgent)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbAgent.AgentID).To(Equal(agent.AgentID))
+			Expect(len(dbAgent.Facts)).To(Equal(2))
+			_, ok := dbAgent.Facts["os"]
+			Expect(ok).To(Equal(true))
+			_, ok = dbAgent.Facts["online"]
+			Expect(ok).To(Equal(true))
 		})
 
 	})
@@ -616,8 +682,9 @@ var _ = Describe("Agent Handlers", func() {
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
 			Expect(w.Code).To(Equal(200))
 
-			// check json body response
-			Expect(w.Body.String()).To(Equal(agent.Facts))
+			checkFacts := models.JSONBfromString(w.Body.String())
+			eq := reflect.DeepEqual(agent.Facts, checkFacts)
+			Expect(eq).To(Equal(true))
 		})
 
 	})

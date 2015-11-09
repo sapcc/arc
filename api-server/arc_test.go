@@ -9,6 +9,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"reflect"
 )
 
 var _ = Describe("Arc", func() {
@@ -39,7 +41,11 @@ var _ = Describe("Arc", func() {
 		dbAgent := models.Agent{AgentID: reg.Sender}
 		err := dbAgent.Get(db)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(dbAgent.Facts).To(Equal(reg.Payload))
+
+		// check facts
+		checkFacts := models.JSONBfromString(reg.Payload)
+		eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
+		Expect(eq).To(Equal(true))
 	})
 
 	It("should receive all replies, update job and save log", func() {

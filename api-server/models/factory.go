@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -116,7 +117,10 @@ func (agent *Agent) Example() {
 	agent.AgentID = uuid.New()
 	agent.Project = "test-project"
 	agent.Organization = "test-org"
-	agent.Facts = `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+	facts := `{"os": "darwin", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+	if err := json.Unmarshal([]byte(facts), &agent.Facts); err != nil {
+		log.Error(err)
+	}
 	agent.CreatedAt = time.Now()
 	agent.UpdatedAt = time.Now()
 }
@@ -149,4 +153,12 @@ func (logpart *LogPart) SaveLogPartExamples(db *sql.DB, id string) string {
 		contentSlice[i] = chunk
 	}
 	return strings.Join(contentSlice[:], "")
+}
+
+func JSONBfromString(data string) JSONB {
+	checkFacts := make(JSONB)
+	if err := json.Unmarshal([]byte(data), &checkFacts); err != nil {
+		log.Error(err)
+	}
+	return checkFacts
 }

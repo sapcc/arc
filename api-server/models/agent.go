@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -17,11 +18,13 @@ import (
 var FilterError = fmt.Errorf("Filter query has a syntax error.")
 var RegistrationExistsError = fmt.Errorf("Registration message already handeled.")
 
+type JSONB map[string]interface{}
+
 type Agent struct {
 	AgentID      string    `json:"agent_id"`
 	Project      string    `json:"project"`
 	Organization string    `json:"organization"`
-	Facts        string    `json:"-"`
+	Facts        JSONB     `json:"facts,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	UpdatedWith  string    `json:"updated_with"`
@@ -31,16 +34,16 @@ type Agent struct {
 type Agents []Agent
 
 func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
-	// select the query
+	// build the query just with facts filter
 	sqlQuery, err := buildAgentsQuery("", filterQuery)
 	if err != nil {
 		return err
 	}
 
-	return agents.getAllAgents(db, sqlQuery)
+	return agents.getAllAgents(db, sqlQuery, []string{})
 }
 
-func (agents *Agents) GetAuthorized(db *sql.DB, filterQuery string, authorization *auth.Authorization) error {
+func (agents *Agents) GetAuthorizedAndShowFacts(db *sql.DB, filterQuery string, authorization *auth.Authorization, showFacts []string) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
@@ -53,7 +56,7 @@ func (agents *Agents) GetAuthorized(db *sql.DB, filterQuery string, authorizatio
 		return err
 	}
 
-	return agents.getAllAgents(db, sqlQuery)
+	return agents.getAllAgents(db, sqlQuery, showFacts)
 }
 
 func (agent *Agent) Get(db Db) error {
@@ -90,6 +93,38 @@ func (agent *Agent) GetAuthorized(db Db, authorization *auth.Authorization) erro
 	if agent.Project != authorization.ProjectId {
 		return auth.NotAuthorized
 	}
+
+	return nil
+}
+
+func (agent *Agent) GetAuthorizedAndShowFacts(db Db, authorization *auth.Authorization, showFacts []string) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get the agent
+	err = agent.Get(db)
+	if err != nil {
+		return err
+	}
+
+	// check project
+	if agent.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
+	// filter facts
+	facts, err := filterFacts(agent.Facts, showFacts)
+	if err != nil {
+		return err
+	}
+	agent.Facts = facts
 
 	return nil
 }
@@ -135,8 +170,14 @@ func (agent *Agent) Save(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
+	// transform agents JSONB to JSON string
+	facts, err := json.Marshal(agent.Facts)
+	if err != nil {
+		return err
+	}
+
 	var lastInsertId string
-	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, agent.Facts, agent.CreatedAt, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy).Scan(&lastInsertId); err != nil {
+	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.CreatedAt, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy).Scan(&lastInsertId); err != nil {
 		return err
 	}
 
@@ -150,7 +191,13 @@ func (agent *Agent) Update(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
-	res, err := db.Exec(ownDb.UpdateAgent, agent.AgentID, agent.Project, agent.Organization, agent.Facts, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy)
+	// transform agents JSONB to JSON string
+	facts, err := json.Marshal(agent.Facts)
+	if err != nil {
+		return err
+	}
+
+	res, err := db.Exec(ownDb.UpdateAgent, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy)
 	if err != nil {
 		return err
 	}
@@ -166,29 +213,37 @@ func (agent *Agent) Update(db Db) error {
 	return nil
 }
 
-func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) {
+func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) error {
 	if reg == nil {
-		return
+		return errors.New("Registration is nil")
 	}
 	agent.AgentID = reg.Sender
 	agent.Project = reg.Project
 	agent.Organization = reg.Organization
-	agent.Facts = reg.Payload
+	err := json.Unmarshal([]byte(reg.Payload), &agent.Facts)
+	if err != nil {
+		return err
+	}
 	agent.CreatedAt = time.Now()
 	agent.UpdatedAt = time.Now()
 	agent.UpdatedWith = reg.RegistrationID
 	agent.UpdatedBy = agentId
-	return
+	return nil
 }
 
-func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, concurrencySafe bool) (err error) {
+func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, concurrencySafe bool) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
 
+	var err error
+
 	// cast registration to agent
 	agent := Agent{}
-	agent.FromRegistration(reg, agentId)
+	err = agent.FromRegistration(reg, agentId)
+	if err != nil {
+		return err
+	}
 
 	// should check concurrency
 	if concurrencySafe {
@@ -205,12 +260,12 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 		return processRegistration(db, &agent)
 	}
 
-	return
+	return nil
 }
 
 // private
 
-func (agents *Agents) getAllAgents(db *sql.DB, query string) error {
+func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -222,18 +277,46 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string) error {
 	}
 	defer rows.Close()
 
-	var agent Agent
 	for rows.Next() {
+		agent := Agent{}
 		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
 		if err != nil {
 			log.Errorf("Error scaning agent results. Got ", err.Error())
 			continue
 		}
+
+		// filter facts from the agent
+		facts, err := filterFacts(agent.Facts, facts)
+		if err != nil {
+			return err
+		}
+		agent.Facts = facts
+
 		*agents = append(*agents, agent)
 	}
 
 	rows.Close()
 	return nil
+}
+
+func filterFacts(facts map[string]interface{}, showFacts []string) (JSONB, error) {
+	// check if there is facts to filter out
+	if len(facts) == 0 {
+		return nil, nil
+	}
+
+	target := make(JSONB)
+	for _, item := range showFacts {
+		if val, ok := facts[item]; ok {
+			target[item] = val
+		}
+	}
+
+	if len(target) == 0 {
+		return nil, nil
+	}
+
+	return target, nil
 }
 
 func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
@@ -299,4 +382,16 @@ func processRegistration(db *sql.DB, agent *Agent) (err error) {
 	}
 
 	return
+}
+
+func (j JSONB) Value() (interface{}, error) {
+	valueString, err := json.Marshal(j)
+	return string(valueString), err
+}
+
+func (j *JSONB) Scan(value interface{}) error {
+	if err := json.Unmarshal(value.([]byte), &j); err != nil {
+		return err
+	}
+	return nil
 }

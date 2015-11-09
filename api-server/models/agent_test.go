@@ -11,7 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -48,21 +50,28 @@ var _ = Describe("Agents", func() {
 		It("should return all agents filtered", func() {
 			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 			os := []string{"darwin", "windows", "windows"}
+
+			// create 3 examples
 			agents := Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
+			// update facts in the examples
 			for i := 0; i < len(agents); i++ {
-				agents[i].Facts = fmt.Sprintf(facts, os[i])
-				err := agents[i].Update(db)
+				currentAgent := agents[i]
+				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
+					Expect(err).NotTo(HaveOccurred())
+				}
+				err := currentAgent.Update(db)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
-			// insert facts / agent
+			// get agents with os darwin
 			dbAgents := Agents{}
 			err := dbAgents.Get(db, `os = "darwin"`)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(1))
 			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
 
+			// get agents with os windows
 			err = dbAgents.Get(db, `os = "windows"`)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
@@ -72,7 +81,7 @@ var _ = Describe("Agents", func() {
 
 	})
 
-	Describe("GetAuthorized", func() {
+	Describe("Authorized and show facts", func() {
 
 		var (
 			agents        = Agents{}
@@ -88,11 +97,11 @@ var _ = Describe("Agents", func() {
 
 		It("returns an error if no db connection is given", func() {
 			agents := Agents{}
-			err := agents.GetAuthorized(nil, "", &authorization)
+			err := agents.GetAuthorizedAndShowFacts(nil, "", &authorization, []string{})
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should return all agents where with same project", func() {
+		It("should return all agents with same authorization project id", func() {
 			// add a new agent
 			agent := Agent{}
 			agent.Example()
@@ -105,7 +114,7 @@ var _ = Describe("Agents", func() {
 
 			// insert facts / agent
 			dbAgents := Agents{}
-			err = dbAgents.GetAuthorized(db, "", &authorization)
+			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(1))
 			Expect(dbAgents[0].Project).To(Equal(authorization.ProjectId))
@@ -114,33 +123,37 @@ var _ = Describe("Agents", func() {
 		It("should return an error if the filter syntax is wrong", func() {
 			// insert facts / agent
 			dbAgents := Agents{}
-			err := dbAgents.GetAuthorized(db, `os =`, &authorization)
+			err := dbAgents.GetAuthorizedAndShowFacts(db, `os =`, &authorization, []string{})
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should return all agents filtered with same project", func() {
+		It("should return all agents filtered by os", func() {
 			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 			os := []string{"darwin", "windows", "windows"}
 			agents := Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
 			for i := 0; i < len(agents); i++ {
-				agents[i].Facts = fmt.Sprintf(facts, os[i])
-				agents[i].Project = "miau"
-				err := agents[i].Update(db)
+				currentAgent := agents[i]
+				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
+					Expect(err).NotTo(HaveOccurred())
+				}
+				currentAgent.Project = "miau"
+				err := currentAgent.Update(db)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
 			// change authorization
 			authorization.ProjectId = "miau"
 
-			// insert facts / agent
+			// agent with darwin os
 			dbAgents := Agents{}
-			err := dbAgents.GetAuthorized(db, `os = "darwin"`, &authorization)
+			err := dbAgents.GetAuthorizedAndShowFacts(db, `os = "darwin"`, &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(1))
 			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
 
-			err = dbAgents.GetAuthorized(db, `os = "windows"`, &authorization)
+			// agent with windows os
+			err = dbAgents.GetAuthorizedAndShowFacts(db, `os = "windows"`, &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
 			Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
@@ -151,7 +164,7 @@ var _ = Describe("Agents", func() {
 			authorization.IdentityStatus = "Something different from Confirmed"
 
 			dbAgents := Agents{}
-			err := dbAgents.GetAuthorized(db, "", &authorization)
+			err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(Equal(auth.IdentityStatusInvalid))
 		})
@@ -160,9 +173,46 @@ var _ = Describe("Agents", func() {
 			authorization.ProjectId = "Some other project"
 
 			dbAgents := Agents{}
-			err := dbAgents.GetAuthorized(db, "", &authorization)
+			err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(0))
+		})
+
+		It("should return all agents with the given facts", func() {
+			// change authorization
+			authorization.ProjectId = "test-project"
+
+			// get agents with existing facts
+			dbAgents := Agents{}
+			err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "online"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(3))
+			for i := 0; i < len(dbAgents); i++ {
+				currentAgent := dbAgents[i]
+				Expect(len(currentAgent.Facts)).To(Equal(2))
+				_, ok := currentAgent.Facts["os"]
+				Expect(ok).To(Equal(true))
+				_, ok = currentAgent.Facts["online"]
+				Expect(ok).To(Equal(true))
+			}
+
+			// get agents with non existing facts
+			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "bup"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(3))
+			for i := 0; i < len(dbAgents); i++ {
+				currentAgent := dbAgents[i]
+				Expect(len(currentAgent.Facts)).To(Equal(1))
+			}
+
+			// get agents with no facts
+			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(3))
+			for i := 0; i < len(dbAgents); i++ {
+				currentAgent := dbAgents[i]
+				Expect(len(currentAgent.Facts)).To(Equal(0))
+			}
 		})
 
 	})
@@ -204,6 +254,51 @@ var _ = Describe("Agent", func() {
 			Expect(agent.Facts).To(Equal(newAgent.Facts))
 			Expect(agent.CreatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(newAgent.CreatedAt.Format("2006-01-02 15:04:05.99")))
 			Expect(agent.UpdatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(newAgent.UpdatedAt.Format("2006-01-02 15:04:05.99")))
+		})
+
+	})
+
+	Describe("Get authorized and show facts", func() {
+
+		var (
+			agent         = Agent{}
+			authorization = auth.Authorization{}
+		)
+
+		JustBeforeEach(func() {
+			// insert facts / agent
+			agent.Example()
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+			// reset authorization
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = "userID"
+			authorization.ProjectId = "test-project"
+		})
+
+		It("should return all agents with the given facts", func() {
+			// authorization
+			authorization.ProjectId = "test-project"
+
+			// get agent with existing facts
+			dbAgent := Agent{AgentID: agent.AgentID}
+			err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "online"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgent.Facts)).To(Equal(2))
+			_, ok := dbAgent.Facts["os"]
+			Expect(ok).To(Equal(true))
+			_, ok = dbAgent.Facts["online"]
+			Expect(ok).To(Equal(true))
+
+			// get agent with non existing facts
+			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "bup"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgent.Facts)).To(Equal(1))
+
+			// get agent with no facts
+			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgent.Facts)).To(Equal(0))
 		})
 
 	})
@@ -281,10 +376,13 @@ var _ = Describe("Agent", func() {
 				AgentID:      uuid.New(),
 				Project:      "huhu project",
 				Organization: "huhu organization",
-				Facts:        fmt.Sprintf(facts, "huhu project", 123456789, 987654321, "huhu organization"),
 				CreatedAt:    time.Now().Add((-5) * time.Minute),
 				UpdatedAt:    time.Now().Add((-5) * time.Minute),
 			}
+			if err := json.Unmarshal([]byte(fmt.Sprintf(facts, "huhu project", 123456789, 987654321, "huhu organization")), &agent.Facts); err != nil {
+				Expect(err).NotTo(HaveOccurred())
+			}
+
 			err := agent.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -293,15 +391,17 @@ var _ = Describe("Agent", func() {
 			newOrg := "Miau organization"
 			memory_used := 666666
 			memory_total := 55555
-			newFacts := fmt.Sprintf(`{"memory_used": %v, "memory_total": %v, "project": "%s", "organization": "%s"}`, memory_used, memory_total, newProj, newOrg)
 			updateAgent := Agent{
 				AgentID:      agent.AgentID,
 				Project:      newProj,
 				Organization: newOrg,
-				Facts:        newFacts,
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			}
+			if err := json.Unmarshal([]byte(fmt.Sprintf(`{"memory_used": %v, "memory_total": %v, "project": "%s", "organization": "%s"}`, memory_used, memory_total, newProj, newOrg)), &updateAgent.Facts); err != nil {
+				Expect(err).NotTo(HaveOccurred())
+			}
+
 			err = updateAgent.Update(db)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -309,7 +409,10 @@ var _ = Describe("Agent", func() {
 			dbAgent := Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbAgent.Facts).To(Equal(fmt.Sprintf(facts, newProj, memory_used, memory_total, newOrg)))
+			Expect(dbAgent.Facts["project"]).To(Equal(newProj))
+			Expect(dbAgent.Facts["memory_used"]).To(Equal(float64(memory_used)))
+			Expect(dbAgent.Facts["memory_total"]).To(Equal(float64(memory_total)))
+			Expect(dbAgent.Facts["organization"]).To(Equal(newOrg))
 			Expect(dbAgent.Project).To(Equal(newProj))
 			Expect(dbAgent.Organization).To(Equal(newOrg))
 			Expect(dbAgent.CreatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(agent.CreatedAt.Format("2006-01-02 15:04:05.99")))
@@ -334,11 +437,15 @@ var _ = Describe("Agent", func() {
 			err := ProcessRegistration(db, &reg.Registration, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
+			// build test facts
+			checkFacts := JSONBfromString(reg.Payload)
+
 			// check
 			dbAgent := Agent{AgentID: reg.Sender}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbAgent.Facts).To(Equal(reg.Payload))
+			eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
+			Expect(eq).To(Equal(true))
 			Expect(dbAgent.Project).To(Equal(reg.Project))
 			Expect(dbAgent.Organization).To(Equal(reg.Organization))
 		})
@@ -370,10 +477,13 @@ var _ = Describe("Agent", func() {
 
 			// check
 			dbFacts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": %v, "memory_total": %v, "organization": "%s"}`, proj, memory_used, memory_total, org)
+			checkFacts := JSONBfromString(dbFacts)
+
 			dbAgent := Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbAgent.Facts).To(Equal(dbFacts))
+			eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
+			Expect(eq).To(Equal(true))
 			Expect(dbAgent.Project).To(Equal(newProj))
 			Expect(dbAgent.Organization).To(Equal(newOrg))
 		})

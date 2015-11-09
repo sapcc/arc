@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
@@ -154,9 +155,15 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	// get authentication
 	authorization := auth.GetIdentity(r)
 
+	// filter facts
+	filterFacts := r.URL.Query().Get("q")
+
+	// show facts
+	showFacts := strings.Split(r.URL.Query().Get("facts"), ",")
+
 	// get agents
 	agents := models.Agents{}
-	err := agents.GetAuthorized(db, r.URL.Query().Get("q"), authorization)
+	err := agents.GetAuthorizedAndShowFacts(db, filterFacts, authorization, showFacts)
 
 	if err == models.FilterError {
 		checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
@@ -181,8 +188,11 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
+	// Show facts
+	showFacts := strings.Split(r.URL.Query().Get("facts"), ",")
+
 	agent := models.Agent{AgentID: agentId}
-	err := agent.GetAuthorized(db, authorization)
+	err := agent.GetAuthorizedAndShowFacts(db, authorization, showFacts)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. ", agentId), http.StatusNotFound)
 		return
@@ -251,7 +261,8 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write([]byte(agent.Facts))
+	err = json.NewEncoder(w).Encode(agent.Facts)
+	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
 }
 
 /*
