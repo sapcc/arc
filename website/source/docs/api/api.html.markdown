@@ -12,9 +12,10 @@ information from one or different Arc servers.
 
 * [Definition](#definition)
 * [List all agents](#list_all_agents)
+  * [Filtering agents](#filter_agents)
+  * [Showing specific agent facts](#show_facts_agents)	
 * [Get an agent](#get_agent)
 * [Delete an agent](#delete_agent)
-* [Filtering agents](#filter_agents)
 * [List agent facts](#list_agent_facts)
 * [List all jobs](#list_all_jobs)
 * [Get a job](#get_job)
@@ -50,34 +51,8 @@ information from one or different Arc servers.
 ]
 ```
 
-<a name="get_agent"></a>
-## Get an agent
-- Method: `GET`
-- URL: `/agents/{agent-id}`
-- Example URL: `/agents/darwin`
-- Example response:
-
-```text
-{
-	agent_id: "darwin",
-	created_at: "2015-06-18T15:13:10.164307Z",
-	updated_at: "2015-06-18T15:13:10.164307Z"
-}
-```
-
-<a name="delete_agent"></a>
-## Delete an agent
-- Method: `DELETE`
-- URL: `/agents/{agent-id}`
-- Example URL: `/agents/darwin`
-- Example response:
-
-```text
-Agent with id "darwin" deleted. 
-```
-
 <a name="filter_agents"></a>
-## Filtering Agents
+### Filtering agents
 We use a self written parser that transforms the filter syntax exposed by the API to a filter expression that can by used by the underlying fact storage system.
 
 <div class="filter-operators">
@@ -116,6 +91,62 @@ We use a self written parser that transforms the filter syntax exposed by the AP
 	},
 	...
 ]
+```
+
+<a name="show_facts_agents"></a>
+### Showing specific agents facts
+
+Adding an extra parameter in the [List all agents](#list_all_agents) call facts can be selected dinamically to be shown in the JSON response.
+A list of all available facts can be found [here](/docs/server/facts.html).
+
+- Method: `GET`
+- URL: `/agents?facts={coma separated facts}`
+- Example URL: `/agents?facts=os,online`
+- Example response:
+
+```text
+[
+	{
+		agent_id: "mo-d90b4b6fe",
+		project: "p-ea1868652",
+		organization: "o-monsoon2",
+		facts: {
+			online: false,
+			os: "linux"
+		},
+		created_at: "2015-10-22T11:02:56.359063Z",
+		updated_at: "2015-11-11T13:13:37.955197Z",
+		updated_with: "6f79af48-00ff-4dbb-b57e-1061e5d3c635",
+		updated_by: "api-6994d829bae7811cca179eb72c3cf634-kiebm"
+		}
+	...
+]
+```
+
+<a name="get_agent"></a>
+## Get an agent
+- Method: `GET`
+- URL: `/agents/{agent-id}`
+- Example URL: `/agents/darwin`
+- Example response:
+
+```text
+{
+	agent_id: "darwin",
+	created_at: "2015-06-18T15:13:10.164307Z",
+	updated_at: "2015-06-18T15:13:10.164307Z"
+}
+```
+
+<a name="delete_agent"></a>
+## Delete an agent
+- Method: `DELETE`
+- URL: `/agents/{agent-id}`
+- Example URL: `/agents/darwin`
+- Example response:
+
+```text
+Agent with id "darwin" deleted. 
 ```
 
 <a name="list_agent_facts"></a>
