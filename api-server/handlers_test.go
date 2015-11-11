@@ -442,7 +442,7 @@ var _ = Describe("Agent Handlers", func() {
 			router.ServeHTTP(w, req)
 
 			// check response code and header
-			// Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
 			Expect(w.Code).To(Equal(200))
 
 			// check json body response
