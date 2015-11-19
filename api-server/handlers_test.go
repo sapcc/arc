@@ -105,9 +105,9 @@ var _ = Describe("Job Handlers", func() {
 			err = json.Unmarshal(w.Body.Bytes(), &dbJobs)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(dbJobs[0].RequestID).To(Equal(jobs[0].RequestID))
+			Expect(dbJobs[0].RequestID).To(Equal(jobs[2].RequestID))
 			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
-			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))
+			Expect(dbJobs[2].RequestID).To(Equal(jobs[0].RequestID))
 		})
 
 		It("returns jobs filtered by agent_id", func() {
@@ -415,9 +415,9 @@ var _ = Describe("Agent Handlers", func() {
 			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
 			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
-			Expect(dbAgents[2].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[2].AgentID).To(Equal(agents[0].AgentID))
 		})
 
 		It("returns all agents filtered", func() {

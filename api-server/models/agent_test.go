@@ -35,9 +35,10 @@ var _ = Describe("Agents", func() {
 			dbAgents := Agents{}
 			err := dbAgents.Get(db, "")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
+			// check that the agents are sorted descending
+			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
 			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
-			Expect(dbAgents[2].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[2].AgentID).To(Equal(agents[0].AgentID))
 		})
 
 		It("should return an error if the filter syntax is wrong", func() {
@@ -75,8 +76,8 @@ var _ = Describe("Agents", func() {
 			err = dbAgents.Get(db, `os = "windows"`)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
-			Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
-			Expect(dbAgents[1].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
 		})
 
 	})
@@ -156,8 +157,8 @@ var _ = Describe("Agents", func() {
 			err = dbAgents.GetAuthorizedAndShowFacts(db, `os = "windows"`, &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
-			Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
-			Expect(dbAgents[1].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
 		})
 
 		It("should return an identity authorization error", func() {
@@ -222,6 +223,44 @@ var _ = Describe("Agents", func() {
 				currentAgent := dbAgents[i]
 				Expect(len(currentAgent.Facts)).To(Equal(0))
 			}
+		})
+
+		It("should return all agents sorted descending", func() {
+			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			agents := Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
+			
+			agent1 := agents[0]
+			json.Unmarshal([]byte(fmt.Sprintf(facts, "windows")), &agent1.Facts)
+			agent1.Project = "miau"
+			agent1.UpdatedAt = time.Now().Add(-5 * time.Minute)
+			err := agent1.Update(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+			agent2 := agents[1]
+			agent2.Project = "miau"
+			json.Unmarshal([]byte(fmt.Sprintf(facts, "darwin")), &agent2.Facts)
+			agent2.UpdatedAt = time.Now().Add(-30 * time.Minute)
+			err = agent2.Update(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+			agent3 := agents[1]
+			agent3.Project = "miau"
+			json.Unmarshal([]byte(fmt.Sprintf(facts, "windows")), &agent3.Facts)	
+			agent3.UpdatedAt = time.Now().Add(-20 * time.Minute)
+			err = agent3.Update(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+
+			// change authorization
+			authorization.ProjectId = "miau"
+			
+			dbAgents := Agents{}
+			err = dbAgents.GetAuthorizedAndShowFacts(db, `os = "windows"`, &authorization, []string{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbAgents)).To(Equal(2))
+			Expect(dbAgents[0].AgentID).To(Equal(agent1.AgentID))
+			Expect(dbAgents[1].AgentID).To(Equal(agent3.AgentID))
 		})
 
 	})

@@ -33,9 +33,10 @@ var _ = Describe("Jobs", func() {
 			dbJobs := Jobs{}
 			err := dbJobs.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbJobs[0].RequestID).To(Equal(jobs[0].RequestID))
+			// check that the jobs are sorted descending			
+			Expect(dbJobs[0].RequestID).To(Equal(jobs[2].RequestID))
 			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
-			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))
+			Expect(dbJobs[2].RequestID).To(Equal(jobs[0].RequestID))
 		})
 
 	})
@@ -129,6 +130,34 @@ var _ = Describe("Jobs", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(1))
 			Expect(dbJobs[0].RequestID).To(Equal(job.RequestID))
+		})
+
+		It("should return the results ordered by update descendent", func(){
+			// add a new job with a small update time
+			job := Job{}
+			job.ExecuteScriptExample()
+			job.Project = "miau"
+			job.UpdatedAt = time.Now().Add(-30 * time.Minute)
+			err := job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// add a new job with a bigger update time
+			job2 := Job{}
+			job2.ExecuteScriptExample()
+			job2.Project = "miau"
+			job.UpdatedAt = time.Now().Add(-5 * time.Minute)
+			err = job2.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+			
+			// change authorization
+			authorization.ProjectId = "miau"
+			
+			dbJobs := Jobs{}
+			err = dbJobs.GetAuthorized(db, &authorization, "")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(2))
+			Expect(dbJobs[0].RequestID).To(Equal(job2.RequestID))
+			Expect(dbJobs[1].RequestID).To(Equal(job.RequestID))			
 		})
 
 	})
