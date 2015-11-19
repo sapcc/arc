@@ -20,7 +20,7 @@ smokes
 Environment variable LATEST_VERSION override -latest-version parameter
 
 ```text
-bin/smoke -api-server https://arc-staging.***REMOVED*** -update-server http://arc-staging.***REMOVED***:8080 -token XXX -test.v
+bin/smoke -api-server https://arc.***REMOVED*** -update-server http://arc.***REMOVED***:8080 -token XXX -test.v
 ```
 
 Job (works on linux and windows)
@@ -28,7 +28,7 @@ Job (works on linux and windows)
 Environment variable AGENT_IDENTITY overrides -agent-identity parameter
 
 ```text
-bin/job-test -api-server https://arc-staging.***REMOVED*** -arc-agent mo-2a9b97c0c -test.v
+bin/job-test -api-server https://arc.***REMOVED*** -arc-agent mo-2a9b97c0c -test.v
 ```
 
 updated and online (check all connected agents)
@@ -36,7 +36,7 @@ updated and online (check all connected agents)
 Environment variable LATEST_VERSION override -latest-version parameter
 
 ```text
-bin/updated-online-test -api-server https://arc-staging.***REMOVED*** -update-server http://arc-staging.***REMOVED***:8080 -arc-last-deployed-version 20150916.5 -test.v
+bin/updated-online-test -api-server https://arc.***REMOVED*** -update-server http://arc.***REMOVED***:8080 -arc-last-deployed-version 20150916.5 -test.v
 ```
 
 Facts
@@ -44,5 +44,5 @@ Facts
 Environment variable AGENT_IDENTITY overrides -agent-identity parameter
 
 ```text
-bin/facts-test -api-server https://arc-staging.***REMOVED*** -arc-agent mo-dfcb6e3fd -test.v
+bin/facts-test -api-server https://arc.***REMOVED*** -arc-agent mo-dfcb6e3fd -test.v
 ````
