@@ -50,7 +50,7 @@ func (agents *Agents) GetAuthorizedAndShowFacts(db *sql.DB, filterQuery string, 
 		return err
 	}
 
-	// select the query
+	// build the query
 	sqlQuery, err := buildAgentsQuery(authorization.ProjectId, filterQuery)
 	if err != nil {
 		return err

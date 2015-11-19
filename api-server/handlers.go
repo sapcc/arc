@@ -26,9 +26,12 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	// get authentication
 	authorization := auth.GetIdentity(r)
 
+	// filter facts
+	filterAgentId := r.URL.Query().Get("agent_id")
+
 	// read jobs
 	jobs := models.Jobs{}
-	err := jobs.GetAuthorized(db, authorization)
+	err := jobs.GetAuthorized(db, authorization, filterAgentId)
 	if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
 		logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
 		return

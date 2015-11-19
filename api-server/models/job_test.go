@@ -55,12 +55,12 @@ var _ = Describe("Jobs", func() {
 		})
 
 		It("returns an error if no db connection is given", func() {
-			job := Job{}
-			err := job.GetAuthorized(nil, &authorization)
+			jobs := Jobs{}
+			err := jobs.GetAuthorized(nil, &authorization, "")
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should return all jobs where with same project", func() {
+		It("should return all jobs with same project", func() {
 			// add a new job
 			job := Job{}
 			job.ExecuteScriptExample()
@@ -72,7 +72,7 @@ var _ = Describe("Jobs", func() {
 			authorization.ProjectId = "miau"
 
 			dbJobs := Jobs{}
-			err = dbJobs.GetAuthorized(db, &authorization)
+			err = dbJobs.GetAuthorized(db, &authorization, "")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(1))
 		})
@@ -81,7 +81,7 @@ var _ = Describe("Jobs", func() {
 			authorization.IdentityStatus = "Something different from Confirmed"
 
 			dbJobs := Jobs{}
-			err := dbJobs.GetAuthorized(db, &authorization)
+			err := dbJobs.GetAuthorized(db, &authorization, "")
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(Equal(auth.IdentityStatusInvalid))
 		})
@@ -90,9 +90,45 @@ var _ = Describe("Jobs", func() {
 			authorization.ProjectId = "Some other project"
 
 			dbJobs := Jobs{}
-			err := dbJobs.GetAuthorized(db, &authorization)
+			err := dbJobs.GetAuthorized(db, &authorization, "")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(0))
+		})
+
+		It("should filter results per agent", func() {
+			// add a new job with project and to attr
+			job := Job{}
+			job.ExecuteScriptExample()
+			job.Project = "miau"
+			job.To = "my_test_laptop"
+			err := job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// add a new job just with to attr
+			job2 := Job{}
+			job2.ExecuteScriptExample()
+			job2.Project = "miau"
+			job2.To = "other_laptop"
+			err = job2.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// change authorization
+			authorization.ProjectId = "miau"
+
+			dbJobs := Jobs{}
+			err = dbJobs.GetAuthorized(db, &authorization, "")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(2))
+			test1 := dbJobs[0].RequestID == job.RequestID || dbJobs[0].RequestID == job2.RequestID
+			test2 := dbJobs[1].RequestID == job.RequestID || dbJobs[1].RequestID == job2.RequestID
+			Expect(test1).To(Equal(true))
+			Expect(test2).To(Equal(true))
+
+			dbJobs = Jobs{}
+			err = dbJobs.GetAuthorized(db, &authorization, "my_test_laptop")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(1))
+			Expect(dbJobs[0].RequestID).To(Equal(job.RequestID))
 		})
 
 	})

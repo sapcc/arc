@@ -110,6 +110,36 @@ var _ = Describe("Job Handlers", func() {
 			Expect(dbJobs[2].RequestID).To(Equal(jobs[2].RequestID))
 		})
 
+		It("returns jobs filtered by agent_id", func() {
+			// fill db
+			jobs := models.Jobs{}
+			jobs.CreateAndSaveRpcVersionExamples(db, 3)
+
+			// add job with special target
+			job := models.Job{}
+			job.ExecuteScriptExample()
+			job.To = "my_test_laptop"
+			err := job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=my_test_laptop"), bytes.NewBufferString(""))
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check json body response
+			dbJobs := make(models.Jobs, 0)
+			err = json.Unmarshal(w.Body.Bytes(), &dbJobs)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbJobs)).To(Equal(1))
+			Expect(dbJobs[0].RequestID).To(Equal(job.RequestID))
+		})
+
 	})
 
 	Describe("serveJob", func() {

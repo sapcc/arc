@@ -93,14 +93,18 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 	return jobs.getAllJobs(db, fmt.Sprintf(ownDb.GetAllJobsQuery, ""))
 }
 
-func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
+func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, agentId string) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
 		return err
 	}
 
-	return jobs.getAllJobs(db, fmt.Sprintf(ownDb.GetAllJobsQuery, fmt.Sprintf(`WHERE project='%s'`, authorization.ProjectId)))
+	// select the query
+	sqlQuery := buildJobsQuery(authorization.ProjectId, agentId)
+
+	// return jobs.getAllJobs(db, sqlQuery)
+	return jobs.getAllJobs(db, sqlQuery)
 }
 
 func (job *Job) Get(db *sql.DB) error {
@@ -241,6 +245,29 @@ func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, 
 }
 
 // private
+
+func buildJobsQuery(authProjectId, agentId string) string {
+	baseQuery := ownDb.GetAllJobsQuery
+	resultQuery := baseQuery
+	authQuery := ""
+
+	if authProjectId != "" {
+		authQuery = fmt.Sprintf(`project = '%s'`, authProjectId)
+	}
+
+	if authQuery != "" {
+		resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery))
+		if agentId != "" {
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE %s AND ( "to" = '%s')`, authQuery, agentId))
+		}
+	} else {
+		if agentId != "" {
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE "to" = '%s'`, agentId))
+		}
+	}
+
+	return resultQuery
+}
 
 func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
 	if db == nil {
