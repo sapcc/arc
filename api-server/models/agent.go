@@ -145,6 +145,9 @@ func (agent *Agent) Save(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
+	//When creating an agent we assume it is online by default
+	//This is a little hacky but the altnatives are also not that good
+	agent.Facts["online"] = true
 	// transform agents JSONB to JSON string
 	facts, err := json.Marshal(agent.Facts)
 	if err != nil {
