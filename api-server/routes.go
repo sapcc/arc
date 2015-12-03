@@ -86,6 +86,30 @@ var v1RoutesDefinition = routes{
 		"/agents/{agentId}/facts",
 		serveFacts,
 	},
+	route{
+		"Agent Tags",
+		"GET",
+		"/agents/{agentId}/tags",
+		serveAgentTags,
+	},
+	route{
+		"Save Agent Tag",
+		"POST",
+		"/agents/{agentId}/tags",
+		saveAgentTags,
+	},
+	route{
+		"Delete an Agent Tag",
+		"DELETE",
+		"/agents/{agentId}/tags/{value}",
+		deleteAgentTag,
+	},
+	route{
+		"Return Tags by Value",
+		"GET",
+		"/tags/{value}",
+		ServeTags,
+	},
 }
 
 func newRouter(env string) *mux.Router {

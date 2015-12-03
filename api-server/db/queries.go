@@ -65,3 +65,10 @@ var CleanLocksQuery = `
 		WHERE (created_at <= NOW() - INTERVAL '1 seconds' * $1)
 	)
 `
+
+// Tags
+var GetTagsByAgentIdQuery = `SELECT DISTINCT * FROM tags WHERE agent_id=$1 order by created_at DESC`
+var GetTagsByValueQuery = `SELECT DISTINCT * FROM tags WHERE project=$1 AND value=$2 order by created_at DESC`
+var GetTagQuery = `SELECT * FROM tags WHERE agent_id=$1 AND value=$2`
+var InsertTagQuery = `INSERT INTO tags(agent_id,project,value,created_at) VALUES($1,$2,$3,$4) returning agent_id`
+var DeleteTagQuery = `DELETE FROM tags WHERE agent_id=$1 AND value=$2`
