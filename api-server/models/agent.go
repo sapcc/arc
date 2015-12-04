@@ -25,6 +25,7 @@ type Agent struct {
 	Project      string    `json:"project"`
 	Organization string    `json:"organization"`
 	Facts        JSONB     `json:"facts,omitempty"`
+	Tags         JSONB     `json:"tags,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	UpdatedWith  string    `json:"updated_with"`
@@ -64,7 +65,7 @@ func (agent *Agent) Get(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
+	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
 	if err != nil {
 		return err
 	}
@@ -140,6 +141,51 @@ func (agent *Agent) DeleteAuthorized(db Db, authorization *auth.Authorization) e
 	return nil
 }
 
+func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization, tagKey string) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get the agent
+	err = agent.Get(db)
+	if err != nil {
+		return err
+	}
+
+	// check project
+	if agent.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
+	fmt.Println("###")
+	fmt.Println("1")
+	fmt.Println("###")
+
+	res, err := db.Exec(ownDb.DeleteAgentTagQuery, agent.AgentID, agent.UpdatedAt, "{}")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("###")
+	fmt.Println("2")
+	fmt.Println("###")
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Tag %q from Agent id %q is removed. %v row(s) where updated.", tagKey, agent.AgentID, affect)
+
+	return nil
+}
+
 func (agent *Agent) Save(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
@@ -148,14 +194,19 @@ func (agent *Agent) Save(db Db) error {
 	//When creating an agent we assume it is online by default
 	//This is a little hacky but the altnatives are also not that good
 	agent.Facts["online"] = true
+
 	// transform agents JSONB to JSON string
 	facts, err := json.Marshal(agent.Facts)
 	if err != nil {
 		return err
 	}
+	tags, err := json.Marshal(agent.Tags)
+	if err != nil {
+		return err
+	}
 
 	var lastInsertId string
-	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.CreatedAt, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy).Scan(&lastInsertId); err != nil {
+	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.CreatedAt, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy, string(tags)).Scan(&lastInsertId); err != nil {
 		return err
 	}
 
@@ -164,7 +215,7 @@ func (agent *Agent) Save(db Db) error {
 	return nil
 }
 
-func (agent *Agent) Update(db Db) error {
+func (agent *Agent) UpdateWithRegistration(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -175,7 +226,7 @@ func (agent *Agent) Update(db Db) error {
 		return err
 	}
 
-	res, err := db.Exec(ownDb.UpdateAgent, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy)
+	res, err := db.Exec(ownDb.UpdateAgentWithRegistration, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy)
 	if err != nil {
 		return err
 	}
@@ -191,6 +242,31 @@ func (agent *Agent) Update(db Db) error {
 	return nil
 }
 
+func (agent *Agent) UpdateWithTags(db Db) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// transform agents JSONB to JSON string
+	tags, err := json.Marshal(agent.Tags)
+	if err != nil {
+		return err
+	}
+
+	res, err := db.Exec(ownDb.UpdateAgentWithTags, agent.AgentID, agent.UpdatedAt, string(tags))
+	if err != nil {
+		return err
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	log.Infof("Agent with id %q has updated the tags. %v row(s) affected", agent.AgentID, affect)
+
+	return nil
+}
+
 func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) error {
 	if reg == nil {
 		return errors.New("Registration is nil")
@@ -202,7 +278,7 @@ func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) erro
 	if err != nil {
 		return err
 	}
-	agent.CreatedAt = time.Now()
+	agent.CreatedAt = time.Now() // usefull just when saving, update method will ignore this value
 	agent.UpdatedAt = time.Now()
 	agent.UpdatedWith = reg.RegistrationID
 	agent.UpdatedBy = agentId
@@ -241,6 +317,38 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 	return nil
 }
 
+func ProcessTags(db *sql.DB, authorization *auth.Authorization, agent Agent, tagsPayload []byte) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// check project
+	if agent.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
+	// cast tags payload to agent Tags
+	err = json.Unmarshal(tagsPayload, &agent.Tags)
+	if err != nil {
+		return err
+	}
+	agent.UpdatedAt = time.Now()
+
+	// update agent
+	err = agent.UpdateWithTags(db)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // private
 
 func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) error {
@@ -257,7 +365,7 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) err
 
 	for rows.Next() {
 		agent := Agent{}
-		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy)
+		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
 		if err != nil {
 			log.Errorf("Error scaning agent results. Got ", err.Error())
 			continue
@@ -369,7 +477,7 @@ func processRegistration(db *sql.DB, agent *Agent) (err error) {
 	} else if existAgentError != nil { // something wrong happned
 		return existAgentError
 	} else { // update the agent
-		if err = agent.Update(tx); err != nil {
+		if err = agent.UpdateWithRegistration(tx); err != nil {
 			return err
 		}
 	}
@@ -383,8 +491,15 @@ func (j JSONB) Value() (interface{}, error) {
 }
 
 func (j *JSONB) Scan(value interface{}) error {
+	// nothing is set yet in the clumn
+	if value == nil {
+		return nil
+	}
+
+	// convert to json
 	if err := json.Unmarshal(value.([]byte), &j); err != nil {
 		return err
 	}
+
 	return nil
 }

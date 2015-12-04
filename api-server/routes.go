@@ -104,12 +104,6 @@ var v1RoutesDefinition = routes{
 		"/agents/{agentId}/tags/{value}",
 		deleteAgentTag,
 	},
-	route{
-		"Return Tags by Value",
-		"GET",
-		"/tags/{value}",
-		ServeTags,
-	},
 }
 
 func newRouter(env string) *mux.Router {
