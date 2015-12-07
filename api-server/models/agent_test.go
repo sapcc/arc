@@ -628,4 +628,162 @@ var _ = Describe("Agent", func() {
 
 	})
 
+	Describe("Tags", func() {
+
+		var (
+			agent         = Agent{}
+			authorization = auth.Authorization{}
+		)
+
+		JustBeforeEach(func() {
+			// insert facts / agent
+			agent.Example()
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+			// reset authorization
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = "userID"
+			authorization.ProjectId = "test-project"
+		})
+		Describe("add tag", func() {
+
+			It("returns an error if no db connection is given", func() {
+				err := agent.AddTagAuthorized(nil, &authorization, "cat", "miau")
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should return an error if agent does not exist", func() {
+				newAgent := Agent{AgentID: "non_existing_id"}
+				err := newAgent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should get the agent if the project id is empty", func() {
+				// set project empty
+				agent.Project = ""
+				// should get the data from the agent again
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should save the tag", func() {
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"test":"miau"}`))
+			})
+
+			It("should override the tag if exists", func() {
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				// override tag
+				err = agent.AddTagAuthorized(db, &authorization, "test", "miau, miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"test":"miau, miau"}`))
+			})
+
+			It("should return an identity authorization error", func() {
+				authorization.IdentityStatus = "Something different from Confirmed"
+
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			})
+
+			It("should return a project authorization error", func() {
+				authorization.ProjectId = "Some other project"
+
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.NotAuthorized))
+			})
+
+		})
+
+		Describe("remove tag", func() {
+
+			It("returns an error if no db connection is given", func() {
+				err := agent.DeleteTagAuthorized(nil, &authorization, "cat")
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should return an error if agent does not exist", func() {
+				newAgent := Agent{AgentID: "non_existing_id"}
+				err := newAgent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).To(HaveOccurred())
+			})
+
+			// no error handling possible because of the row will allways updated
+			It("should not return an error if the tag does not exist", func() {
+				err := agent.DeleteTagAuthorized(db, &authorization, "non_existing_tag")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should get the agent if the project id is empty", func() {
+				// set project empty
+				agent.Project = ""
+				// should get the data from the agent again
+				err := agent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should save the tag", func() {
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = agent.AddTagAuthorized(db, &authorization, "dog", "bup")
+				Expect(err).NotTo(HaveOccurred())
+
+				// remove tag
+				err = agent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"cat":"miau"}`))
+			})
+
+			It("should return an identity authorization error", func() {
+				authorization.IdentityStatus = "Something different from Confirmed"
+
+				// add tag
+				err := agent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			})
+
+			It("should return a project authorization error", func() {
+				authorization.ProjectId = "Some other project"
+
+				err := agent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.NotAuthorized))
+			})
+
+		})
+
+	})
+
 })

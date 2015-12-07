@@ -60,14 +60,18 @@ var UpdateAgentWithRegistration = `
 	updated_by=$7
 	WHERE agent_id=$1
 `
-var UpdateAgentWithTags = `
+var AddAgentTag = `
 	UPDATE agents SET 
 	updated_at=$2,
-	tags=$3	
+	tags=json_set_key((SELECT tags::json FROM agents WHERE agent_id=$1),$3, $4::TEXT)::jsonb
 	WHERE agent_id=$1
 `
 var DeleteAgentQuery = `DELETE FROM agents WHERE agent_id=$1`
-var DeleteAgentTagQuery = `UPDATE agents SET updated_at=$2,tags=$3 WHERE agent_id=$1`
+var DeleteAgentTagQuery = `
+	UPDATE agents SET 
+	updated_at=$2,
+	tags=json_delete_keys((SELECT tags::json FROM agents WHERE agent_id=$1),$3)::jsonb 
+	WHERE agent_id=$1`
 
 // Locks
 var GetLockQuery = "SELECT * FROM locks WHERE lock_id=$1"

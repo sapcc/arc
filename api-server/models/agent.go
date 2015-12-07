@@ -141,51 +141,6 @@ func (agent *Agent) DeleteAuthorized(db Db, authorization *auth.Authorization) e
 	return nil
 }
 
-func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization, tagKey string) error {
-	if db == nil {
-		return errors.New("Db connection is nil")
-	}
-
-	// check the identity status
-	err := authorization.CheckIdentity()
-	if err != nil {
-		return err
-	}
-
-	// get the agent
-	err = agent.Get(db)
-	if err != nil {
-		return err
-	}
-
-	// check project
-	if agent.Project != authorization.ProjectId {
-		return auth.NotAuthorized
-	}
-
-	fmt.Println("###")
-	fmt.Println("1")
-	fmt.Println("###")
-
-	res, err := db.Exec(ownDb.DeleteAgentTagQuery, agent.AgentID, agent.UpdatedAt, "{}")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("###")
-	fmt.Println("2")
-	fmt.Println("###")
-
-	affect, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Tag %q from Agent id %q is removed. %v row(s) where updated.", tagKey, agent.AgentID, affect)
-
-	return nil
-}
-
 func (agent *Agent) Save(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
@@ -205,6 +160,12 @@ func (agent *Agent) Save(db Db) error {
 		return err
 	}
 
+	// we set default empty JSON if no tags are set
+	// avoids an error when using the json_set_key function
+	if agent.Tags == nil {
+		tags = []uint8("{}")
+	}
+
 	var lastInsertId string
 	if err := db.QueryRow(ownDb.InsertAgentQuery, agent.AgentID, agent.Project, agent.Organization, string(facts), agent.CreatedAt, agent.UpdatedAt, agent.UpdatedWith, agent.UpdatedBy, string(tags)).Scan(&lastInsertId); err != nil {
 		return err
@@ -215,7 +176,7 @@ func (agent *Agent) Save(db Db) error {
 	return nil
 }
 
-func (agent *Agent) UpdateWithRegistration(db Db) error {
+func (agent *Agent) Update(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -238,31 +199,6 @@ func (agent *Agent) UpdateWithRegistration(db Db) error {
 		return err
 	}
 	log.Infof("%v row(s) where updated for agent id %q and registratrion reply id %q", affect, agent.AgentID, agent.UpdatedWith)
-
-	return nil
-}
-
-func (agent *Agent) UpdateWithTags(db Db) error {
-	if db == nil {
-		return errors.New("Db connection is nil")
-	}
-
-	// transform agents JSONB to JSON string
-	tags, err := json.Marshal(agent.Tags)
-	if err != nil {
-		return err
-	}
-
-	res, err := db.Exec(ownDb.UpdateAgentWithTags, agent.AgentID, agent.UpdatedAt, string(tags))
-	if err != nil {
-		return err
-	}
-
-	affect, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	log.Infof("Agent with id %q has updated the tags. %v row(s) affected", agent.AgentID, affect)
 
 	return nil
 }
@@ -317,7 +253,9 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 	return nil
 }
 
-func ProcessTags(db *sql.DB, authorization *auth.Authorization, agent Agent, tagsPayload []byte) error {
+// tags
+
+func (agent *Agent) AddTagAuthorized(db Db, authorization *auth.Authorization, tagKey string, tagValue string) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -328,23 +266,70 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agent Agent, tag
 		return err
 	}
 
+	// check if the project is empty
+	if agent.Project == "" {
+		// get the agent
+		err = agent.Get(db)
+		if err != nil {
+			return err
+		}
+	}
+
 	// check project
 	if agent.Project != authorization.ProjectId {
 		return auth.NotAuthorized
 	}
 
-	// cast tags payload to agent Tags
-	err = json.Unmarshal(tagsPayload, &agent.Tags)
+	res, err := db.Exec(ownDb.AddAgentTag, agent.AgentID, time.Now(), tagKey, tagValue)
 	if err != nil {
 		return err
 	}
-	agent.UpdatedAt = time.Now()
 
-	// update agent
-	err = agent.UpdateWithTags(db)
+	affect, err := res.RowsAffected()
 	if err != nil {
 		return err
 	}
+	log.Infof("Agent with id %q has added tag with key $q value $q. %v row(s) affected", agent.AgentID, tagKey, tagValue, affect)
+
+	return nil
+}
+
+func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization, tagKey string) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return err
+	}
+
+	// check if the project is empty
+	if agent.Project == "" {
+		// get the agent
+		err = agent.Get(db)
+		if err != nil {
+			return err
+		}
+	}
+
+	// check project
+	if agent.Project != authorization.ProjectId {
+		return auth.NotAuthorized
+	}
+
+	res, err := db.Exec(ownDb.DeleteAgentTagQuery, agent.AgentID, time.Now(), tagKey)
+	if err != nil {
+		return err
+	}
+
+	affect, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Tag %q from Agent id %q is removed. %v row(s) where updated.", tagKey, agent.AgentID, affect)
 
 	return nil
 }
@@ -477,7 +462,7 @@ func processRegistration(db *sql.DB, agent *Agent) (err error) {
 	} else if existAgentError != nil { // something wrong happned
 		return existAgentError
 	} else { // update the agent
-		if err = agent.UpdateWithRegistration(tx); err != nil {
+		if err = agent.Update(tx); err != nil {
 			return err
 		}
 	}
