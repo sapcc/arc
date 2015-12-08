@@ -8,9 +8,10 @@ import (
 	"fmt"
 )
 
-var dbCol = "facts"
+var factsColumn = "facts"
+var tagsColumn = "tags"
 
-//line expr.y:13
+//line expr.y:14
 type yySymType struct {
 	yys int
 	str string
@@ -43,12 +44,23 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyMaxDepth = 200
 
-//line expr.y:105
+//line expr.y:106
 func stringKey(field string) string {
-	return fmt.Sprintf("%s->>'%s'", dbCol, field)
+
+	column := tagsColumn
+	if field[0] == '@' {
+		field = field[1:]
+		column = factsColumn
+	}
+	return fmt.Sprintf("%s->>'%s'", column, field)
 }
 func numKey(field string) string {
-	return fmt.Sprintf("(%s->>'%s')::numeric", dbCol, field)
+	column := tagsColumn
+	if field[0] == '@' {
+		field = field[1:]
+		column = factsColumn
+	}
+	return fmt.Sprintf("(%s->>'%s')::numeric", column, field)
 }
 
 //line yacctab:1
@@ -349,72 +361,72 @@ yydefault:
 	switch yynt {
 
 	case 1:
-		//line expr.y:35
+		//line expr.y:36
 		{
 			yylex.(*Lexer).parseResult = yyS[yypt-0].str
 		}
 	case 2:
-		//line expr.y:41
+		//line expr.y:42
 		{
 			yyVAL.str = fmt.Sprintf(`NOT %s`, yyS[yypt-0].str)
 		}
 	case 3:
-		//line expr.y:46
+		//line expr.y:47
 		{
 			yyVAL.str = fmt.Sprintf(`( %s )`, yyS[yypt-1].str)
 		}
 	case 4:
-		//line expr.y:51
+		//line expr.y:52
 		{
 			yyVAL.str = fmt.Sprintf(`( %s OR %s )`, yyS[yypt-2].str, yyS[yypt-0].str)
 		}
 	case 5:
-		//line expr.y:56
+		//line expr.y:57
 		{
 			yyVAL.str = fmt.Sprintf(`( %s AND %s )`, yyS[yypt-2].str, yyS[yypt-0].str)
 		}
 	case 6:
-		//line expr.y:61
+		//line expr.y:62
 		{
 			yyVAL.str = yyS[yypt-0].str
 		}
 	case 7:
-		//line expr.y:67
+		//line expr.y:68
 		{
 			yyVAL.str = fmt.Sprintf("%s = '%s'", stringKey(yyS[yypt-2].str), yyS[yypt-0].str)
 		}
 	case 8:
-		//line expr.y:72
+		//line expr.y:73
 		{
 			yyVAL.str = fmt.Sprintf("%s = '%s'", stringKey(yyS[yypt-0].str), yyS[yypt-2].str)
 		}
 	case 9:
-		//line expr.y:77
+		//line expr.y:78
 		{
 			yyVAL.str = fmt.Sprintf("%s <> '%s'", stringKey(yyS[yypt-2].str), yyS[yypt-0].str)
 		}
 	case 10:
-		//line expr.y:82
+		//line expr.y:83
 		{
 			yyVAL.str = fmt.Sprintf("%s <> '%s'", stringKey(yyS[yypt-0].str), yyS[yypt-2].str)
 		}
 	case 11:
-		//line expr.y:87
+		//line expr.y:88
 		{
 			yyVAL.str = fmt.Sprintf("%s = %d", numKey(yyS[yypt-2].str), yyS[yypt-0].num)
 		}
 	case 12:
-		//line expr.y:92
+		//line expr.y:93
 		{
 			yyVAL.str = fmt.Sprintf("%s = %d", numKey(yyS[yypt-0].str), yyS[yypt-2].num)
 		}
 	case 13:
-		//line expr.y:97
+		//line expr.y:98
 		{
 			yyVAL.str = fmt.Sprintf("%s <> %d", numKey(yyS[yypt-2].str), yyS[yypt-0].num)
 		}
 	case 14:
-		//line expr.y:102
+		//line expr.y:103
 		{
 			yyVAL.str = fmt.Sprintf("%s <> %d", numKey(yyS[yypt-0].str), yyS[yypt-2].num)
 		}

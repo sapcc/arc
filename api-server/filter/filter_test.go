@@ -13,7 +13,7 @@ func TestStringEqualFilter(t *testing.T) {
 		t.Error("Parsing query failed: ", err)
 	}
 
-	expected := fmt.Sprintf(`%s->>'column' = 'query'`, dbCol)
+	expected := fmt.Sprintf(`%s->>'column' = 'query'`, tagsColumn)
 
 	if filter != expected {
 		t.Errorf("Unexpected filter result: `%s`", filter)
@@ -34,7 +34,7 @@ func TestStringNotEqualFilter(t *testing.T) {
 		t.Error("Parsing query failed: ", err)
 	}
 
-	expected := fmt.Sprintf(`%s->>'column' <> 'query'`, dbCol)
+	expected := fmt.Sprintf(`%s->>'column' <> 'query'`, tagsColumn)
 
 	if filter != expected {
 		t.Errorf("Unexpected filter result: `%s`", filter)
@@ -55,7 +55,7 @@ func TestNumberEqualFilter(t *testing.T) {
 		t.Error("Parsing query failed: ", err)
 	}
 
-	expected := fmt.Sprintf(`(%s->>'column')::numeric = 3`, dbCol)
+	expected := fmt.Sprintf(`(%s->>'column')::numeric = 3`, tagsColumn)
 
 	if filter != expected {
 		t.Errorf("Unexpected filter result: `%s`", filter)
@@ -76,7 +76,7 @@ func TestNumberNotEqualFilter(t *testing.T) {
 		t.Error("Parsing query failed: ", err)
 	}
 
-	expected := fmt.Sprintf(`(%s->>'column')::numeric <> 3`, dbCol)
+	expected := fmt.Sprintf(`(%s->>'column')::numeric <> 3`, tagsColumn)
 
 	if filter != expected {
 		t.Errorf("Unexpected filter result: `%s`", filter)
@@ -99,11 +99,11 @@ func TestEmptyFilter(t *testing.T) {
 }
 
 func TestCompoundFilter(t *testing.T) {
-	filter, err := Postgresql(`column1 = "1" OR column2 != "2" AND NOT (column3 = "3" AND cloumn4 = "4")`)
+	filter, err := Postgresql(`@fact1 = "1" OR tag2 != "2" AND NOT (tag3 = "3" AND @fact4 = "4")`)
 	if err != nil {
 		t.Error("Parsing query failed: ", err)
 	}
-	expected := "( facts->>'column1' = '1' OR ( facts->>'column2' <> '2' AND NOT ( ( facts->>'column3' = '3' AND facts->>'cloumn4' = '4' ) ) ) )"
+	expected := "( facts->>'fact1' = '1' OR ( tags->>'tag2' <> '2' AND NOT ( ( tags->>'tag3' = '3' AND facts->>'fact4' = '4' ) ) ) )"
 	if filter != expected {
 		t.Errorf("Unexpected filter result: `%s`", filter)
 	}
