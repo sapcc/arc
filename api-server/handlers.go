@@ -307,9 +307,11 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
-	// get the agent
-	agent := models.Agent{AgentID: agentId}
-	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{})
+	// parse form
+	r.ParseForm()
+
+	// process data
+	err := models.ProcessTags(db, authorization, agentId, r.Form)
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
 		return
@@ -320,20 +322,6 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q. ", agentId), http.StatusInternalServerError)
 		return
 	}
-
-	// // read request body
-	// data, err := ioutil.ReadAll(r.Body)
-	// if err != nil {
-	// 	checkErrAndReturnStatus(w, err, "Error saving a Tag. ", http.StatusBadRequest)
-	// 	return
-	// }
-
-	// // process data
-	// err = models.ProcessTags(db, authorization, agent, data)
-	// if err != nil {
-	// 	checkErrAndReturnStatus(w, err, fmt.Sprintf("Error processing tags for agent id %q. ", agentId), http.StatusInternalServerError)
-	// 	return
-	// }
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte("All tags saved!!"))

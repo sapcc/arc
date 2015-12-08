@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -38,7 +39,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -69,7 +70,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns empty arry if no jobs found", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -91,7 +92,7 @@ var _ = Describe("Job Handlers", func() {
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -123,7 +124,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=my_test_laptop"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=my_test_laptop"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -158,7 +159,7 @@ var _ = Describe("Job Handlers", func() {
 			GetJobQuery = "SELECT * Wrong_Job_Table jobs WHERE id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -178,7 +179,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -190,7 +191,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns a 404 error if job not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -207,7 +208,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("should return the job", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -244,7 +245,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 400 error if request is wrong", func() {
 			jsonStr := []byte(`this is not json`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -261,7 +262,7 @@ var _ = Describe("Job Handlers", func() {
 
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -277,7 +278,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 404 error if the targe agent does not exist", func() {
 			jsonStr := []byte(`{"to":"non_existing_agent","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -295,7 +296,7 @@ var _ = Describe("Job Handlers", func() {
 		It("should save the job and return the unique id as JSON", func() {
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr))
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -333,7 +334,7 @@ var _ = Describe("Agent Handlers", func() {
 			GetAgentsQuery = "SELECT DISTINCT agent_id,created_at,updated_at FROM Wrong_Facts order by updated_at"
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -347,7 +348,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 400 if the filter query is wrong", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -380,7 +381,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns empty json arry if no agents found", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -401,7 +402,7 @@ var _ = Describe("Agent Handlers", func() {
 			agents.CreateAndSaveAgentExamples(db, 3)
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -435,7 +436,7 @@ var _ = Describe("Agent Handlers", func() {
 			}
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"`), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"`), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -466,7 +467,7 @@ var _ = Describe("Agent Handlers", func() {
 			}
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"&facts=os,online`), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"&facts=os,online`), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -507,7 +508,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -523,7 +524,7 @@ var _ = Describe("Agent Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -543,7 +544,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("return an angent", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -568,7 +569,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("should show facts", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "?facts=os,online")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "?facts=os,online")), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -606,7 +607,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("DELETE", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -622,7 +623,7 @@ var _ = Describe("Agent Handlers", func() {
 			DeleteAgentQuery = `DELETE FROM miaus WHERE agent_id=$1`
 
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -642,7 +643,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("Delete an angent", func() {
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -672,7 +673,7 @@ var _ = Describe("Agent Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -686,7 +687,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -703,7 +704,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns the facts from an agent", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -712,6 +713,7 @@ var _ = Describe("Agent Handlers", func() {
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
 			Expect(w.Code).To(Equal(200))
 
+			// check facts
 			checkFacts := models.JSONBfromString(w.Body.String())
 			eq := reflect.DeepEqual(agent.Facts, checkFacts)
 			Expect(eq).To(Equal(true))
@@ -723,345 +725,245 @@ var _ = Describe("Agent Handlers", func() {
 
 var _ = Describe("Tags", func() {
 
-	// var (
-	// 	agent models.Agent
-	// )
-	//
-	// JustBeforeEach(func() {
-	// 	agent = models.Agent{}
-	// 	agent.Example()
-	// 	err := agent.Save(db)
-	// 	Expect(err).NotTo(HaveOccurred())
-	// })
-	//
-	// Describe("serveAgentTags", func() {
-	//
-	// 	It("returns a 500 error if something is wrong with the query", func() {
-	// 		tmp_GetTagsByAgentIdQuery := GetTagsByAgentIdQuery
-	// 		GetTagsByAgentIdQuery = `SELECT DISTINCT * FROM wrong_table WHERE agent_id=$1 order by created_at DESC`
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(500))
-	//
-	// 		GetTagsByAgentIdQuery = tmp_GetTagsByAgentIdQuery
-	// 	})
-	//
-	// 	It("returns a 404 error if Agent not found", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", "non_exisitng_agent", "/tags")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(404))
-	// 	})
-	//
-	// 	It("returns an empty array if no tags for the agent", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check no agents returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(0))
-	// 	})
-	//
-	// 	It("returns a 401 error if not authorized", func() {
-	// 		checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "")
-	// 		checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "")
-	// 	})
-	//
-	// 	It("returns the tags from an agent", func() {
-	// 		authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
-	// 		newTag := models.Tag{AgentID: agent.AgentID, Project: agent.Project, Value: "tag_miau", CreatedAt: time.Now()}
-	// 		err := newTag.SaveAuthorized(db, &authorization)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		newTag2 := models.Tag{AgentID: agent.AgentID, Project: agent.Project, Value: "tag_bup", CreatedAt: time.Now()}
-	// 		err = newTag2.SaveAuthorized(db, &authorization)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check no agents returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(2))
-	// 	})
-	//
-	// })
-	//
-	// Describe("saveAgentTags", func() {
-	//
-	// 	It("returns a 500 error if something is wrong with the query", func() {
-	// 		tmp_InsertTagQuery := InsertTagQuery
-	// 		InsertTagQuery = `INSERT INTO wrong_table(agent_id,project,value,created_at) VALUES($1,$2,$3) returning agent_id`
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString("tag1, tag2"))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(500))
-	//
-	// 		InsertTagQuery = tmp_InsertTagQuery
-	// 	})
-	//
-	// 	It("returns a 404 error if Agent not found", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags")), bytes.NewBufferString("tag1, tag2"))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(404))
-	// 	})
-	//
-	// 	It("returns a 401 error if not authorized", func() {
-	// 		checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "tag1, tag2")
-	// 		checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "tag1, tag2")
-	// 	})
-	//
-	// 	It("saves all tags for the agent", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString("tag1, tag2"))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check tags are saved
-	// 		req, err = newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w = httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check no agents returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(2))
-	// 		Expect(dbTags[0].Value).To(Equal("tag2"))
-	// 		Expect(dbTags[1].Value).To(Equal("tag1"))
-	// 	})
-	//
-	// })
-	//
-	// Describe("deleteAgentTag", func() {
-	//
-	// 	It("returns a 500 error if something is wrong with the query", func() {
-	// 		tmp_DeleteTagQuery := DeleteTagQuery
-	// 		DeleteTagQuery = `DELETE FROM wrong_table WHERE agent_id=$1 AND value=$2`
-	//
-	// 		authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
-	// 		newTag := models.Tag{AgentID: agent.AgentID, Project: agent.Project, Value: "tag_miau", CreatedAt: time.Now()}
-	// 		err := newTag.SaveAuthorized(db, &authorization)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(500))
-	//
-	// 		DeleteTagQuery = tmp_DeleteTagQuery
-	// 	})
-	//
-	// 	It("returns a 404 error if Agent not found", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags", "/tag_miau")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(404))
-	// 	})
-	//
-	// 	It("returns a 404 error if Tag not found", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/non_exiting_tag")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(404))
-	// 	})
-	//
-	// 	It("returns a 401 error if not authorized", func() {
-	// 		checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), "")
-	// 		checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), "")
-	// 	})
-	//
-	// 	It("removes the agent tag", func() {
-	// 		authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
-	// 		newTag := models.Tag{AgentID: agent.AgentID, Project: agent.Project, Value: "tag_miau", CreatedAt: time.Now()}
-	// 		err := newTag.SaveAuthorized(db, &authorization)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check tags are removed
-	// 		req, err = newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w = httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check no agents returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(0))
-	// 	})
-	//
-	// })
-	//
-	// Describe("ServeTags", func() {
-	//
-	// 	It("returns a 500 error if something is wrong with the query", func() {
-	// 		tmp_GetTagsByValueQuery := GetTagsByValueQuery
-	// 		GetTagsByValueQuery = `SELECT DISTINCT * FROM wrong_table WHERE project=$1 AND value=$2 order by created_at DESC`
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/tags", "/tag_miau")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-	// 		Expect(w.Code).To(Equal(500))
-	//
-	// 		GetTagsByValueQuery = tmp_GetTagsByValueQuery
-	// 	})
-	//
-	// 	It("returns an empty array if no tags for this value found", func() {
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/tags", "/non_existing_tag")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check no agents returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(0))
-	// 	})
-	//
-	// 	It("returns a 401 error if not authorized", func() {
-	// 		checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/tags", "/tag_miau")), "")
-	//
-	// 		// make a request with X-Identity-Status to Confirmed but not X-Project-Id
-	// 		req, err := http.NewRequest("GET", getUrl("/tags/tag_miau"), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		req.Header.Add("X-Identity-Status", `Confirmed`)
-	// 		req.Header.Add("X-Project-Id", `some_different_project`)
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	// 		// check no tags returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(0))
-	// 	})
-	//
-	// 	It("returns the tags by the given value", func() {
-	// 		authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
-	// 		newTag := models.Tag{AgentID: agent.AgentID, Project: agent.Project, Value: "tag_miau", CreatedAt: time.Now()}
-	// 		err := newTag.SaveAuthorized(db, &authorization)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		newAgent := models.Agent{}
-	// 		newAgent.Example()
-	// 		err = newAgent.Save(db)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		newTag2 := models.Tag{AgentID: newAgent.AgentID, Project: newAgent.Project, Value: "tag_miau", CreatedAt: time.Now()}
-	// 		err = newTag2.SaveAuthorized(db, &authorization)
-	// 		Expect(err).NotTo(HaveOccurred())
-	//
-	// 		// make request
-	// 		req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/tags", "/tag_miau")), bytes.NewBufferString(""))
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		w := httptest.NewRecorder()
-	// 		router.ServeHTTP(w, req)
-	//
-	// 		// check response code and header
-	// 		Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-	// 		Expect(w.Code).To(Equal(200))
-	//
-	// 		// check no agents returned
-	// 		dbTags := make(models.Tags, 0)
-	// 		err = json.Unmarshal(w.Body.Bytes(), &dbTags)
-	// 		Expect(err).NotTo(HaveOccurred())
-	// 		Expect(len(dbTags)).To(Equal(2))
-	// 	})
-	//
-	// })
+	var (
+		agent models.Agent
+	)
+
+	JustBeforeEach(func() {
+		agent = models.Agent{}
+		agent.Example()
+		err := agent.Save(db)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	Describe("serveAgentTags", func() {
+
+		It("returns a 500 error if something is wrong with the query", func() {
+			tmp_GetAgentQuery := GetAgentQuery
+			GetAgentQuery = `SELECT DISTINCT * FROM wrong_table WHERE agent_id=$1 order by created_at DESC`
+
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(500))
+
+			GetAgentQuery = tmp_GetAgentQuery
+		})
+
+		It("returns a 404 error if Agent not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", "non_exisitng_agent", "/tags")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns an empty json if no tags for the agent", func() {
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check body is json empty
+			var objmap *json.RawMessage
+			err = json.Unmarshal(w.Body.Bytes(), &objmap)
+			Expect(err).NotTo(HaveOccurred())
+			data := []byte(`{}`)
+			nilJson := (*json.RawMessage)(&data)
+			Expect(objmap).To(Equal(nilJson))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "")
+		})
+
+		It("returns the tags from an agent", func() {
+			authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
+			err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
+			Expect(err).NotTo(HaveOccurred())
+			err = agent.AddTagAuthorized(db, &authorization, "dog", "bup")
+			Expect(err).NotTo(HaveOccurred())
+
+			// create a new agent with other project and tags
+			newAgent := models.Agent{}
+			newAgent.Project = "another_project"
+			newAgent.Example()
+			err = newAgent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+			err = newAgent.AddTagAuthorized(db, &authorization, "bird", "piupiu")
+			Expect(err).NotTo(HaveOccurred())
+
+			// make request
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			// check tags
+			dbAgent := models.Agent{AgentID: agent.AgentID}
+			err = dbAgent.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			checkTags := models.JSONBfromString(w.Body.String())
+			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			Expect(eq).To(Equal(true))
+		})
+
+	})
+
+	Describe("saveAgentTags", func() {
+
+		It("returns a 500 error if something is wrong with the query", func() {
+			tmp_AddAgentTag := AddAgentTag
+			AddAgentTag = `INSERT INTO wrong_table(agent_id,project,value,created_at) VALUES($1,$2,$3) returning agent_id`
+
+			// make request
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(500))
+
+			AddAgentTag = tmp_AddAgentTag
+		})
+
+		It("returns a 404 error if Agent not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags")), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "tag1, tag2")
+			checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "tag1, tag2")
+		})
+
+		It("saves all tags for the agent", func() {
+			// make request
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(200))
+
+			dbAgent := models.Agent{AgentID: agent.AgentID}
+			err = dbAgent.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			checkTags := models.JSONBfromString(`{"cat":"miau","dog":"bup"}`)
+			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			Expect(eq).To(Equal(true))
+		})
+
+	})
+
+	Describe("deleteAgentTag", func() {
+
+		It("returns a 500 error if something is wrong with the query", func() {
+			tmp_DeleteTagQuery := DeleteAgentTagQuery
+			DeleteAgentTagQuery = `DELETE FROM wrong_table WHERE agent_id=$1 AND value=$2`
+
+			authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
+			err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
+			Expect(err).NotTo(HaveOccurred())
+
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/cat")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(500))
+
+			DeleteAgentTagQuery = tmp_DeleteTagQuery
+		})
+
+		It("returns a 404 error if Agent not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags", "/tag_miau")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(404))
+		})
+
+		It("returns no error if Tag not found", func() {
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/non_exiting_tag")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(200))
+		})
+
+		It("returns a 401 error if not authorized", func() {
+			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), "")
+			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), "")
+		})
+
+		It("removes the agent tag", func() {
+			authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
+			err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
+			Expect(err).NotTo(HaveOccurred())
+			err = agent.AddTagAuthorized(db, &authorization, "dog", "bup")
+			Expect(err).NotTo(HaveOccurred())
+
+			// make request
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/dog")), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(200))
+
+			dbAgent := models.Agent{AgentID: agent.AgentID}
+			err = dbAgent.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			checkTags := models.JSONBfromString(`{"cat":"miau"}`)
+			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			Expect(eq).To(Equal(true))
+		})
+
+	})
 
 })
 
@@ -1087,7 +989,7 @@ var _ = Describe("Log Handlers", func() {
 			GetLogQuery = "SELECT * Wrong_Log_Table logs WHERE job_id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1102,7 +1004,7 @@ var _ = Describe("Log Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id/log"), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id/log"), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1131,7 +1033,7 @@ var _ = Describe("Log Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1150,7 +1052,7 @@ var _ = Describe("Log Handlers", func() {
 			content := logpart.SaveLogPartExamples(db, job.RequestID)
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""))
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1332,13 +1234,19 @@ func checkNonAuthorizeProjectRequest(method, urlStr string, body string) {
 	Expect(w.Code).To(Equal(401))
 }
 
-func newAuthorizedRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+func newAuthorizedRequest(method, urlStr string, body io.Reader, headerOptions map[string]string) (*http.Request, error) {
 	req, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("X-Identity-Status", `Confirmed`)
 	req.Header.Add("X-Project-Id", `test-project`)
+
+	// add extra headers
+	for k, v := range headerOptions {
+		req.Header.Add(k, v)
+	}
+
 	return req, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -176,6 +177,8 @@ func (agent *Agent) Save(db Db) error {
 	return nil
 }
 
+// registration (facts)
+
 func (agent *Agent) Update(db Db) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
@@ -253,7 +256,9 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 	return nil
 }
 
+// ****
 // tags
+// ****
 
 func (agent *Agent) AddTagAuthorized(db Db, authorization *auth.Authorization, tagKey string, tagValue string) error {
 	if db == nil {
@@ -330,6 +335,34 @@ func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization
 	}
 
 	log.Infof("Tag %q from Agent id %q is removed. %v row(s) where updated.", tagKey, agent.AgentID, affect)
+
+	return nil
+}
+
+func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, tags url.Values) error {
+	if db == nil {
+		return errors.New("Db connection is nil")
+	}
+
+	// get agent
+	agent := Agent{AgentID: agentId}
+	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{})
+	if err != nil {
+		return err
+	}
+
+	for k, v := range tags {
+		keyTag := k
+		valueTag := ""
+		if len(v) > 0 {
+			valueTag = v[0]
+		}
+		err := agent.AddTagAuthorized(db, authorization, keyTag, valueTag)
+		// if something wrong happens we brake the process
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

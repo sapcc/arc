@@ -645,6 +645,7 @@ var _ = Describe("Agent", func() {
 			authorization.UserId = "userID"
 			authorization.ProjectId = "test-project"
 		})
+
 		Describe("add tag", func() {
 
 			It("returns an error if no db connection is given", func() {
