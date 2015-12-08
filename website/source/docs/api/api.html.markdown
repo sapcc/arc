@@ -202,6 +202,7 @@ Agent with id "darwin" deleted.
 	- Body: `pool=green&lanscape=staging`
 	- Headers: `Content-Type: application/x-www-form-urlencoded`
 - Example response:
+
 ```text
 All tags saved!
 ```
