@@ -324,7 +324,7 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte("All tags saved!!"))
+	w.Write([]byte("All tags saved!"))
 }
 
 func deleteAgentTag(w http.ResponseWriter, r *http.Request) {
@@ -351,7 +351,7 @@ func deleteAgentTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(fmt.Sprintf("Tag with agent id %q and value %q is removed!!", agentId, value)))
+	w.Write([]byte(fmt.Sprintf("Tag from agent with id %q and value %q is removed!", agentId, value)))
 }
 
 /*
