@@ -6,7 +6,8 @@ import (
 	"fmt"
 )
 
-var dbCol = "facts"
+var factsColumn = "facts"
+var tagsColumn = "tags"
 
 %}
 
@@ -105,10 +106,21 @@ comp:
 %%
 
 func stringKey(field string) string {
-  return fmt.Sprintf("%s->>'%s'", dbCol, field)
+  
+  column := tagsColumn
+  if field[0] == '@' {
+    field=field[1:]
+    column = factsColumn
+  }
+  return fmt.Sprintf("%s->>'%s'", column, field)
 }
 func numKey(field string) string {
-  return fmt.Sprintf("(%s->>'%s')::numeric", dbCol, field)
+  column := tagsColumn
+  if field[0] == '@' {
+    field = field[1:]
+    column = factsColumn
+  }
+  return fmt.Sprintf("(%s->>'%s')::numeric", column, field)
 }
 
 

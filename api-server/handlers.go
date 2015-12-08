@@ -269,6 +269,92 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
+ * Tags
+ */
+
+func serveAgentTags(w http.ResponseWriter, r *http.Request) {
+	// check authentication
+	authorization := auth.GetIdentity(r)
+
+	// get the agent id
+	vars := mux.Vars(r)
+	agentId := vars["agentId"]
+
+	// get the agent
+	agent := models.Agent{AgentID: agentId}
+	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{"all"})
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	err = json.NewEncoder(w).Encode(agent.Tags)
+	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+}
+
+func saveAgentTags(w http.ResponseWriter, r *http.Request) {
+	// check authentication
+	authorization := auth.GetIdentity(r)
+
+	// get the agent id
+	vars := mux.Vars(r)
+	agentId := vars["agentId"]
+
+	// parse form
+	r.ParseForm()
+
+	// process data
+	err := models.ProcessTags(db, authorization, agentId, r.Form)
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q. ", agentId), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte("All tags saved!"))
+}
+
+func deleteAgentTag(w http.ResponseWriter, r *http.Request) {
+	// check authentication
+	authorization := auth.GetIdentity(r)
+
+	// get the agent id
+	vars := mux.Vars(r)
+	agentId := vars["agentId"]
+	value := vars["value"]
+
+	// get the agent
+	agent := models.Agent{AgentID: agentId}
+	err := agent.DeleteTagAuthorized(db, authorization, value)
+	if err == sql.ErrNoRows {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+		return
+	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
+		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error removing tag %q from Agent id %q. ", value, agentId), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(fmt.Sprintf("Tag from agent with id %q and value %q is removed!", agentId, value)))
+}
+
+/*
  * Root and Healthcheck
  */
 

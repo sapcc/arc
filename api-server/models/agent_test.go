@@ -67,13 +67,13 @@ var _ = Describe("Agents", func() {
 
 			// get agents with os darwin
 			dbAgents := Agents{}
-			err := dbAgents.Get(db, `os = "darwin"`)
+			err := dbAgents.Get(db, `@os = "darwin"`)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(1))
 			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
 
 			// get agents with os windows
-			err = dbAgents.Get(db, `os = "windows"`)
+			err = dbAgents.Get(db, `@os = "windows"`)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
 			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
@@ -82,7 +82,7 @@ var _ = Describe("Agents", func() {
 
 	})
 
-	Describe("Authorized and show facts", func() {
+	Describe("Get Agents with Authorized and show facts", func() {
 
 		var (
 			agents        = Agents{}
@@ -102,130 +102,7 @@ var _ = Describe("Agents", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should return all agents with same authorization project id", func() {
-			// add a new agent
-			agent := Agent{}
-			agent.Example()
-			agent.Project = "miau"
-			err := agent.Save(db)
-			Expect(err).NotTo(HaveOccurred())
-
-			// change authorization
-			authorization.ProjectId = "miau"
-
-			// insert facts / agent
-			dbAgents := Agents{}
-			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(1))
-			Expect(dbAgents[0].Project).To(Equal(authorization.ProjectId))
-		})
-
-		It("should return an error if the filter syntax is wrong", func() {
-			// insert facts / agent
-			dbAgents := Agents{}
-			err := dbAgents.GetAuthorizedAndShowFacts(db, `os =`, &authorization, []string{})
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("should return all agents filtered by os", func() {
-			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
-			os := []string{"darwin", "windows", "windows"}
-			agents := Agents{}
-			agents.CreateAndSaveAgentExamples(db, 3)
-			for i := 0; i < len(agents); i++ {
-				currentAgent := agents[i]
-				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
-					Expect(err).NotTo(HaveOccurred())
-				}
-				currentAgent.Project = "miau"
-				err := currentAgent.Update(db)
-				Expect(err).NotTo(HaveOccurred())
-			}
-
-			// change authorization
-			authorization.ProjectId = "miau"
-
-			// agent with darwin os
-			dbAgents := Agents{}
-			err := dbAgents.GetAuthorizedAndShowFacts(db, `os = "darwin"`, &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(1))
-			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
-
-			// agent with windows os
-			err = dbAgents.GetAuthorizedAndShowFacts(db, `os = "windows"`, &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(2))
-			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
-			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
-		})
-
-		It("should return an identity authorization error", func() {
-			authorization.IdentityStatus = "Something different from Confirmed"
-
-			dbAgents := Agents{}
-			err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.IdentityStatusInvalid))
-		})
-
-		It("should return a project authorization error", func() {
-			authorization.ProjectId = "Some other project"
-
-			dbAgents := Agents{}
-			err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(0))
-		})
-
-		It("should return all agents with the given facts", func() {
-			// change authorization
-			authorization.ProjectId = "test-project"
-
-			// get agents with existing facts
-			dbAgents := Agents{}
-			err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "online"})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(3))
-			for i := 0; i < len(dbAgents); i++ {
-				currentAgent := dbAgents[i]
-				Expect(len(currentAgent.Facts)).To(Equal(2))
-				_, ok := currentAgent.Facts["os"]
-				Expect(ok).To(Equal(true))
-				_, ok = currentAgent.Facts["online"]
-				Expect(ok).To(Equal(true))
-			}
-
-			// get agents with non existing facts
-			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "bup"})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(3))
-			for i := 0; i < len(dbAgents); i++ {
-				currentAgent := dbAgents[i]
-				Expect(len(currentAgent.Facts)).To(Equal(1))
-			}
-
-			// get agent with all existing agents
-			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"all"})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(3))
-			for i := 0; i < len(dbAgents); i++ {
-				currentAgent := dbAgents[i]
-				Expect(len(currentAgent.Facts)).To(BeNumerically(">=", 10))
-			}
-
-			// get agents with no facts
-			err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgents)).To(Equal(3))
-			for i := 0; i < len(dbAgents); i++ {
-				currentAgent := dbAgents[i]
-				Expect(len(currentAgent.Facts)).To(Equal(0))
-			}
-		})
-
-		It("should return all agents sorted descending", func() {
+		It("should return all agents sorted by update and descending", func() {
 			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 			agents := Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
@@ -255,11 +132,185 @@ var _ = Describe("Agents", func() {
 			authorization.ProjectId = "miau"
 
 			dbAgents := Agents{}
-			err = dbAgents.GetAuthorizedAndShowFacts(db, `os = "windows"`, &authorization, []string{})
+			err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
 			Expect(dbAgents[0].AgentID).To(Equal(agent1.AgentID))
 			Expect(dbAgents[1].AgentID).To(Equal(agent3.AgentID))
+		})
+
+		Describe("filter", func() {
+
+			It("should return an error if the filter syntax is wrong", func() {
+				// insert facts / agent
+				dbAgents := Agents{}
+				err := dbAgents.GetAuthorizedAndShowFacts(db, `os =`, &authorization, []string{})
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should filter agents", func() {
+				// change authorization
+				authorization.ProjectId = "miau"
+
+				// create new custom agents
+				var (
+					facts      = `{"os": "%s", "online": "%s", "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+					os         = []string{"darwin", "windows", "windows"}
+					online     = []string{"true", "false", "true"}
+					tagsKey    = []string{"landscape", "landscape", "landscape"}
+					tagsValue  = []string{"development", "staging", "production"}
+					tagsKey2   = []string{"pool", "pool", "pool"}
+					tagsValue2 = []string{"green", "green", "blue"}
+				)
+
+				agents := Agents{}
+				agents.CreateAndSaveAgentExamples(db, 3)
+				for i := 0; i < len(agents); i++ {
+					currentAgent := agents[i]
+					// change facts
+					err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i])), &currentAgent.Facts)
+					Expect(err).NotTo(HaveOccurred())
+					currentAgent.Project = "miau"
+					err = currentAgent.Update(db)
+					Expect(err).NotTo(HaveOccurred())
+					// add tags
+					err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey[i], tagsValue[i])
+					Expect(err).NotTo(HaveOccurred())
+					err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey2[i], tagsValue2[i])
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				// agent with darwin os
+				dbAgents := Agents{}
+				err := dbAgents.GetAuthorizedAndShowFacts(db, `@os = "darwin"`, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(1))
+				Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
+
+				// agent with windows os
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(2))
+				Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
+				Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
+
+				// agent with windows os and online
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows" AND @online = "false"`, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(1))
+				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
+
+				// agent with tag production
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `landscape = "staging"`, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(1))
+				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
+
+				// agent more tags
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `landscape = "staging" AND (pool = "green" OR pool = "blue")`, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(1))
+				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
+
+				// agent mix tags and facts
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "darwin" OR (landscape = "staging" AND pool = "green")`, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(2))
+				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
+				Expect(dbAgents[1].AgentID).To(Equal(agents[0].AgentID))
+			})
+
+		})
+
+		Describe("Show facts", func() {
+
+			It("should return all agents with the given facts", func() {
+				// change authorization
+				authorization.ProjectId = "test-project"
+
+				// get agents with existing facts
+				dbAgents := Agents{}
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "online"})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(3))
+				for i := 0; i < len(dbAgents); i++ {
+					currentAgent := dbAgents[i]
+					Expect(len(currentAgent.Facts)).To(Equal(2))
+					_, ok := currentAgent.Facts["os"]
+					Expect(ok).To(Equal(true))
+					_, ok = currentAgent.Facts["online"]
+					Expect(ok).To(Equal(true))
+				}
+
+				// get agents with non existing facts
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "bup"})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(3))
+				for i := 0; i < len(dbAgents); i++ {
+					currentAgent := dbAgents[i]
+					Expect(len(currentAgent.Facts)).To(Equal(1))
+				}
+
+				// get agent with all existing agents
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"all"})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(3))
+				for i := 0; i < len(dbAgents); i++ {
+					currentAgent := dbAgents[i]
+					Expect(len(currentAgent.Facts)).To(BeNumerically(">=", 10))
+				}
+
+				// get agents with no facts
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(3))
+				for i := 0; i < len(dbAgents); i++ {
+					currentAgent := dbAgents[i]
+					Expect(len(currentAgent.Facts)).To(Equal(0))
+				}
+			})
+
+		})
+
+		Describe("Authorized", func() {
+
+			It("should return all agents with same authorization project id", func() {
+				// add a new agent with a different project
+				agent := Agent{}
+				agent.Example()
+				agent.Project = "miau"
+				err := agent.Save(db)
+				Expect(err).NotTo(HaveOccurred())
+
+				// change authorization
+				authorization.ProjectId = "miau"
+
+				// insert facts / agent
+				dbAgents := Agents{}
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(1))
+				Expect(dbAgents[0].Project).To(Equal(authorization.ProjectId))
+			})
+
+			It("should return an identity authorization error", func() {
+				authorization.IdentityStatus = "Something different from Confirmed"
+
+				dbAgents := Agents{}
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			})
+
+			It("should return a project authorization error", func() {
+				authorization.ProjectId = "Some other project"
+
+				dbAgents := Agents{}
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(0))
+			})
+
 		})
 
 	})
@@ -305,7 +356,7 @@ var _ = Describe("Agent", func() {
 
 	})
 
-	Describe("Get authorized and show facts", func() {
+	Describe("Get an agent wiht authorization and show facts", func() {
 
 		var (
 			agent         = Agent{}
@@ -323,77 +374,86 @@ var _ = Describe("Agent", func() {
 			authorization.ProjectId = "test-project"
 		})
 
-		It("should return an agent with same authorization project id", func() {
-			// add a new agent
-			newAgent := Agent{}
-			newAgent.Example()
-			newAgent.Project = "miau"
-			err := newAgent.Save(db)
-			Expect(err).NotTo(HaveOccurred())
+		Describe("Show facts", func() {
 
-			// change authorization
-			authorization.ProjectId = "miau"
+			It("should return all agents with the given facts", func() {
+				// authorization
+				authorization.ProjectId = "test-project"
 
-			// insert facts / agent
-			dbAgent := Agent{AgentID: newAgent.AgentID}
-			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(dbAgent.Project).To(Equal(authorization.ProjectId))
+				// get agent with existing facts
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "online"})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgent.Facts)).To(Equal(2))
+				_, ok := dbAgent.Facts["os"]
+				Expect(ok).To(Equal(true))
+				_, ok = dbAgent.Facts["online"]
+				Expect(ok).To(Equal(true))
+
+				// get agent with non existing facts
+				err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "bup"})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgent.Facts)).To(Equal(1))
+
+				// get agent with all existing agents
+				err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"all"})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgent.Facts)).To(BeNumerically(">=", 10))
+
+				// get agent with no facts
+				err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgent.Facts)).To(Equal(0))
+			})
+
 		})
 
-		It("should return an identity authorization error", func() {
-			authorization.IdentityStatus = "Something different from Confirmed"
+		Describe("Authorized", func() {
 
-			dbAgent := Agent{AgentID: agent.AgentID}
-			err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.IdentityStatusInvalid))
-		})
+			It("should return same project id", func() {
+				// add a new agent
+				newAgent := Agent{}
+				newAgent.Example()
+				newAgent.Project = "miau"
+				err := newAgent.Save(db)
+				Expect(err).NotTo(HaveOccurred())
 
-		It("should return a project authorization error", func() {
-			authorization.ProjectId = "Some other project"
+				// change authorization
+				authorization.ProjectId = "miau"
 
-			dbAgent := Agent{AgentID: agent.AgentID}
-			err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
-			Expect(err).To(HaveOccurred())
-		})
+				// insert facts / agent
+				dbAgent := Agent{AgentID: newAgent.AgentID}
+				err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(dbAgent.Project).To(Equal(authorization.ProjectId))
+			})
 
-		It("should return all agents with the given facts", func() {
-			// authorization
-			authorization.ProjectId = "test-project"
+			It("should return an identity authorization error", func() {
+				authorization.IdentityStatus = "Something different from Confirmed"
 
-			// get agent with existing facts
-			dbAgent := Agent{AgentID: agent.AgentID}
-			err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "online"})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgent.Facts)).To(Equal(2))
-			_, ok := dbAgent.Facts["os"]
-			Expect(ok).To(Equal(true))
-			_, ok = dbAgent.Facts["online"]
-			Expect(ok).To(Equal(true))
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			})
 
-			// get agent with non existing facts
-			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"os", "bup"})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgent.Facts)).To(Equal(1))
+			It("should return a project authorization error", func() {
+				authorization.ProjectId = "Some other project"
 
-			// get agent with all existing agents
-			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{"all"})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgent.Facts)).To(BeNumerically(">=", 10))
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
+				Expect(err).To(HaveOccurred())
+			})
 
-			// get agent with no facts
-			err = dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(dbAgent.Facts)).To(Equal(0))
 		})
 
 	})
 
-	Describe("Delete authorized", func() {
+	Describe("Delete an agent", func() {
 
 		var (
-			agent = Agent{}
+			agent         = Agent{}
+			authorization = auth.Authorization{}
 		)
 
 		JustBeforeEach(func() {
@@ -401,41 +461,13 @@ var _ = Describe("Agent", func() {
 			agent.Example()
 			err := agent.Save(db)
 			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should return an identity authorization error", func() {
-			authorization := auth.Authorization{
-				IdentityStatus: "Something different from Confirmed",
-				UserId:         "userID",
-				ProjectId:      agent.Project,
-			}
-
-			// delete agent
-			err := agent.DeleteAuthorized(db, &authorization)
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.IdentityStatusInvalid))
-		})
-
-		It("should return a project authorization error", func() {
-			authorization := auth.Authorization{
-				IdentityStatus: "Confirmed",
-				UserId:         "userID",
-				ProjectId:      "Some other project",
-			}
-
-			// delete agent
-			err := agent.DeleteAuthorized(db, &authorization)
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.NotAuthorized))
+			// reset authorization
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = "userID"
+			authorization.ProjectId = agent.Project
 		})
 
 		It("should delete an agent", func() {
-			authorization := auth.Authorization{
-				IdentityStatus: "Confirmed",
-				UserId:         "userID",
-				ProjectId:      agent.Project,
-			}
-
 			// delete agent
 			err := agent.DeleteAuthorized(db, &authorization)
 			Expect(err).NotTo(HaveOccurred())
@@ -444,6 +476,28 @@ var _ = Describe("Agent", func() {
 			newAgent := Agent{AgentID: agent.AgentID}
 			err = newAgent.Get(db)
 			Expect(err).To(HaveOccurred())
+		})
+
+		Describe("authorization", func() {
+
+			It("should return an identity authorization error", func() {
+				authorization.IdentityStatus = "Something different from Confirmed"
+
+				// delete agent
+				err := agent.DeleteAuthorized(db, &authorization)
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			})
+
+			It("should return a project authorization error", func() {
+				authorization.ProjectId = "Some other project"
+
+				// delete agent
+				err := agent.DeleteAuthorized(db, &authorization)
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(auth.NotAuthorized))
+			})
+
 		})
 
 	})
@@ -463,6 +517,7 @@ var _ = Describe("Agent", func() {
 				AgentID:      uuid.New(),
 				Project:      "huhu project",
 				Organization: "huhu organization",
+				Tags:         JSONB{"cat": "miau"},
 				CreatedAt:    time.Now().Add((-5) * time.Minute),
 				UpdatedAt:    time.Now().Add((-5) * time.Minute),
 			}
@@ -504,6 +559,8 @@ var _ = Describe("Agent", func() {
 			Expect(dbAgent.Organization).To(Equal(newOrg))
 			Expect(dbAgent.CreatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(agent.CreatedAt.Format("2006-01-02 15:04:05.99")))
 			Expect(dbAgent.UpdatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(updateAgent.UpdatedAt.Format("2006-01-02 15:04:05.99")))
+			// check the tags have not been updated
+			Expect(dbAgent.Tags).To(Equal(agent.Tags))
 		})
 
 	})
@@ -624,6 +681,173 @@ var _ = Describe("Agent", func() {
 			// process the request
 			err = ProcessRegistration(db, &newReg, agentId, false)
 			Expect(err).NotTo(HaveOccurred()) // it is updated twice
+		})
+
+	})
+
+	Describe("Tags", func() {
+
+		var (
+			agent         = Agent{}
+			authorization = auth.Authorization{}
+		)
+
+		JustBeforeEach(func() {
+			// insert facts / agent
+			agent.Example()
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+			// reset authorization
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = "userID"
+			authorization.ProjectId = agent.Project
+		})
+
+		Describe("add tag", func() {
+
+			It("returns an error if no db connection is given", func() {
+				err := agent.AddTagAuthorized(nil, &authorization, "cat", "miau")
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should return an error if agent does not exist", func() {
+				newAgent := Agent{AgentID: "non_existing_id"}
+				err := newAgent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should get the agent if the project id is empty", func() {
+				// set project empty
+				agent.Project = ""
+				// should get the data from the agent again
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should save the tag", func() {
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"test":"miau"}`))
+			})
+
+			It("should override the tag if exists", func() {
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				// override tag
+				err = agent.AddTagAuthorized(db, &authorization, "test", "miau, miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"test":"miau, miau"}`))
+			})
+
+			Describe("authorization", func() {
+
+				It("should return an identity authorization error", func() {
+					authorization.IdentityStatus = "Something different from Confirmed"
+
+					// add tag
+					err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(Equal(auth.IdentityStatusInvalid))
+				})
+
+				It("should return a project authorization error", func() {
+					authorization.ProjectId = "Some other project"
+
+					err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(Equal(auth.NotAuthorized))
+				})
+
+			})
+
+		})
+
+		Describe("remove tag", func() {
+
+			It("returns an error if no db connection is given", func() {
+				err := agent.DeleteTagAuthorized(nil, &authorization, "cat")
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("should return an error if agent does not exist", func() {
+				newAgent := Agent{AgentID: "non_existing_id"}
+				err := newAgent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).To(HaveOccurred())
+			})
+
+			// no error handling possible because of the row will allways updated
+			It("should not return an error if the tag does not exist", func() {
+				err := agent.DeleteTagAuthorized(db, &authorization, "non_existing_tag")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should get the agent if the project id is empty", func() {
+				// set project empty
+				agent.Project = ""
+				// should get the data from the agent again
+				err := agent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should save the tag", func() {
+				// add tag
+				err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = agent.AddTagAuthorized(db, &authorization, "dog", "bup")
+				Expect(err).NotTo(HaveOccurred())
+
+				// remove tag
+				err = agent.DeleteTagAuthorized(db, &authorization, "dog")
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"cat":"miau"}`))
+			})
+
+			Describe("authorization", func() {
+
+				It("should return an identity authorization error", func() {
+					authorization.IdentityStatus = "Something different from Confirmed"
+
+					// add tag
+					err := agent.DeleteTagAuthorized(db, &authorization, "dog")
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(Equal(auth.IdentityStatusInvalid))
+				})
+
+				It("should return a project authorization error", func() {
+					authorization.ProjectId = "Some other project"
+
+					err := agent.DeleteTagAuthorized(db, &authorization, "dog")
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(Equal(auth.NotAuthorized))
+				})
+
+			})
+
 		})
 
 	})

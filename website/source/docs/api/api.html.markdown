@@ -17,6 +17,9 @@ information from one or different Arc servers.
 * [Get an agent](#get_agent)
 * [Delete an agent](#delete_agent)
 * [List agent facts](#list_agent_facts)
+* [List agent tags](#list_agent_tags)
+* [Add an agent tag](#add_agent_tag)
+* [Delete an agent tag](#delete_agent_tag)
 * [List all jobs](#list_all_jobs)
 * [Get a job](#get_job)
 * [Get a job log](#get_job_log)
@@ -25,14 +28,15 @@ information from one or different Arc servers.
 <a name="definition"></a>
 ## Definition
 
-| URL                               | GET                                        | PUT                        | POST          | DELETE                    |
-|:----------------------------------|:-------------------------------------------|:---------------------------|:--------------|:--------------------------|
-| /agents                           | List all agents                            | N/A                        | N/A           | N/A                       |
-| /agents/{agent-id}                | Get an agent                               | N/A                        | N/A           | Delete an Agent           |
-| /agents/{agent-id}/facts          | List all facts from an agent               | N/A                        | N/A           | N/A                       |
-| /jobs                             | List all jobs                              | N/A                        | Execute a job | N/A                       |
-| /jobs/{job-id}                    | Get a job                                  | N/A                        | N/A           | N/A                       |
-| /jobs/{job-id}/log                | Get a job log                              | N/A                        | N/A           | N/A                       |
+| URL                               | GET                    | PUT                        | POST          | DELETE                    |
+|:----------------------------------|:-----------------------|:---------------------------|:--------------|:--------------------------|
+| /agents                           | List all agents        | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}                | Get an agent           | N/A                        | N/A           | Delete an agent           |
+| /agents/{agent-id}/facts          | List agent facts       | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}/tags           | List agent tags        | N/A                        | Add a tag     | Delete a tag              |
+| /jobs                             | List all jobs          | N/A                        | Execute a job | N/A                       |
+| /jobs/{job-id}                    | Get a job              | N/A                        | N/A           | N/A                       |
+| /jobs/{job-id}/log                | Get a job log          | N/A                        | N/A           | N/A                       |
 
 <a name="list_all_agents"></a>
 ## List all agents
@@ -174,6 +178,46 @@ Agent with id "darwin" deleted.
 	memory_used_percent: 80
 }
 ```
+
+<a name="list_agent_tags"></a>
+## List agent tags
+- Method: `GET`
+- URL: `/agents/{agent-id}/tacts`
+- Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
+- Example response:
+
+```text
+{
+	pool: "green",
+	landscape: "staging",
+}
+```
+
+<a name="add_agent_tag"></a>
+## Add an agent tag
+- Method: `POST`
+- URL: `/agents/{agent-id}/tags`
+- Example: 
+	- URL: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
+	- Body: `pool=green&lanscape=staging`
+	- Headers: `Content-Type: application/x-www-form-urlencoded`
+- Example response:
+
+```text
+All tags saved!
+```
+
+<a name="delete_agent_tag"></a>
+## Delete an agent tag
+- Method: `DELETE`
+- URL: `/agents/{agent-id}/tags/{tag-key}`
+- Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags/pool`
+- Example response:
+
+```text
+Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" is removed!
+```
+
 <a name="list_all_jobs"></a>
 ## List all jobs
 - Method: `GET`

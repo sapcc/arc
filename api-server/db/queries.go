@@ -49,9 +49,29 @@ var GetLogPartsToCleanQuery = `
 // Agents
 var GetAgentsQuery = "SELECT DISTINCT * FROM agents %s order by updated_at DESC"
 var GetAgentQuery = "SELECT * FROM agents WHERE agent_id=$1"
-var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at,updated_with,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) returning agent_id`
-var UpdateAgent = `UPDATE agents SET project=$2,organization=$3,facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$4::json)::jsonb,updated_at=$5,updated_with=$6,updated_by=$7 WHERE agent_id=$1`
+var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at,updated_with,updated_by,tags) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning agent_id`
+var UpdateAgentWithRegistration = `
+	UPDATE agents SET 
+	project=$2,
+	organization=$3,
+	facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$4::json)::jsonb,
+	updated_at=$5,
+	updated_with=$6,
+	updated_by=$7
+	WHERE agent_id=$1
+`
+var AddAgentTag = `
+	UPDATE agents SET 
+	updated_at=$2,
+	tags=json_set_key((SELECT tags::json FROM agents WHERE agent_id=$1),$3, $4::TEXT)::jsonb
+	WHERE agent_id=$1
+`
 var DeleteAgentQuery = `DELETE FROM agents WHERE agent_id=$1`
+var DeleteAgentTagQuery = `
+	UPDATE agents SET 
+	updated_at=$2,
+	tags=json_delete_keys((SELECT tags::json FROM agents WHERE agent_id=$1),$3)::jsonb 
+	WHERE agent_id=$1`
 
 // Locks
 var GetLockQuery = "SELECT * FROM locks WHERE lock_id=$1"
