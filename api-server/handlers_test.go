@@ -422,21 +422,34 @@ var _ = Describe("Agent Handlers", func() {
 		})
 
 		It("returns all agents filtered", func() {
-			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
-			os := []string{"darwin", "windows", "windows"}
+			var (
+				facts      = `{"os": "%s", "online": "%s", "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+				os         = []string{"darwin", "windows", "windows"}
+				online     = []string{"true", "false", "true"}
+				tagsKey    = []string{"landscape", "landscape", "landscape"}
+				tagsValue  = []string{"development", "staging", "production"}
+				tagsKey2   = []string{"pool", "pool", "pool"}
+				tagsValue2 = []string{"green", "green", "blue"}
+			)
 			agents := models.Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
 			for i := 0; i < len(agents); i++ {
 				currentAgent := agents[i]
-				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
-					Expect(err).NotTo(HaveOccurred())
-				}
-				err := currentAgent.Update(db)
+				// change facts
+				err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i])), &currentAgent.Facts)
+				Expect(err).NotTo(HaveOccurred())
+				err = currentAgent.Update(db)
+				Expect(err).NotTo(HaveOccurred())
+				// add tags
+				authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: currentAgent.Project}
+				err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey[i], tagsValue[i])
+				Expect(err).NotTo(HaveOccurred())
+				err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey2[i], tagsValue2[i])
 				Expect(err).NotTo(HaveOccurred())
 			}
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"`), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=@os+%3D+%22darwin%22+OR+%28landscape+%3D+%22staging%22+AND+pool+%3D+%22green%22%29`), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -450,6 +463,8 @@ var _ = Describe("Agent Handlers", func() {
 			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
+			Expect(dbAgents[1].AgentID).To(Equal(agents[0].AgentID))
 		})
 
 		It("should show facts", func() {
@@ -467,7 +482,7 @@ var _ = Describe("Agent Handlers", func() {
 			}
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D+"windows"&facts=os,online`), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=@os+%3D+"windows"&facts=os,online`), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
