@@ -1,6 +1,6 @@
 #Workaround for concourse not using ENV statements in registry v2 images
 ifeq ($(GOPATH),)
-PATH := /go/bin:/usr/local/bin:$(PATH)
+PATH := /go/bin:/usr/local/go/bin:$(PATH)
 export http_proxy := http://proxy.***REMOVED***:8080
 export https_proxy := http://proxy.***REMOVED***:8080
 export no_proxy := sap.corp,localhost,127.0.0.1
