@@ -1,12 +1,12 @@
 #Workaround for concourse not using ENV statements in registry v2 images
 ifeq ($(GOPATH),)
-  PATH ?= /go/bin:/usr/local/bin:$(PATH)
-  export http_proxy := http://proxy.***REMOVED***:8080
-  export https_proxy := http://proxy.***REMOVED***:8080
-  export no_proxy := sap.corp,localhost,127.0.0.1
-  export GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
+PATH := /go/bin:/usr/local/bin:$(PATH)
+export http_proxy := http://proxy.***REMOVED***:8080
+export https_proxy := http://proxy.***REMOVED***:8080
+export no_proxy := sap.corp,localhost,127.0.0.1
+export GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
 else
-  GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
+GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
 endif
 ORG_PATH:=gitHub.***REMOVED***/monsoon
 REPO_PATH:=$(ORG_PATH)/arc
