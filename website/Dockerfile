@@ -1,4 +1,4 @@
-FROM ruby:2.2
+FROM ruby:2.2.3
 
 ENV http_proxy=http://proxy.***REMOVED***:8080 \
     https_proxy=http://proxy.***REMOVED***:8080 \

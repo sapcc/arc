@@ -11,4 +11,4 @@ if [ "$1" = "" ]; then
   exit 1
 fi
 cd $1
-middleman deploy -b
+/usr/local/bundle/bin/middleman deploy -b
