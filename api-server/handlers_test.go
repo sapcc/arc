@@ -1242,6 +1242,7 @@ func checkNonAuthorizeProjectRequest(method, urlStr string, body string) {
 	req, err := http.NewRequest(method, urlStr, bytes.NewBufferString(body))
 	req.Header.Add("X-Identity-Status", `Confirmed`)
 	req.Header.Add("X-Project-Id", `some_different_project`)
+	req.Header.Add("X-User-Id", `arc_test`)
 	Expect(err).NotTo(HaveOccurred())
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -1256,6 +1257,7 @@ func newAuthorizedRequest(method, urlStr string, body io.Reader, headerOptions m
 	}
 	req.Header.Add("X-Identity-Status", `Confirmed`)
 	req.Header.Add("X-Project-Id", `test-project`)
+	req.Header.Add("X-User-Id", `arc_test`)
 
 	// add extra headers
 	for k, v := range headerOptions {
