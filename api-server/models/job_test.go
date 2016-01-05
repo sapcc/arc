@@ -384,7 +384,7 @@ var _ = Describe("Job", func() {
 	Describe("CleanJobs", func() {
 
 		It("returns an error if no db connection is given", func() {
-			_, _, err := CleanJobs(nil)
+			_, _, _, err := CleanJobs(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -396,10 +396,11 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			occurHeartbeat, occurTimeOut, err := CleanJobs(db)
+			occurHeartbeat, occurTimeOut, occurOld, err := CleanJobs(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(occurHeartbeat).To(Equal(int64(1)))
 			Expect(occurTimeOut).To(Equal(int64(0)))
+			Expect(occurOld).To(Equal(int64(0)))
 
 			// check job
 			dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
@@ -421,10 +422,11 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			occurHeartbeat, occurTimeOut, err := CleanJobs(db)
+			occurHeartbeat, occurTimeOut, occurOld, err := CleanJobs(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(occurHeartbeat).To(Equal(int64(1))) // this overlap between hearbeat and timeout criteria
 			Expect(occurTimeOut).To(Equal(int64(1)))
+			Expect(occurOld).To(Equal(int64(0)))
 
 			// check job
 			dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
@@ -436,6 +438,26 @@ var _ = Describe("Job", func() {
 			err = dbJob2.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbJob2.Status).To(Equal(arc.Failed))
+		})
+
+		It("should clean jobs are older than 30 days", func() {
+			// save a job older than 30 days
+			job := Job{}
+			job.CustomExecuteScriptExample(arc.Complete, time.Now().Add((-24*31)*time.Hour), 15) // 60 sec extra to be sure
+			err := job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// save a job not older than 30 days
+			job.CustomExecuteScriptExample(arc.Complete, time.Now().Add((-24*15)*time.Hour), 15) // 60 sec extra to be sure
+			err = job.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+
+			// clean jobs
+			occurHeartbeat, occurTimeOut, occurOld, err := CleanJobs(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(occurHeartbeat).To(Equal(int64(0)))
+			Expect(occurTimeOut).To(Equal(int64(0)))
+			Expect(occurOld).To(Equal(int64(1)))
 		})
 
 	})

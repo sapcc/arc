@@ -190,7 +190,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 func aggregateLogParts(db *sql.DB, id string) (err error) {
 	tx, err := db.Begin()
 	if err != nil {
-		return
+		return err
 	}
 
 	defer func() {

@@ -172,7 +172,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	// start transaction
 	tx, err := db.Begin()
 	if err != nil {
-		return
+		return err
 	}
 
 	defer func() {
@@ -203,15 +203,15 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	return
 }
 
-func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, err error) {
+func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, affectOldJobs int64, err error) {
 	if db == nil {
-		return 0, 0, errors.New("Clean job routine: Db connection is nil")
+		return 0, 0, 0, errors.New("Clean job routine: Db connection is nil")
 	}
 
 	// start transaction
 	tx, err := db.Begin()
 	if err != nil {
-		return
+		return 0, 0, 0, err
 	}
 
 	defer func() {
@@ -224,6 +224,7 @@ func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, 
 
 	affectHeartbeatJobs = 0
 	affectTimeOutJobs = 0
+	affectOldJobs = 0
 
 	// clean jobs which no heartbeat was send back after created_at + 60 sec
 	res, err := tx.Exec(ownDb.CleanJobsNonHeartbeatQuery, 60)
@@ -243,6 +244,17 @@ func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, 
 	}
 
 	affectTimeOutJobs, err = res.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	// clean jobs which are older than 30 days
+	res, err = tx.Exec(ownDb.CleanJobsOldQuery, 30)
+	if err != nil {
+		return
+	}
+
+	affectOldJobs, err = res.RowsAffected()
 	if err != nil {
 		return
 	}
