@@ -14,6 +14,7 @@ import (
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
@@ -26,12 +27,15 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	// get authentication
 	authorization := auth.GetIdentity(r)
 
-	// filter facts
+	// filter per agent
 	filterAgentId := r.URL.Query().Get("agent_id")
+
+	// pagination
+	pagination := pagination.CreatePagination(*r.URL)
 
 	// read jobs
 	jobs := models.Jobs{}
-	err := jobs.GetAuthorized(db, authorization, filterAgentId)
+	err := jobs.GetAuthorized(db, authorization, filterAgentId, pagination)
 	if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
 		logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
 		return
@@ -39,6 +43,11 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 		checkErrAndReturnStatus(w, err, "Error getting all jobs. ", http.StatusInternalServerError)
 		return
 	}
+
+	// set pagination header
+	w.Header().Set("Pagination-TotalElements", fmt.Sprintf("%v", pagination.TotalElements))
+	w.Header().Set("Pagination-TotalPages", fmt.Sprintf("%v", pagination.TotalPages))
+	w.Header().Set("Link", pagination.GetLinks())
 
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
