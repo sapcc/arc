@@ -5,6 +5,7 @@ package models_test
 import (
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 
 	. "github.com/onsi/ginkgo"
@@ -87,6 +88,7 @@ var _ = Describe("Agents", func() {
 		var (
 			agents        = Agents{}
 			authorization = auth.Authorization{}
+			pagination    = pagination.Pagination{}
 		)
 
 		JustBeforeEach(func() {
@@ -94,11 +96,13 @@ var _ = Describe("Agents", func() {
 			authorization.IdentityStatus = "Confirmed"
 			authorization.UserId = "userID"
 			authorization.ProjectId = "test-project"
+			pagination.Offset = 0
+			pagination.Limit = 25
 		})
 
 		It("returns an error if no db connection is given", func() {
 			agents := Agents{}
-			err := agents.GetAuthorizedAndShowFacts(nil, "", &authorization, []string{})
+			err := agents.GetAuthorizedAndShowFacts(nil, "", &authorization, []string{}, &pagination)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -132,7 +136,7 @@ var _ = Describe("Agents", func() {
 			authorization.ProjectId = "miau"
 
 			dbAgents := Agents{}
-			err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{})
+			err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{}, &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
 			Expect(dbAgents[0].AgentID).To(Equal(agent1.AgentID))
@@ -144,7 +148,7 @@ var _ = Describe("Agents", func() {
 			It("should return an error if the filter syntax is wrong", func() {
 				// insert facts / agent
 				dbAgents := Agents{}
-				err := dbAgents.GetAuthorizedAndShowFacts(db, `os =`, &authorization, []string{})
+				err := dbAgents.GetAuthorizedAndShowFacts(db, `os =`, &authorization, []string{}, &pagination)
 				Expect(err).To(HaveOccurred())
 			})
 
@@ -182,38 +186,38 @@ var _ = Describe("Agents", func() {
 
 				// agent with darwin os
 				dbAgents := Agents{}
-				err := dbAgents.GetAuthorizedAndShowFacts(db, `@os = "darwin"`, &authorization, []string{})
+				err := dbAgents.GetAuthorizedAndShowFacts(db, `@os = "darwin"`, &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(1))
 				Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
 
 				// agent with windows os
-				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(2))
 				Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
 				Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
 
 				// agent with windows os and online
-				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows" AND @online = "false"`, &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows" AND @online = "false"`, &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(1))
 				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
 
 				// agent with tag production
-				err = dbAgents.GetAuthorizedAndShowFacts(db, `landscape = "staging"`, &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `landscape = "staging"`, &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(1))
 				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
 
 				// agent more tags
-				err = dbAgents.GetAuthorizedAndShowFacts(db, `landscape = "staging" AND (pool = "green" OR pool = "blue")`, &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `landscape = "staging" AND (pool = "green" OR pool = "blue")`, &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(1))
 				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
 
 				// agent mix tags and facts
-				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "darwin" OR (landscape = "staging" AND pool = "green")`, &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "darwin" OR (landscape = "staging" AND pool = "green")`, &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(2))
 				Expect(dbAgents[0].AgentID).To(Equal(agents[1].AgentID))
@@ -230,7 +234,7 @@ var _ = Describe("Agents", func() {
 
 				// get agents with existing facts
 				dbAgents := Agents{}
-				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "online"})
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "online"}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(3))
 				for i := 0; i < len(dbAgents); i++ {
@@ -243,7 +247,7 @@ var _ = Describe("Agents", func() {
 				}
 
 				// get agents with non existing facts
-				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "bup"})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"os", "bup"}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(3))
 				for i := 0; i < len(dbAgents); i++ {
@@ -252,7 +256,7 @@ var _ = Describe("Agents", func() {
 				}
 
 				// get agent with all existing agents
-				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"all"})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{"all"}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(3))
 				for i := 0; i < len(dbAgents); i++ {
@@ -261,7 +265,7 @@ var _ = Describe("Agents", func() {
 				}
 
 				// get agents with no facts
-				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(3))
 				for i := 0; i < len(dbAgents); i++ {
@@ -287,7 +291,7 @@ var _ = Describe("Agents", func() {
 
 				// insert facts / agent
 				dbAgents := Agents{}
-				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				err = dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(1))
 				Expect(dbAgents[0].Project).To(Equal(authorization.ProjectId))
@@ -297,7 +301,7 @@ var _ = Describe("Agents", func() {
 				authorization.IdentityStatus = "Something different from Confirmed"
 
 				dbAgents := Agents{}
-				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(auth.IdentityStatusInvalid))
 			})
@@ -306,7 +310,7 @@ var _ = Describe("Agents", func() {
 				authorization.ProjectId = "Some other project"
 
 				dbAgents := Agents{}
-				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{})
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(dbAgents)).To(Equal(0))
 			})

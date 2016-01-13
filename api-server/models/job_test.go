@@ -12,6 +12,7 @@ import (
 
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
@@ -45,24 +46,27 @@ var _ = Describe("Jobs", func() {
 
 		var (
 			authorization = auth.Authorization{}
+			pagination    = pagination.Pagination{}
 		)
 
 		JustBeforeEach(func() {
 			jobs := Jobs{}
-			jobs.CreateAndSaveRpcVersionExamples(db, 3) // create jobs and agents
+			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 			authorization.IdentityStatus = "Confirmed"
 			authorization.UserId = "userID"
 			authorization.ProjectId = "test-project"
+			pagination.Offset = 0
+			pagination.Limit = 25
 		})
 
 		It("returns an error if no db connection is given", func() {
 			jobs := Jobs{}
-			err := jobs.GetAuthorized(nil, &authorization, "")
+			err := jobs.GetAuthorized(nil, &authorization, "", &pagination)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should return all jobs with same project", func() {
-			// add a new job
+			// add a new job with different project
 			job := Job{}
 			job.ExecuteScriptExample()
 			job.Project = "miau"
@@ -73,7 +77,7 @@ var _ = Describe("Jobs", func() {
 			authorization.ProjectId = "miau"
 
 			dbJobs := Jobs{}
-			err = dbJobs.GetAuthorized(db, &authorization, "")
+			err = dbJobs.GetAuthorized(db, &authorization, "", &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(1))
 		})
@@ -82,7 +86,7 @@ var _ = Describe("Jobs", func() {
 			authorization.IdentityStatus = "Something different from Confirmed"
 
 			dbJobs := Jobs{}
-			err := dbJobs.GetAuthorized(db, &authorization, "")
+			err := dbJobs.GetAuthorized(db, &authorization, "", &pagination)
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(Equal(auth.IdentityStatusInvalid))
 		})
@@ -91,7 +95,7 @@ var _ = Describe("Jobs", func() {
 			authorization.ProjectId = "Some other project"
 
 			dbJobs := Jobs{}
-			err := dbJobs.GetAuthorized(db, &authorization, "")
+			err := dbJobs.GetAuthorized(db, &authorization, "", &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(0))
 		})
@@ -117,7 +121,7 @@ var _ = Describe("Jobs", func() {
 			authorization.ProjectId = "miau"
 
 			dbJobs := Jobs{}
-			err = dbJobs.GetAuthorized(db, &authorization, "")
+			err = dbJobs.GetAuthorized(db, &authorization, "", &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(2))
 			test1 := dbJobs[0].RequestID == job.RequestID || dbJobs[0].RequestID == job2.RequestID
@@ -126,7 +130,7 @@ var _ = Describe("Jobs", func() {
 			Expect(test2).To(Equal(true))
 
 			dbJobs = Jobs{}
-			err = dbJobs.GetAuthorized(db, &authorization, "my_test_laptop")
+			err = dbJobs.GetAuthorized(db, &authorization, "my_test_laptop", &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(1))
 			Expect(dbJobs[0].RequestID).To(Equal(job.RequestID))
@@ -153,7 +157,7 @@ var _ = Describe("Jobs", func() {
 			authorization.ProjectId = "miau"
 
 			dbJobs := Jobs{}
-			err = dbJobs.GetAuthorized(db, &authorization, "")
+			err = dbJobs.GetAuthorized(db, &authorization, "", &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbJobs)).To(Equal(2))
 			Expect(dbJobs[0].RequestID).To(Equal(job2.RequestID))

@@ -11,6 +11,7 @@ import (
 
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
@@ -96,21 +97,27 @@ func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorizatio
 }
 
 func (jobs *Jobs) Get(db *sql.DB) error {
-	return jobs.getAllJobs(db, fmt.Sprintf(ownDb.GetAllJobsQuery, ""))
+	return jobs.getAllJobs(db, buildJobsQuery(ownDb.GetAllJobsQuery, "", "", nil))
 }
 
-func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, agentId string) error {
+func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, agentId string, pag *pagination.Pagination) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
 		return err
 	}
 
-	// select the query
-	sqlQuery := buildJobsQuery(authorization.ProjectId, agentId)
+	// count jobs and set total pages
+	countJobs, err := countJobs(db, buildJobsQuery(ownDb.CountAllJobsQuery, authorization.ProjectId, agentId, nil))
+	if err != nil {
+		return err
+	}
+	err = pag.SetTotalElements(countJobs)
+	if err != nil {
+		return err
+	}
 
-	// return jobs.getAllJobs(db, sqlQuery)
-	return jobs.getAllJobs(db, sqlQuery)
+	return jobs.getAllJobs(db, buildJobsQuery(ownDb.GetAllJobsQuery, authorization.ProjectId, agentId, pag))
 }
 
 func (job *Job) Get(db *sql.DB) error {
@@ -264,23 +271,30 @@ func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, 
 
 // private
 
-func buildJobsQuery(authProjectId, agentId string) string {
-	baseQuery := ownDb.GetAllJobsQuery
-	resultQuery := baseQuery
+func buildJobsQuery(baseQuery string, authProjectId, agentId string, pag *pagination.Pagination) string {
+	resultQuery := fmt.Sprintf(baseQuery, "", "")
 	authQuery := ""
+	paginationQuery := ""
 
+	// check pagination
+	if pag != nil {
+		paginationQuery = fmt.Sprintf(`OFFSET %v LIMIT %v`, pag.Offset, pag.Limit)
+		resultQuery = fmt.Sprintf(baseQuery, "", paginationQuery)
+	}
+
+	// check authority
 	if authProjectId != "" {
 		authQuery = fmt.Sprintf(`project = '%s'`, authProjectId)
 	}
 
 	if authQuery != "" {
-		resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery))
+		resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery), paginationQuery)
 		if agentId != "" {
-			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE %s AND ( "to" = '%s')`, authQuery, agentId))
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE %s AND ( "to" = '%s')`, authQuery, agentId), paginationQuery)
 		}
 	} else {
 		if agentId != "" {
-			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE "to" = '%s'`, agentId))
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE "to" = '%s'`, agentId), paginationQuery)
 		}
 	}
 
@@ -311,4 +325,18 @@ func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
 
 	rows.Close()
 	return nil
+}
+
+func countJobs(db *sql.DB, query string) (int, error) {
+	if db == nil {
+		return 0, errors.New("Db is nil")
+	}
+
+	var countJob int
+	err := db.QueryRow(query).Scan(&countJob)
+	if err != nil {
+		return 0, err
+	}
+
+	return countJob, nil
 }

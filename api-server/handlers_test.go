@@ -141,6 +141,65 @@ var _ = Describe("Job Handlers", func() {
 			Expect(dbJobs[0].RequestID).To(Equal(job.RequestID))
 		})
 
+		Describe("Pagination", func() {
+
+			It("return pagination headers and the right number of objects in the body", func() {
+				// fill db
+				jobs := models.Jobs{}
+				jobs.CreateAndSaveRpcVersionExamples(db, 10)
+
+				// add job with other target jus to check that pagination with agent id filter works fine
+				job := models.Job{}
+				job.ExecuteScriptExample()
+				job.To = "other_target"
+				err := job.Save(db)
+				Expect(err).NotTo(HaveOccurred())
+
+				// make request go get the first page (default page 1)
+				req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=darwin&per_page=5"), bytes.NewBufferString(""), map[string]string{})
+				Expect(err).NotTo(HaveOccurred())
+				w := httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+
+				// check response code and header
+				Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+				Expect(w.Code).To(Equal(200))
+				Expect(w.Header().Get("Pagination-Elements")).To(Equal("10"))
+				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="next",<%s>;rel="last"`, "/api/v1/jobs?agent_id=darwin&page=1&per_page=5", "/api/v1/jobs?agent_id=darwin&page=2&per_page=5", "/api/v1/jobs?agent_id=darwin&page=2&per_page=5")))
+
+				// check json body response
+				dbJobs := make(models.Jobs, 0)
+				err = json.Unmarshal(w.Body.Bytes(), &dbJobs)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbJobs)).To(Equal(5))
+
+				// make request go get the second page (default page 1)
+				req, err = newAuthorizedRequest("GET", getUrl("/jobs?agent_id=darwin&page=2&per_page=5"), bytes.NewBufferString(""), map[string]string{})
+				Expect(err).NotTo(HaveOccurred())
+				w = httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+
+				// check response code and header
+				Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+				Expect(w.Code).To(Equal(200))
+				Expect(w.Header().Get("Pagination-Elements")).To(Equal("10"))
+				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev"`, "/api/v1/jobs?agent_id=darwin&page=2&per_page=5", "/api/v1/jobs?agent_id=darwin&page=1&per_page=5", "/api/v1/jobs?agent_id=darwin&page=1&per_page=5")))
+
+				// check json body response
+				dbJobs2 := make(models.Jobs, 0)
+				err = json.Unmarshal(w.Body.Bytes(), &dbJobs2)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbJobs2)).To(Equal(5))
+
+				// compare 2 result bodies are different
+				eq := reflect.DeepEqual(dbJobs, dbJobs2)
+				Expect(eq).To(Equal(false))
+			})
+
+		})
+
 	})
 
 	Describe("serveJob", func() {
@@ -504,6 +563,70 @@ var _ = Describe("Agent Handlers", func() {
 				_, ok = currentAgent.Facts["online"]
 				Expect(ok).To(Equal(true))
 			}
+		})
+
+		Describe("Pagination", func() {
+
+			It("return pagination headers and the right number of objects in the body", func() {
+				// fill db
+				var (
+					facts = `{"os": "%s", "online": "true", "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+					os    = []string{"darwin", "windows", "windows", "windows", "windows", "windows", "windows", "windows", "windows", "windows"}
+				)
+				agents := models.Agents{}
+				agents.CreateAndSaveAgentExamples(db, 10)
+				for i := 0; i < len(agents); i++ {
+					currentAgent := agents[i]
+					// change facts
+					err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts)
+					Expect(err).NotTo(HaveOccurred())
+					err = currentAgent.Update(db)
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				// make a request
+				req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=%40os+%3D+%22windows%22&per_page=5`), bytes.NewBufferString(""), map[string]string{})
+				Expect(err).NotTo(HaveOccurred())
+				w := httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+
+				// check response code and header
+				Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+				Expect(w.Code).To(Equal(200))
+				Expect(w.Header().Get("Pagination-Elements")).To(Equal("9"))
+				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="next",<%s>;rel="last"`, `/api/v1/agents?page=1&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`)))
+
+				// check json body response
+				dbAgents := make(models.Agents, 0)
+				err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents)).To(Equal(5))
+
+				// make request go get the second page (default page 1)
+				req, err = newAuthorizedRequest("GET", getUrl(`/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`), bytes.NewBufferString(""), map[string]string{})
+				Expect(err).NotTo(HaveOccurred())
+				w = httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+
+				// check response code and header
+				Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+				Expect(w.Code).To(Equal(200))
+				Expect(w.Header().Get("Pagination-Elements")).To(Equal("9"))
+				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev"`, `/api/v1/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=1&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=1&per_page=5&q=%40os+%3D+%22windows%22`)))
+
+				// check json body response
+				dbAgents2 := make(models.Agents, 0)
+				err = json.Unmarshal(w.Body.Bytes(), &dbAgents2)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbAgents2)).To(Equal(4))
+
+				// compare 2 result bodies are different
+				eq := reflect.DeepEqual(dbAgents, dbAgents2)
+				Expect(eq).To(Equal(false))
+			})
+
 		})
 
 	})
