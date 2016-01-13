@@ -4,7 +4,7 @@ ALTER TABLE jobs
 ADD COLUMN user_id text;
 
 UPDATE jobs
-SET user_id = 'arc_system';
+SET user_id = 'unknown';
 
 ALTER TABLE jobs 
 ALTER COLUMN user_id SET NOT NULL;
