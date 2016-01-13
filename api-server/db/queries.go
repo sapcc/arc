@@ -29,6 +29,16 @@ var CleanJobsNonHeartbeatQuery = `
 		AND status=1
 	)
 `
+var CleanJobsOldQuery = `
+	DELETE FROM jobs
+	WHERE id IN
+	(
+		SELECT DISTINCT id
+		FROM jobs
+		WHERE (updated_at <= NOW() - INTERVAL '1 day' * $1)
+		AND status=4
+	)
+`
 
 // Log
 var GetLogQuery = "SELECT * FROM logs WHERE job_id=$1"

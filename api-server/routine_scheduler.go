@@ -29,11 +29,11 @@ func runRoutineTasks(db *sql.DB) {
 }
 
 func cleanJobs(db *sql.DB) {
-	affectHeartbeatJobs, affectTimeOutJobs, err := models.CleanJobs(db)
+	affectHeartbeatJobs, affectTimeOutJobs, affectOldJobs, err := models.CleanJobs(db)
 	if err != nil {
 		log.Error("Clean jobs: ", err.Error())
 	}
-	log.Infof("Clean job routine : %v jobs without heartbeat answer and %v timeout jobs where updated", affectHeartbeatJobs, affectTimeOutJobs)
+	log.Infof("Clean job routine : %v jobs without heartbeat answer and %v timeout jobs where updated. %v old jobs where deleted", affectHeartbeatJobs, affectTimeOutJobs, affectOldJobs)
 }
 
 func cleanLogParts(db *sql.DB) {
