@@ -45,8 +45,8 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// set pagination header
-	w.Header().Set("Pagination-TotalElements", fmt.Sprintf("%v", pagination.TotalElements))
-	w.Header().Set("Pagination-TotalPages", fmt.Sprintf("%v", pagination.TotalPages))
+	w.Header().Set("Pagination-Elements", fmt.Sprintf("%v", pagination.TotalElements))
+	w.Header().Set("Pagination-Pages", fmt.Sprintf("%v", pagination.TotalPages))
 	w.Header().Set("Link", pagination.GetLinks())
 
 	// set the header and body

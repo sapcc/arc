@@ -31,6 +31,8 @@ func CreatePagination(reqUrl url.URL) *Pagination {
 		limit = 25
 	} else if intPerPage > 100 {
 		limit = 100
+	} else {
+		limit = intPerPage
 	}
 	// check page
 	if intPage < 1 {

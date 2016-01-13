@@ -141,6 +141,65 @@ var _ = Describe("Job Handlers", func() {
 			Expect(dbJobs[0].RequestID).To(Equal(job.RequestID))
 		})
 
+		Describe("Pagination", func() {
+
+			It("return pagination headers and the right number of objects in the body", func() {
+				// fill db
+				jobs := models.Jobs{}
+				jobs.CreateAndSaveRpcVersionExamples(db, 10)
+
+				// add job with other target jus to check that pagination with agent id filter works fine
+				job := models.Job{}
+				job.ExecuteScriptExample()
+				job.To = "other_target"
+				err := job.Save(db)
+				Expect(err).NotTo(HaveOccurred())
+
+				// make request go get the first page (default page 1)
+				req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=darwin&per_page=5"), bytes.NewBufferString(""), map[string]string{})
+				Expect(err).NotTo(HaveOccurred())
+				w := httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+
+				// check response code and header
+				Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+				Expect(w.Code).To(Equal(200))
+				Expect(w.Header().Get("Pagination-Elements")).To(Equal("10"))
+				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="next",<%s>;rel="last"`, "/api/v1/jobs?agent_id=darwin&page=1&per_page=5", "/api/v1/jobs?agent_id=darwin&page=2&per_page=5", "/api/v1/jobs?agent_id=darwin&page=2&per_page=5")))
+
+				// check json body response
+				dbJobs := make(models.Jobs, 0)
+				err = json.Unmarshal(w.Body.Bytes(), &dbJobs)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbJobs)).To(Equal(5))
+
+				// make request go get the second page (default page 1)
+				req, err = newAuthorizedRequest("GET", getUrl("/jobs?agent_id=darwin&page=2&per_page=5"), bytes.NewBufferString(""), map[string]string{})
+				Expect(err).NotTo(HaveOccurred())
+				w = httptest.NewRecorder()
+				router.ServeHTTP(w, req)
+
+				// check response code and header
+				Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+				Expect(w.Code).To(Equal(200))
+				Expect(w.Header().Get("Pagination-Elements")).To(Equal("10"))
+				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev"`, "/api/v1/jobs?agent_id=darwin&page=2&per_page=5", "/api/v1/jobs?agent_id=darwin&page=1&per_page=5", "/api/v1/jobs?agent_id=darwin&page=1&per_page=5")))
+
+				// check json body response
+				dbJobs2 := make(models.Jobs, 0)
+				err = json.Unmarshal(w.Body.Bytes(), &dbJobs2)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(dbJobs2)).To(Equal(5))
+
+				// compare 2 result bodies are different
+				eq := reflect.DeepEqual(dbJobs, dbJobs2)
+				Expect(eq).To(Equal(false))
+			})
+
+		})
+
 	})
 
 	Describe("serveJob", func() {
