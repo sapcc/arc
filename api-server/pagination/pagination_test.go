@@ -4,10 +4,11 @@ import (
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/url"
 	"reflect"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Pagination", func() {
