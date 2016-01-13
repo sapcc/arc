@@ -1,3 +1,5 @@
+// +build integration
+
 package pagination_test
 
 import (
