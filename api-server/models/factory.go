@@ -51,6 +51,7 @@ func (job *Job) RpcVersionExample() {
 	job.CreatedAt = time.Now().Add(-1 * time.Minute)
 	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
 	job.Project = "test-project"
+	job.UserID = "arc_test"
 }
 
 func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.Time, timeout int) {
@@ -66,6 +67,7 @@ func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.T
 	job.CreatedAt = createdAt
 	job.UpdatedAt = createdAt
 	job.Project = "test-project"
+	job.UserID = "arc_test"
 }
 
 func (job *Job) ExecuteScriptExample() {

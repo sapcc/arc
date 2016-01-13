@@ -168,47 +168,120 @@ var _ = Describe("Job", func() {
 
 	Describe("CreateJob", func() {
 
+		var (
+			userId = "userID_test"
+			agent  = Agent{}
+		)
+
 		JustBeforeEach(func() {
-			agent := Agent{}
 			agent.Example()
 			agent.AgentID = "darwin"
 			err := agent.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("returns an error data is no json conform", func() {
+		It("returns error data is no json conform", func() {
 			noValidJson := `"to":"darwin"`
 			strSlice := []byte(noValidJson)
-			job, err := CreateJob(db, &strSlice, uuid.New())
+			job, err := CreateJob(db, &strSlice, uuid.New(), userId)
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
 		})
 
-		It("returns an error data is not valid", func() {
+		It("returns error data is not valid", func() {
 			noValidData := `{"to":"darwin","timeout":60,"agent":"execute","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}` // action is missing
 			strSlice := []byte(noValidData)
-			job, err := CreateJob(db, &strSlice, uuid.New())
+			job, err := CreateJob(db, &strSlice, uuid.New(), userId)
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
 		})
 
-		It("should return a job", func() {
+		It("returns error user id is blank", func() {
+			data := `{"to":"darwin","timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`
+			strSlice := []byte(data)
+			job, err := CreateJob(db, &strSlice, uuid.New(), "")
+			Expect(err).To(HaveOccurred())
+			var newJob *Job
+			Expect(job).To(Equal(newJob))
+		})
+
+		It("should create a job", func() {
 			to := "darwin"
 			timeout := 60
-			agent := "execute"
+			arcAgent := "execute"
 			action := "script"
 			payload := `"payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""`
-			noValidData := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, agent, action, payload)
+			noValidData := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, arcAgent, action, payload)
 			strSlice := []byte(noValidData)
-			job, err := CreateJob(db, &strSlice, uuid.New())
+			job, err := CreateJob(db, &strSlice, uuid.New(), userId)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(job.To).To(Equal(to))
 			Expect(job.Timeout).To(Equal(timeout))
-			Expect(job.Agent).To(Equal(agent))
+			Expect(job.Agent).To(Equal(arcAgent))
 			Expect(job.Action).To(Equal(action))
 			Expect(job.Payload).To(Equal(payload))
+			// should create a job with the project id from the target agent
+			Expect(job.Project).To(Equal(agent.Project))
+			// should save also the user id given
+			Expect(job.UserID).To(Equal(userId))
+		})
+
+	})
+
+	Describe("CreateJobAuthorized", func() {
+
+		var (
+			userId        = "userID_test"
+			authorization = auth.Authorization{}
+			agent         = Agent{}
+		)
+
+		JustBeforeEach(func() {
+			// authorization
+			authorization.IdentityStatus = "Confirmed"
+			authorization.UserId = userId
+			authorization.ProjectId = "test-project"
+			// agent
+			agent.Example()
+			agent.AgentID = "darwin"
+			err := agent.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should save the user id from the token", func() {
+			data := fmt.Sprintf(`{"to":%q,"timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`, agent.AgentID)
+			strSlice := []byte(data)
+			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(job.UserID).To(Equal(authorization.UserId))
+		})
+
+		It("should return an identity authorization error", func() {
+			authorization.IdentityStatus = "Something different from Confirmed"
+
+			// create job
+			data := fmt.Sprintf(`{"to":%q,"timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`, agent.AgentID)
+			strSlice := []byte(data)
+			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			var newJob *Job
+			Expect(job).To(Equal(newJob))
+		})
+
+		It("should return a project authorization error", func() {
+			authorization.ProjectId = "Some other project"
+
+			// create job
+			data := fmt.Sprintf(`{"to":%q,"timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`, agent.AgentID)
+			strSlice := []byte(data)
+			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(auth.NotAuthorized))
+			var newJob *Job
+			Expect(job).To(Equal(newJob))
 		})
 
 	})
@@ -288,7 +361,7 @@ var _ = Describe("Job", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should update a job", func() {
+		It("should update the status and update at", func() {
 			// save a job
 			job := Job{}
 			job.ExecuteScriptExample()

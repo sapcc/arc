@@ -58,6 +58,7 @@ information from one or different Arc servers.
 <a name="filter_agents"></a>
 ### Filtering agents
 We use a self written parser that transforms the filter syntax exposed by the API to a filter expression that can by used by the underlying fact storage system.
+Following operators are available:
 
 <div class="filter-operators">
 
@@ -79,9 +80,19 @@ We use a self written parser that transforms the filter syntax exposed by the AP
 
 </div>
 
+<div class="filter-operators">
+
+| Attribute types           | Description                                |
+|:--------------------------|:-------------------------------------------|
+| @attribute_name           | Will match a Fact defined by the attribute name |
+| attribute_name            | Will match a Tag defined by the attribute name    |
+
+</div>
+
 - Method: `GET`
 - URL: `/agents?q={filter}`
-- Example URL: `/agents?q=os+%3D+"darwin"+AND+online%3D+"true"`
+- Example URL: `/agents?q=@os+%3D+%22darwin%22+OR+%28landscape+%3D+%22staging%22+AND+pool+%3D+%22green%22%29`
+- Example filter not encoded: `@os = "darwin" OR (landscape = "staging" AND pool = "green")`
 - Example response:
 
 ```text

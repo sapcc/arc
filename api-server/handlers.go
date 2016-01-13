@@ -72,43 +72,45 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
-	// get authentication
+	errorText := "Error creating a job. "
+
+	// get authentication parameters
 	authorization := auth.GetIdentity(r)
 
 	// read request body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusBadRequest)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest)
 		return
 	}
 
 	// create job
 	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)
 	if err == models.JobTargetAgentNotFoundError {
-		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusNotFound)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound)
 		return
 	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "Error creating a job. ", http.StatusUnauthorized)
+		logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized)
 		return
 	} else if err == models.JobBadRequestError {
-		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusBadRequest)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest)
 		return
 	} else if err != nil {
-		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
 		return
 	}
 
 	// save db
 	err = job.Save(db)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
 		return
 	}
 
 	// create a mqtt request
 	err = arcSendRequest(&job.Request)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error creating a job. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
 		return
 	}
 
