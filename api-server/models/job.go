@@ -100,7 +100,7 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 	return jobs.getAllJobs(db, buildJobsQuery(ownDb.GetAllJobsQuery, "", "", nil))
 }
 
-func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, agentId string, pagination *pagination.Pagination) error {
+func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, agentId string, pag *pagination.Pagination) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
@@ -112,12 +112,12 @@ func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, a
 	if err != nil {
 		return err
 	}
-	err = pagination.SetTotalElements(countJobs)
+	err = pag.SetTotalElements(countJobs)
 	if err != nil {
 		return err
 	}
 
-	return jobs.getAllJobs(db, buildJobsQuery(ownDb.GetAllJobsQuery, authorization.ProjectId, agentId, pagination))
+	return jobs.getAllJobs(db, buildJobsQuery(ownDb.GetAllJobsQuery, authorization.ProjectId, agentId, pag))
 }
 
 func (job *Job) Get(db *sql.DB) error {
@@ -279,6 +279,7 @@ func buildJobsQuery(baseQuery string, authProjectId, agentId string, pag *pagina
 	// check pagination
 	if pag != nil {
 		paginationQuery = fmt.Sprintf(`OFFSET %v LIMIT %v`, pag.Offset, pag.Limit)
+		resultQuery = fmt.Sprintf(baseQuery, "", paginationQuery)
 	}
 
 	// check authority

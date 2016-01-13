@@ -13,6 +13,7 @@ import (
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/filter"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
@@ -37,7 +38,7 @@ type Agents []Agent
 
 func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 	// build the query just with facts filter
-	sqlQuery, err := buildAgentsQuery("", filterQuery)
+	sqlQuery, err := buildAgentsQuery(ownDb.GetAgentsQuery, "", filterQuery, nil)
 	if err != nil {
 		return err
 	}
@@ -45,15 +46,29 @@ func (agents *Agents) Get(db *sql.DB, filterQuery string) error {
 	return agents.getAllAgents(db, sqlQuery, []string{})
 }
 
-func (agents *Agents) GetAuthorizedAndShowFacts(db *sql.DB, filterQuery string, authorization *auth.Authorization, showFacts []string) error {
+func (agents *Agents) GetAuthorizedAndShowFacts(db *sql.DB, filterQuery string, authorization *auth.Authorization, showFacts []string, pag *pagination.Pagination) error {
 	// check the identity status
 	err := authorization.CheckIdentity()
 	if err != nil {
 		return err
 	}
 
+	// count agents and set total pages
+	countQuery, err := buildAgentsQuery(ownDb.CountAgentsQuery, authorization.ProjectId, filterQuery, nil) // no use pagination
+	if err != nil {
+		return err
+	}
+	countAgents, err := countAgents(db, countQuery)
+	if err != nil {
+		return err
+	}
+	err = pag.SetTotalElements(countAgents)
+	if err != nil {
+		return err
+	}
+
 	// build the query
-	sqlQuery, err := buildAgentsQuery(authorization.ProjectId, filterQuery)
+	sqlQuery, err := buildAgentsQuery(ownDb.GetAgentsQuery, authorization.ProjectId, filterQuery, pag)
 	if err != nil {
 		return err
 	}
@@ -438,11 +453,18 @@ func filterFacts(facts map[string]interface{}, showFacts []string) (JSONB, error
 //
 // Builds a sql query based on the facts filter and the authorization project id
 //
-func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
+func buildAgentsQuery(baseQuery string, authProjectId, filterParam string, pag *pagination.Pagination) (string, error) {
 	var err error
-	resultQuery := fmt.Sprintf(ownDb.GetAgentsQuery, "")
+	resultQuery := fmt.Sprintf(baseQuery, "", "")
 	authQuery := ""
 	filterQuery := ""
+	paginationQuery := ""
+
+	// check pagination
+	if pag != nil {
+		paginationQuery = fmt.Sprintf(`OFFSET %v LIMIT %v`, pag.Offset, pag.Limit)
+		resultQuery = fmt.Sprintf(baseQuery, "", paginationQuery)
+	}
 
 	if authProjectId != "" {
 		authQuery = fmt.Sprintf(`project='%s'`, authProjectId)
@@ -457,17 +479,31 @@ func buildAgentsQuery(authProjectId, filterParam string) (string, error) {
 	}
 
 	if authQuery != "" {
-		resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", authQuery))
+		resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery), paginationQuery)
 		if filterQuery != "" {
-			resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprintf(`WHERE %s AND (%s)`, authQuery, filterQuery))
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE %s AND (%s)`, authQuery, filterQuery), paginationQuery)
 		}
 	} else {
 		if filterQuery != "" {
-			resultQuery = fmt.Sprintf(ownDb.GetAgentsQuery, fmt.Sprint("WHERE ", filterQuery))
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", filterQuery), paginationQuery)
 		}
 	}
 
 	return resultQuery, nil
+}
+
+func countAgents(db *sql.DB, query string) (int, error) {
+	if db == nil {
+		return 0, errors.New("Db is nil")
+	}
+
+	var countAgents int
+	err := db.QueryRow(query).Scan(&countAgents)
+	if err != nil {
+		return 0, err
+	}
+
+	return countAgents, nil
 }
 
 func processRegistration(db *sql.DB, agent *Agent) (err error) {

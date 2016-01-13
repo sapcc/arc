@@ -175,9 +175,12 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	// show facts
 	showFacts := strings.Split(r.URL.Query().Get("facts"), ",")
 
+	// pagination
+	pagination := pagination.CreatePagination(*r.URL)
+
 	// get agents
 	agents := models.Agents{}
-	err := agents.GetAuthorizedAndShowFacts(db, filterFacts, authorization, showFacts)
+	err := agents.GetAuthorizedAndShowFacts(db, filterFacts, authorization, showFacts, pagination)
 
 	if err == models.FilterError {
 		checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
@@ -190,8 +193,15 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// set pagination header
+	w.Header().Set("Pagination-Elements", fmt.Sprintf("%v", pagination.TotalElements))
+	w.Header().Set("Pagination-Pages", fmt.Sprintf("%v", pagination.TotalPages))
+	w.Header().Set("Link", pagination.GetLinks())
+
+	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(agents)
+	err = json.NewEncoder(w).Encode(agents)
+	checkErrAndReturnStatus(w, err, "Error encoding Agents to JSON", http.StatusInternalServerError)
 }
 
 func serveAgent(w http.ResponseWriter, r *http.Request) {
