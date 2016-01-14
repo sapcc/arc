@@ -1,4 +1,4 @@
-Arc automation agent
+ Arc automation agent
 =============================
 The repository contains the agent running on VMs using the new Monsoon automation service.
 
