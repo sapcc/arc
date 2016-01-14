@@ -1,5 +1,10 @@
 package version
 
+import (
+	"fmt"
+	"runtime"
+)
+
 //needs to be a var (no const)
 //so that we van overwrite during linking with -X main.GITCOMMIT ...
 var (
@@ -8,5 +13,5 @@ var (
 )
 
 func String() string {
-	return Version + " (" + GITCOMMIT + ")"
+	return fmt.Sprintf("%s (%s), %s", Version, GITCOMMIT, runtime.Version())
 }
