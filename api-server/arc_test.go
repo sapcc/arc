@@ -3,6 +3,8 @@
 package main
 
 import (
+	"time"
+
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
@@ -23,9 +25,11 @@ var _ = Describe("Arc", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("should receive all registries and update facts", func() {
+	It("should receive all registries and update facts", func(done Done) {
 		// subscribe to all replies
 		go arcSubscribeReplies(tp)
+		//This is a drity hack, we need to do better
+		time.Sleep(100 * time.Millisecond)
 
 		// write to chan
 		reg := models.Registration{}
@@ -46,9 +50,10 @@ var _ = Describe("Arc", func() {
 		checkFacts := models.JSONBfromString(reg.Payload)
 		eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
 		Expect(eq).To(Equal(true))
-	})
+		close(done)
+	}, 2.0)
 
-	It("should receive all replies, update job and save log", func() {
+	It("should receive all replies, update job and save log", func(done Done) {
 		// save a job
 		job := models.Job{}
 		job.RpcVersionExample()
@@ -57,6 +62,8 @@ var _ = Describe("Arc", func() {
 
 		// subscribe to all replies
 		go arcSubscribeReplies(tp)
+		//This is a drity hack, we need to do better
+		time.Sleep(100 * time.Millisecond)
 
 		// write to chan
 		reply := models.Reply{}
@@ -80,6 +87,7 @@ var _ = Describe("Arc", func() {
 		err = dbLog.Get(db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dbLog.Content).To(Equal(reply.Payload))
-	})
+		close(done)
+	}, 2.0)
 
 })
