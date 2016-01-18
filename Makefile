@@ -1,38 +1,26 @@
-#Workaround for concourse not using ENV statements in registry v2 images
-ifeq ($(GOPATH),)
-PATH := /go/bin:/usr/local/go/bin:$(PATH)
-export http_proxy := http://proxy.***REMOVED***:8080
-export https_proxy := http://proxy.***REMOVED***:8080
-export no_proxy := sap.corp,localhost,127.0.0.1
-export GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
-else
-GOPATH:=$(CURDIR)/.gopath:$(CURDIR)/Godeps/_workspace
-endif
-ORG_PATH:=gitHub.***REMOVED***/monsoon
-REPO_PATH:=$(ORG_PATH)/arc
+export GO15VENDOREXPERIMENT=1
+PKG_NAME:=gitHub.***REMOVED***/monsoon/arc
 BUILD_DIR:=bin
 ARC_BINARY:=$(BUILD_DIR)/arc
 US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
-LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
-BUILD_IMAGE:=docker.***REMOVED***/monsoon/arc-build
+BUILD_IMAGE:=docker.***REMOVED***/monsoon/gobuild@1.5.3
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
 ifneq ($(BUILD_VERSION),)
-LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
 ARC_BIN_TPL:=arc_$(BUILD_VERSION)_{{.OS}}_{{.Arch}}
 endif
 
+packages = $(PKG_NAME) $(shell go list -f '{{ join .Deps "\n" }}' | grep -v vendor | grep $(PKG_NAME))
 
 .PHONY: help 
 help:
 	@echo
 	@echo "Available targets:"
 	@echo "  * build             - build the binary, output to $(ARC_BINARY)"
-	@echo "  * build-update-site - build the update site, output to $(US_BINARY)"
-	@echo "  * build-api         - build the api server, output to $(API_BINARY)"
-	@echo "  * build-all         - build everything" 
 	@echo "  * test              - run all tests"
 	@echo "  * unit              - run unit tests"
 	@echo "  * integration test  - run integration tests"
@@ -46,36 +34,20 @@ help:
 	@echo "  * up                - run dev stack in iTerm tabs" 
 
 .PHONY: build
-build: setup
+build: ensure_gopath
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(ARC_BINARY) -ldflags="$(LDFLAGS)" $(REPO_PATH)
-
-.PHONY: build-update-site
-build-update-site: setup
-	@mkdir -p $(BUILD_DIR)
-	go build -o $(US_BINARY) $(REPO_PATH)/update-server
-
-.PHONY: build-api
-build-api: setup
-	@mkdir -p $(BUILD_DIR)
-	go build -o $(API_BINARY) -ldflags="$(LDFLAGS)" $(REPO_PATH)/api-server
-
-.PHONY: build-all
-build-all: build build-update-site build-api
+	go build -o $(ARC_BINARY) -ldflags="$(LDFLAGS)" $(PKG_NAME)
 
 .PHONY: test
-test: fmt unit
+test: metalint unit
 
 .PHONY: unit
-unit: setup
-	go test -v -timeout=4s ./...
+unit: ensure_gopath 
+	go test -v -timeout=4s $(packages)
 
-.PHONY: fmt
-fmt:
-	which goimports > /dev/null
-	dirs=`go list -f "{{.Dir}}" ./...|grep -v update-server`; \
-		test -z "`for d in $$dirs; do goimports -l $$d/*.go | tee /dev/stderr; done`"
-
+.PHONY: metalint
+metalint:
+	gometalinter -E goimports -D gotype -D aligncheck -D structcheck -D deadcode -D gocyclo -D interfacer -D errcheck -D dupl -D vetshadow -D golint -D vet -D varcheck --deadline=10s $(shell echo $(packages) | sed -e 's!$(PKG_NAME)!.!g')
 
 .PHONY: test-win
 test-win: 
@@ -114,12 +86,13 @@ build-rhel:
 build-ubuntu:
 	docker build -f scripts/Dockerfile.ubuntu -t ubuntu-arc scripts/
 
-.PHONY: gopath 
-gopath: setup
-	@echo $(GOPATH)
-
-.PHONY: setup
-setup: .gopath/src/$(REPO_PATH)
+.PHONY: ensure_gopath
+ensure_gopath:
+	@goDir=$${GOPATH%%:*}/src/$(PKG_NAME) && \
+				mkdir -p $$(dirname $$goDir) && \
+				if [ ! -e "$$goDir" ]; then \
+					ln -sfv "$(CURDIR)" "$$goDir"; \
+				fi
 
 .PHONY: install-deps
 install-deps:
@@ -140,13 +113,14 @@ cross:
 	@# -s stip binary
 	docker run \
 		--rm \
-		-v $(CURDIR):/arc \
+		-v $(CURDIR):/go/src/$(PKG_NAME) \
+		-w /go/src/$(PKG_NAME) \
 		$(BUILD_IMAGE) \
-		make -C /arc cross-compile TARGETS="$(TARGETS)" BUILD_VERSION=$(BUILD_VERSION)
+		make cross-compile TARGETS="$(TARGETS)" BUILD_VERSION=$(BUILD_VERSION)
 
 .PHONY: cross-compile
-cross-compile: setup
-	gox -osarch="$(TARGETS)" -output="bin/$(ARC_BIN_TPL)" -ldflags="$(LDFLAGS)"
+cross-compile: ensure_gopath 
+	gox -osarch="$(TARGETS)" -output="bin/$(ARC_BIN_TPL)" -ldflags="$(LDFLAGS)" $(PKG_NAME)
 
 .PHONY: up
 up:
@@ -154,7 +128,7 @@ up:
 
 .PHONY: assets
 assets: service/assets_linux/runsv service/assets_linux/svlogd service/assets_linux/sv service/assets_windows/nssm.exe
-	go generate $(ORG_PATH)/arc/service
+	go generate $(PKG_NAME)/service
 
 service/assets_linux/%:
 	mkdir -p service/assets_linux
@@ -167,10 +141,6 @@ service/assets_windows/nssm.exe:
 	wget -O $(dir $@)nssm.zip http://www.nssm.cc/release/nssm-2.24.zip
 	unzip -p $(dir $@)nssm.zip nssm-2.24/win64/nssm.exe > $@
 	rm -f $(dir $@)nssm.zip
-
-.gopath/src/$(REPO_PATH):
-	mkdir -p .gopath/src/$(ORG_PATH)
-	ln -s ../../../.. .gopath/src/$(REPO_PATH)
 
 .PHONY: clean
 clean:

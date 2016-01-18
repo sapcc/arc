@@ -8,8 +8,8 @@ import (
 
 	_ "net" //we need this to ensure the winsock subsystem is initialized
 
+	"github.com/StackExchange/wmi"
 	gopsutil "github.com/shirou/gopsutil/common"
-	"gitHub.***REMOVED***/monsoon/arc/vendor/github.com/StackExchange/wmi"
 )
 
 type Win32_OperatingSystem struct {

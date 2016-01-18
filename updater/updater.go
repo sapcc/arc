@@ -5,7 +5,7 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/inconshreveable/go-update"
+	update "github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 )
 
