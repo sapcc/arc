@@ -54,7 +54,7 @@ metalint:
 test: metalint unit
 
 .PHONY: unit
-unit: setup
+unit: ensure_gopath 
 	go test -v -timeout=4s $(REPO_PATH)/update-server
 
 .PHONY: clean

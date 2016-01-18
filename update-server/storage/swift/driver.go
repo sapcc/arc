@@ -101,7 +101,7 @@ func (s *SwiftStorage) GetWebUpdates() (*[]string, *[]string, error) {
 	}
 
 	// get latest version
-	latestVersion, err := helpers.GetLatestVersion(updates)
+	latestVersion, _ := helpers.GetLatestVersion(updates)
 
 	var latestUpdates []string
 	var allUpdates []string
