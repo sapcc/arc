@@ -1,6 +1,6 @@
 {
 	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.5",
 	"Packages": [
 		"./..."
 	],
@@ -14,6 +14,10 @@
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.8.2-2-g6ba91e2",
 			"Rev": "6ba91e24c498b49d0363c723e9e2ab2b5b8fd012"
+		},
+		{
+			"ImportPath": "github.com/StackExchange/wmi",
+			"Rev": "f3e2bae1e0cb5aef83e319133eabfee30013a4a5"
 		},
 		{
 			"ImportPath": "github.com/blang/semver",
@@ -105,6 +109,11 @@
 			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
 		},
 		{
+			"ImportPath": "github.com/shirou/gopsutil/cpu",
+			"Comment": "1.0.0-70-gc71f9ee",
+			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
+		},
+		{
 			"ImportPath": "github.com/shirou/gopsutil/host",
 			"Comment": "1.0.0-70-gc71f9ee",
 			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
@@ -113,6 +122,20 @@
 			"ImportPath": "github.com/shirou/gopsutil/mem",
 			"Comment": "1.0.0-70-gc71f9ee",
 			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/net",
+			"Comment": "1.0.0-70-gc71f9ee",
+			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/process",
+			"Comment": "1.0.0-70-gc71f9ee",
+			"Rev": "c71f9ee5be4592abdb847630035725d9e9506477"
+		},
+		{
+			"ImportPath": "github.com/shirou/w32",
+			"Rev": "ada3ba68f000aa1b58580e45c9d308fe0b7fc5c5"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

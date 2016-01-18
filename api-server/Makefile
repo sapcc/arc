@@ -1,24 +1,13 @@
-#Workaround for concourse not using ENV statements in registry v2 images
-ifeq ($(GOPATH),)
-PATH := /go/bin:/usr/local/go/bin:$(PATH)
-export http_proxy := http://proxy.***REMOVED***:8080
-export https_proxy := http://proxy.***REMOVED***:8080
-export no_proxy := sap.corp,localhost,127.0.0.1
-export GOPATH := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
-else
-GOPATH      := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
-endif
-SHELL       := /bin/sh
-ORG_PATH    := gitHub.***REMOVED***/monsoon
-REPO_PATH   := $(ORG_PATH)/arc
-LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT `git rev-parse --short HEAD`
+export GO15VENDOREXPERIMENT=1
+REPO_PATH   := gitHub.***REMOVED***/monsoon/arc
+LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
-BUILD_IMAGE := docker.***REMOVED***/monsoon/arc-build
+BUILD_IMAGE := docker.***REMOVED***/monsoon/gobuild@1.5.3 
 
 ifneq ($(BUILD_VERSION),)
-LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version $(BUILD_VERSION)
+LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
 endif
 
 DOCKER = docker
@@ -37,8 +26,16 @@ help:
 	@echo "  * build-docker - build static binary via golang container, output to bin/api-server"
 	@echo "  * image        - build docker image containing the update site"
 
+.PHONY: ensure_gopath
+ensure_gopath:
+	goDir=$${GOPATH%%:*}/src/$(REPO_PATH) && \
+				mkdir -p $$(dirname $$goDir) && \
+				if [ ! -e "$$goDir" ]; then \
+					ln -sfv "$(realpath $(CURDIR)/..)" "$$goDir"; \
+				fi
+
 .PHONY: build
-build: setup
+build: ensure_gopath 
 	mkdir -p bin/ 
 	go build -o bin/api-server -ldflags="$(LDFLAGS)" $(REPO_PATH)/api-server
 
@@ -48,23 +45,12 @@ gencert:
 	go build -o bin/gencert -ldflags="-s -w" gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
 
 .PHONY: build-docker
-build-docker: setup
+build-docker: ensure_gopath 
 	$(DOCKER) run \
 		--rm \
 		-v $(CURDIR)/..:/arc \
 		$(BUILD_IMAGE) \
 		make -C /arc/api-server build gencert BUILD_VERSION=$(BUILD_VERSION)
-
-.PHONY: gopath 
-gopath: setup
-	@echo $(GOPATH)
-
-.PHONY: setup
-setup: ../.gopath/src/$(REPO_PATH)
-
-../.gopath/src/$(REPO_PATH):
-	mkdir -p ../.gopath/src/$(ORG_PATH)
-	ln -s ../../../.. ../.gopath/src/$(REPO_PATH)
 
 .PHONY: image
 image: build-docker 
@@ -83,9 +69,9 @@ test: postgres migrate-test
 		make -C /arc/api-server run-tests
 
 .PHONY: run-tests
-run-tests: setup
-	go test ./... -v
-	go test ./... -v -p=1 -timeout=60s -tags=integration
+run-tests: ensure_gopath
+	go test -v $(REPO_PATH)/api-server
+	go test -v -p=1 -timeout=60s -tags=integration $(REPO_PATH)/api-server
 
 .PHONY:
 migrate-%:
