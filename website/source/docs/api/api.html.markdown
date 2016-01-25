@@ -111,7 +111,7 @@ Following operators are available:
 <a name="show_facts_agents"></a>
 ### Showing specific agents facts
 
-Adding an extra parameter in the [List all agents](#list_all_agents) call facts can be selected dinamically to be shown in the JSON response.
+Adding the `facts` parameter in the [List all agents](#list_all_agents) call facts can be selected dinamically to be shown in the JSON response.
 A list of all available facts can be found [here](/docs/server/facts.html).
 
 - Method: `GET`
@@ -137,6 +137,9 @@ A list of all available facts can be found [here](/docs/server/facts.html).
 	...
 ]
 ```
+
+Use the special key `all` as a value to the `facts` parameter to show all available facts. If the key is being added in combination with other facts this 
+will be ignored.
 
 <a name="get_agent"></a>
 ## Get an agent
