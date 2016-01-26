@@ -11,13 +11,14 @@ The main interface to Arc is a RESTful HTTP API. The API can be used to perform 
 information from one or different Arc servers.
 
 * [Definition](#definition)
+* [Paginating lists](#paginating_lists)
 * [List all agents](#list_all_agents)
   * [Filtering agents](#filter_agents)
   * [Showing specific agent facts](#show_facts_agents)	
 * [Get an agent](#get_agent)
 * [Delete an agent](#delete_agent)
-* [List agent facts](#list_agent_facts)
-* [List agent tags](#list_agent_tags)
+* [Show agent facts](#show_agent_facts)
+* [Show agent tags](#show_agent_tags)
 * [Add an agent tag](#add_agent_tag)
 * [Delete an agent tag](#delete_agent_tag)
 * [List all jobs](#list_all_jobs)
@@ -32,11 +33,45 @@ information from one or different Arc servers.
 |:----------------------------------|:-----------------------|:---------------------------|:--------------|:--------------------------|
 | /agents                           | List all agents        | N/A                        | N/A           | N/A                       |
 | /agents/{agent-id}                | Get an agent           | N/A                        | N/A           | Delete an agent           |
-| /agents/{agent-id}/facts          | List agent facts       | N/A                        | N/A           | N/A                       |
-| /agents/{agent-id}/tags           | List agent tags        | N/A                        | Add a tag     | Delete a tag              |
+| /agents/{agent-id}/facts          | Show agent facts       | N/A                        | N/A           | N/A                       |
+| /agents/{agent-id}/tags           | Show agent tags        | N/A                        | Add a tag     | Delete a tag              |
 | /jobs                             | List all jobs          | N/A                        | Execute a job | N/A                       |
 | /jobs/{job-id}                    | Get a job              | N/A                        | N/A           | N/A                       |
 | /jobs/{job-id}/log                | Get a job log          | N/A                        | N/A           | N/A                       |
+
+<a name="paginating_lists"></a>
+## Paginating lists
+All lists served by the Arc API are by default paginated. The pagination can be used adding following parameters to the request url:
+
+| Parameter                 |Default value    | Description                                           |
+|:--------------------------|:----------------|:------------------------------------------------------|
+| page                      |1                | Subset of the whole set available                     |
+| per_page                  |25               | Limit the number of resources with a maximum of `100` |
+
+
+In the response header extra parameters will be added to handle the pagination.
+
+| Headers                   | Description                                                 |
+|:--------------------------|:------------------------------------------------------------|
+| Pagination-Elements       | Returns total elements available from the set               |
+| Pagination-Pages          | Returns total number of pages using same per_page parameter |
+| Link                      | Returns links to paginate the data                          |
+
+- Example URL: 
+
+`https://arc-staging.***REMOVED***/api/v1/jobs?page=2&per_page=50`
+
+- Example response headers:
+
+```text
+Content-Type: application/json; charset=UTF-8
+Link: </api/v1/jobs?page=2&per_page=50>;rel="self",</api/v1/jobs?page=1&per_page=50>;rel="first",</api/v1/jobs?page=1&per_page=50>;rel="prev",</api/v1/jobs?page=3&per_page=50>;rel="next",</api/v1/jobs?page=3&per_page=50>;rel="last"
+Pagination-Elements: 125
+Pagination-Pages: 3
+X-Served-By: api-c7287855605592c8309e5d58174e6e30-g6vj5
+Date: Tue, 26 Jan 2016 13:04:28 GMT
+Transfer-Encoding: chunked
+```
 
 <a name="list_all_agents"></a>
 ## List all agents
@@ -167,8 +202,8 @@ will be ignored.
 Agent with id "darwin" deleted. 
 ```
 
-<a name="list_agent_facts"></a>
-## List agent facts
+<a name="show_agent_facts"></a>
+## Show agent facts
 - Method: `GET`
 - URL: `/agents/{agent-id}/facts`
 - Example: `/agents/darwin/facts`
@@ -193,8 +228,8 @@ Agent with id "darwin" deleted.
 }
 ```
 
-<a name="list_agent_tags"></a>
-## List agent tags
+<a name="show_agent_tags"></a>
+## Show agent tags
 - Method: `GET`
 - URL: `/agents/{agent-id}/tacts`
 - Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
