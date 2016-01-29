@@ -5,6 +5,7 @@ sidebar_current: "docs-api-api"
 description: The main interface to Arc is a RESTful HTTP API. The API can be used to perform operations or collect information from one or different Arc servers.
 ---
 
+<a name="back_to_top"></a>
 # HTTP API
 
 The main interface to Arc is a RESTful HTTP API. The API can be used to perform operations or collect
@@ -22,6 +23,7 @@ information from one or different Arc servers.
 * [Add an agent tag](#add_agent_tag)
 * [Delete an agent tag](#delete_agent_tag)
 * [List all jobs](#list_all_jobs)
+  * [Filtering jobs](#filter_jobs)
 * [Get a job](#get_job)
 * [Get a job log](#get_job_log)
 * [Execute a job](#execute_job)
@@ -38,6 +40,7 @@ information from one or different Arc servers.
 | /jobs                             | List all jobs          | N/A                        | Execute a job | N/A                       |
 | /jobs/{job-id}                    | Get a job              | N/A                        | N/A           | N/A                       |
 | /jobs/{job-id}/log                | Get a job log          | N/A                        | N/A           | N/A                       |
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="paginating_lists"></a>
 ## Paginating lists
@@ -72,6 +75,7 @@ X-Served-By: api-c7287855605592c8309e5d58174e6e30-g6vj5
 Date: Tue, 26 Jan 2016 13:04:28 GMT
 Transfer-Encoding: chunked
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="list_all_agents"></a>
 ## List all agents
@@ -89,9 +93,11 @@ Transfer-Encoding: chunked
 	...
 ]
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="filter_agents"></a>
 ### Filtering agents
+
 We use a self written parser that transforms the filter syntax exposed by the API to a filter expression that can by used by the underlying fact storage system.
 Following operators are available:
 
@@ -142,6 +148,7 @@ Following operators are available:
 	...
 ]
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="show_facts_agents"></a>
 ### Showing specific agents facts
@@ -175,6 +182,7 @@ A list of all available facts can be found [here](/docs/server/facts.html).
 
 Use the special key `all` as a value to the `facts` parameter to show all available facts. If the key is being added in combination with other facts this 
 will be ignored.
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="get_agent"></a>
 ## Get an agent
@@ -190,6 +198,7 @@ will be ignored.
 	updated_at: "2015-06-18T15:13:10.164307Z"
 }
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="delete_agent"></a>
 ## Delete an agent
@@ -201,6 +210,7 @@ will be ignored.
 ```text
 Agent with id "darwin" deleted. 
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="show_agent_facts"></a>
 ## Show agent facts
@@ -227,6 +237,7 @@ Agent with id "darwin" deleted.
 	memory_used_percent: 80
 }
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="show_agent_tags"></a>
 ## Show agent tags
@@ -241,6 +252,7 @@ Agent with id "darwin" deleted.
 	landscape: "staging",
 }
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="add_agent_tag"></a>
 ## Add an agent tag
@@ -255,6 +267,7 @@ Agent with id "darwin" deleted.
 ```text
 All tags saved!
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="delete_agent_tag"></a>
 ## Delete an agent tag
@@ -266,6 +279,7 @@ All tags saved!
 ```text
 Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" is removed!
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="list_all_jobs"></a>
 ## List all jobs
@@ -293,6 +307,36 @@ Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" i
 	...
 ]
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
+
+<a name="filter_jobs"></a>
+### Filtering jobs
+Adding the `agent_id` parameter in the [List all jobs](#list_all_jobs) call jobs can be filtered by agent.
+
+- Example URL: `/jobs?agent_id=d84ca366-c963-454f-9bd7-854121a0117e`
+- Example response:
+
+```text
+[
+	{
+		request: {
+			version: 1,
+			sender: "darwin",
+			request_id: "24c744df-1773-429d-b9cf-a0f280e514ca",
+			to: "d84ca366-c963-454f-9bd7-854121a0117e",
+			timeout: 60,
+			agent: "execute",
+			action: "script",
+			payload: "echo "Script start" for i in {1..10} do echo $i sleep 1s done echo "Script done""
+		},
+		status: "failed",
+		created_at: "2015-06-18T15:23:23.595169Z",
+		updated_at: "2015-06-18T15:25:32.09501Z"
+	},
+	...
+]
+```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="get_job"></a>
 ## Get a job
@@ -318,6 +362,7 @@ Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" i
 	updated_at: "2015-06-18T15:25:32.09501Z"
 }
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="get_job_log"></a>
 ## Get a job log
@@ -354,6 +399,7 @@ Processing triggers for mime-support (3.54ubuntu1.1) ...
 Setting up unzip (6.0-9ubuntu1) ...
 Setting up zip (3.0-8) ...
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="execute_job"></a>
 ## Execute a job
@@ -378,3 +424,4 @@ Setting up zip (3.0-8) ...
 	request_id: "692f9dd9-f0f4-4332-89e9-ac556a343bd4"
 }
 ```
+<a href="#back_to_top" class="back_to_top">Top &uarr;</a>
