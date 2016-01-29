@@ -232,6 +232,17 @@ body.layout-intro{
 			width: 1px;
 		}
 	}
+	
+	code {
+		word-wrap: break-word;
+	}
+	
+	.back_to_top {
+		font-size: 14px;
+		color:gray;
+    display: block;
+    text-align: right;
+	}
 }
 
 
