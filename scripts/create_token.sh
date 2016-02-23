@@ -65,8 +65,10 @@ json=$(curl --silent -D /dev/stderr \
   }
 }
 ' \
-  https://identity.***REMOVED***:5000/v3/auth/tokens?nocatalog \
+  $KEYSTONE_ENDPOINT/auth/tokens?nocatalog \
   2> >(grep -E HTTP\|X-Subject-Token >&2))
+
+
 if echo $json |grep -q error; then
   echo $json | jq -r .error.message
   exit 1
