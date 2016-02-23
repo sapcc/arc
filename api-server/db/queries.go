@@ -7,7 +7,7 @@ var CheckConnection = "SELECT 1"
 // Jobs
 var InsertJobQuery = `INSERT INTO jobs(id,version,sender,"to",timeout,agent,action,payload,status,created_at,updated_at,project,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning id;`
 var UpdateJobQuery = `UPDATE jobs SET status=$1,updated_at=$2 WHERE id=$3`
-var GetAllJobsQuery = "SELECT * FROM jobs %s order by updated_at DESC %s"
+var GetAllJobsQuery = "SELECT * FROM jobs %s order by created_at DESC %s"
 var CountAllJobsQuery = "SELECT count(*) FROM jobs %s %s"
 var GetJobQuery = "SELECT * FROM jobs WHERE id=$1"
 var CleanJobsTimeoutQuery = `
@@ -58,7 +58,7 @@ var GetLogPartsToCleanQuery = `
 `
 
 // Agents
-var GetAgentsQuery = "SELECT DISTINCT * FROM agents %s order by updated_at DESC %s"
+var GetAgentsQuery = "SELECT DISTINCT * FROM agents %s order by created_at DESC %s"
 var CountAgentsQuery = "SELECT count(*) FROM agents %s %s"
 var GetAgentQuery = "SELECT * FROM agents WHERE agent_id=$1"
 var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at,updated_with,updated_by,tags) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning agent_id`

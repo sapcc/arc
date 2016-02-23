@@ -34,10 +34,10 @@ var _ = Describe("Jobs", func() {
 			dbJobs := Jobs{}
 			err := dbJobs.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			// check that the jobs are sorted descending
-			Expect(dbJobs[0].RequestID).To(Equal(jobs[2].RequestID))
-			Expect(dbJobs[1].RequestID).To(Equal(jobs[1].RequestID))
-			Expect(dbJobs[2].RequestID).To(Equal(jobs[0].RequestID))
+			Expect(len(dbJobs)).To(Equal(3))
+			// check that the jobs are sorted by created_at descending
+			Expect(dbJobs[0].CreatedAt.Sub(dbJobs[1].CreatedAt)).To(BeNumerically(">", 0))
+			Expect(dbJobs[1].CreatedAt.Sub(dbJobs[2].CreatedAt)).To(BeNumerically(">", 0))
 		})
 
 	})
