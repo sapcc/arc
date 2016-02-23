@@ -30,7 +30,8 @@ func (jobs *Jobs) CreateAndSaveRpcVersionExamples(db *sql.DB, number int) {
 	for i := 0; i < number; i++ {
 		job := Job{}
 		job.RpcVersionExample()
-		job.UpdatedAt = now.Add(time.Duration(i) * time.Minute)
+		job.CreatedAt = now.Add(time.Duration(i) * time.Minute)
+		job.UpdatedAt = now.Add(time.Duration(i+1) * time.Minute)
 		err := job.Save(db)
 		if err != nil {
 			log.Error(err)
@@ -133,7 +134,7 @@ func (agents *Agents) CreateAndSaveAgentExamples(db *sql.DB, number int) {
 		agent := Agent{}
 		agent.Example()
 		agent.CreatedAt = now.Add(time.Duration(i) * time.Minute)
-		agent.UpdatedAt = now.Add(time.Duration(i) * time.Minute)
+		agent.UpdatedAt = now.Add(time.Duration(i+1) * time.Minute)
 		err := agent.Save(db)
 		if err != nil {
 			log.Error(err)

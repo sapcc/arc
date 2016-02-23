@@ -131,7 +131,6 @@ var _ = Describe("Agents", func() {
 			agent3.UpdatedAt = time.Now().Add(-20 * time.Minute)
 			err = agent3.Update(db)
 			Expect(err).NotTo(HaveOccurred())
-
 			// change authorization
 			authorization.ProjectId = "miau"
 
@@ -139,8 +138,8 @@ var _ = Describe("Agents", func() {
 			err = dbAgents.GetAuthorizedAndShowFacts(db, `@os = "windows"`, &authorization, []string{}, &pagination)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
-			Expect(dbAgents[0].AgentID).To(Equal(agent1.AgentID))
-			Expect(dbAgents[1].AgentID).To(Equal(agent3.AgentID))
+			// check the right sort
+			Expect(dbAgents[0].CreatedAt.Sub(dbAgents[1].CreatedAt)).To(BeNumerically(">", 0))
 		})
 
 		Describe("filter", func() {
