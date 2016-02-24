@@ -242,7 +242,7 @@ Agent with id "darwin" deleted.
 <a name="show_agent_tags"></a>
 ## Show agent tags
 - Method: `GET`
-- URL: `/agents/{agent-id}/tacts`
+- URL: `/agents/{agent-id}/tags`
 - Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
 - Example response:
 
