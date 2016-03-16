@@ -16,6 +16,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/commands"
 	"gitHub.***REMOVED***/monsoon/arc/fact"
+	"gitHub.***REMOVED***/monsoon/arc/fact/agents"
 	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
 	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
@@ -298,6 +299,7 @@ func cmdFacts(c *cli.Context) {
 	store.AddSource(memory.New(), 0)
 	store.AddSource(network.New(), 0)
 	store.AddSource(arc_facts.New(config), 0)
+	store.AddSource(agents.New(), 0)
 	j, err := json.MarshalIndent(store.Facts(), " ", "  ")
 	if err != nil {
 		log.Warnf("Failed to generate json: %s", err)

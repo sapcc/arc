@@ -34,6 +34,7 @@ type Registry interface {
 	HasAction(agent string, action string) bool
 	Agents() []string
 	Actions(agent string) []string
+	IsEnabled(agent string) bool
 }
 
 func AgentRegistry() Registry {
@@ -119,6 +120,13 @@ func (r *registry) HasAction(agent string, action string) bool {
 	if a := r.agents[agent]; a != nil {
 		_, found := a.actions[action]
 		return found
+	}
+	return false
+}
+
+func (r *registry) IsEnabled(agent string) bool {
+	if a := r.agents[agent]; a != nil {
+		return a.agent.Enabled()
 	}
 	return false
 }
