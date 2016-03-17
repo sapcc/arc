@@ -3,6 +3,7 @@ package updater
 import (
 	"fmt"
 	"runtime"
+	"sync/atomic"
 
 	log "github.com/Sirupsen/logrus"
 	update "github.com/inconshreveable/go-update"
@@ -31,10 +32,18 @@ func New(options map[string]string) *Updater {
 	}
 }
 
+var checkAndUpdateRunning int32 = 0
+
 /*
  * Check for new updates and replace binary
  */
 func (u *Updater) CheckAndUpdate() (bool, error) {
+	//Ensure only one CheckAndUpdate call is running at any given point in time
+	if !atomic.CompareAndSwapInt32(&checkAndUpdateRunning, 0, 1) {
+		return false, nil //Already running, bail
+	}
+	defer atomic.SwapInt32(&checkAndUpdateRunning, 0)
+
 	r, err := u.Check()
 	if err == check.NoUpdateAvailable {
 		return false, nil
