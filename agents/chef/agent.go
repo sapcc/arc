@@ -15,7 +15,6 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/blang/semver"
 	"golang.org/x/net/context"
 )
 
@@ -23,7 +22,6 @@ type chefAgent struct{}
 
 var (
 	defaultOmnitruckUrl = "https://www.chef.io/chef/metadata"
-	chef_version        = "12.3.0"
 )
 
 type omnitruckResponse struct {
@@ -40,6 +38,11 @@ type chefZeroPayload struct {
 	Debug      bool                   `json:"debug"`
 }
 
+type enableOptions struct {
+	OmnitruckUrl string `json:"omnitruck_url"`
+	ChefVersion  string `json:"chef_version"`
+}
+
 func init() {
 	arc.RegisterAgent("chef", new(chefAgent))
 }
@@ -48,19 +51,12 @@ func (a *chefAgent) Enabled() bool {
 	cmd := exec.Command(chef_binary, "-v")
 	out, err := cmd.Output()
 	if err != nil {
-		log.Warn("Chef not installed: ", err)
 		return false
 	}
 	if v := regexp.MustCompile(`\d+\.\d+\.\d+`).Find(out); v != nil {
 		version := string(v)
-		log.Info("Detected chef version ", version)
-		installed_version, _ := semver.Make(version)
-		wanted_version, _ := semver.Make(chef_version)
-		if installed_version.GTE(wanted_version) {
-			return true
-		} else {
-			log.Infof("Installed version (%s) of chef is outdated", installed_version)
-		}
+		log.Debug("Detected chef version ", version)
+		return true
 	}
 
 	return false
@@ -74,13 +70,23 @@ func (a *chefAgent) Enable(ctx context.Context, job *arc.Job) (string, error) {
 	facts, _ := arc.FactsFromContext(ctx)
 	if facts["platform"] != nil && facts["platform_version"] != nil {
 		omnitruckUrl := defaultOmnitruckUrl
+
+		var opts enableOptions
 		if job.Payload != "" {
-			omnitruckUrl = job.Payload
+			if err := json.Unmarshal([]byte(job.Payload), &opts); err != nil {
+				return "", err
+			}
+		}
+		if opts.OmnitruckUrl == "" {
+			opts.OmnitruckUrl = defaultOmnitruckUrl
+		}
+		if opts.ChefVersion == "" {
+			opts.ChefVersion = "latest"
 		}
 		job.Heartbeat("Downloading chef installer via " + omnitruckUrl + "\n")
 		platform := facts["platform"].(string)
 		platform_version := facts["platform_version"].(string)
-		if installer, err := downloadInstaller(omnitruckUrl, platform, platform_version); err == nil {
+		if installer, err := downloadInstaller(opts.OmnitruckUrl, platform, platform_version, opts.ChefVersion); err == nil {
 			job.Heartbeat("Installing " + installer + "\n")
 			if err := install(installer); err != nil {
 				return "", err
@@ -184,7 +190,10 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	return "", nil
 }
 
-func downloadInstaller(omnitruckUrl, platform, platform_version string) (string, error) {
+func downloadInstaller(omnitruckUrl, platform, platform_version, chef_version string) (string, error) {
+	if chef_version == "" {
+		chef_version = "latest"
+	}
 	metadata_url := fmt.Sprintf("%s?v=%s&p=%s&pv=%s&m=x86_64", omnitruckUrl, chef_version, platform, platform_version)
 	log.Infof("Fetching Omnitruck metadata from %s", metadata_url)
 	var client http.Client
