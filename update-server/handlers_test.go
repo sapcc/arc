@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/codegangsta/cli"
@@ -25,7 +26,16 @@ import (
 
 func TestServeAvailableUpdates(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	ioutil.TempFile(buildsRootPath, "arc_20150905.15_linux_amd64_")
+	checksum_data := "checksum data"
+	filename := "arc_20150905.15_linux_amd64"
+	err := createTestBuildFile(buildsRootPath, filename)
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. ", err))
+	}
+	err = createChecksumFile(buildsRootPath, filename, checksum_data)
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. ", err))
+	}
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 	}()
@@ -170,4 +180,35 @@ func TestUpload(t *testing.T) {
 	if _, err := os.Stat(buildPath); os.IsNotExist(err) {
 		t.Error("Expected to find build file")
 	}
+}
+
+//
+// helpers
+//
+
+func createTestBuildFile(buildsRootPath, name string) error {
+	file, err := ioutil.TempFile(buildsRootPath, name)
+	if err != nil {
+		return err
+	}
+	err = os.Rename(file.Name(), path.Join(buildsRootPath, name))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createChecksumFile(buildsRootPath, referenceFileName, checksumData string) error {
+	// extract the temp file name
+	i := strings.LastIndex(referenceFileName, "/")
+	filename_ext := referenceFileName[i+1:]
+	// create a checksum file without extra random data in the name
+	checksum, _ := ioutil.TempFile(buildsRootPath, fmt.Sprint(filename_ext, ".sha256"))
+	checksum.WriteString(checksumData)
+	err := os.Rename(checksum.Name(), path.Join(buildsRootPath, fmt.Sprint(filename_ext, ".sha256")))
+	if err != nil {
+		return err
+	}
+	return nil
 }

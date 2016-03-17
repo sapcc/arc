@@ -20,7 +20,7 @@ var ObjectNotFoundError = fmt.Errorf("Object not found.")
 
 const (
 	BuildRelativeUrl = "/builds/"
-	FileNameRegex    = `^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?`
+	FileNameRegex    = `^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?$`
 )
 
 /*
@@ -81,7 +81,7 @@ func SortByVersion(filenames []string) {
 }
 
 func ExtractVersion(filename string) (string, error) {
-	r := regexp.MustCompile(`^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?`)
+	r := regexp.MustCompile(FileNameRegex)
 	results := r.FindStringSubmatch(filename)
 	if len(results) < 3 {
 		return "", fmt.Errorf("Version could not be found.")
@@ -119,6 +119,13 @@ func GetLatestReleaseFrom(releases *[]string, params *check.Params) string {
 		}
 	}
 	return lastRelease
+}
+
+func GetChecksumFileName(resultUrl string) string {
+	i := strings.LastIndex(resultUrl, "/")
+	filename := resultUrl[i+1:]
+	filename = fmt.Sprint(filename, ".sha256")
+	return filename
 }
 
 // private

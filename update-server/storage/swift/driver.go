@@ -79,10 +79,11 @@ func (s *SwiftStorage) GetAllUpdates() (*[]string, error) {
 		return nil, err
 	}
 
-	// filter files
+	// filter build files
 	for _, name := range names {
 		r := regexp.MustCompile(helpers.FileNameRegex)
 		if r.MatchString(name) {
+			// TODO get checksum
 			filteredNames = append(filteredNames, name)
 		}
 	}

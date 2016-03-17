@@ -90,9 +90,12 @@ func (u *Updater) Check() (*check.Result, error) {
 // private
 
 func apply_update(r *check.Result) error {
-	err, _ := r.Update()
+	err, errRecover := r.Update()
 	if err != nil {
 		return err
+	}
+	if errRecover != nil {
+		return errRecover
 	}
 	return nil
 }
