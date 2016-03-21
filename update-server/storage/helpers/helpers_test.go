@@ -370,3 +370,22 @@ func TestSortByVersion(t *testing.T) {
 		}
 	}
 }
+
+//
+// Checksum
+//
+
+func TestGetChecksumFileName(t *testing.T) {
+	linux_url := "http://localhost:3001/builds/arc_20160316.01_darwin_amd64"
+	windows_url := "http://localhost:3001/builds/arc_20160316.01_darwin_amd64.exe"
+
+	linux_checksum := GetChecksumFileName(linux_url)
+	if linux_checksum != "arc_20160316.01_darwin_amd64.sha256" {
+		t.Error(fmt.Sprint("Expected get checksum filename. Got ", linux_url, " and ", linux_checksum))
+	}
+
+	windows_checksum := GetChecksumFileName(windows_url)
+	if windows_checksum != "arc_20160316.01_darwin_amd64.exe.sha256" {
+		t.Error(fmt.Sprint("Expected get checksum filename. Got ", windows_url, " and ", windows_checksum))
+	}
+}

@@ -73,18 +73,102 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 	// save a file
 	saveExamples(storage, t)
 
+	// add checksum file
+	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_linux_amd64.sha256", "checksum for arc_20150906.07_linux_amd64", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	update, err := storage.GetAvailableUpdate(req)
 	if err != nil {
-		t.Error("Expected to not have an error")
+		t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
+		return
 	}
 	if update == nil {
 		t.Error("Expected not nil")
+		return
 	}
 	if !strings.Contains(update.Url, "arc_20150906.07_linux_amd64") {
 		t.Error("Expected to get the file name in the update url")
+	}
+}
+
+//
+// Checksum
+//
+
+func TestChecksumLinuxSuccess(t *testing.T) {
+	storage, err := getTestSwiftStorage()
+	if err != nil {
+		t.Error("Expected to have an error")
+	}
+	defer func() {
+		shutDownConnection()
+	}()
+
+	// save a file
+	saveExamples(storage, t)
+
+	// add checksum file
+	checksum_data := "checksum for arc_20150906.07_linux_amd64"
+	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_linux_amd64.sha256", checksum_data, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+
+	update, err := storage.GetAvailableUpdate(req)
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
+		return
+	}
+	if update == nil {
+		t.Error("Expected not nil")
+		return
+	}
+	if update.Checksum != checksum_data {
+		t.Error("Expected to find checksum")
+	}
+}
+
+func TestChecksumWindowsSuccess(t *testing.T) {
+	storage, err := getTestSwiftStorage()
+	if err != nil {
+		t.Error("Expected to have an error")
+	}
+	defer func() {
+		shutDownConnection()
+	}()
+
+	// save a file
+	saveExamples(storage, t)
+
+	// add checksum file
+	checksum_data := "checksum for arc_20150906.07_windows_amd64.exe"
+	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_windows_amd64.exe.sha256", checksum_data, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"windows"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+
+	update, err := storage.GetAvailableUpdate(req)
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
+		return
+	}
+	if update == nil {
+		t.Error("Expected not nil")
+		return
+	}
+	if update.Checksum != checksum_data {
+		t.Error("Expected to find checksum")
 	}
 }
 
@@ -218,7 +302,7 @@ func TestGetLastestUpdate(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if latestUpdate != "arc_20150906.07_windows_amd64" {
+	if latestUpdate != "arc_20150906.07_windows_amd64.exe" {
 		t.Error(fmt.Sprint("Expected to get last arc_20150906.07_windows_amd64. Got ", latestUpdate))
 	}
 
@@ -323,7 +407,7 @@ func saveExamples(storage *SwiftStorage, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150905.10_windows_amd64", "123", "")
+	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150905.10_windows_amd64.exe", "123", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -331,7 +415,7 @@ func saveExamples(storage *SwiftStorage, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_windows_amd64", "456", "")
+	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_windows_amd64.exe", "456", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -339,7 +423,7 @@ func saveExamples(storage *SwiftStorage, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150805.15_windows_amd64", "789", "")
+	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150805.15_windows_amd64.exe", "789", "")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -60,8 +60,8 @@ func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 	if result != nil {
 		// get the filename from the url
 		filename := helpers.GetChecksumFileName(result.Url)
-		// get the content of the checksum file
 		if len(filename) > 1 {
+			// get the content of the checksum file
 			var b bytes.Buffer
 			w := bufio.NewWriter(&b)
 			err = l.GetUpdate(filename, w)
