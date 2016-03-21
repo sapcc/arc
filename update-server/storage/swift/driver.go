@@ -149,7 +149,7 @@ func (s *SwiftStorage) GetLastestUpdate(params *check.Params) (string, error) {
 }
 
 func (s *SwiftStorage) GetUpdate(name string, writer io.Writer) error {
-	_, err := s.Connection.ObjectGet(s.Container, name, writer, false, nil)
+	_, err := s.Connection.ObjectGet(s.Container, name, writer, true, nil)
 	if err == swift.ObjectNotFound {
 		return helpers.ObjectNotFoundError
 	} else if err != nil {
