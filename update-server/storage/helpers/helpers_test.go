@@ -102,7 +102,7 @@ func TestExtractVersion(t *testing.T) {
 		t.Error("Expected to find version 20150903.10")
 	}
 
-	result, err = ExtractVersion("arc_20150905.15_darwin_amd64_061430944")
+	_, err = ExtractVersion("arc_20150905.15_darwin_amd64_061430944")
 	if err == nil {
 		t.Error("Expected to have an error")
 	}
