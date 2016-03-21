@@ -103,11 +103,8 @@ func TestExtractVersion(t *testing.T) {
 	}
 
 	result, err = ExtractVersion("arc_20150905.15_darwin_amd64_061430944")
-	if err != nil {
-		t.Error("Expected to not have an error")
-	}
-	if result != "20150905.15" {
-		t.Error("Expected to find version 20150903.10")
+	if err == nil {
+		t.Error("Expected to have an error")
 	}
 }
 
@@ -335,7 +332,7 @@ func TestAvailableUpdateWithOtherFiles(t *testing.T) {
 	// get a success update
 	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-	releases := []string{"README.md", "Vagrantfile", "arc_test_linux_amd64", "arc_20150904.1_linux_amd64"}
+	releases := []string{"README.md", "Vagrantfile", "arc_test_linux_amd64", "arc_20150904.1_linux_amd64", "arc_20150904.1_linux_amd64.sha256"}
 
 	update, err := AvailableUpdate(req, &releases)
 	if err != nil {
@@ -371,5 +368,24 @@ func TestSortByVersion(t *testing.T) {
 		if file != sortedFilenames[i] {
 			t.Error(fmt.Sprint("Expected sorted filenames. Got ", file, " and ", sortedFilenames[i]))
 		}
+	}
+}
+
+//
+// Checksum
+//
+
+func TestGetChecksumFileName(t *testing.T) {
+	linux_url := "http://localhost:3001/builds/arc_20160316.01_darwin_amd64"
+	windows_url := "http://localhost:3001/builds/arc_20160316.01_darwin_amd64.exe"
+
+	linux_checksum := GetChecksumFileName(linux_url)
+	if linux_checksum != "arc_20160316.01_darwin_amd64.sha256" {
+		t.Error(fmt.Sprint("Expected get checksum filename. Got ", linux_url, " and ", linux_checksum))
+	}
+
+	windows_checksum := GetChecksumFileName(windows_url)
+	if windows_checksum != "arc_20160316.01_darwin_amd64.exe.sha256" {
+		t.Error(fmt.Sprint("Expected get checksum filename. Got ", windows_url, " and ", windows_checksum))
 	}
 }

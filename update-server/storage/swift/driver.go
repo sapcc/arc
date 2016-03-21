@@ -1,6 +1,8 @@
 package swift
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -66,6 +68,19 @@ func (s *SwiftStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 	}
 
 	if result != nil {
+		// get the filename from the url
+		filename := helpers.GetChecksumFileName(result.Url)
+		if len(filename) > 1 {
+			// get the content of the checksum file
+			var b bytes.Buffer
+			w := bufio.NewWriter(&b)
+			err = s.GetUpdate(filename, w)
+			if err != nil {
+				return nil, errors.New(fmt.Sprint("Checksum file ", filename, " not found."))
+			}
+			result.Checksum = b.String()
+		}
+
 		return result, nil
 	}
 
@@ -79,10 +94,11 @@ func (s *SwiftStorage) GetAllUpdates() (*[]string, error) {
 		return nil, err
 	}
 
-	// filter files
+	// filter build files
 	for _, name := range names {
 		r := regexp.MustCompile(helpers.FileNameRegex)
 		if r.MatchString(name) {
+			// TODO get checksum
 			filteredNames = append(filteredNames, name)
 		}
 	}
