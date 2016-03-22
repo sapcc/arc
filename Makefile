@@ -6,7 +6,7 @@ US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
 LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
-BUILD_IMAGE:=docker.***REMOVED***/monsoon/gobuild@1.5.3
+BUILD_IMAGE:=docker.***REMOVED***/monsoon/gobuild@1.6
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
 ifneq ($(BUILD_VERSION),)

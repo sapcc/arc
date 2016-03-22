@@ -4,7 +4,7 @@ LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git 
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
-BUILD_IMAGE := docker.***REMOVED***/monsoon/gobuild@1.5.3 
+BUILD_IMAGE := docker.***REMOVED***/monsoon/gobuild@1.6
 
 ifneq ($(BUILD_VERSION),)
 LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
