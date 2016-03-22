@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/inconshreveable/go-update/check"
@@ -68,7 +69,10 @@ func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 			if err != nil {
 				return nil, errors.New(fmt.Sprint("Checksum file ", filename, " not found."))
 			}
-			result.Checksum = b.String()
+			checksum := strings.Split(b.String(), " ")
+			if len(checksum) > 1 {
+				result.Checksum = checksum[0]
+			}
 		}
 
 		return result, nil

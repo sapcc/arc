@@ -5,6 +5,7 @@ package swift
 import (
 	"bufio"
 	"bytes"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
+	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 	"github.com/ncw/swift/swifttest"
 )
@@ -100,75 +102,87 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 // Checksum
 //
 
-func TestChecksumLinuxSuccess(t *testing.T) {
+func TestChecksumSuccess(t *testing.T) {
 	storage, err := getTestSwiftStorage()
 	if err != nil {
 		t.Error("Expected to have an error")
+		return
+	}
+	defer func() {
+		shutDownConnection()
+	}()
+
+	files := []string{"arc_20150905.15_linux_amd64", "arc_20150906.07_windows_amd64.exe"}
+	for _, filename := range files {
+		// save a file
+		err = storage.Connection.ObjectPutString(CONTAINER, filename, "123", "")
+		if err != nil {
+			t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
+			return
+		}
+
+		//Checksum pattern "486c9e5b987027990865ed3109554cb6d9d6469397ea2ee0745999649defd203 *arc_20160321.2_linux_amd64"
+		objectBytes, _ := storage.Connection.ObjectGetBytes(CONTAINER, filename)
+		expectedChecksum, _ := update.ChecksumForBytes(objectBytes)
+		checksumData := fmt.Sprintf("%x *%s", expectedChecksum, filename)
+		storage.Connection.ObjectPutString(CONTAINER, fmt.Sprint(filename, ".sha256"), checksumData, "")
+
+		jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+		req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+
+		update, err := storage.GetAvailableUpdate(req)
+		if err != nil {
+			t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
+			return
+		}
+		if update == nil {
+			t.Error("Expected not nil")
+			return
+		}
+
+		// check checksum is being added right
+		if update.Checksum != fmt.Sprintf("%x", expectedChecksum) {
+			t.Error("Expected to find checksum")
+		}
+
+		// compare checksum from result
+		decChecksum, err := hex.DecodeString(update.Checksum)
+		if err != nil {
+			t.Error(fmt.Sprint("Expected to not have an error. ", err))
+		}
+		if !bytes.Equal(expectedChecksum, decChecksum) {
+			t.Errorf("Updated file %s has wrong checksum. Expected: %x, got: %x", filename, expectedChecksum, decChecksum)
+		}
+	}
+}
+
+func TestChecksumFail(t *testing.T) {
+	storage, err := getTestSwiftStorage()
+	if err != nil {
+		t.Error("Expected to have an error")
+		return
 	}
 	defer func() {
 		shutDownConnection()
 	}()
 
 	// save a file
-	saveExamples(storage, t)
-
-	// add checksum file
-	checksum_data := "checksum for arc_20150906.07_linux_amd64"
-	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_linux_amd64.sha256", checksum_data, "")
+	filename := "arc_20150905.15_linux_amd64"
+	err = storage.Connection.ObjectPutString(CONTAINER, filename, "123", "")
 	if err != nil {
-		t.Fatal(err)
+		t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
+		return
 	}
 
 	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	update, err := storage.GetAvailableUpdate(req)
-	if err != nil {
-		t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
-		return
+	if err == nil {
+		t.Error("Expected to have an error.")
 	}
-	if update == nil {
-		t.Error("Expected not nil")
-		return
-	}
-	if update.Checksum != checksum_data {
-		t.Error("Expected to find checksum")
-	}
-}
-
-func TestChecksumWindowsSuccess(t *testing.T) {
-	storage, err := getTestSwiftStorage()
-	if err != nil {
-		t.Error("Expected to have an error")
-	}
-	defer func() {
-		shutDownConnection()
-	}()
-
-	// save a file
-	saveExamples(storage, t)
-
-	// add checksum file
-	checksum_data := "checksum for arc_20150906.07_windows_amd64.exe"
-	err = storage.Connection.ObjectPutString(CONTAINER, "arc_20150906.07_windows_amd64.exe.sha256", checksum_data, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"windows"}}`)
-	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-
-	update, err := storage.GetAvailableUpdate(req)
-	if err != nil {
-		t.Error(fmt.Sprint("Expected to not have an error. Got ", err))
-		return
-	}
-	if update == nil {
-		t.Error("Expected not nil")
-		return
-	}
-	if update.Checksum != checksum_data {
-		t.Error("Expected to find checksum")
+	if update != nil {
+		t.Error("Expected update to be nil")
 	}
 }
 

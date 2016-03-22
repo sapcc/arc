@@ -5,6 +5,7 @@ package local
 import (
 	"bufio"
 	"bytes"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
+	"github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 )
 
@@ -78,10 +80,7 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
 	checksum_data := "checksum data"
 	filename := "arc_20150905.15_linux_amd64"
-	err := createTestBuildFile(buildsRootPath, filename)
-	if err != nil {
-		t.Error(fmt.Sprint("Expected to not have an error. ", err))
-	}
+	err := createTestBuildFile(buildsRootPath, filename, "")
 	err = createChecksumFile(buildsRootPath, filename, checksum_data)
 	if err != nil {
 		t.Error(fmt.Sprint("Expected to not have an error. ", err))
@@ -111,44 +110,9 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 // Checksum
 //
 
-func TestChecksumSuccess(t *testing.T) {
-	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	checksum_data := "checksum data"
-	filename := "arc_20150905.15_linux_amd64"
-	err := createTestBuildFile(buildsRootPath, filename)
-	err = createChecksumFile(buildsRootPath, filename, checksum_data)
-	if err != nil {
-		t.Error(fmt.Sprint("Expected to not have an error. ", err))
-	}
-	defer func() {
-		os.RemoveAll(buildsRootPath)
-		buildsRootPath = ""
-	}()
-
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
-	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
-
-	ls := LocalStorage{
-		BuildsRootPath: buildsRootPath,
-	}
-	update, err := ls.GetAvailableUpdate(req)
-	if err != nil {
-		t.Error(fmt.Sprint("Expected to not have an error. ", err))
-	}
-	if update == nil {
-		t.Error("Expected not nil")
-	}
-	if update.Checksum != checksum_data {
-		t.Error("Expected to find checksum")
-	}
-}
-
 func TestChecksumFail(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	err := createTestBuildFile(buildsRootPath, "arc_20150905.15_linux_amd64")
-	if err != nil {
-		t.Error(fmt.Sprint("Expected to not have an error. ", err))
-	}
+	createTestBuildFile(buildsRootPath, "arc_20150905.15_linux_amd64", "")
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 		buildsRootPath = ""
@@ -166,6 +130,50 @@ func TestChecksumFail(t *testing.T) {
 	}
 	if update != nil {
 		t.Error("Expected update to be nil")
+	}
+}
+
+func TestChecksumSuccess(t *testing.T) {
+	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
+	createTestBuildFile(buildsRootPath, "arc_20150905.15_linux_amd64", "test test test")
+	defer func() {
+		os.RemoveAll(buildsRootPath)
+		buildsRootPath = ""
+	}()
+
+	//Checksum pattern "486c9e5b987027990865ed3109554cb6d9d6469397ea2ee0745999649defd203 *arc_20160321.2_linux_amd64"
+	expectedChecksum, err := update.ChecksumForFile(path.Join(buildsRootPath, "arc_20150905.15_linux_amd64"))
+	err = createChecksumFile(buildsRootPath, "arc_20150905.15_linux_amd64", fmt.Sprintf("%x *arc_20150905.15_linux_amd64", expectedChecksum))
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. ", err))
+	}
+
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
+
+	ls := LocalStorage{
+		BuildsRootPath: buildsRootPath,
+	}
+	update, err := ls.GetAvailableUpdate(req)
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. ", err))
+	}
+	if update == nil {
+		t.Error("Expected not nil")
+	}
+
+	// check checksum is being added right
+	if update.Checksum != fmt.Sprintf("%x", expectedChecksum) {
+		t.Error("Expected to find checksum. Got ", update.Checksum, " but should be ", fmt.Sprintf("%x", expectedChecksum))
+	}
+
+	// compare checksum from result
+	decChecksum, err := hex.DecodeString(update.Checksum)
+	if err != nil {
+		t.Error(fmt.Sprint("Expected to not have an error. ", err))
+	}
+	if !bytes.Equal(expectedChecksum, decChecksum) {
+		t.Errorf("Updated file has wrong checksum. Expected: %x, got: %x", expectedChecksum, decChecksum)
 	}
 }
 
@@ -205,11 +213,11 @@ func TestGetUpdate(t *testing.T) {
 func TestGetAllUpdates(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
 	filename := "arc_20150905.15_linux_amd64"
-	createTestBuildFile(buildsRootPath, filename)
+	createTestBuildFile(buildsRootPath, filename, "")
 	checksum_data := "checksum data"
 	createChecksumFile(buildsRootPath, filename, checksum_data)
 	filename2 := "arc_20150904.10_windows_amd64"
-	createTestBuildFile(buildsRootPath, filename2)
+	createTestBuildFile(buildsRootPath, filename2, "")
 	createChecksumFile(buildsRootPath, filename2, checksum_data)
 	defer func() {
 		os.RemoveAll(buildsRootPath)
@@ -254,12 +262,12 @@ func TestGetAllUpdatesFilteredFiles(t *testing.T) {
 
 func TestGetWebUpdates(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	createTestBuildFile(buildsRootPath, "arc_20150905.10_linux_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150905.10_windows_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150906.07_linux_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150906.07_windows_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150805.15_linux_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150805.15_windows_amd64")
+	createTestBuildFile(buildsRootPath, "arc_20150905.10_linux_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150905.10_windows_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150906.07_linux_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150906.07_windows_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150805.15_linux_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150805.15_windows_amd64", "")
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 		buildsRootPath = ""
@@ -283,12 +291,12 @@ func TestGetWebUpdates(t *testing.T) {
 
 func TestGetLastestUpdate(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	createTestBuildFile(buildsRootPath, "arc_20150905.10_linux_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150905.10_windows_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150906.07_linux_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150906.07_windows_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150805.15_linux_amd64")
-	createTestBuildFile(buildsRootPath, "arc_20150805.15_windows_amd64")
+	createTestBuildFile(buildsRootPath, "arc_20150905.10_linux_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150905.10_windows_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150906.07_linux_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150906.07_windows_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150805.15_linux_amd64", "")
+	createTestBuildFile(buildsRootPath, "arc_20150805.15_windows_amd64", "")
 	defer func() {
 		os.RemoveAll(buildsRootPath)
 		buildsRootPath = ""
@@ -321,16 +329,18 @@ func TestGetLastestUpdate(t *testing.T) {
 // helpers
 //
 
-func createTestBuildFile(buildsRootPath, name string) error {
-	file, err := ioutil.TempFile(buildsRootPath, name)
+func createTestBuildFile(buildsRootPath, name, data string) error { //*os.File,
+	file, err := os.Create(path.Join(buildsRootPath, name))
 	if err != nil {
 		return err
 	}
-	err = os.Rename(file.Name(), path.Join(buildsRootPath, name))
-	if err != nil {
-		return err
+	defer file.Close()
+	if len(data) > 0 {
+		_, err := file.WriteString(data)
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -338,12 +348,18 @@ func createChecksumFile(buildsRootPath, referenceFileName, checksumData string) 
 	// extract the temp file name
 	i := strings.LastIndex(referenceFileName, "/")
 	filename_ext := referenceFileName[i+1:]
+
 	// create a checksum file without extra random data in the name
-	checksum, _ := ioutil.TempFile(buildsRootPath, fmt.Sprint(filename_ext, ".sha256"))
-	checksum.WriteString(checksumData)
-	err := os.Rename(checksum.Name(), path.Join(buildsRootPath, fmt.Sprint(filename_ext, ".sha256")))
+	checksum, err := os.Create(path.Join(buildsRootPath, fmt.Sprint(filename_ext, ".sha256")))
 	if err != nil {
 		return err
+	}
+	defer checksum.Close()
+	if len(checksumData) > 0 {
+		_, err := checksum.WriteString(checksumData)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
