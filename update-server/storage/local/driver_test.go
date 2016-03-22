@@ -16,7 +16,7 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
-	"github.com/inconshreveable/go-update"
+	update "github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 )
 
