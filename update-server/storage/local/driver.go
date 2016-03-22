@@ -70,8 +70,11 @@ func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 				return nil, errors.New(fmt.Sprint("Checksum file ", filename, " not found."))
 			}
 			checksum := strings.Split(b.String(), " ")
+
 			if len(checksum) > 1 {
 				result.Checksum = checksum[0]
+			} else {
+				return nil, errors.New("Checksum file pattern wrong")
 			}
 		}
 

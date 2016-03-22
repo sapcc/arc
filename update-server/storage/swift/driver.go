@@ -82,6 +82,8 @@ func (s *SwiftStorage) GetAvailableUpdate(req *http.Request) (*check.Result, err
 			checksum := strings.Split(b.String(), " ")
 			if len(checksum) > 1 {
 				result.Checksum = checksum[0]
+			} else {
+				return nil, errors.New("Checksum file pattern wrong")
 			}
 		}
 
