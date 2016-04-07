@@ -15,6 +15,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 
 	log "github.com/Sirupsen/logrus"
+	version "github.com/hashicorp/go-version"
 	"golang.org/x/net/context"
 )
 
@@ -47,18 +48,23 @@ func init() {
 	arc.RegisterAgent("chef", new(chefAgent))
 }
 
-func (a *chefAgent) Enabled() bool {
-	cmd := exec.Command(chef_binary, "-v")
+func chefVersion() string {
+	cmd := exec.Command(chefClientBinary, "-v")
 	out, err := cmd.Output()
 	if err != nil {
-		return false
+		return ""
 	}
 	if v := regexp.MustCompile(`\d+\.\d+\.\d+`).Find(out); v != nil {
-		version := string(v)
-		log.Debug("Detected chef version ", version)
+		return string(v)
+	}
+	return ""
+}
+
+func (a *chefAgent) Enabled() bool {
+	if ver := chefVersion(); ver != "" {
+		log.Debug("Detected chef version ", ver)
 		return true
 	}
-
 	return false
 }
 
@@ -155,15 +161,27 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	}
 	dnaFile.Close()
 
-	process := arc.NewSubprocess(chef_binary, "--local-mode", "--no-fork", "--recipe-url", data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
+	installedVersion, err := version.NewVersion(chefVersion())
+	chefZeroMinimalVersion, err := version.NewVersion("12.1.0")
+	if err != nil {
+		return "", err
+	}
+
+	var process *arc.Subprocess
+	if installedVersion.LessThan(chefZeroMinimalVersion) {
+		log.Warnf("Detected chef version < %s, falling back to chef-solo", chefZeroMinimalVersion)
+		process = arc.NewSubprocess(chefSoloBinary, "--no-fork", "--recipe-url", data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
+	} else {
+		process = arc.NewSubprocess(chefClientBinary, "--local-mode", "--no-fork", "--recipe-url", data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
+	}
 	log.Info("Running ", strings.Join(process.Command, " "))
 
 	output, err := process.Start()
 	if err != nil {
 		return "", err
 	}
-	//send empty heartbeat so that the caller knows the command is executing
-	job.Heartbeat("")
+	//send heartbeat so that the caller knows the command is executing
+	job.Heartbeat("Running " + strings.Join(process.Command, " "))
 
 	for {
 		select {

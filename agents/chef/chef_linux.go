@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	chef_binary = "/usr/bin/chef-client"
+	chefClientBinary = "/usr/bin/chef-client"
+	chefSoloBinary   = "/usr/bin/chef-solo"
 )
 
 func install(installer string) error {

@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	chef_binary = "C:/opscode/chef/bin/chef-client.bat"
+	chefClientBinary = "C:/opscode/chef/bin/chef-client.bat"
+	chefSoloBinary   = "C:/opscode/chef/bin/chef-solo.bat"
 )
 
 func install(installer string) error {
