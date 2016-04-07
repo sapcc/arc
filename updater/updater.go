@@ -50,7 +50,7 @@ func (u *Updater) CheckAndUpdate() (bool, error) {
 	} else if err != nil {
 		return false, fmt.Errorf("Error while checking for update: %q", err.Error())
 	}
-	log.Infof("Updated version %q for app %q available ", r.Version, u.params.AppId)
+	log.Infof("Updated version %s for app %s available ", r.Version, u.params.AppId)
 
 	// replace binary
 	err = u.Update(r)
