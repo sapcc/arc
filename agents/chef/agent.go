@@ -155,7 +155,7 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	}
 	dnaFile.Close()
 
-	process := arc.NewSubprocess(chef_binary, "--local-mode", "--recipe-url="+data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level="+log_level)
+	process := arc.NewSubprocess(chef_binary, "--local-mode", "--no-fork", "--recipe-url", data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
 	log.Info("Running ", strings.Join(process.Command, " "))
 
 	output, err := process.Start()
