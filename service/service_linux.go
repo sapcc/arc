@@ -19,6 +19,7 @@ import (
 
 var runitRunScript = template.Must(template.New("run").Parse(`#!/bin/sh
 exec 2>&1
+[ -f /etc/profile.d/proxy_settings.sh ] && . /etc/profile.d/proxy_settings.sh
 exec {{ .executable }} -c {{.arcDir}}/arc.cfg server
 `))
 
