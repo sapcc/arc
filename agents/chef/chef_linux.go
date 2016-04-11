@@ -33,5 +33,9 @@ func install(installer string) error {
 		return err
 	}
 
+	if err := addSAPCAsToChefBundle("/opt/chef/embedded/ssl/certs/cacert.pem"); err != nil {
+		return err
+	}
+
 	return nil
 }
