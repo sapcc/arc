@@ -341,7 +341,7 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
 		}
-		http.Error(w, fmt.Sprint(body), http.StatusBadRequest)
+		http.Error(w, string(body), http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		return
 	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
