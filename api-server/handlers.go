@@ -336,6 +336,14 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 	if err == sql.ErrNoRows {
 		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
 		return
+	} else if serr, ok := err.(*models.TagError); ok {
+		body, err := json.Marshal(serr.Messages)
+		if err != nil {
+			checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+		}
+		http.Error(w, fmt.Sprint(body), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		return
 	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
 		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
 		return

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -19,6 +20,14 @@ import (
 
 var FilterError = fmt.Errorf("Filter query has a syntax error.")
 var RegistrationExistsError = fmt.Errorf("Registration message already handeled.")
+
+type TagError struct {
+	Messages map[string][]string
+}
+
+func (e *TagError) Error() string {
+	return fmt.Sprintf("Tag key is not alphanumeric ([a-z0-9A-Z]) or key value is empty.")
+}
 
 type JSONB map[string]interface{}
 
@@ -309,7 +318,7 @@ func (agent *Agent) AddTagAuthorized(db Db, authorization *auth.Authorization, t
 	if err != nil {
 		return err
 	}
-	log.Infof("Agent with id %q has added tag with key $q value $q. %v row(s) affected", agent.AgentID, tagKey, tagValue, affect)
+	log.Infof("Agent with id %q has added tag with key %q value %q. %v row(s) affected", agent.AgentID, tagKey, tagValue, affect)
 
 	return nil
 }
@@ -366,12 +375,30 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 		return err
 	}
 
+	// check for aphanumeric keys or empty values
+	tagsErrorMessages := make(map[string][]string)
+	for k, v := range tags {
+		// check for aphanumeric
+		match, _ := regexp.MatchString("^\\w+$", k)
+		if !match {
+			tagsErrorMessages[k] = append(tagsErrorMessages[k], fmt.Sprintf("Tag key %s is not alphanumeric ([a-z0-9A-Z]).", k))
+			continue
+		}
+		// check for empty values
+		if len(v) == 0 || len(v[0]) == 0 {
+			tagsErrorMessages[k] = append(tagsErrorMessages[k], fmt.Sprintf("Tag key %s is empty.", k))
+			continue
+		}
+	}
+
+	if len(tagsErrorMessages) > 0 {
+		return &TagError{Messages: tagsErrorMessages}
+	}
+
 	for k, v := range tags {
 		keyTag := k
-		valueTag := ""
-		if len(v) > 0 {
-			valueTag = v[0]
-		}
+		valueTag := v[0]
+
 		err := agent.AddTagAuthorized(db, authorization, keyTag, valueTag)
 		// if something wrong happens we brake the process
 		if err != nil {

@@ -14,6 +14,7 @@ import (
 
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"reflect"
 	"time"
 )
@@ -735,6 +736,8 @@ var _ = Describe("Agent", func() {
 				// check
 				dbAgent := Agent{AgentID: agent.AgentID}
 				err = dbAgent.Get(db)
+				Expect(err).NotTo(HaveOccurred())
+
 				// conver to JSON string
 				tags, err := json.Marshal(dbAgent.Tags)
 				Expect(err).NotTo(HaveOccurred())
@@ -782,6 +785,69 @@ var _ = Describe("Agent", func() {
 
 		})
 
+		Describe("ProcessTags", func() {
+
+			It("should just allow keys alphanumeric and keys with no empty value. None tag will be saved if some key is not alphanumeric.", func() {
+				// add tag and return error
+				err := ProcessTags(db, &authorization, agent.AgentID, url.Values{"test": []string{"test"}, "test%test": []string{"test%test"}, "test3": []string{""}})
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal((&TagError{}).Error()))
+
+				serr, ok := err.(*TagError)
+				Expect(ok).Should(BeTrue())
+				Expect(serr.Messages["test%test"][0]).Should(ContainSubstring("test%test"))
+				Expect(serr.Messages["test3"][0]).Should(ContainSubstring("test3"))
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				Expect(err).NotTo(HaveOccurred())
+
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{}`))
+			})
+
+			It("save all tags if keys alphanumeric and values not empty", func() {
+				// add tag and return error
+				err := ProcessTags(db, &authorization, agent.AgentID, url.Values{"miau": []string{"miau"}, "bup": []string{"bup"}})
+				Expect(err).NotTo(HaveOccurred())
+
+				// check
+				dbAgent := Agent{AgentID: agent.AgentID}
+				err = dbAgent.Get(db)
+				Expect(err).NotTo(HaveOccurred())
+
+				// conver to JSON string
+				tags, err := json.Marshal(dbAgent.Tags)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(tags)).To(Equal(`{"bup":"bup","miau":"miau"}`))
+			})
+
+			Describe("authorization", func() {
+
+				It("should return an identity authorization error", func() {
+					authorization.IdentityStatus = "Something different from Confirmed"
+
+					// add tag
+					err := ProcessTags(db, &authorization, agent.AgentID, url.Values{})
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(Equal(auth.IdentityStatusInvalid))
+				})
+
+				It("should return a project authorization error", func() {
+					authorization.ProjectId = "Some other project"
+
+					err := ProcessTags(db, &authorization, agent.AgentID, url.Values{})
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(Equal(auth.NotAuthorized))
+				})
+
+			})
+
+		})
+
 		Describe("remove tag", func() {
 
 			It("returns an error if no db connection is given", func() {
@@ -809,7 +875,7 @@ var _ = Describe("Agent", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("should save the tag", func() {
+			It("should remove the tag", func() {
 				// add tag
 				err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
 				Expect(err).NotTo(HaveOccurred())

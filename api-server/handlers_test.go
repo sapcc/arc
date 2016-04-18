@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"reflect"
 
@@ -39,7 +40,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -50,10 +51,10 @@ var _ = Describe("Job Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("GET", getUrl("/jobs"), "")
+			checkIdentityInvalidRequest("GET", getUrl("/jobs", url.Values{}), "")
 
 			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
-			req, err := http.NewRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/jobs", url.Values{}), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			req.Header.Add("X-Identity-Status", `Confirmed`)
 			req.Header.Add("X-Project-Id", `some_different_project`)
@@ -70,7 +71,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns empty arry if no jobs found", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -92,7 +93,7 @@ var _ = Describe("Job Handlers", func() {
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -124,7 +125,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=my_test_laptop"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs", url.Values{"agent_id": []string{"my_test_laptop"}}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -156,7 +157,7 @@ var _ = Describe("Job Handlers", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				// make request go get the first page (default page 1)
-				req, err := newAuthorizedRequest("GET", getUrl("/jobs?agent_id=darwin&per_page=5"), bytes.NewBufferString(""), map[string]string{})
+				req, err := newAuthorizedRequest("GET", getUrl("/jobs", url.Values{"agent_id": []string{"darwin"}, "per_page": []string{"5"}}), bytes.NewBufferString(""), map[string]string{})
 				Expect(err).NotTo(HaveOccurred())
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, req)
@@ -175,7 +176,7 @@ var _ = Describe("Job Handlers", func() {
 				Expect(len(dbJobs)).To(Equal(5))
 
 				// make request go get the second page (default page 1)
-				req, err = newAuthorizedRequest("GET", getUrl("/jobs?agent_id=darwin&page=2&per_page=5"), bytes.NewBufferString(""), map[string]string{})
+				req, err = newAuthorizedRequest("GET", getUrl("/jobs", url.Values{"agent_id": []string{"darwin"}, "page": []string{"2"}, "per_page": []string{"5"}}), bytes.NewBufferString(""), map[string]string{})
 				Expect(err).NotTo(HaveOccurred())
 				w = httptest.NewRecorder()
 				router.ServeHTTP(w, req)
@@ -218,7 +219,7 @@ var _ = Describe("Job Handlers", func() {
 			GetJobQuery = "SELECT * Wrong_Job_Table jobs WHERE id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -238,7 +239,7 @@ var _ = Describe("Job Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -250,7 +251,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns a 404 error if job not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -261,13 +262,13 @@ var _ = Describe("Job Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), "")
-			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), "")
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), "")
 		})
 
 		It("should return the job", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -304,7 +305,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 400 error if request is wrong", func() {
 			jsonStr := []byte(`this is not json`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs", url.Values{}), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -321,7 +322,7 @@ var _ = Describe("Job Handlers", func() {
 
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs", url.Values{}), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -337,7 +338,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 404 error if the targe agent does not exist", func() {
 			jsonStr := []byte(`{"to":"non_existing_agent","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs", url.Values{}), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -348,14 +349,14 @@ var _ = Describe("Job Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("POST", getUrl("/jobs"), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
-			checkNonAuthorizeProjectRequest("POST", getUrl("/jobs"), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
+			checkIdentityInvalidRequest("POST", getUrl("/jobs", url.Values{}), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
+			checkNonAuthorizeProjectRequest("POST", getUrl("/jobs", url.Values{}), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 		})
 
 		It("should save the job and return the unique id as JSON", func() {
 			jsonStr := []byte(`{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			// make a request
-			req, err := newAuthorizedRequest("POST", getUrl("/jobs"), bytes.NewBuffer(jsonStr), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/jobs", url.Values{}), bytes.NewBuffer(jsonStr), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -393,7 +394,7 @@ var _ = Describe("Agent Handlers", func() {
 			GetAgentsQuery = "SELECT DISTINCT agent_id,created_at,updated_at FROM Wrong_Facts order by updated_at"
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/agents", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -407,7 +408,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 400 if the filter query is wrong", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=os+%3D`), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents`, url.Values{"q": []string{`@os=`}}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -418,12 +419,12 @@ var _ = Describe("Agent Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("GET", getUrl("/agents"), "")
+			checkIdentityInvalidRequest("GET", getUrl("/agents", url.Values{}), "")
 
 			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
 			agents := models.Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
-			req, err := http.NewRequest("GET", getUrl("/agents"), bytes.NewBufferString(""))
+			req, err := http.NewRequest("GET", getUrl("/agents", url.Values{}), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			req.Header.Add("X-Identity-Status", `Confirmed`)
 			req.Header.Add("X-Project-Id", `some_different_project`)
@@ -440,7 +441,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns empty json arry if no agents found", func() {
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/agents", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -461,7 +462,7 @@ var _ = Describe("Agent Handlers", func() {
 			agents.CreateAndSaveAgentExamples(db, 3)
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/agents", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -508,7 +509,7 @@ var _ = Describe("Agent Handlers", func() {
 			}
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=@os+%3D+%22darwin%22+OR+%28landscape+%3D+%22staging%22+AND+pool+%3D+%22green%22%29`), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents`, url.Values{"q": []string{`@os="darwin" OR (landscape = "staging" AND pool = "green")`}}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -541,7 +542,7 @@ var _ = Describe("Agent Handlers", func() {
 			}
 
 			// make a request
-			req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=@os+%3D+"windows"&facts=os,online`), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(`/agents`, url.Values{"q": []string{`@os="windows"`}, "facts": []string{"os,online"}}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -585,7 +586,7 @@ var _ = Describe("Agent Handlers", func() {
 				}
 
 				// make a request
-				req, err := newAuthorizedRequest("GET", getUrl(`/agents?q=%40os+%3D+%22windows%22&per_page=5`), bytes.NewBufferString(""), map[string]string{})
+				req, err := newAuthorizedRequest("GET", getUrl("/agents", url.Values{"q": []string{`@os = "windows"`}, "per_page": []string{"5"}}), bytes.NewBufferString(""), map[string]string{})
 				Expect(err).NotTo(HaveOccurred())
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, req)
@@ -604,7 +605,7 @@ var _ = Describe("Agent Handlers", func() {
 				Expect(len(dbAgents)).To(Equal(5))
 
 				// make request go get the second page (default page 1)
-				req, err = newAuthorizedRequest("GET", getUrl(`/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`), bytes.NewBufferString(""), map[string]string{})
+				req, err = newAuthorizedRequest("GET", getUrl("/agents", url.Values{"page": []string{"2"}, "per_page": []string{"5"}, "q": []string{`@os = "windows"`}}), bytes.NewBufferString(""), map[string]string{})
 				Expect(err).NotTo(HaveOccurred())
 				w = httptest.NewRecorder()
 				router.ServeHTTP(w, req)
@@ -646,7 +647,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_exisitng_id", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -662,7 +663,7 @@ var _ = Describe("Agent Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -676,13 +677,13 @@ var _ = Describe("Agent Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
-			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
 		})
 
 		It("return an angent", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -707,7 +708,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("should show facts", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "?facts=os,online")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{"facts": []string{"os,online"}}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -745,7 +746,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl("/agents/non_exisitng_id"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl("/agents/non_exisitng_id", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -761,7 +762,7 @@ var _ = Describe("Agent Handlers", func() {
 			DeleteAgentQuery = `DELETE FROM miaus WHERE agent_id=$1`
 
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -775,13 +776,13 @@ var _ = Describe("Agent Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
-			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), "")
+			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
 		})
 
 		It("Delete an angent", func() {
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID)), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -811,7 +812,7 @@ var _ = Describe("Agent Handlers", func() {
 			GetAgentQuery = "SELECT * FROM Wrong_facts_table WHERE agent_id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -825,7 +826,7 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/agents/non_existing_id/facts", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -836,13 +837,13 @@ var _ = Describe("Agent Handlers", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), "")
-			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), "")
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), "")
 		})
 
 		It("returns the facts from an agent", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -881,7 +882,7 @@ var _ = Describe("Tags", func() {
 			GetAgentQuery = `SELECT DISTINCT * FROM wrong_table WHERE agent_id=$1 order by created_at DESC`
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -895,7 +896,7 @@ var _ = Describe("Tags", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", "non_exisitng_agent", "/tags")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", "non_exisitng_agent", "/tags"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -907,7 +908,7 @@ var _ = Describe("Tags", func() {
 
 		It("returns an empty json if no tags for the agent", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -926,8 +927,8 @@ var _ = Describe("Tags", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "")
-			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "")
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "")
 		})
 
 		It("returns the tags from an agent", func() {
@@ -947,7 +948,7 @@ var _ = Describe("Tags", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -974,7 +975,7 @@ var _ = Describe("Tags", func() {
 			AddAgentTag = `INSERT INTO wrong_table(agent_id,project,value,created_at) VALUES($1,$2,$3) returning agent_id`
 
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -988,7 +989,7 @@ var _ = Describe("Tags", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags")), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -999,13 +1000,32 @@ var _ = Describe("Tags", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "tag1, tag2")
-			checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), "tag1, tag2")
+			checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "tag1, tag2")
+			checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "tag1, tag2")
 		})
 
-		It("saves all tags for the agent", func() {
+		It("returns 400 if one of the tags is not alphanumeric", func() {
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags")), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup&test!!=test&hallo"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(400))
+
+			dbAgent := models.Agent{AgentID: agent.AgentID}
+			err = dbAgent.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			checkTags := models.JSONBfromString(`{}`)
+			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			Expect(eq).To(Equal(true))
+		})
+
+		It("It should save the tags", func() {
+			// make request
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1035,7 +1055,7 @@ var _ = Describe("Tags", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/cat")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/cat"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1049,7 +1069,7 @@ var _ = Describe("Tags", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags", "/tag_miau")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags", "/tag_miau"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1061,7 +1081,7 @@ var _ = Describe("Tags", func() {
 
 		It("returns no error if Tag not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/non_exiting_tag")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/non_exiting_tag"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1072,8 +1092,8 @@ var _ = Describe("Tags", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), "")
-			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau")), "")
+			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau"), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau"), url.Values{}), "")
 		})
 
 		It("removes the agent tag", func() {
@@ -1084,7 +1104,7 @@ var _ = Describe("Tags", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/dog")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/dog"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1127,7 +1147,7 @@ var _ = Describe("Log Handlers", func() {
 			GetLogQuery = "SELECT * Wrong_Log_Table logs WHERE job_id=$1"
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1142,7 +1162,7 @@ var _ = Describe("Log Handlers", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id/log"), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl("/jobs/non_existing_id/log", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1159,8 +1179,8 @@ var _ = Describe("Log Handlers", func() {
 			err := models.ProcessLogReply(db, &reply.Reply, "darwin", true)
 			Expect(err).NotTo(HaveOccurred())
 
-			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), "")
-			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), "")
+			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), "")
+			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), "")
 		})
 
 		It("returns the log from the log table", func() {
@@ -1171,7 +1191,7 @@ var _ = Describe("Log Handlers", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1190,7 +1210,7 @@ var _ = Describe("Log Handlers", func() {
 			content := logpart.SaveLogPartExamples(db, job.RequestID)
 
 			// make request
-			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log")), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1390,6 +1410,10 @@ func newAuthorizedRequest(method, urlStr string, body io.Reader, headerOptions m
 	return req, nil
 }
 
-func getUrl(url string) string {
-	return fmt.Sprint("/api/v1", url)
+func getUrl(path string, params url.Values) string {
+	//var newUrl *url.URL
+	newUrl, _ := url.Parse("")
+	newUrl.Path = fmt.Sprint("/api/v1", path)
+	newUrl.RawQuery = params.Encode()
+	return newUrl.String()
 }
