@@ -271,6 +271,8 @@ All tags saved!
 All tag keys musst be `alphanumeric [a-z0-9A-Z]` and have non empty values. In case of an error 
 body will contain the error messages as JSON.
 
+In case of adding an existing tag the value will be replaced with the new submitted.
+
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="delete_agent_tag"></a>
