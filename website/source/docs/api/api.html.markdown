@@ -20,7 +20,7 @@ information from one or different Arc servers.
 * [Delete an agent](#delete_agent)
 * [Show agent facts](#show_agent_facts)
 * [Show agent tags](#show_agent_tags)
-* [Add an agent tag](#add_agent_tag)
+* [Add an agent tags](#add_agent_tag)
 * [Delete an agent tag](#delete_agent_tag)
 * [List all jobs](#list_all_jobs)
   * [Filtering jobs](#filter_jobs)
@@ -255,7 +255,7 @@ Agent with id "darwin" deleted.
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="add_agent_tag"></a>
-## Add an agent tag
+## Add an agent tags
 - Method: `POST`
 - URL: `/agents/{agent-id}/tags`
 - Example: 
@@ -267,6 +267,10 @@ Agent with id "darwin" deleted.
 ```text
 All tags saved!
 ```
+
+All tag keys musst be `alphanumeric [a-z0-9A-Z]` and have non empty values. In case of an error 
+body will contain the error messages as JSON.
+
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="delete_agent_tag"></a>
