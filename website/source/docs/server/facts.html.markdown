@@ -10,6 +10,7 @@ description: |-
 
 Following facts are available:
 
+- agents
 - arc_version
 - default_gateway
 - default_interface
@@ -36,6 +37,7 @@ Facts values example:
 
 ```text
 {
+	agents: {"chef"=>"enabled", "execute"=>"enabled", "rpc"=>"enabled"},
 	arc_version: "20160118.2 (341fb82), go1.5.3",
 	default_gateway: "10.44.57.1",
 	default_interface: "eth0",
