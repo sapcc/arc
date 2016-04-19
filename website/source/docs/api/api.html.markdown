@@ -93,6 +93,9 @@ Transfer-Encoding: chunked
 	...
 ]
 ```
+
+Agents are `sorted` by creation date newest first.
+
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="filter_agents"></a>
@@ -313,6 +316,9 @@ Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" i
 	...
 ]
 ```
+
+Jobs are `sorted` by creation date newest first.
+
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="filter_jobs"></a>
