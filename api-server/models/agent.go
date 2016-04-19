@@ -29,6 +29,14 @@ func (e *TagError) Error() string {
 	return fmt.Sprintf("Tag key is not alphanumeric ([a-z0-9A-Z]) or key value is empty.")
 }
 
+func (e *TagError) MessagesToJson() (string, error) {
+	jsonBytes, err := json.Marshal(e.Messages)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`{"error":{"tags":%s}}`, string(jsonBytes)), nil
+}
+
 type JSONB map[string]interface{}
 
 type Agent struct {
@@ -381,7 +389,7 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 		// check for aphanumeric
 		match, _ := regexp.MatchString("^\\w+$", k)
 		if !match {
-			tagsErrorMessages[k] = append(tagsErrorMessages[k], fmt.Sprintf("Tag key %s is not alphanumeric ([a-z0-9A-Z]).", k))
+			tagsErrorMessages[k] = append(tagsErrorMessages[k], fmt.Sprintf("Tag key %s is not alphanumeric [a-z0-9A-Z].", k))
 			continue
 		}
 		// check for empty values
