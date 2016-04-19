@@ -34,7 +34,7 @@ func (e *TagError) MessagesToJson() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(`{"error":{"tags":%s}}`, string(jsonBytes)), nil
+	return fmt.Sprintf(`{"errors":{"tags":%s}}`, string(jsonBytes)), nil
 }
 
 type JSONB map[string]interface{}
