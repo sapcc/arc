@@ -68,9 +68,10 @@ func main() {
 			Value:  new(cli.StringSlice),
 		},
 		cli.StringFlag{
-			Name:  "bind-address,b",
-			Usage: "Update server URL",
-			Value: "0.0.0.0:3000",
+			Name:   "bind-address,b",
+			Usage:  "Listen address for api server",
+			Value:  "0.0.0.0:3000",
+			EnvVar: envPrefix + "LISTEN",
 		},
 		cli.StringFlag{
 			Name:   "env",
