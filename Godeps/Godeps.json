@@ -48,6 +48,10 @@
 			"Rev": "da300d2fe98ed10eea5d9d86ba155393d824fa8c"
 		},
 		{
+			"ImportPath": "github.com/databus23/requestutil",
+			"Rev": "5ff8e981f38fcabfc52ff8fd7fc7cf401d6bec67"
+		},
+		{
 			"ImportPath": "github.com/go-ole/go-ole",
 			"Comment": "v1.1.1-13-g487c37e",
 			"Rev": "487c37e10823c9d5e647262f01f51a12331525f2"

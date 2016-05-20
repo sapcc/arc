@@ -94,26 +94,6 @@ func TestServeAvailableUpdatesError(t *testing.T) {
 	}
 }
 
-func TestServeAvailableError500(t *testing.T) {
-	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	defer func() {
-		os.RemoveAll(buildsRootPath)
-	}()
-
-	set := flag.NewFlagSet("test", 0)
-	set.String("path", buildsRootPath, "local")
-	c := cli.NewContext(nil, set, nil)
-	st, _ = storage.New(storage.Local, c)
-
-	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`) // missing tag
-	req, _ := http.NewRequest("POST", "", bytes.NewBuffer(jsonStr))                                       // fails with 500 generating the host url for the available update
-	w := httptest.NewRecorder()
-	serveAvailableUpdates(w, req)
-	if w.Code != 500 {
-		t.Error("Expected code to be '500'. Got ", w.Code)
-	}
-}
-
 //
 // Healthcheck
 //

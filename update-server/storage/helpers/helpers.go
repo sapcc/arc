@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/databus23/requestutil"
 	version "github.com/hashicorp/go-version"
 	"github.com/inconshreveable/go-update/check"
 )
@@ -206,22 +207,7 @@ func parseRequest(req *http.Request) (*check.Params, error) {
 }
 
 func getHostUrl(req *http.Request) *url.URL {
-	// get the host
-	host := req.Host
-	if len(host) == 0 {
-		return nil
-	}
-
-	// get the scheme
-	scheme := ""
-	// set the scheme
-	if req.TLS != nil {
-		scheme = "https"
-	} else {
-		scheme = "http"
-	}
-
-	return &url.URL{Scheme: scheme, Host: host}
+	return &url.URL{Scheme: requestutil.Scheme(req), Host: requestutil.HostWithPort(req)}
 }
 
 type ByVersion []string
