@@ -14,6 +14,8 @@ import (
 
 type Subprocess struct {
 	Command   []string
+	Dir       string
+	Env       []string
 	cmd       *exec.Cmd
 	outPipe   io.ReadCloser
 	errPipe   io.ReadCloser

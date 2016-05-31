@@ -31,6 +31,10 @@
 			"Rev": "f3e2bae1e0cb5aef83e319133eabfee30013a4a5"
 		},
 		{
+			"ImportPath": "github.com/c4milo/unzipit",
+			"Rev": "339618fad77ac6102721ba322bc1b1d678083520"
+		},
+		{
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-163-g70e3fa5",
 			"Rev": "70e3fa51ebed95df8c0fbe1519c1c1f9bc16bb13"

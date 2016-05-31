@@ -26,6 +26,10 @@ func (s *Subprocess) Kill() {
 
 func (s *Subprocess) prepareCmd() *exec.Cmd {
 	cmd := exec.Command(s.Command[0], s.Command[1:]...)
+	if s.Env != nil {
+		cmd.Env = s.Env
+	}
+	cmd.Dir = s.Dir
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
