@@ -49,6 +49,7 @@ func (s *Subprocess) Start() (<-chan string, error) {
 	log.Debugf("Started subprocess %s", strings.Join(s.Command, " "))
 	s.outChan = make(chan string, 10)
 
+	s.wg.Add(2) //scan decrements by 1 on exit
 	go s.scan(s.outPipe)
 	go s.scan(s.errPipe)
 	go s.waitForExit()
@@ -89,7 +90,6 @@ func (s *Subprocess) waitForExit() {
 }
 
 func (s *Subprocess) scan(pipe io.ReadCloser) {
-	s.wg.Add(1)
 	defer s.wg.Done()
 
 	chunker := NewChunkedReader(pipe, 1*time.Second, 4096)
