@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -73,6 +74,29 @@ func TestTarballAction(t *testing.T) {
 	expected := fmt.Sprintf("arg:%s,env:%s", "arg1", "env1")
 	if reply.Payload != expected {
 		t.Fatalf("Expected %v, got %v", expected, reply.Payload)
+	}
+}
+
+func TestTarballHTTPError(t *testing.T) {
+	testserver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+
+	defer testserver.Close()
+	payload := fmt.Sprintf(`{"url":"%s"}`, testserver.URL)
+	req, err := arc.CreateRequest("execute", "tarball", "sender", "identity", 60, payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := make(chan *arc.Reply, 10)
+	job := arc.NewJob("identity", req, out)
+	agent := &executeAgent{}
+	_, err = agent.TarballAction(context.Background(), job)
+	if err == nil {
+		t.Fatal("Action should fail when the download errors.")
+	}
+	if !strings.Contains(err.Error(), testserver.URL) {
+		t.Fatalf("Expected error message containing %v, got %v", testserver.URL, err.Error())
 	}
 
 }

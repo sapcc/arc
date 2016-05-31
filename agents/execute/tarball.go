@@ -39,6 +39,9 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 	if err != nil {
 		return "", err
 	}
+	if res.StatusCode >= 400 {
+		return "", fmt.Errorf("Failed to retrieve %s: %s", data.URL, res.Status)
+	}
 	defer res.Body.Close()
 	destPath, err := unzipit.UnpackStream(res.Body, tmpDir)
 	if err != nil {
