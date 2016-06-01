@@ -232,7 +232,8 @@ var _ = Describe("Log", func() {
 			// process new reply
 			newReply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: chunck2, Final: false}
 			err = ProcessLogReply(db, &newReply, "darwin", true)
-			Expect(err).To(Equal(ReplyExistsError))
+			_, ok := err.(ReplyExistsError)
+			Expect(ok).To(Equal(true))
 		})
 
 		It("should not check concurrency safe", func() {
@@ -254,7 +255,8 @@ var _ = Describe("Log", func() {
 			newReply := arc.Reply{RequestID: newJob.RequestID, Number: 0, Payload: chunck2, Final: false}
 			err = ProcessLogReply(db, &newReply, "darwin", false)
 			Expect(err).To(HaveOccurred())
-			Expect(err).NotTo(Equal(ReplyExistsError))
+			_, ok := err.(ReplyExistsError)
+			Expect(ok).NotTo(Equal(true))
 		})
 
 	})

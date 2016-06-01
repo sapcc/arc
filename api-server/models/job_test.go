@@ -88,7 +88,8 @@ var _ = Describe("Jobs", func() {
 			dbJobs := Jobs{}
 			err := dbJobs.GetAuthorized(db, &authorization, "", &pagination)
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			_, ok := err.(auth.IdentityStatusInvalid)
+			Expect(ok).To(Equal(true))
 		})
 
 		It("should return a project authorization error", func() {
@@ -270,7 +271,8 @@ var _ = Describe("Job", func() {
 			strSlice := []byte(data)
 			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.IdentityStatusInvalid))
+			_, ok := err.(auth.IdentityStatusInvalid)
+			Expect(ok).To(Equal(true))
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
 		})
@@ -283,7 +285,8 @@ var _ = Describe("Job", func() {
 			strSlice := []byte(data)
 			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(auth.NotAuthorized))
+			_, ok := err.(auth.NotAuthorized)
+			Expect(ok).To(Equal(true))
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
 		})

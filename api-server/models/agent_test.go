@@ -303,7 +303,8 @@ var _ = Describe("Agents", func() {
 				dbAgents := Agents{}
 				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+				_, ok := err.(auth.IdentityStatusInvalid)
+				Expect(ok).To(Equal(true))
 			})
 
 			It("should return a project authorization error", func() {
@@ -438,7 +439,8 @@ var _ = Describe("Agent", func() {
 				dbAgent := Agent{AgentID: agent.AgentID}
 				err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+				_, ok := err.(auth.IdentityStatusInvalid)
+				Expect(ok).To(Equal(true))
 			})
 
 			It("should return a project authorization error", func() {
@@ -490,7 +492,8 @@ var _ = Describe("Agent", func() {
 				// delete agent
 				err := agent.DeleteAuthorized(db, &authorization)
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(auth.IdentityStatusInvalid))
+				_, ok := err.(auth.IdentityStatusInvalid)
+				Expect(ok).To(Equal(true))
 			})
 
 			It("should return a project authorization error", func() {
@@ -499,7 +502,8 @@ var _ = Describe("Agent", func() {
 				// delete agent
 				err := agent.DeleteAuthorized(db, &authorization)
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(auth.NotAuthorized))
+				_, ok := err.(auth.NotAuthorized)
+				Expect(ok).To(Equal(true))
 			})
 
 		})
@@ -658,7 +662,8 @@ var _ = Describe("Agent", func() {
 
 			// process the request
 			err = ProcessRegistration(db, &newReg, agentId, true)
-			Expect(err).To(Equal(RegistrationExistsError))
+			_, ok := err.(RegistrationExistsError)
+			Expect(ok).To(Equal(true))
 		})
 
 		It("should NOT check concurrency safe", func() {
@@ -770,7 +775,8 @@ var _ = Describe("Agent", func() {
 					// add tag
 					err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(Equal(auth.IdentityStatusInvalid))
+					_, ok := err.(auth.IdentityStatusInvalid)
+					Expect(ok).To(Equal(true))
 				})
 
 				It("should return a project authorization error", func() {
@@ -778,7 +784,8 @@ var _ = Describe("Agent", func() {
 
 					err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(Equal(auth.NotAuthorized))
+					_, ok := err.(auth.NotAuthorized)
+					Expect(ok).To(Equal(true))
 				})
 
 			})
@@ -833,7 +840,8 @@ var _ = Describe("Agent", func() {
 					// add tag
 					err := ProcessTags(db, &authorization, agent.AgentID, url.Values{})
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(Equal(auth.IdentityStatusInvalid))
+					_, ok := err.(auth.IdentityStatusInvalid)
+					Expect(ok).To(Equal(true))
 				})
 
 				It("should return a project authorization error", func() {
@@ -841,7 +849,8 @@ var _ = Describe("Agent", func() {
 
 					err := ProcessTags(db, &authorization, agent.AgentID, url.Values{})
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(Equal(auth.NotAuthorized))
+					_, ok := err.(auth.NotAuthorized)
+					Expect(ok).To(Equal(true))
 				})
 
 			})
@@ -904,7 +913,8 @@ var _ = Describe("Agent", func() {
 					// add tag
 					err := agent.DeleteTagAuthorized(db, &authorization, "dog")
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(Equal(auth.IdentityStatusInvalid))
+					_, ok := err.(auth.IdentityStatusInvalid)
+					Expect(ok).To(Equal(true))
 				})
 
 				It("should return a project authorization error", func() {
@@ -912,7 +922,8 @@ var _ = Describe("Agent", func() {
 
 					err := agent.DeleteTagAuthorized(db, &authorization, "dog")
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(Equal(auth.NotAuthorized))
+					_, ok := err.(auth.NotAuthorized)
+					Expect(ok).To(Equal(true))
 				})
 
 			})

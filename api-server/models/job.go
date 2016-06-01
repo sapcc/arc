@@ -15,8 +15,21 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-var JobTargetAgentNotFoundError = fmt.Errorf("Target agent where the job has to be executed not found.")
-var JobBadRequestError = fmt.Errorf("Error unmarschaling or creating/validating the arc request.")
+type JobTargetAgentNotFoundError struct {
+	Msg string
+}
+
+func (e JobTargetAgentNotFoundError) Error() string {
+	return e.Msg
+}
+
+type JobBadRequestError struct {
+	Msg string
+}
+
+func (e JobBadRequestError) Error() string {
+	return e.Msg
+}
 
 type Job struct {
 	arc.Request
@@ -48,20 +61,20 @@ func CreateJob(db *sql.DB, data *[]byte, identity string, userId string) (*Job, 
 	var tmpReq arc.Request
 	err := json.Unmarshal(*data, &tmpReq)
 	if err != nil {
-		return nil, JobBadRequestError
+		return nil, JobBadRequestError{Msg: err.Error()}
 	}
 
 	// create a validate request
 	request, err := arc.CreateRequest(tmpReq.Agent, tmpReq.Action, identity, tmpReq.To, tmpReq.Timeout, tmpReq.Payload)
 	if err != nil {
-		return nil, JobBadRequestError
+		return nil, JobBadRequestError{Msg: err.Error()}
 	}
 
 	// check and get the target project id
 	agent := Agent{AgentID: tmpReq.To}
 	err = agent.Get(db)
 	if err == sql.ErrNoRows {
-		return nil, JobTargetAgentNotFoundError
+		return nil, JobTargetAgentNotFoundError{Msg: err.Error()}
 	} else if err != nil {
 		return nil, err
 	}
@@ -90,7 +103,7 @@ func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorizatio
 
 	// check project
 	if job.Project != authorization.ProjectId {
-		return nil, auth.NotAuthorized
+		return nil, auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", job.Project, authorization.ProjectId)}
 	}
 
 	return job, nil
@@ -151,7 +164,7 @@ func (job *Job) GetAuthorized(db *sql.DB, authorization *auth.Authorization) err
 
 	// check project
 	if job.Project != authorization.ProjectId {
-		return auth.NotAuthorized
+		return auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", job.Project, authorization.ProjectId)}
 	}
 
 	return nil

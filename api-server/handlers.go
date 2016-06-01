@@ -36,12 +36,17 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	// read jobs
 	jobs := models.Jobs{}
 	err := jobs.GetAuthorized(db, authorization, filterAgentId, pagination)
-	if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, "Error getting all jobs. ", http.StatusInternalServerError)
-		return
+	if err != nil {
+		if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, "Error getting all jobs. ", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// set pagination header
@@ -64,15 +69,20 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 
 	job := models.Job{Request: arc.Request{RequestID: jobId}}
 	err := job.GetAuthorized(db, authorization)
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -95,18 +105,23 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 
 	// create job
 	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)
-	if err == models.JobTargetAgentNotFoundError {
-		checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized)
-		return
-	} else if err == models.JobBadRequestError {
-		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
-		return
+	if err != nil {
+		if _, ok := err.(models.JobBadRequestError); ok {
+			checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest)
+			return
+		} else if _, ok := err.(models.JobTargetAgentNotFoundError); ok {
+			checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// save db
@@ -146,15 +161,20 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	// get the log
 	logEntry := models.Log{JobID: jobId}
 	err := logEntry.GetOrCollectAuthorized(db, authorization)
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -181,16 +201,20 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	// get agents
 	agents := models.Agents{}
 	err := agents.GetAuthorizedAndShowFacts(db, filterFacts, authorization, showFacts, pagination)
-
-	if err == models.FilterError {
-		checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError)
-		return
+	if err != nil {
+		if _, ok := err.(models.FilterError); ok {
+			checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// set pagination header
@@ -217,15 +241,20 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 
 	agent := models.Agent{AgentID: agentId}
 	err := agent.GetAuthorizedAndShowFacts(db, authorization, showFacts)
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. ", agentId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error getting agent with id %q. ", agentId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. ", agentId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error getting agent with id %q. ", agentId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -243,15 +272,20 @@ func deleteAgent(w http.ResponseWriter, r *http.Request) {
 
 	agent := models.Agent{AgentID: agentId}
 	err := agent.DeleteAuthorized(db, authorization)
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error deleten agent with id %q. ", agentId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error deleten agent with id %q. ", agentId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -273,15 +307,20 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	// get the agent
 	agent := models.Agent{AgentID: agentId}
 	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{"all"})
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -304,15 +343,20 @@ func serveAgentTags(w http.ResponseWriter, r *http.Request) {
 	// get the agent
 	agent := models.Agent{AgentID: agentId}
 	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{"all"})
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -333,23 +377,28 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 
 	// process data
 	err := models.ProcessTags(db, authorization, agentId, r.Form)
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
-		return
-	} else if serr, ok := err.(*models.TagError); ok {
-		jsonString, err := serr.MessagesToJson()
-		if err != nil {
-			checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			return
+		} else if serr, ok := err.(*models.TagError); ok {
+			jsonString, err := serr.MessagesToJson()
+			if err != nil {
+				checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+			}
+			http.Error(w, jsonString, http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q. ", agentId), http.StatusInternalServerError)
+			return
 		}
-		http.Error(w, jsonString, http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q. ", agentId), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -368,15 +417,20 @@ func deleteAgentTag(w http.ResponseWriter, r *http.Request) {
 	// get the agent
 	agent := models.Agent{AgentID: agentId}
 	err := agent.DeleteTagAuthorized(db, authorization, value)
-	if err == sql.ErrNoRows {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
-		return
-	} else if err == auth.IdentityStatusInvalid || err == auth.NotAuthorized {
-		logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error removing tag %q from Agent id %q. ", value, agentId), http.StatusInternalServerError)
-		return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			return
+		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else if _, ok := err.(auth.NotAuthorized); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			return
+		} else {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error removing tag %q from Agent id %q. ", value, agentId), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")

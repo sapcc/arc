@@ -18,8 +18,21 @@ import (
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-var FilterError = fmt.Errorf("Filter query has a syntax error.")
-var RegistrationExistsError = fmt.Errorf("Registration message already handeled.")
+type RegistrationExistsError struct {
+	Msg string
+}
+
+func (e RegistrationExistsError) Error() string {
+	return e.Msg
+}
+
+type FilterError struct {
+	Msg string
+}
+
+func (e FilterError) Error() string {
+	return e.Msg
+}
 
 type TagError struct {
 	Messages map[string][]string
@@ -125,7 +138,7 @@ func (agent *Agent) GetAuthorizedAndShowFacts(db Db, authorization *auth.Authori
 
 	// check project
 	if agent.Project != authorization.ProjectId {
-		return auth.NotAuthorized
+		return auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", agent.Project, authorization.ProjectId)}
 	}
 
 	// filter facts
@@ -157,7 +170,7 @@ func (agent *Agent) DeleteAuthorized(db Db, authorization *auth.Authorization) e
 
 	// check project
 	if agent.Project != authorization.ProjectId {
-		return auth.NotAuthorized
+		return auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", agent.Project, authorization.ProjectId)}
 	}
 
 	res, err := db.Exec(ownDb.DeleteAgentQuery, agent.AgentID)
@@ -279,7 +292,7 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 		if safe {
 			return processRegistration(db, &agent)
 		} else {
-			return RegistrationExistsError
+			return RegistrationExistsError{Msg: fmt.Sprint("IsConcurrencySafe returns false by ProcessRegistration. Agent update with: ", agent.UpdatedWith)}
 		}
 	} else {
 		return processRegistration(db, &agent)
@@ -314,7 +327,7 @@ func (agent *Agent) AddTagAuthorized(db Db, authorization *auth.Authorization, t
 
 	// check project
 	if agent.Project != authorization.ProjectId {
-		return auth.NotAuthorized
+		return auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", agent.Project, authorization.ProjectId)}
 	}
 
 	res, err := db.Exec(ownDb.AddAgentTag, agent.AgentID, time.Now(), tagKey, tagValue)
@@ -353,7 +366,7 @@ func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization
 
 	// check project
 	if agent.Project != authorization.ProjectId {
-		return auth.NotAuthorized
+		return auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", agent.Project, authorization.ProjectId)}
 	}
 
 	res, err := db.Exec(ownDb.DeleteAgentTagQuery, agent.AgentID, time.Now(), tagKey)
@@ -509,7 +522,7 @@ func buildAgentsQuery(baseQuery string, authProjectId, filterParam string, pag *
 		// query string to sql query
 		filterQuery, err = filter.Postgresql(filterParam)
 		if err != nil {
-			return "", FilterError
+			return "", FilterError{Msg: err.Error()}
 		}
 	}
 

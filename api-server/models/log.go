@@ -13,7 +13,15 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-var ReplyExistsError = fmt.Errorf("Reply message already handeled.")
+//var ReplyExistsError = fmt.Errorf("Reply message already handeled.")
+
+type ReplyExistsError struct {
+	Msg string
+}
+
+func (e ReplyExistsError) Error() string {
+	return e.Msg
+}
 
 type Log struct {
 	JobID     string    `json:"job_id"`
@@ -88,7 +96,7 @@ func (log *Log) GetOrCollectAuthorized(db *sql.DB, authorization *auth.Authoriza
 		return err
 	}
 	if job.Project != authorization.ProjectId {
-		return auth.NotAuthorized
+		return auth.NotAuthorized{Msg: fmt.Sprintf("%s is not project %s", job.Project, authorization.ProjectId)}
 	}
 
 	return nil
@@ -107,7 +115,7 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 		if safe {
 			return processLogReply(db, reply)
 		} else {
-			return ReplyExistsError
+			return ReplyExistsError{Msg: fmt.Sprint("IsConcurrencySafe for ProcessLogReply is false. ", fmt.Sprint(reply.RequestID, "_", reply.Number))}
 		}
 	} else {
 		return processLogReply(db, reply)
