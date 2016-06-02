@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/c4milo/unzipit"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"golang.org/x/net/context"
@@ -35,6 +37,7 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 	}
 	defer os.Remove(tmpDir)
 
+	log.Info("Fetching ", data.URL)
 	res, err := http.Get(data.URL)
 	if err != nil {
 		return "", err
@@ -43,13 +46,14 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 		return "", fmt.Errorf("Failed to retrieve %s: %s", data.URL, res.Status)
 	}
 	defer res.Body.Close()
-	destPath, err := unzipit.UnpackStream(res.Body, tmpDir)
+	_, err = unzipit.UnpackStream(res.Body, tmpDir)
 	if err != nil {
 		return "", err
 	}
 
-	process := arc.NewSubprocess(path.Join(destPath, data.Path), data.Arguments...)
-	process.Dir = destPath
+	process := arc.NewSubprocess(path.Join(tmpDir, data.Path), data.Arguments...)
+	log.Info("Running ", strings.Join(process.Command, " "))
+	process.Dir = tmpDir
 	if data.Environment != nil && len(data.Environment) > 0 {
 		envVars := os.Environ()
 		for key, val := range data.Environment {
