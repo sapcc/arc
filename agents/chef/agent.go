@@ -139,7 +139,7 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 		log_level = "debug"
 	} else {
 		//by default if we are not in debug mode we remove the temporary Directory
-		defer os.Remove(tmpDir)
+		defer os.RemoveAll(tmpDir)
 	}
 
 	dnaFile, err := os.Create(path.Join(tmpDir, "dna.json"))
