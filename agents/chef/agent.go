@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
@@ -33,10 +34,11 @@ type omnitruckResponse struct {
 }
 
 type chefZeroPayload struct {
-	RunList    []string               `json:"run_list"`
-	RecipeURL  string                 `json:"recipe_url"`
-	Attributes map[string]interface{} `json:"attributes"`
-	Debug      bool                   `json:"debug"`
+	RunList    []string                 `json:"run_list"`
+	RecipeURL  string                   `json:"recipe_url"`
+	Attributes map[string]interface{}   `json:"attributes"`
+	Debug      bool                     `json:"debug"`
+	Nodes      []map[string]interface{} `json:"nodes"`
 }
 
 type enableOptions struct {
@@ -165,6 +167,29 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	chefZeroMinimalVersion, err := version.NewVersion("12.1.0")
 	if err != nil {
 		return "", err
+	}
+
+	if data.Nodes != nil {
+		var nodesDir = path.Join(tmpDir, "nodes")
+		if err = os.Mkdir(nodesDir, 0755); err != nil {
+			return "", fmt.Errorf("Failed to create %s: %s", nodesDir, err)
+		}
+		for i, node := range data.Nodes {
+			nodeJson, err := json.MarshalIndent(node, "", "  ")
+			if err != nil {
+				return "", fmt.Errorf("Failed to marshal node %d: %s", i, err)
+			}
+			nodeName := strconv.Itoa(i)
+			if name, ok := node["name"]; ok {
+				if s, ok := name.(string); ok {
+					nodeName = s
+				}
+			}
+			nodeFile := path.Join(nodesDir, fmt.Sprintf("%s.json", nodeName))
+			if err = ioutil.WriteFile(nodeFile, nodeJson, 0644); err != nil {
+				return "", fmt.Errorf("Failed to write %s: %s", nodeFile, err)
+			}
+		}
 	}
 
 	var process *arc.Subprocess
