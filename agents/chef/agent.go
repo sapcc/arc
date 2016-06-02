@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 
@@ -24,6 +25,10 @@ type chefAgent struct{}
 
 var (
 	defaultOmnitruckUrl = "https://www.chef.io/chef/metadata"
+	clientRbTemplate    = template.Must(template.New("client.rb").Parse(`chef_repo_path '{{ .chefRepoPath }}'
+{{ if .nodeName -}}
+node_name '{{.nodeName}}'
+{{ end -}}`))
 )
 
 type omnitruckResponse struct {
@@ -39,6 +44,7 @@ type chefZeroPayload struct {
 	Attributes map[string]interface{}   `json:"attributes"`
 	Debug      bool                     `json:"debug"`
 	Nodes      []map[string]interface{} `json:"nodes"`
+	NodeName   string                   `json:"name"`
 }
 
 type enableOptions struct {
@@ -103,7 +109,6 @@ func (a *chefAgent) Enable(ctx context.Context, job *arc.Job) (string, error) {
 		} else {
 			return "", err
 		}
-
 	}
 
 	return "", fmt.Errorf("Enabling chef agent failed")
@@ -150,6 +155,7 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	}
 	log.Infof("Writing dna.json to %s", dnaFile.Name())
 	if _, err := dnaFile.Write(dna); err != nil {
+		dnaFile.Close()
 		return "", fmt.Errorf("Failed to write dna.json to disk: %s", err)
 	}
 	dnaFile.Close()
@@ -158,10 +164,17 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	if err != nil {
 		return "", fmt.Errorf("Failed to create client.rb: %s", err)
 	}
-	if _, err := configFile.Write([]byte(fmt.Sprintf("chef_repo_path '%s'\n", tmpDir))); err != nil {
+
+	configVars := map[string]string{
+		"nodeName":     data.NodeName,
+		"chefRepoPath": tmpDir,
+	}
+
+	if err = clientRbTemplate.Execute(configFile, configVars); err != nil {
+		configFile.Close()
 		return "", fmt.Errorf("Failed to write client.rb to disk: %s", err)
 	}
-	dnaFile.Close()
+	configFile.Close()
 
 	installedVersion, err := version.NewVersion(chefVersion())
 	chefZeroMinimalVersion, err := version.NewVersion("12.1.0")
