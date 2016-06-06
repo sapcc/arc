@@ -38,13 +38,13 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	err := jobs.GetAuthorized(db, authorization, filterAgentId, pagination)
 	if err != nil {
 		if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "Error getting all jobs. ", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, "Error getting all jobs. ", http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, "Error getting all jobs. ", http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -57,7 +57,7 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(jobs)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
@@ -71,23 +71,23 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 	err := job.GetAuthorized(db, authorization)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q not found", jobId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Job with id %q.", jobId), http.StatusInternalServerError, r)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(job)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +99,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	// read request body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest, r)
 		return
 	}
 
@@ -107,19 +107,19 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)
 	if err != nil {
 		if _, ok := err.(models.JobBadRequestError); ok {
-			checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest)
+			checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest, r)
 			return
 		} else if _, ok := err.(models.JobTargetAgentNotFoundError); ok {
-			checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -127,14 +127,14 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 	// save db
 	err = job.Save(db)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError, r)
 		return
 	}
 
 	// create a mqtt request
 	err = arcSendRequest(&job.Request)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError, r)
 		return
 	}
 
@@ -143,7 +143,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(response)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
 }
 
 /*
@@ -163,16 +163,16 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	err := logEntry.GetOrCollectAuthorized(db, authorization)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id %q not found.", jobId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Logs for Job with id  %q.", jobId), http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -203,16 +203,16 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	err := agents.GetAuthorizedAndShowFacts(db, filterFacts, authorization, showFacts, pagination)
 	if err != nil {
 		if _, ok := err.(models.FilterError); ok {
-			checkErrAndReturnStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest)
+			logInfoAndReturnHttpErrStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, "Error getting all agents.", http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -225,7 +225,7 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agents)
-	checkErrAndReturnStatus(w, err, "Error encoding Agents to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Agents to JSON", http.StatusInternalServerError, r)
 }
 
 func serveAgent(w http.ResponseWriter, r *http.Request) {
@@ -243,23 +243,23 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 	err := agent.GetAuthorizedAndShowFacts(db, authorization, showFacts)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. ", agentId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. ", agentId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error getting agent with id %q. ", agentId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error getting agent with id %q. ", agentId), http.StatusInternalServerError, r)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agent)
-	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
 }
 
 func deleteAgent(w http.ResponseWriter, r *http.Request) {
@@ -274,16 +274,16 @@ func deleteAgent(w http.ResponseWriter, r *http.Request) {
 	err := agent.DeleteAuthorized(db, authorization)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error deleten agent with id %q. ", agentId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error deleten agent with id %q. ", agentId), http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -309,23 +309,23 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{"all"})
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError, r)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agent.Facts)
-	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
 }
 
 /*
@@ -345,23 +345,23 @@ func serveAgentTags(w http.ResponseWriter, r *http.Request) {
 	err := agent.GetAuthorizedAndShowFacts(db, authorization, []string{"all"})
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q", agentId), http.StatusInternalServerError, r)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agent.Tags)
-	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
 }
 
 func saveAgentTags(w http.ResponseWriter, r *http.Request) {
@@ -379,24 +379,24 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 	err := models.ProcessTags(db, authorization, agentId, r.Form)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound, r)
 			return
 		} else if serr, ok := err.(*models.TagError); ok {
 			jsonString, err := serr.MessagesToJson()
 			if err != nil {
-				checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+				checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
 			}
 			http.Error(w, jsonString, http.StatusBadRequest)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q. ", agentId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q. ", agentId), http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -419,16 +419,16 @@ func deleteAgentTag(w http.ResponseWriter, r *http.Request) {
 	err := agent.DeleteTagAuthorized(db, authorization, value)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound, r)
 			return
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized)
+			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 			return
 		} else {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error removing tag %q from Agent id %q. ", value, agentId), http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error removing tag %q from Agent id %q. ", value, agentId), http.StatusInternalServerError, r)
 			return
 		}
 	}
@@ -466,7 +466,7 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 
 		// convert struct to json
 		body, err := json.Marshal(ready)
-		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
 
 		// return the error with json body
 		http.Error(w, string(body), ready.Status)
@@ -486,7 +486,7 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 
 		// convert struct to json
 		body, err := json.Marshal(ready)
-		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
 
 		// return the error with json body
 		http.Error(w, string(body), ready.Status)
@@ -502,18 +502,45 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 
 // private
 
-func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int) {
+func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
+	// status string, code int, title string, detail string
+	apiError := NewApiError(http.StatusText(status), status, msg, err, r)
+
 	if err != nil {
-		log.Infof("Error, returning status %v. %s %s", status, msg, err.Error())
+		log.Infof("Error, returning status %v.\nDetails: %+v", apiError.Status, apiError)
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	http.Error(w, http.StatusText(status), status)
+	http.Error(w, apiError.String(), status)
 }
 
-func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
+func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
 	if err != nil {
-		log.Errorf("Error, returning status %v. %s %s", status, msg, err.Error())
+		apiError := NewApiError(http.StatusText(status), status, msg, err, r)
+		log.Errorf("Error, returning status %v.\nDetails: %+v", apiError.Status, apiError)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		http.Error(w, http.StatusText(status), status)
+		http.Error(w, apiError.String(), status)
 	}
 }
+
+// func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
+//   // status string, code int, title string, detail string
+//   apiError := NewApiError(http.StatusText(status), status, msg, err, r)
+//
+//   if err != nil {
+//     log.Infof("Error id %s, returning status %v. %s %s", apiError.Id, status, msg, err.Error())
+//   }
+//   w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+//   http.Error(w, apiError.String(), status)
+// }
+//
+// func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
+//   // status string, code int, title string, detail string
+//   apiError := NewApiError(http.StatusText(status), status, msg, err, r)
+//
+//   if err != nil {
+//     log.Errorf("Error id %s, returning status %v. %s %s", apiError.Id, status, msg, err.Error())
+//   }
+//
+//   w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+//   http.Error(w, apiError.String(), status)
+// }
