@@ -521,26 +521,3 @@ func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, statu
 		http.Error(w, apiError.String(), status)
 	}
 }
-
-// func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
-//   // status string, code int, title string, detail string
-//   apiError := NewApiError(http.StatusText(status), status, msg, err, r)
-//
-//   if err != nil {
-//     log.Infof("Error id %s, returning status %v. %s %s", apiError.Id, status, msg, err.Error())
-//   }
-//   w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-//   http.Error(w, apiError.String(), status)
-// }
-//
-// func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
-//   // status string, code int, title string, detail string
-//   apiError := NewApiError(http.StatusText(status), status, msg, err, r)
-//
-//   if err != nil {
-//     log.Errorf("Error id %s, returning status %v. %s %s", apiError.Id, status, msg, err.Error())
-//   }
-//
-//   w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-//   http.Error(w, apiError.String(), status)
-// }
