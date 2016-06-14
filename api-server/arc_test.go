@@ -47,8 +47,9 @@ var _ = Describe("Arc", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// check facts
-		checkFacts := models.JSONBfromString(reg.Payload)
-		eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
+		checkFacts, err := models.JSONBfromString(reg.Payload)
+		Expect(err).NotTo(HaveOccurred())
+		eq := reflect.DeepEqual(dbAgent.Facts, *checkFacts)
 		Expect(eq).To(Equal(true))
 		close(done)
 	}, 2.0)

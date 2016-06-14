@@ -9,7 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
-
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
@@ -52,7 +52,12 @@ func (job *Job) RpcVersionExample() {
 	job.CreatedAt = time.Now().Add(-1 * time.Minute)
 	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
 	job.Project = "test-project"
-	job.UserID = "arc_test"
+	job.User = JSONB{}
+	userJSONB, err := JobUserToJSONB(auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"})
+	if err != nil {
+		log.Error(err)
+	}
+	job.User = *userJSONB
 }
 
 func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.Time, timeout int) {
@@ -68,7 +73,11 @@ func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.T
 	job.CreatedAt = createdAt
 	job.UpdatedAt = createdAt
 	job.Project = "test-project"
-	job.UserID = "arc_test"
+	userJSONB, err := JobUserToJSONB(auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"})
+	if err != nil {
+		log.Error(err)
+	}
+	job.User = *userJSONB
 }
 
 func (job *Job) ExecuteScriptExample() {
@@ -156,12 +165,4 @@ func (logpart *LogPart) SaveLogPartExamples(db *sql.DB, id string) string {
 		contentSlice[i] = chunk
 	}
 	return strings.Join(contentSlice[:], "")
-}
-
-func JSONBfromString(data string) JSONB {
-	checkFacts := make(JSONB)
-	if err := json.Unmarshal([]byte(data), &checkFacts); err != nil {
-		log.Error(err)
-	}
-	return checkFacts
 }

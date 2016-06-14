@@ -53,7 +53,7 @@ var _ = Describe("Jobs", func() {
 			jobs := Jobs{}
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 			authorization.IdentityStatus = "Confirmed"
-			authorization.UserId = "userID"
+			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = "test-project"
 			pagination.Offset = 0
 			pagination.Limit = 25
@@ -174,8 +174,8 @@ var _ = Describe("Job", func() {
 	Describe("CreateJob", func() {
 
 		var (
-			userId = "userID_test"
-			agent  = Agent{}
+			user  = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			agent = Agent{}
 		)
 
 		JustBeforeEach(func() {
@@ -188,7 +188,7 @@ var _ = Describe("Job", func() {
 		It("returns error data is no json conform", func() {
 			noValidJson := `"to":"darwin"`
 			strSlice := []byte(noValidJson)
-			job, err := CreateJob(db, &strSlice, uuid.New(), userId)
+			job, err := CreateJob(db, &strSlice, uuid.New(), &user)
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
@@ -197,7 +197,7 @@ var _ = Describe("Job", func() {
 		It("returns error data is not valid", func() {
 			noValidData := `{"to":"darwin","timeout":60,"agent":"execute","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}` // action is missing
 			strSlice := []byte(noValidData)
-			job, err := CreateJob(db, &strSlice, uuid.New(), userId)
+			job, err := CreateJob(db, &strSlice, uuid.New(), &user)
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
@@ -206,7 +206,7 @@ var _ = Describe("Job", func() {
 		It("returns error user id is blank", func() {
 			data := `{"to":"darwin","timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`
 			strSlice := []byte(data)
-			job, err := CreateJob(db, &strSlice, uuid.New(), "")
+			job, err := CreateJob(db, &strSlice, uuid.New(), &auth.User{})
 			Expect(err).To(HaveOccurred())
 			var newJob *Job
 			Expect(job).To(Equal(newJob))
@@ -220,7 +220,7 @@ var _ = Describe("Job", func() {
 			payload := `"payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""`
 			noValidData := fmt.Sprintf(`{"to":%q,"timeout":%v,"agent":%q,"action":%q,"payload":%q}`, to, timeout, arcAgent, action, payload)
 			strSlice := []byte(noValidData)
-			job, err := CreateJob(db, &strSlice, uuid.New(), userId)
+			job, err := CreateJob(db, &strSlice, uuid.New(), &user)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(job.To).To(Equal(to))
 			Expect(job.Timeout).To(Equal(timeout))
@@ -229,8 +229,11 @@ var _ = Describe("Job", func() {
 			Expect(job.Payload).To(Equal(payload))
 			// should create a job with the project id from the target agent
 			Expect(job.Project).To(Equal(agent.Project))
-			// should save also the user id given
-			Expect(job.UserID).To(Equal(userId))
+
+			// should save also the given user
+			eq, err := CompareUserWithJobUser(user, job.User)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(eq).To(Equal(true))
 		})
 
 	})
@@ -238,7 +241,7 @@ var _ = Describe("Job", func() {
 	Describe("CreateJobAuthorized", func() {
 
 		var (
-			userId        = "userID_test"
+			user          = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization = auth.Authorization{}
 			agent         = Agent{}
 		)
@@ -246,7 +249,7 @@ var _ = Describe("Job", func() {
 		JustBeforeEach(func() {
 			// authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.UserId = userId
+			authorization.User = user
 			authorization.ProjectId = "test-project"
 			// agent
 			agent.Example()
@@ -260,7 +263,11 @@ var _ = Describe("Job", func() {
 			strSlice := []byte(data)
 			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(job.UserID).To(Equal(authorization.UserId))
+
+			// should save also the given user
+			eq, err := CompareUserWithJobUser(user, job.User)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(eq).To(Equal(true))
 		})
 
 		It("should return an identity authorization error", func() {

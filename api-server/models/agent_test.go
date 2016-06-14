@@ -95,7 +95,7 @@ var _ = Describe("Agents", func() {
 		JustBeforeEach(func() {
 			agents.CreateAndSaveAgentExamples(db, 3)
 			authorization.IdentityStatus = "Confirmed"
-			authorization.UserId = "userID"
+			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = "test-project"
 			pagination.Offset = 0
 			pagination.Limit = 25
@@ -375,7 +375,7 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// reset authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.UserId = "userID"
+			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = "test-project"
 		})
 
@@ -469,7 +469,7 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// reset authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.UserId = "userID"
+			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = agent.Project
 		})
 
@@ -590,13 +590,14 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// build test facts
-			checkFacts := JSONBfromString(reg.Payload)
+			checkFacts, err := JSONBfromString(reg.Payload)
+			Expect(err).NotTo(HaveOccurred())
 
 			// check
 			dbAgent := Agent{AgentID: reg.Sender}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
+			eq := reflect.DeepEqual(dbAgent.Facts, *checkFacts)
 			Expect(eq).To(Equal(true))
 			Expect(dbAgent.Project).To(Equal(reg.Project))
 			Expect(dbAgent.Organization).To(Equal(reg.Organization))
@@ -629,12 +630,13 @@ var _ = Describe("Agent", func() {
 
 			// check
 			dbFacts := fmt.Sprintf(`{"os": "darwin", "online": true, "project": "%s", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": %v, "memory_total": %v, "organization": "%s"}`, proj, memory_used, memory_total, org)
-			checkFacts := JSONBfromString(dbFacts)
+			checkFacts, err := JSONBfromString(dbFacts)
+			Expect(err).NotTo(HaveOccurred())
 
 			dbAgent := Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			eq := reflect.DeepEqual(dbAgent.Facts, checkFacts)
+			eq := reflect.DeepEqual(dbAgent.Facts, *checkFacts)
 			Expect(eq).To(Equal(true))
 			Expect(dbAgent.Project).To(Equal(newProj))
 			Expect(dbAgent.Organization).To(Equal(newOrg))
@@ -708,7 +710,7 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// reset authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.UserId = "userID"
+			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = agent.Project
 		})
 

@@ -501,7 +501,7 @@ var _ = Describe("Agent Handlers", func() {
 				err = currentAgent.Update(db)
 				Expect(err).NotTo(HaveOccurred())
 				// add tags
-				authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: currentAgent.Project}
+				authorization := auth.Authorization{IdentityStatus: "Confirmed", User: auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}, ProjectId: currentAgent.Project}
 				err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey[i], tagsValue[i])
 				Expect(err).NotTo(HaveOccurred())
 				err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey2[i], tagsValue2[i])
@@ -853,8 +853,9 @@ var _ = Describe("Agent Handlers", func() {
 			Expect(w.Code).To(Equal(200))
 
 			// check facts
-			checkFacts := models.JSONBfromString(w.Body.String())
-			eq := reflect.DeepEqual(agent.Facts, checkFacts)
+			checkFacts, err := models.JSONBfromString(w.Body.String())
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(agent.Facts, *checkFacts)
 			Expect(eq).To(Equal(true))
 		})
 
@@ -932,7 +933,7 @@ var _ = Describe("Tags", func() {
 		})
 
 		It("returns the tags from an agent", func() {
-			authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
+			authorization := auth.Authorization{IdentityStatus: "Confirmed", User: auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}, ProjectId: agent.Project}
 			err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
 			Expect(err).NotTo(HaveOccurred())
 			err = agent.AddTagAuthorized(db, &authorization, "dog", "bup")
@@ -961,8 +962,9 @@ var _ = Describe("Tags", func() {
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			checkTags := models.JSONBfromString(w.Body.String())
-			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			checkTags, err := models.JSONBfromString(w.Body.String())
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
 			Expect(eq).To(Equal(true))
 		})
 
@@ -1018,8 +1020,9 @@ var _ = Describe("Tags", func() {
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			checkTags := models.JSONBfromString(`{}`)
-			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			checkTags, err := models.JSONBfromString(`{}`)
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
 			Expect(eq).To(Equal(true))
 		})
 
@@ -1037,8 +1040,9 @@ var _ = Describe("Tags", func() {
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			checkTags := models.JSONBfromString(`{"cat":"miau","dog":"bup"}`)
-			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			checkTags, err := models.JSONBfromString(`{"cat":"miau","dog":"bup"}`)
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
 			Expect(eq).To(Equal(true))
 		})
 
@@ -1050,7 +1054,7 @@ var _ = Describe("Tags", func() {
 			tmp_DeleteTagQuery := DeleteAgentTagQuery
 			DeleteAgentTagQuery = `DELETE FROM wrong_table WHERE agent_id=$1 AND value=$2`
 
-			authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
+			authorization := auth.Authorization{IdentityStatus: "Confirmed", User: auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}, ProjectId: agent.Project}
 			err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -1097,7 +1101,7 @@ var _ = Describe("Tags", func() {
 		})
 
 		It("removes the agent tag", func() {
-			authorization := auth.Authorization{IdentityStatus: "Confirmed", UserId: "userID", ProjectId: agent.Project}
+			authorization := auth.Authorization{IdentityStatus: "Confirmed", User: auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}, ProjectId: agent.Project}
 			err := agent.AddTagAuthorized(db, &authorization, "cat", "miau")
 			Expect(err).NotTo(HaveOccurred())
 			err = agent.AddTagAuthorized(db, &authorization, "dog", "bup")
@@ -1116,8 +1120,9 @@ var _ = Describe("Tags", func() {
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
-			checkTags := models.JSONBfromString(`{"cat":"miau"}`)
-			eq := reflect.DeepEqual(dbAgent.Tags, checkTags)
+			checkTags, err := models.JSONBfromString(`{"cat":"miau"}`)
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
 			Expect(eq).To(Equal(true))
 		})
 

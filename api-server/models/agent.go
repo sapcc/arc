@@ -50,8 +50,6 @@ func (e *TagError) MessagesToJson() (string, error) {
 	return fmt.Sprintf(`{"errors":{"tags":%s}}`, string(jsonBytes)), nil
 }
 
-type JSONB map[string]interface{}
-
 type Agent struct {
 	AgentID      string    `json:"agent_id"`
 	Project      string    `json:"project"`
@@ -585,23 +583,4 @@ func processRegistration(db *sql.DB, agent *Agent) (err error) {
 	}
 
 	return
-}
-
-func (j JSONB) Value() (interface{}, error) {
-	valueString, err := json.Marshal(j)
-	return string(valueString), err
-}
-
-func (j *JSONB) Scan(value interface{}) error {
-	// nothing is set yet in the clumn
-	if value == nil {
-		return nil
-	}
-
-	// convert to json
-	if err := json.Unmarshal(value.([]byte), &j); err != nil {
-		return err
-	}
-
-	return nil
 }

@@ -37,7 +37,7 @@ type Job struct {
 	CreatedAt time.Time    `json:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at"`
 	Project   string       `json:"project"`
-	UserID    string       `json:"user_id"`
+	User      JSONB        `json:"user"`
 }
 
 type JobID struct {
@@ -48,12 +48,12 @@ type Jobs []Job
 
 type Status string
 
-func CreateJob(db *sql.DB, data *[]byte, identity string, userId string) (*Job, error) {
+func CreateJob(db *sql.DB, data *[]byte, identity string, user *auth.User) (*Job, error) {
 	if db == nil {
 		return nil, errors.New("Db is nil")
 	}
 
-	if userId == "" {
+	if user.Id == "" {
 		return nil, errors.New("User id is blank")
 	}
 
@@ -79,14 +79,23 @@ func CreateJob(db *sql.DB, data *[]byte, identity string, userId string) (*Job, 
 		return nil, err
 	}
 
-	return &Job{
+	job := Job{
 		*request,
 		arc.Queued,
 		time.Now(),
 		time.Now(),
 		agent.Project,
-		userId,
-	}, nil
+		JSONB{},
+	}
+
+	// add the user
+	userJsonb, err := JobUserToJSONB(*user)
+	if err != nil {
+		return nil, err
+	}
+	job.User = *userJsonb
+
+	return &job, nil
 }
 
 func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorization *auth.Authorization) (*Job, error) {
@@ -96,7 +105,7 @@ func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorizatio
 		return nil, err
 	}
 
-	job, err := CreateJob(db, data, identity, authorization.UserId)
+	job, err := CreateJob(db, data, identity, &authorization.User)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +147,7 @@ func (job *Job) Get(db *sql.DB) error {
 		return errors.New("Db is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.UserID)
+	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
 	if err != nil {
 		return err
 	}
@@ -175,8 +184,13 @@ func (job *Job) Save(db *sql.DB) error {
 		return errors.New("Db is nil")
 	}
 
+	jobUser, err := job.User.Value()
+	if err != nil {
+		return err
+	}
+
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt, job.Project, job.UserID).Scan(&lastInsertId)
+	err = db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt, job.Project, jobUser).Scan(&lastInsertId)
 	if err != nil {
 		return err
 	}
@@ -214,7 +228,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	}
 
 	// update object data
-	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.UserID); err != nil {
+	if err = tx.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User); err != nil {
 		return
 	}
 
@@ -328,7 +342,7 @@ func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
 
 	var job Job
 	for rows.Next() {
-		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.UserID)
+		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
 		if err != nil {
 			log.Errorf("Error scaning job results. Got ", err.Error())
 			continue
