@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	uuid "github.com/pborman/uuid"
 	"net/http"
+
+	uuid "github.com/pborman/uuid"
 )
 
 type ErrorSource struct {
