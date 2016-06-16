@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/codegangsta/cli"
-	"github.com/inconshreveable/go-update/check"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/local"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/swift"
@@ -21,12 +21,12 @@ const (
 )
 
 type Storage interface {
-	GetAvailableUpdate(req *http.Request) (*check.Result, error)
+	GetAvailableUpdate(req *http.Request) (*updater.CheckResult, error)
 	GetAllUpdates() (*[]string, error)
 	GetWebUpdates() (*[]string, *[]string, error)
 	GetUpdate(name string, writer io.Writer) error
 	GetStoragePath() string
-	GetLastestUpdate(params *check.Params) (string, error)
+	GetLastestUpdate(params *updater.CheckParams) (string, error)
 	IsConnected() bool
 }
 

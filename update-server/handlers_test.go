@@ -45,7 +45,7 @@ func TestServeAvailableUpdates(t *testing.T) {
 	c := cli.NewContext(nil, set, nil)
 	st, _ = storage.New(storage.Local, c)
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150901.01","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150901.01","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	w := httptest.NewRecorder()
 	serveAvailableUpdates(w, req)
@@ -65,7 +65,7 @@ func TestServeNonAvailableUpdates(t *testing.T) {
 	c := cli.NewContext(nil, set, nil)
 	st, _ = storage.New(storage.Local, c)
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","arch":"amd64","os":"darwin"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	w := httptest.NewRecorder()
 	serveAvailableUpdates(w, req)
@@ -85,7 +85,7 @@ func TestServeAvailableUpdatesError(t *testing.T) {
 	c := cli.NewContext(nil, set, nil)
 	st, _ = storage.New(storage.Local, c)
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64"}}`) // missing tag
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","arch":"amd64"}`) // missing tag
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	w := httptest.NewRecorder()
 	serveAvailableUpdates(w, req)

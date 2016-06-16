@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/inconshreveable/go-update/check"
-
 	"gitHub.***REMOVED***/monsoon/arc/updater"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
@@ -24,13 +22,19 @@ func Update(c *cli.Context, options map[string]interface{}) (int, error) {
 	})
 
 	r, err := up.Check()
-	if err == check.NoUpdateAvailable {
+	if err == updater.NoUpdateAvailable {
 		fmt.Println("No update available")
 		return 0, nil
 	} else if err != nil {
 		return 1, err
 	}
-	fmt.Println("Available update version", r.Version)
+
+	if r == nil {
+		fmt.Println("No update response available.")
+		return 0, nil
+	}
+
+	fmt.Printf("Available update version %s\n", r.Version)
 
 	if !c.Bool("no-update") {
 		if !c.Bool("force") {

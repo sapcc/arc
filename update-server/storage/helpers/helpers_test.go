@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/inconshreveable/go-update/check"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 )
 
 //
@@ -17,8 +17,8 @@ import (
 //
 
 func TestIsRelease(t *testing.T) {
-	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
-	darwinParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "darwin", "arch": "amd64"}}
+	windowsParams := updater.CheckParams{AppId: "arc", OS: "windows", Arch: "amd64"}
+	darwinParams := updater.CheckParams{AppId: "arc", OS: "darwin", Arch: "amd64"}
 
 	result := isReleaseFrom("", &windowsParams)
 	if result != false {
@@ -47,8 +47,8 @@ func TestIsRelease(t *testing.T) {
 //
 
 func TestExtractVersionFromRelease(t *testing.T) {
-	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
-	darwinParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "darwin", "arch": "amd64"}}
+	windowsParams := updater.CheckParams{AppId: "arc", OS: "windows", Arch: "amd64"}
+	darwinParams := updater.CheckParams{AppId: "arc", OS: "darwin", Arch: "amd64"}
 
 	_, err := extractVersionFrom("arc_20150903.10_windows_amd64.exe", &darwinParams)
 	if err == nil {
@@ -135,13 +135,13 @@ func TestGetLatestReleaseFrom(t *testing.T) {
 		"arc_20150805.15_linux_amd64",
 		"arc_20150805.15_windows_amd64.exe"}
 
-	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
+	windowsParams := updater.CheckParams{AppId: "arc", OS: "windows", Arch: "amd64"}
 	lastWindowsRelease := GetLatestReleaseFrom(&releases, &windowsParams)
 	if lastWindowsRelease != "arc_20150906.07_windows_amd64.exe" {
 		t.Error(fmt.Sprint("Expected to get last release arc_20150906.07_windows_amd64.exe. Got ", lastWindowsRelease))
 	}
 
-	linuxParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "linux", "arch": "amd64"}}
+	linuxParams := updater.CheckParams{AppId: "arc", OS: "linux", Arch: "amd64"}
 	lastLinuxRelease := GetLatestReleaseFrom(&releases, &linuxParams)
 	if lastLinuxRelease != "arc_20150906.07_linux_amd64" {
 		t.Error(fmt.Sprint("Expected to get last release arc_20150906.07_linux_amd64. Got ", lastLinuxRelease))
@@ -239,7 +239,7 @@ func TestParseRequestEmptyBodyNotJson(t *testing.T) {
 
 func TestParseRequestcheckMissingParams(t *testing.T) {
 	// get a success update
-	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","arch":"amd64"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	params, err := parseRequest(req)
 	if err == nil {
@@ -252,7 +252,7 @@ func TestParseRequestcheckMissingParams(t *testing.T) {
 
 func TestParseRequestSuccessfulcheckParams(t *testing.T) {
 	// get a success update
-	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","tags":{"arch":"amd64","os":"darwin"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"0.1.0-dev","arch":"amd64","os":"darwin"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	params, err := parseRequest(req)
 	if err != nil {
@@ -264,10 +264,10 @@ func TestParseRequestSuccessfulcheckParams(t *testing.T) {
 	if params.AppVersion != "0.1.0-dev" {
 		t.Error("Missing required post attribute 'app_version'")
 	}
-	if params.Tags["os"] != "darwin" {
+	if params.OS != "darwin" {
 		t.Error("Missing required post attribute 'tags[os]'")
 	}
-	if params.Tags["arch"] != "amd64" {
+	if params.Arch != "amd64" {
 		t.Error("Missing required post attribute 'tags[arch]'")
 	}
 }
@@ -278,7 +278,7 @@ func TestParseRequestSuccessfulcheckParams(t *testing.T) {
 
 func TestAvailableUpdate(t *testing.T) {
 	// get a success update
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	releases := []string{"arc_20150903.10_linux_amd64", "arc_20150903.10_windows_amd64.exe", "arc_20150903.5_windows_amd64.exe", "arc_20150904.1_linux_amd64"}
 
@@ -288,10 +288,6 @@ func TestAvailableUpdate(t *testing.T) {
 	}
 	if update == nil {
 		t.Error("Expected update NOT to be nil. Got ", update)
-	}
-
-	if update.Initiative != "automatically" {
-		t.Error("Expected Initiative to be 'automatically'. Got ", update.Initiative)
 	}
 
 	if update.Url != "http://0.0.0.0:3000/builds/arc_20150904.1_linux_amd64" {
@@ -304,7 +300,7 @@ func TestAvailableUpdate(t *testing.T) {
 }
 
 func TestNoAvailableUpdate(t *testing.T) {
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	releases := []string{"arc_20150903.10_linux_amd64", "arc_20150903.10_windows_amd64.exe", "arc_20150903.5_windows_amd64.exe", "arc_20150902.1_linux_amd64"}
 
@@ -318,19 +314,19 @@ func TestNoAvailableUpdate(t *testing.T) {
 }
 
 func TestAvailableUpdateArgumentError(t *testing.T) {
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64"}}`) // parse error (missing parameter) == UpdateArgumentError == 400
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64"}`) // parse error (missing parameter) == UpdateArgumentError == 400
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	releases := []string{}
 
 	_, err := AvailableUpdate(req, &releases)
-	if err != UpdateArgumentError {
+	if _, ok := err.(UpdateArgumentError); !ok {
 		t.Error("Expected argument error")
 	}
 }
 
 func TestAvailableUpdateWithOtherFiles(t *testing.T) {
 	// get a success update
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 	releases := []string{"README.md", "Vagrantfile", "arc_test_linux_amd64", "arc_20150904.1_linux_amd64", "arc_20150904.1_linux_amd64.sha256"}
 
@@ -340,10 +336,6 @@ func TestAvailableUpdateWithOtherFiles(t *testing.T) {
 	}
 	if update == nil {
 		t.Error("Expected update NOT to be nil. Got ", update)
-	}
-
-	if update.Initiative != "automatically" {
-		t.Error("Expected Initiative to be 'automatically'. Got ", update.Initiative)
 	}
 
 	if update.Url != "http://0.0.0.0:3000/builds/arc_20150904.1_linux_amd64" {

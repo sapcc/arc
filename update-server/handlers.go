@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/inconshreveable/go-update/check"
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
@@ -20,13 +20,16 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	update, err := st.GetAvailableUpdate(r)
-	if err == helpers.UpdateArgumentError {
-		logInfoAndReturnHttpErrStatus(w, err, "Error serving available updates. ", http.StatusBadRequest)
-		return
-	} else if err != nil {
-		checkErrAndReturnStatus(w, err, "Error serving available updates. ", http.StatusInternalServerError)
-		return
+	if err != nil {
+		if _, ok := err.(helpers.UpdateArgumentError); ok {
+			logInfoAndReturnHttpErrStatus(w, err, "Error serving available updates. ", http.StatusBadRequest, r)
+			return
+		} else if err != nil {
+			checkErrAndReturnStatus(w, err, "Error serving available updates. ", http.StatusInternalServerError, r)
+			return
+		}
 	}
+
 	if update == nil {
 		w.WriteHeader(204)
 		return
@@ -40,10 +43,10 @@ func serveAvailableUpdates(w http.ResponseWriter, r *http.Request) {
 func serveSwiftBuilds(w http.ResponseWriter, r *http.Request) {
 	err := st.GetUpdate(r.URL.Path, w)
 	if err == helpers.ObjectNotFoundError {
-		logInfoAndReturnHttpErrStatus(w, err, "Error getting swift update. ", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, err, "Error getting swift update. ", http.StatusNotFound, r)
 		return
 	} else if err != nil {
-		checkErrAndReturnStatus(w, err, "Error getting swift update. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error getting swift update. ", http.StatusInternalServerError, r)
 		return
 	}
 }
@@ -52,7 +55,7 @@ func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	uriSegments := strings.Split(path, "/")
 	if len(uriSegments) != 3 {
-		logInfoAndReturnHttpErrStatus(w, fmt.Errorf("Error getting lastest update. Not enough arguments."), "", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, fmt.Errorf("Error getting lastest update. Not enough arguments."), "", http.StatusNotFound, r)
 		return
 	}
 
@@ -61,15 +64,15 @@ func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	os := uriSegments[1]
 	arch := uriSegments[2]
 
-	params := check.Params{AppId: app, Tags: map[string]string{"os": os, "arch": arch}}
+	params := updater.CheckParams{AppId: app, OS: os, Arch: arch}
 	latestUpdate, err := st.GetLastestUpdate(&params)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error getting latest update. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error getting latest update. ", http.StatusInternalServerError, r)
 		return
 	}
 
 	if latestUpdate == "" {
-		logInfoAndReturnHttpErrStatus(w, fmt.Errorf("Error getting lastest update. No latest update available for this configuration."), "", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, fmt.Errorf("Error getting lastest update. No latest update available for this configuration."), "", http.StatusNotFound, r)
 		return
 	}
 
@@ -77,10 +80,10 @@ func serveLatestBuild(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-disposition", fmt.Sprint("attachment; filename=", latestUpdate))
 	err = st.GetUpdate(latestUpdate, w)
 	if err == helpers.ObjectNotFoundError {
-		logInfoAndReturnHttpErrStatus(w, err, "Error serving latest update. ", http.StatusNotFound)
+		logInfoAndReturnHttpErrStatus(w, err, "Error serving latest update. ", http.StatusNotFound, r)
 		return
 	} else if err != nil {
-		checkErrAndReturnStatus(w, err, "Error serving latest update. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error serving latest update. ", http.StatusInternalServerError, r)
 		return
 	}
 }
@@ -111,7 +114,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	lastUpdates, allUpdates, err := st.GetWebUpdates()
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error serving tempate. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error serving tempate. ", http.StatusInternalServerError, r)
 	}
 
 	// get build infos
@@ -124,7 +127,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// render template
 	if err := tmpl.ExecuteTemplate(w, "layout", data); err != nil {
-		checkErrAndReturnStatus(w, err, "Error serving tempate. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error serving tempate. ", http.StatusInternalServerError, r)
 		return
 	}
 }
@@ -132,7 +135,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Query().Get("filename")
 	if len(fileName) == 0 {
-		checkErrAndReturnStatus(w, errors.New("Error uploading a file. No filename parameter found. "), "", http.StatusBadRequest)
+		checkErrAndReturnStatus(w, errors.New("Error uploading a file. No filename parameter found. "), "", http.StatusBadRequest, r)
 		return
 	}
 
@@ -140,7 +143,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	path := path.Join(st.GetStoragePath(), fileName)
 	out, err := os.Create(path)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "Error uploading a file. Unable to create the file for writing. ", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "Error uploading a file. Unable to create the file for writing. ", http.StatusInternalServerError, r)
 		return
 	}
 	defer out.Close()
@@ -148,7 +151,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	// write the content from POST to the file
 	_, err = io.Copy(out, r.Body)
 	if err != nil {
-		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError)
+		checkErrAndReturnStatus(w, err, "", http.StatusInternalServerError, r)
 		return
 	}
 
@@ -175,7 +178,7 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 		// convert struct to json
 		body, err := json.Marshal(ready)
 		if err != nil {
-			checkErrAndReturnStatus(w, err, "Error checking readiness. Error encoding Agent to JSON. ", http.StatusInternalServerError)
+			checkErrAndReturnStatus(w, err, "Error checking readiness. Error encoding Agent to JSON. ", http.StatusInternalServerError, r)
 			return
 		}
 
@@ -201,18 +204,22 @@ func serveVersion(w http.ResponseWriter, r *http.Request) {
 
 // private
 
-func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int) {
+func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
+	// status string, code int, title string, detail string
+	apiError := NewApiError(http.StatusText(status), status, msg, err, r)
+
 	if err != nil {
-		log.Infof("Error, returning status %v. %s %s", status, msg, err.Error())
+		log.Infof("Error, returning status %v.\nDetails: %+v", apiError.Status, apiError)
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	http.Error(w, http.StatusText(status), status)
+	http.Error(w, apiError.String(), status)
 }
 
-func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int) {
+func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
 	if err != nil {
-		log.Errorf("Error, returning status %v. %s %s", status, msg, err.Error())
+		apiError := NewApiError(http.StatusText(status), status, msg, err, r)
+		log.Errorf("Error, returning status %v.\nDetails: %+v", apiError.Status, apiError)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		http.Error(w, http.StatusText(status), status)
+		http.Error(w, apiError.String(), status)
 	}
 }

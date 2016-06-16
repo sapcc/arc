@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
-	"github.com/inconshreveable/go-update/check"
 	"gitHub.***REMOVED***/monsoon/arc/updater"
 )
 
@@ -205,7 +204,7 @@ func mockConfirmStdInput(input string) (*os.File, error) {
 	return in, nil
 }
 
-func mock_apply_update(r *check.Result) error {
+func mock_apply_update(u *updater.Updater, r *updater.CheckResult) error {
 	CheckResult = "mock apply_update"
 	return nil
 }

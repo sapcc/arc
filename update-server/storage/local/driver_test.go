@@ -5,9 +5,11 @@ package local
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,8 +18,7 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
-	update "github.com/inconshreveable/go-update"
-	"github.com/inconshreveable/go-update/check"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 )
 
 //
@@ -91,7 +92,7 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 		buildsRootPath = ""
 	}()
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	ls := LocalStorage{
@@ -118,7 +119,7 @@ func TestChecksumFail(t *testing.T) {
 		buildsRootPath = ""
 	}()
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	ls := LocalStorage{
@@ -142,13 +143,13 @@ func TestChecksumSuccess(t *testing.T) {
 	}()
 
 	//Checksum pattern "486c9e5b987027990865ed3109554cb6d9d6469397ea2ee0745999649defd203 *arc_20160321.2_linux_amd64"
-	expectedChecksum, err := update.ChecksumForFile(path.Join(buildsRootPath, "arc_20150905.15_linux_amd64"))
+	expectedChecksum, err := checksumForFile(path.Join(buildsRootPath, "arc_20150905.15_linux_amd64"))
 	err = createChecksumFile(buildsRootPath, "arc_20150905.15_linux_amd64", fmt.Sprintf("%x *arc_20150905.15_linux_amd64", expectedChecksum))
 	if err != nil {
 		t.Error(fmt.Sprint("Expected to not have an error. ", err))
 	}
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	ls := LocalStorage{
@@ -306,7 +307,7 @@ func TestGetLastestUpdate(t *testing.T) {
 		BuildsRootPath: buildsRootPath,
 	}
 
-	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
+	windowsParams := updater.CheckParams{AppId: "arc", OS: "windows", Arch: "amd64"}
 	latestUpdate, err := ls.GetLastestUpdate(&windowsParams)
 	if err != nil {
 		t.Error("Expected to not have an error")
@@ -315,7 +316,7 @@ func TestGetLastestUpdate(t *testing.T) {
 		t.Error(fmt.Sprint("Expected to get last arc_20150906.07_windows_amd64. Got ", latestUpdate))
 	}
 
-	linuxParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "linux", "arch": "amd64"}}
+	linuxParams := updater.CheckParams{AppId: "arc", OS: "linux", Arch: "amd64"}
 	latestUpdate, err = ls.GetLastestUpdate(&linuxParams)
 	if err != nil {
 		t.Error("Expected to not have an error")
@@ -362,4 +363,22 @@ func createChecksumFile(buildsRootPath, referenceFileName, checksumData string) 
 		}
 	}
 	return nil
+}
+
+func checksumForFile(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return checksumForReader(f)
+}
+
+func checksumForReader(rd io.Reader) ([]byte, error) {
+	h := sha256.New()
+	if _, err := io.Copy(h, rd); err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
 }

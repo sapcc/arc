@@ -7,12 +7,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	update "github.com/inconshreveable/go-update"
-	"github.com/inconshreveable/go-update/check"
 )
 
 type Updater struct {
-	params    check.Params
-	updateUri string
+	Params CheckParams
+	client *Client
 }
 
 /**
@@ -22,13 +21,15 @@ type Updater struct {
  * options["updateUri"] = update server uri
  */
 func New(options map[string]string) *Updater {
+	client := NewClient(options["updateUri"])
 	return &Updater{
-		params: check.Params{
+		Params: CheckParams{
 			AppVersion: options["version"],
 			AppId:      options["appName"],
 			OS:         runtime.GOOS,
+			Arch:       runtime.GOARCH,
 		},
-		updateUri: options["updateUri"],
+		client: client,
 	}
 }
 
@@ -45,12 +46,12 @@ func (u *Updater) CheckAndUpdate() (bool, error) {
 	defer atomic.SwapInt32(&checkAndUpdateRunning, 0)
 
 	r, err := u.Check()
-	if err == check.NoUpdateAvailable {
+	if err == NoUpdateAvailable {
 		return false, nil
 	} else if err != nil {
 		return false, fmt.Errorf("Error while checking for update: %q", err.Error())
 	}
-	log.Infof("Updated version %s for app %s available ", r.Version, u.params.AppId)
+	log.Infof("Updated version %s for app %s available ", r.Version, u.Params.AppId)
 
 	// replace binary
 	err = u.Update(r)
@@ -67,35 +68,27 @@ func (u *Updater) CheckAndUpdate() (bool, error) {
  */
 var ApplyUpdate = apply_update
 
-func (u *Updater) Update(r *check.Result) error {
-	err := ApplyUpdate(r)
-	if err != nil {
-		return err
-	}
-	return nil
+func (u *Updater) Update(r *CheckResult) error {
+	err := ApplyUpdate(u, r)
+	return err
 }
 
 /*
  * Check last version available
  */
-func (u *Updater) Check() (*check.Result, error) {
-	up := update.New()
-	r, err := u.params.CheckForUpdate(u.updateUri, up)
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
+func (u *Updater) Check() (*CheckResult, error) {
+	return u.client.CheckForUpdate(u.Params)
 }
 
 // private
 
-func apply_update(r *check.Result) error {
-	err, errRecover := r.Update()
+func apply_update(u *Updater, r *CheckResult) error {
+	reader, err := u.client.GetUpdate(r.Url)
 	if err != nil {
 		return err
 	}
-	if errRecover != nil {
-		return errRecover
-	}
-	return nil
+	defer (*reader).Close()
+
+	err = update.Apply(*reader, update.Options{Checksum: []byte(r.Checksum)})
+	return err
 }
