@@ -211,7 +211,7 @@ func cmdExecute(c *cli.Context) {
 
 	agent := c.Args().Get(0)
 	action := c.Args().Get(1)
-	if registry.HasAction(agent, action) == false {
+	if !registry.HasAction(agent, action) {
 		log.Fatal("You need to provide a valid agent and action name")
 	}
 

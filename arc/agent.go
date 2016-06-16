@@ -73,7 +73,7 @@ func ExecuteAction(ctx context.Context, job *Job) {
 		job.Fail("Agent not found\n")
 		return
 	}
-	if job.Action != "enable" && job.Action != "disable" && agt.agent.Enabled() == false {
+	if job.Action != "enable" && job.Action != "disable" && !agt.agent.Enabled() {
 		job.Fail("Agent not enabled\n")
 		return
 	}

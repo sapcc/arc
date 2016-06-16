@@ -51,9 +51,6 @@ func addSAPCAsToChefBundle(certBundlePath string) error {
 
 	defer f.Close()
 
-	if _, err := f.WriteString(sapGlobalRootCA); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = f.WriteString(sapGlobalRootCA)
+	return err
 }

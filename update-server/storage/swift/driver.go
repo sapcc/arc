@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/inconshreveable/go-update/check"
 	"github.com/ncw/swift"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 )
@@ -56,7 +56,7 @@ func New(c *cli.Context) (*SwiftStorage, error) {
 	return &swiftStorage, nil
 }
 
-func (s *SwiftStorage) GetAvailableUpdate(req *http.Request) (*check.Result, error) {
+func (s *SwiftStorage) GetAvailableUpdate(req *http.Request) (*updater.CheckResult, error) {
 	releases, err := s.GetAllUpdates()
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func (s *SwiftStorage) GetWebUpdates() (*[]string, *[]string, error) {
 	return &latestUpdates, &allUpdates, nil
 }
 
-func (s *SwiftStorage) GetLastestUpdate(params *check.Params) (string, error) {
+func (s *SwiftStorage) GetLastestUpdate(params *updater.CheckParams) (string, error) {
 	// get all updates sorted by verison (latest first)
 	updates, err := s.GetAllUpdates()
 	if err != nil {

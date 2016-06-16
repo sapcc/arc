@@ -13,11 +13,18 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/databus23/requestutil"
 	version "github.com/hashicorp/go-version"
-	"github.com/inconshreveable/go-update/check"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 )
 
-var UpdateArgumentError = fmt.Errorf("Update arguments are missing or wrong")
 var ObjectNotFoundError = fmt.Errorf("Object not found.")
+
+type UpdateArgumentError struct {
+	Msg string
+}
+
+func (e UpdateArgumentError) Error() string {
+	return e.Msg
+}
 
 const (
 	BuildRelativeUrl = "/builds/"
@@ -27,15 +34,15 @@ const (
 /*
  * Results:
  * nil, Error 						-> There is an error
- * *check.Result, nil			-> There is an available update result to send back
+ * *CheckResult, nil			-> There is an available update result to send back
  * nil, nil								-> No updates available
  */
 
-func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, error) {
+func AvailableUpdate(req *http.Request, releases *[]string) (*updater.CheckResult, error) {
 	// get check.Params
 	reqParams, err := parseRequest(req)
 	if err != nil {
-		return nil, UpdateArgumentError
+		return nil, UpdateArgumentError{Msg: err.Error()}
 	}
 
 	// get host url
@@ -67,10 +74,9 @@ func AvailableUpdate(req *http.Request, releases *[]string) (*check.Result, erro
 	}
 
 	if len(buildFile) > 0 {
-		return &check.Result{
-			Initiative: "automatically",
-			Url:        fmt.Sprint(hostUrl, BuildRelativeUrl, buildFile),
-			Version:    buildVersion,
+		return &updater.CheckResult{
+			Url:     fmt.Sprint(hostUrl, BuildRelativeUrl, buildFile),
+			Version: buildVersion,
 		}, nil
 	}
 
@@ -106,7 +112,7 @@ func GetLatestVersion(releases *[]string) (string, error) {
 	return latestVersion, nil
 }
 
-func GetLatestReleaseFrom(releases *[]string, params *check.Params) string {
+func GetLatestReleaseFrom(releases *[]string, params *updater.CheckParams) string {
 	// sort releases by version
 	SortByVersion(*releases)
 
@@ -150,13 +156,13 @@ func shouldUpdate(appVersion string, fileVersion string, currentVersion string) 
 	return false, nil
 }
 
-func isReleaseFrom(filename string, params *check.Params) bool {
-	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_([.0-9]+)_", params.Tags["os"], "_", params.Tags["arch"]))
+func isReleaseFrom(filename string, params *updater.CheckParams) bool {
+	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_([.0-9]+)_", params.OS, "_", params.Arch))
 	return r.MatchString(filename)
 }
 
-func extractVersionFrom(filename string, params *check.Params) (string, error) {
-	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_([.0-9]+)_", params.Tags["os"], "_", params.Tags["arch"]))
+func extractVersionFrom(filename string, params *updater.CheckParams) (string, error) {
+	r, _ := regexp.Compile(fmt.Sprint(params.AppId, "_([.0-9]+)_", params.OS, "_", params.Arch))
 	results := r.FindStringSubmatch(filename)
 	if len(results) < 1 {
 		return "", fmt.Errorf("Version could not be found.")
@@ -164,7 +170,7 @@ func extractVersionFrom(filename string, params *check.Params) (string, error) {
 	return results[1], nil
 }
 
-func parseRequest(req *http.Request) (*check.Params, error) {
+func parseRequest(req *http.Request) (*updater.CheckParams, error) {
 	// check arguments
 	if req == nil {
 		return nil, fmt.Errorf("Request are empty or nil")
@@ -183,7 +189,7 @@ func parseRequest(req *http.Request) (*check.Params, error) {
 	}
 
 	// convert to check.Params struc
-	var reqParams check.Params
+	var reqParams updater.CheckParams
 	err = json.Unmarshal(body, &reqParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error unmarshaling body. Got %q", err)
@@ -196,11 +202,11 @@ func parseRequest(req *http.Request) (*check.Params, error) {
 	if len(reqParams.AppVersion) == 0 {
 		return nil, fmt.Errorf("Missing required post attribute 'app_version'")
 	}
-	if len(reqParams.Tags["os"]) == 0 {
-		return nil, fmt.Errorf("Missing required post attribute 'tags[os]'")
+	if len(reqParams.OS) == 0 {
+		return nil, fmt.Errorf("Missing required post attribute 'OS'")
 	}
-	if len(reqParams.Tags["arch"]) == 0 {
-		return nil, fmt.Errorf("Missing required post attribute 'tags[arch]'")
+	if len(reqParams.Arch) == 0 {
+		return nil, fmt.Errorf("Missing required post attribute 'Arch'")
 	}
 
 	return &reqParams, nil

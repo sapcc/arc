@@ -5,9 +5,11 @@ package swift
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,9 +17,8 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
-	update "github.com/inconshreveable/go-update"
-	"github.com/inconshreveable/go-update/check"
 	"github.com/ncw/swift/swifttest"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 )
 
 var (
@@ -81,7 +82,7 @@ func TestGetAvailableUpdateSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	update, err := storage.GetAvailableUpdate(req)
@@ -123,11 +124,11 @@ func TestChecksumSuccess(t *testing.T) {
 
 		//Checksum pattern "486c9e5b987027990865ed3109554cb6d9d6469397ea2ee0745999649defd203 *arc_20160321.2_linux_amd64"
 		objectBytes, _ := storage.Connection.ObjectGetBytes(CONTAINER, filename)
-		expectedChecksum, _ := update.ChecksumForBytes(objectBytes)
+		expectedChecksum, _ := checksumForBytes(objectBytes)
 		checksumData := fmt.Sprintf("%x *%s", expectedChecksum, filename)
 		storage.Connection.ObjectPutString(CONTAINER, fmt.Sprint(filename, ".sha256"), checksumData, "")
 
-		jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+		jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 		req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 		update, err := storage.GetAvailableUpdate(req)
@@ -174,7 +175,7 @@ func TestChecksumFail(t *testing.T) {
 		return
 	}
 
-	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","tags":{"arch":"amd64","os":"linux"}}`)
+	jsonStr := []byte(`{"app_id":"arc","app_version":"20150903.10","arch":"amd64","os":"linux"}`)
 	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/updates", bytes.NewBuffer(jsonStr))
 
 	update, err := storage.GetAvailableUpdate(req)
@@ -311,7 +312,7 @@ func TestGetLastestUpdate(t *testing.T) {
 	// save files
 	saveExamples(storage, t)
 
-	windowsParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "windows", "arch": "amd64"}}
+	windowsParams := updater.CheckParams{AppId: "arc", OS: "windows", Arch: "amd64"}
 	latestUpdate, err := storage.GetLastestUpdate(&windowsParams)
 	if err != nil {
 		t.Error("Expected to not have an error")
@@ -320,7 +321,7 @@ func TestGetLastestUpdate(t *testing.T) {
 		t.Error(fmt.Sprint("Expected to get last arc_20150906.07_windows_amd64. Got ", latestUpdate))
 	}
 
-	linuxParams := check.Params{AppId: "arc", Tags: map[string]string{"os": "linux", "arch": "amd64"}}
+	linuxParams := updater.CheckParams{AppId: "arc", OS: "linux", Arch: "amd64"}
 	latestUpdate, err = storage.GetLastestUpdate(&linuxParams)
 	if err != nil {
 		t.Error("Expected to not have an error")
@@ -441,4 +442,17 @@ func saveExamples(storage *SwiftStorage, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+// ChecksumForBytes returns the sha256 checksum for the given bytes
+func checksumForBytes(source []byte) ([]byte, error) {
+	return checksumForReader(bytes.NewReader(source))
+}
+
+func checksumForReader(rd io.Reader) ([]byte, error) {
+	h := sha256.New()
+	if _, err := io.Copy(h, rd); err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
 }

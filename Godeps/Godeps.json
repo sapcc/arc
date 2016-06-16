@@ -1,7 +1,7 @@
 {
 	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
+	"GodepVersion": "v66",
 	"Packages": [
 		"./..."
 	],
@@ -83,15 +83,15 @@
 		},
 		{
 			"ImportPath": "github.com/inconshreveable/go-update",
-			"Rev": "68f5725818189545231c1fd8694793d45f2fc529"
+			"Rev": "8152e7eb6ccf8679a64582a66b78519688d156ad"
 		},
 		{
-			"ImportPath": "github.com/inconshreveable/go-update/check",
-			"Rev": "68f5725818189545231c1fd8694793d45f2fc529"
+			"ImportPath": "github.com/inconshreveable/go-update/internal/binarydist",
+			"Rev": "8152e7eb6ccf8679a64582a66b78519688d156ad"
 		},
 		{
-			"ImportPath": "github.com/inconshreveable/go-update/download",
-			"Rev": "68f5725818189545231c1fd8694793d45f2fc529"
+			"ImportPath": "github.com/inconshreveable/go-update/internal/osext",
+			"Rev": "8152e7eb6ccf8679a64582a66b78519688d156ad"
 		},
 		{
 			"ImportPath": "github.com/joho/godotenv",

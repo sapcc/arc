@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/inconshreveable/go-update/check"
+	"gitHub.***REMOVED***/monsoon/arc/updater"
 
 	"gitHub.***REMOVED***/monsoon/arc/update-server/storage/helpers"
 )
@@ -46,7 +46,7 @@ func New(c *cli.Context) (*LocalStorage, error) {
  * Result, nil             	-> There is an available update
  * nil, nil						      -> No updates available
  */
-func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*check.Result, error) {
+func (l *LocalStorage) GetAvailableUpdate(req *http.Request) (*updater.CheckResult, error) {
 	releases, err := l.GetAllUpdates()
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (l *LocalStorage) GetWebUpdates() (*[]string, *[]string, error) {
 	return &latestUpdates, &allUpdates, nil
 }
 
-func (l *LocalStorage) GetLastestUpdate(params *check.Params) (string, error) {
+func (l *LocalStorage) GetLastestUpdate(params *updater.CheckParams) (string, error) {
 	// get all updates sorted by verison (latest first)
 	updates, err := l.GetAllUpdates()
 	if err != nil {

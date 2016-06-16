@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/inconshreveable/go-update/check"
 )
 
 var validOptions = map[string]string{
@@ -20,14 +18,14 @@ var validOptions = map[string]string{
 func TestUpdaterNewSuccess(t *testing.T) {
 	up := New(validOptions)
 
-	if up.updateUri != validOptions["updateUri"] {
-		t.Error("Expected upater attribute 'updateUri' set to", validOptions["updateUri"], ", got ", up.updateUri)
+	if up.client.Endpoint != validOptions["updateUri"] {
+		t.Error("Expected upater attribute 'updateUri' set to", validOptions["updateUri"], ", got ", up.client.Endpoint)
 	}
-	if up.params.AppId != validOptions["appName"] {
-		t.Error("Expected upater attribute 'AppId' set to", validOptions["appName"], ", got ", up.params.AppId)
+	if up.Params.AppId != validOptions["appName"] {
+		t.Error("Expected upater attribute 'AppId' set to", validOptions["appName"], ", got ", up.Params.AppId)
 	}
-	if up.params.AppVersion != validOptions["version"] {
-		t.Error("Expected upater attribute 'AppVersion' set to", validOptions["version"], ", got ", up.params.AppVersion)
+	if up.Params.AppVersion != validOptions["version"] {
+		t.Error("Expected upater attribute 'AppVersion' set to", validOptions["version"], ", got ", up.Params.AppVersion)
 	}
 }
 
@@ -40,7 +38,7 @@ func TestUpdaterCheckAndUpdateNotAvailable(t *testing.T) {
 
 	up := New(validOptions)
 	success, err := up.CheckAndUpdate()
-	if success != false {
+	if success {
 		t.Error("Expected to be false")
 	}
 	if err != nil {
@@ -70,7 +68,7 @@ func TestUpdaterCheckAndUpdateSuccess(t *testing.T) {
 
 // private
 
-func mock_apply_update(r *check.Result) error {
+func mock_apply_update(u *Updater, r *CheckResult) error {
 	return nil
 }
 
