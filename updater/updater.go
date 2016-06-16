@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/inconshreveable/go-update"
+	update "github.com/inconshreveable/go-update"
 )
 
 type Updater struct {
