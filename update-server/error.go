@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pborman/uuid"
+	uuid "github.com/pborman/uuid"
 	"net/http"
 )
 
