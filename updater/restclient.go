@@ -46,7 +46,7 @@ func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
 	}
 
 	// make request
-	resp, err := restCall(c.Endpoint, "updates", "POST", url.Values{}, bytes.NewBuffer(body))
+	resp, err := restCall(c.Endpoint, "", "POST", url.Values{}, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
