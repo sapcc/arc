@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"encoding/hex"
 	"fmt"
 	"runtime"
 	"sync/atomic"
@@ -89,6 +90,12 @@ func apply_update(u *Updater, r *CheckResult) error {
 	}
 	defer (*reader).Close()
 
-	err = update.Apply(*reader, update.Options{Checksum: []byte(r.Checksum)})
+	//decode checksum
+	checksum, err := hex.DecodeString(r.Checksum)
+	if err != nil {
+		return err
+	}
+
+	err = update.Apply(*reader, update.Options{Checksum: checksum})
 	return err
 }
