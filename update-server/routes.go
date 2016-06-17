@@ -22,6 +22,12 @@ func newRouter(storageType storage.StorageType) *mux.Router {
 		Name("Get available updates").
 		Handler(middlewareChain.ThenFunc(http.HandlerFunc(serveAvailableUpdates)))
 
+	router.
+		Methods("POST").
+		Path("/updates/updates").
+		Name("Get available updates. Should fix the problem with arc wrong updates site").
+		Handler(middlewareChain.ThenFunc(http.HandlerFunc(serveAvailableUpdates)))
+
 	if storageType == storage.Local {
 		router.
 			Methods("POST").
