@@ -48,7 +48,7 @@ image:
 
 .PHONY: metalint
 metalint:
-	gometalinter -E goimports -D unconvert -D goconst -D gotype -D aligncheck -D structcheck -D deadcode -D gocyclo -D interfacer -D errcheck -D dupl -D vetshadow -D golint -D vet -D varcheck ./...
+	gometalinter -E goimports -D unconvert -D goconst -D gotype -D aligncheck -D structcheck -D deadcode -D gocyclo -D interfacer -D errcheck -D dupl -D vetshadow -D golint -D vet -D varcheck -D gosimple ./...
 
 .PHONY: test
 test: metalint unit

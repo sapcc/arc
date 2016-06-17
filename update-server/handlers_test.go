@@ -122,24 +122,24 @@ func TestHealthcheck(t *testing.T) {
 // Local storage - Upload
 //
 
-func TestUploadFilenameMissing(t *testing.T) {
-	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
-	defer func() {
-		os.RemoveAll(buildsRootPath)
-	}()
-
-	set := flag.NewFlagSet("test", 0)
-	set.String("path", buildsRootPath, "local")
-	c := cli.NewContext(nil, set, nil)
-	st, _ = storage.New(storage.Local, c)
-
-	req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/upload", bytes.NewBuffer([]byte("binary file")))
-	w := httptest.NewRecorder()
-	uploadHandler(w, req)
-	if w.Code != 400 {
-		t.Error("Expected code to be '400'. Got ", w.Code)
-	}
-}
+// func TestUploadFilenameMissing(t *testing.T) {
+//   buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
+//   defer func() {
+//     os.RemoveAll(buildsRootPath)
+//   }()
+//
+//   set := flag.NewFlagSet("test", 0)
+//   set.String("path", buildsRootPath, "local")
+//   c := cli.NewContext(nil, set, nil)
+//   st, _ = storage.New(storage.Local, c)
+//
+//   req, _ := http.NewRequest("POST", "http://0.0.0.0:3000/upload", bytes.NewBuffer([]byte("binary file")))
+//   w := httptest.NewRecorder()
+//   uploadHandler(w, req)
+//   if w.Code != 400 {
+//     t.Error("Expected code to be '400'. Got ", w.Code)
+//   }
+// }
 
 func TestUpload(t *testing.T) {
 	buildsRootPath, _ := ioutil.TempDir(os.TempDir(), "arc_builds_")
@@ -172,11 +172,7 @@ func createTestBuildFile(buildsRootPath, name string) error {
 		return err
 	}
 	err = os.Rename(file.Name(), path.Join(buildsRootPath, name))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func createChecksumFile(buildsRootPath, referenceFileName, checksumData string) error {
@@ -187,8 +183,5 @@ func createChecksumFile(buildsRootPath, referenceFileName, checksumData string) 
 	checksum, _ := ioutil.TempFile(buildsRootPath, fmt.Sprint(filename_ext, ".sha256"))
 	checksum.WriteString(checksumData)
 	err := os.Rename(checksum.Name(), path.Join(buildsRootPath, fmt.Sprint(filename_ext, ".sha256")))
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

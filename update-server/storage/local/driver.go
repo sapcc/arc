@@ -166,11 +166,7 @@ func (l *LocalStorage) GetUpdate(name string, writer io.Writer) error {
 
 	// copy data from reader to writer
 	_, err = io.Copy(writer, reader)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (l *LocalStorage) GetStoragePath() string {
