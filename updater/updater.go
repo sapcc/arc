@@ -7,12 +7,15 @@ import (
 	"sync/atomic"
 
 	log "github.com/Sirupsen/logrus"
+	version "github.com/hashicorp/go-version"
 	update "github.com/inconshreveable/go-update"
+	arcVersion "gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 type Updater struct {
-	Params CheckParams
-	client *Client
+	Params   CheckParams
+	ParamsV2 CheckParamsV2
+	client   *Client
 }
 
 /**
@@ -29,6 +32,10 @@ func New(options map[string]string) *Updater {
 			AppId:      options["appName"],
 			OS:         runtime.GOOS,
 			Arch:       runtime.GOARCH,
+		}, ParamsV2: CheckParamsV2{
+			AppId: options["appName"],
+			OS:    runtime.GOOS,
+			Arch:  runtime.GOARCH,
 		},
 		client: client,
 	}
@@ -74,6 +81,23 @@ func (u *Updater) Update(r *CheckResult) error {
 	return err
 }
 
+func (u *Updater) UpdateV2(r *CheckResultV2) error {
+	reader, err := u.client.GetUpdateV2(r)
+	if err != nil {
+		return err
+	}
+	defer (*reader).Close()
+
+	//decode checksum
+	checksum, err := hex.DecodeString(r.Checksum)
+	if err != nil {
+		return err
+	}
+
+	err = update.Apply(*reader, update.Options{Checksum: checksum})
+	return err
+}
+
 /*
  * Check last version available
  */
@@ -81,10 +105,46 @@ func (u *Updater) Check() (*CheckResult, error) {
 	return u.client.CheckForUpdate(u.Params)
 }
 
+func (u *Updater) CheckV2() (*CheckResultV2, error) {
+	// get last update
+	result, err := u.client.CheckForUpdateV2(u.ParamsV2)
+	if err != nil {
+		return nil, err
+	}
+
+	shouldBeUpdated, err := shouldUpdate(arcVersion.Version, result.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	// compare versions
+	if shouldBeUpdated {
+		return result, nil
+	}
+
+	return nil, NoUpdateAvailable
+}
+
 // private
 
+func shouldUpdate(appVersion string, updateVersion string) (bool, error) {
+	av, err := version.NewVersion(appVersion)
+	if err != nil {
+		return false, err
+	}
+	uv, err := version.NewVersion(updateVersion)
+	if err != nil {
+		return false, err
+	}
+
+	if uv.GreaterThan(av) {
+		return true, nil
+	}
+	return false, nil
+}
+
 func apply_update(u *Updater, r *CheckResult) error {
-	reader, err := u.client.GetUpdate(r.Url)
+	reader, err := u.client.GetUpdate(r)
 	if err != nil {
 		return err
 	}

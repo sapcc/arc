@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
@@ -17,6 +18,19 @@ var NoUpdateAvailable error = fmt.Errorf("No update available")
 
 type Client struct {
 	Endpoint string
+}
+
+type CheckParamsV2 struct {
+	AppId string `json:"app_id"`
+	OS    string `json:"os"`
+	Arch  string `json:"arch"`
+}
+
+type CheckResultV2 struct {
+	CheckParamsV2
+	Url      string `json:"url"`
+	Version  string `json:"version"`
+	Checksum string `json:"checksum"`
 }
 
 type CheckParams struct {
@@ -36,6 +50,33 @@ func NewClient(endpoint string) *Client {
 	return &Client{
 		Endpoint: endpoint,
 	}
+}
+
+func (c *Client) CheckForUpdateV2(params CheckParamsV2) (*CheckResultV2, error) {
+	// make request
+	resp, err := restCall(c.Endpoint, buildPathJson(params), "GET", url.Values{}, bytes.NewBufferString(""))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// read body
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("%v - %s", resp.StatusCode, respBody)
+	}
+
+	// response body to struct
+	var res CheckResultV2
+	err = json.Unmarshal(respBody, &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
 
 func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
@@ -76,8 +117,27 @@ func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
 	return &res, nil
 }
 
-func (c *Client) GetUpdate(url string) (*io.ReadCloser, error) {
-	resp, err := http.Get(url)
+func (c *Client) GetUpdateV2(r *CheckResultV2) (*io.ReadCloser, error) {
+	isUrlAbsolute, err := isAbsouteUrl(r.Url)
+	if err != nil {
+		return nil, err
+	}
+
+	// check url absolut vs relativ
+	download_url := r.Url
+	if !isUrlAbsolute {
+		download_url = buildPathBinary(*r)
+	}
+
+	resp, err := http.Get(download_url)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Body, nil
+}
+
+func (c *Client) GetUpdate(r *CheckResult) (*io.ReadCloser, error) {
+	resp, err := http.Get(r.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +145,22 @@ func (c *Client) GetUpdate(url string) (*io.ReadCloser, error) {
 }
 
 // private
+
+func isAbsouteUrl(url string) (bool, error) {
+	return regexp.MatchString("^(?:[a-z]+:)?//", url)
+}
+
+func buildPathJson(params CheckParamsV2) string {
+	return path.Join(buildPath(params.AppId, params.OS, params.Arch), "latest.json")
+}
+
+func buildPathBinary(params CheckResultV2) string {
+	return path.Join(buildPath(params.AppId, params.OS, params.Arch), params.Url)
+}
+
+func buildPath(appId, os, arch string) string {
+	return path.Join("updates", appId, os, arch)
+}
 
 func restCall(endpoint string, pathAction string, method string, params url.Values, body *bytes.Buffer) (*http.Response, error) {
 	// set up the rest url
