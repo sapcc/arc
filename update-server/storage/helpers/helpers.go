@@ -28,7 +28,7 @@ func (e UpdateArgumentError) Error() string {
 
 const (
 	BuildRelativeUrl = "/builds/"
-	FileNameRegex    = `^(?P<app>[^_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?$`
+	FileNameRegex    = `^(?P<app>[^/_]+)_(?P<version>[.0-9]+)_(?P<platform>windows|linux|darwin)_(?P<arch>amd64|386)(.exe)?$`
 )
 
 /*
