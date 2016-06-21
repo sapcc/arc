@@ -1,0 +1,8 @@
+{
+  "app_id": "arc",
+  "os": "windows",
+  "arch": "amd64",
+  "checksum": "06285e7a9d85edee79c5d20732a66c92500a91fe003e1ff0f45de9abcb3d318b",
+  "version": "20160316.01",
+  "url":"arc_20160316.01_windows_amd64"
+}

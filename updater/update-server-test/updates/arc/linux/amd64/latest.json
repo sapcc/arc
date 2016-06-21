@@ -1,0 +1,8 @@
+{
+  "app_id": "arc",
+  "os": "linux",
+  "arch": "amd64",
+  "checksum": "e2494bbb988849fb6291ded4220591af4939fa9818754d440ada4f1ef9c9f1f9",
+  "version": "20160602.2",
+  "url":"arc_20160602.2_linux_amd64"
+}
