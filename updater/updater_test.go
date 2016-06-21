@@ -109,8 +109,8 @@ func TestUpdaterCheckAndUpdateNotAvailableWhenJSONnotFound(t *testing.T) {
 	if success {
 		t.Error("Expected to be false")
 	}
-	if err != nil {
-		t.Error("Expected to no get an error, got ", err)
+	if err == nil {
+		t.Error("Expected to get an error, got ", err)
 	}
 }
 
