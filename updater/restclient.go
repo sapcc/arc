@@ -59,7 +59,7 @@ func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
 	}
 
 	if resp.StatusCode >= 404 {
-		return nil, fmt.Errorf("%v - %s", resp.StatusCode, respBody)
+		return nil, fmt.Errorf("$s - %v - %s", jsonUrl, resp.StatusCode, respBody)
 	}
 
 	// response body to struct
