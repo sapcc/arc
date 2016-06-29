@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type route struct {
@@ -121,16 +122,24 @@ func newRouter(env string) *mux.Router {
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).
-			Handler(middlewareChain.ThenFunc(r.HandlerFunc))
+			Handler(middlewareChain.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
 	}
 
+	// add metrics
+	router.
+		Methods("GET").
+		Path("/metrics").
+		Name("Metrics").
+		Handler(middlewareChain.Then(prometheus.Handler()))
+
+		// add api/v1 routes
 	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
 	for _, r := range v1RoutesDefinition {
 		v1SubRouter.
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).
-			Handler(middlewareChainApiV1.ThenFunc(r.HandlerFunc))
+			Handler(middlewareChainApiV1.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
 	}
 
 	return router
