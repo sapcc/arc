@@ -1,5 +1,4 @@
 SHELL       := /bin/sh
-GOPATH      := $(CURDIR)/../.gopath:$(CURDIR)/../Godeps/_workspace
 ORG_PATH    := gitHub.***REMOVED***/monsoon
 REPO_PATH   := $(ORG_PATH)/arc
 GITVERSION  := -X command-line-arguments.GITCOMMIT `git rev-parse --short HEAD`
@@ -19,24 +18,24 @@ help:
 	@echo "  * build-docker - build static binary via golang container, output to bin/api-server"
 	@echo "  * image        - build docker image containing the update site"
 
-.PHONY: build
+.PHONY: build 
 build:  bin/smoke bin/updated-test bin/job-test bin/fact-test
 
-bin/smoke: smoke_test.go helper_test.go
+bin/smoke: smoke_test.go helper_test.go ensure_gopath
 	@mkdir -p bin/ 
 	go test -c smoke_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/smoke 
-bin/updated-test: updated_online_service_test.go  helper_test.go
+bin/updated-test: updated_online_service_test.go  helper_test.go ensure_gopath
 	@mkdir -p bin/
 	go test -c updated_online_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/updated-test
-bin/job-test: job_service_test.go helper_test.go
+bin/job-test: job_service_test.go helper_test.go ensure_gopath
 	@mkdir -p bin/
 	go test -c job_service_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/job-test
-bin/fact-test: fact_service_test.go helper_test.go
+bin/fact-test: fact_service_test.go helper_test.go ensure_gopath
 	@mkdir -p bin/
 	go test -c fact_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/fact-test
 
 .PHONY: build-docker
-build-docker: setup
+build-docker:
 	$(DOCKER) run \
 		--rm \
 		-v $(CURDIR)/..:/arc \
@@ -56,13 +55,11 @@ clean:
 	rm -f bin/*
 	rm image
 
-.PHONY: gopath 
-gopath: setup
-	@echo $(GOPATH)
 
-.PHONY: setup
-setup: ../.gopath/src/$(REPO_PATH)
-
-../.gopath/src/$(REPO_PATH):
-	mkdir -p ../.gopath/src/$(ORG_PATH)
-	ln -s ../../../.. ../.gopath/src/$(REPO_PATH)
+.PHONY: ensure_gopath
+ensure_gopath:
+	@goDir=$${GOPATH%%:*}/src/$(PKG_NAME) && \
+				mkdir -p $$(dirname $$goDir) && \
+				if [ ! -e "$$goDir" ]; then \
+					ln -sfv "$(CURDIR)" "$$goDir"; \
+				fi
