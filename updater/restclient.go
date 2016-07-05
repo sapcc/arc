@@ -118,7 +118,7 @@ func (c *Client) buildPathBinary(params CheckResult) (string, error) {
 }
 
 func buildPath(appId, os, arch string) string {
-	return path.Join("updates", appId, os, arch)
+	return path.Join(appId, os, arch)
 }
 
 func restCall(urlPath, method string, params url.Values, body *bytes.Buffer) (*http.Response, error) {
