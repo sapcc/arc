@@ -17,7 +17,14 @@ import (
 )
 
 var CheckResult = ""
-var responseExample = `{"initiative":"automatically","url":"MIAU://non_valid_url","patch_url":null,"patch_type":null,"version":"999","checksum":null,"signature":null}`
+var responseExample = `{
+  "app_id": "arc",
+  "os": "darwin",
+  "arch": "amd64",
+  "checksum": "af938b7e52da57de81ce0daf5bc196b703dfe1b54a4b5a6c3a6f8738024eb84d",
+  "version": "20170316.01",
+  "url":"arc_20170316.01_darwin_amd64"
+}`
 
 func TestCmdUpdateMissingUri(t *testing.T) {
 	// prepare context flags
