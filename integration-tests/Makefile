@@ -1,12 +1,11 @@
 SHELL       := /bin/sh
-ORG_PATH    := gitHub.***REMOVED***/monsoon
-REPO_PATH   := $(ORG_PATH)/arc
+PKG_NAME    := gitHub.***REMOVED***/monsoon/arc
 GITVERSION  := -X command-line-arguments.GITCOMMIT `git rev-parse --short HEAD`
 LDFLAGS     := -w -s $(GITVERSION)
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-tests
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
-BUILD_IMAGE := docker.***REMOVED***/monsoon/arc-build
+BUILD_IMAGE := docker.***REMOVED***/monsoon/gobuild:1.6
 
 DOCKER = docker
 
@@ -24,6 +23,7 @@ build:  bin/smoke bin/updated-test bin/job-test bin/fact-test
 bin/smoke: smoke_test.go helper_test.go ensure_gopath
 	@mkdir -p bin/ 
 	go test -c smoke_test.go helper_test.go -ldflags="$(LDFLAGS)" -o bin/smoke 
+
 bin/updated-test: updated_online_service_test.go  helper_test.go ensure_gopath
 	@mkdir -p bin/
 	go test -c updated_online_service_test.go helper_test.go  -ldflags="$(LDFLAGS)" -o bin/updated-test
@@ -61,5 +61,8 @@ ensure_gopath:
 	@goDir=$${GOPATH%%:*}/src/$(PKG_NAME) && \
 				mkdir -p $$(dirname $$goDir) && \
 				if [ ! -e "$$goDir" ]; then \
-					ln -sfv "$(CURDIR)" "$$goDir"; \
+					ln -sfv "$(CURDIR)/.." "$$goDir"; \
 				fi
+	for i in `ls -d -1 $(CURDIR)/../vendor/*`; do \
+		ln -sfv $$i /go/src/`basename $$i`; \
+	done
