@@ -12,7 +12,7 @@ import (
 var validOptions = map[string]string{
 	"version":   "2.0",
 	"appName":   "Miau",
-	"updateUri": "http://localhost:3000/updates",
+	"updateUri": "http://localhost:3000",
 }
 
 func TestUpdaterNewSuccess(t *testing.T) {
