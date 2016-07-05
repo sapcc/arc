@@ -20,27 +20,14 @@ type Client struct {
 	Endpoint string
 }
 
-type CheckParamsV2 struct {
+type CheckParams struct {
 	AppId string `json:"app_id"`
 	OS    string `json:"os"`
 	Arch  string `json:"arch"`
 }
 
-type CheckResultV2 struct {
-	CheckParamsV2
-	Url      string `json:"url"`
-	Version  string `json:"version"`
-	Checksum string `json:"checksum"`
-}
-
-type CheckParams struct {
-	AppVersion string `json:"app_version"`
-	AppId      string `json:"app_id"`
-	OS         string `json:"os"`
-	Arch       string `json:"arch"`
-}
-
 type CheckResult struct {
+	CheckParams
 	Url      string `json:"url"`
 	Version  string `json:"version"`
 	Checksum string `json:"checksum"`
@@ -52,51 +39,18 @@ func NewClient(endpoint string) *Client {
 	}
 }
 
-func (c *Client) CheckForUpdateV2(params CheckParamsV2) (*CheckResultV2, error) {
-	// make request
-	resp, err := restCall(c.Endpoint, buildPathJson(params), "GET", url.Values{}, bytes.NewBufferString(""))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// read body
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("%v - %s", resp.StatusCode, respBody)
-	}
-
-	// response body to struct
-	var res CheckResultV2
-	err = json.Unmarshal(respBody, &res)
-	if err != nil {
-		return nil, err
-	}
-	return &res, nil
-}
-
 func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
-	// prepare body with params
-	body, err := json.Marshal(params)
+	jsonUrl, err := c.buildPathJson(params)
 	if err != nil {
 		return nil, err
 	}
 
 	// make request
-	resp, err := restCall(c.Endpoint, "", "POST", url.Values{}, bytes.NewBuffer(body))
+	resp, err := restCall(jsonUrl, "GET", url.Values{}, bytes.NewBufferString(""))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	// status 204 means no update available
-	if resp.StatusCode == 204 {
-		return nil, NoUpdateAvailable
-	}
 
 	// read body
 	respBody, err := ioutil.ReadAll(resp.Body)
@@ -104,8 +58,8 @@ func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("%v - %s", resp.StatusCode, respBody)
+	if resp.StatusCode >= 404 {
+		return nil, fmt.Errorf("$s - %v - %s", jsonUrl, resp.StatusCode, respBody)
 	}
 
 	// response body to struct
@@ -117,7 +71,7 @@ func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
 	return &res, nil
 }
 
-func (c *Client) GetUpdateV2(r *CheckResultV2) (*io.ReadCloser, error) {
+func (c *Client) GetUpdate(r *CheckResult) (*io.ReadCloser, error) {
 	isUrlAbsolute, err := isAbsouteUrl(r.Url)
 	if err != nil {
 		return nil, err
@@ -126,18 +80,13 @@ func (c *Client) GetUpdateV2(r *CheckResultV2) (*io.ReadCloser, error) {
 	// check url absolut vs relativ
 	download_url := r.Url
 	if !isUrlAbsolute {
-		download_url = buildPathBinary(*r)
+		download_url, err = c.buildPathBinary(*r)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resp, err := http.Get(download_url)
-	if err != nil {
-		return nil, err
-	}
-	return &resp.Body, nil
-}
-
-func (c *Client) GetUpdate(r *CheckResult) (*io.ReadCloser, error) {
-	resp, err := http.Get(r.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -150,25 +99,34 @@ func isAbsouteUrl(url string) (bool, error) {
 	return regexp.MatchString("^(?:[a-z]+:)?//", url)
 }
 
-func buildPathJson(params CheckParamsV2) string {
-	return path.Join(buildPath(params.AppId, params.OS, params.Arch), "latest.json")
+func (c *Client) buildPathJson(params CheckParams) (string, error) {
+	u, err := url.Parse(c.Endpoint)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, buildPath(params.AppId, params.OS, params.Arch), "latest.json")
+	return u.String(), nil
 }
 
-func buildPathBinary(params CheckResultV2) string {
-	return path.Join(buildPath(params.AppId, params.OS, params.Arch), params.Url)
+func (c *Client) buildPathBinary(params CheckResult) (string, error) {
+	u, err := url.Parse(c.Endpoint)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, buildPath(params.AppId, params.OS, params.Arch), params.Url)
+	return u.String(), nil
 }
 
 func buildPath(appId, os, arch string) string {
 	return path.Join("updates", appId, os, arch)
 }
 
-func restCall(endpoint string, pathAction string, method string, params url.Values, body *bytes.Buffer) (*http.Response, error) {
+func restCall(urlPath, method string, params url.Values, body *bytes.Buffer) (*http.Response, error) {
 	// set up the rest url
-	u, err := url.Parse(endpoint)
+	u, err := url.Parse(urlPath)
 	if err != nil {
 		return nil, err
 	}
-	u.Path = path.Join(u.Path, pathAction)
 	u.RawQuery = params.Encode()
 
 	// set up body

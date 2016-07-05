@@ -1,0 +1,8 @@
+{
+  "app_id": "arc",
+  "os": "darwin",
+  "arch": "amd64",
+  "checksum": "af938b7e52da57de81ce0daf5bc196b703dfe1b54a4b5a6c3a6f8738024eb84d",
+  "version": "20160316.01",
+  "url":"arc_20160316.01_darwin_amd64"
+}

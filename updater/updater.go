@@ -13,9 +13,8 @@ import (
 )
 
 type Updater struct {
-	Params   CheckParams
-	ParamsV2 CheckParamsV2
-	client   *Client
+	Params CheckParams
+	client *Client
 }
 
 /**
@@ -28,11 +27,6 @@ func New(options map[string]string) *Updater {
 	client := NewClient(options["updateUri"])
 	return &Updater{
 		Params: CheckParams{
-			AppVersion: options["version"],
-			AppId:      options["appName"],
-			OS:         runtime.GOOS,
-			Arch:       runtime.GOARCH,
-		}, ParamsV2: CheckParamsV2{
 			AppId: options["appName"],
 			OS:    runtime.GOOS,
 			Arch:  runtime.GOARCH,
@@ -81,33 +75,14 @@ func (u *Updater) Update(r *CheckResult) error {
 	return err
 }
 
-func (u *Updater) UpdateV2(r *CheckResultV2) error {
-	reader, err := u.client.GetUpdateV2(r)
-	if err != nil {
-		return err
-	}
-	defer (*reader).Close()
-
-	//decode checksum
-	checksum, err := hex.DecodeString(r.Checksum)
-	if err != nil {
-		return err
-	}
-
-	err = update.Apply(*reader, update.Options{Checksum: checksum})
-	return err
-}
-
 /*
  * Check last version available
  */
-func (u *Updater) Check() (*CheckResult, error) {
-	return u.client.CheckForUpdate(u.Params)
-}
 
-func (u *Updater) CheckV2() (*CheckResultV2, error) {
+func (u *Updater) Check() (*CheckResult, error) {
 	// get last update
-	result, err := u.client.CheckForUpdateV2(u.ParamsV2)
+	result, err := u.client.CheckForUpdate(u.Params)
+
 	if err != nil {
 		return nil, err
 	}
