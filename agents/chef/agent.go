@@ -127,6 +127,9 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	if data.RunList == nil {
 		return "", fmt.Errorf("run_list not given or invalid")
 	}
+	if data.NodeName == "" {
+		data.NodeName = job.Identity()
+	}
 	if data.Attributes == nil {
 		//if no attributes given init the map
 		data.Attributes = make(map[string]interface{})
