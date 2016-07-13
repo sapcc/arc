@@ -71,6 +71,10 @@ func (j *Job) reply_number() uint {
 	return j.reply_sequence
 }
 
+func (j *Job) Identity() string {
+	return j.identity
+}
+
 type JobState byte
 
 const (
