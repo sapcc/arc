@@ -1,0 +1,29 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: { repository: docker.***REMOVED***/monsoon/gobuild, tag: '1.6'}
+
+inputs:
+- name: arc.git 
+  path: gopath/src/gitHub.***REMOVED***/monsoon/arc
+- name: arc.version
+
+outputs:
+- name: bin
+
+run:
+  path: sh
+  args:
+    - -exc
+    - |
+      GOPATH=$PWD/gopath
+      PKG=gitHub.***REMOVED***/monsoon/arc
+      VERSION=$(cat arc.version/current)
+      COMMIT_SHA=$(git -C gopath/src/$PKG rev-parse --short HEAD)
+      LDFLAGS="-s -w -X $PKG/version.GITCOMMIT=${COMMIT_SHA} -X $PKG/version.Version=${VERSION}"
+      gox -osarch="linux/amd64 windows/amd64" \
+          -output="bin/arc_${VERSION}_{{.OS}}_{{.Arch}}" \
+          -ldflags="$LDFLAGS" \
+          $PKG
