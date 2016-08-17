@@ -1,0 +1,635 @@
+groups:
+  - name: master 
+    jobs:
+      - arc-unit
+      - arc-build 
+      - build-tests
+      - api-test
+      - api-build
+      - pki-test
+      - pki-build
+      - mosquitto-build
+      - mosquitto-staging
+      - pki-staging
+      - api-staging
+      - staging-tests
+      - release-stable
+      - mosquitto-production
+      - pki-production
+      - api-production
+      #- production-tests
+  - name: website
+    jobs:
+      - arc-website
+  - name: pullrequests
+    jobs:
+      - pr-test
+jobs:
+  - name: arc-website
+    serial: true
+    plan:
+      - get: website.git
+        trigger: true
+      - task: deploy 
+        config:
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon/arc-website-builder
+          inputs:
+            - name: website.git
+              path: source
+          run:
+            path: /deploy.sh
+            args: [ source/website/ ]
+          params:
+            SSH_KEY: {{arc-deploy-key}}
+  - name: arc-unit
+    plan:
+      - get: arc.git
+        trigger: true
+      - aggregate: 
+        - task: metalint 
+          config:
+            platform: 'linux'
+            image: docker://docker.***REMOVED***/monsoon/gobuild#1.6
+            inputs:
+              - name: arc.git
+                path: arc
+            run:
+              path: make
+              args: [-C, arc/, metalint]
+        - task: unit 
+          config:
+            platform: 'linux'
+            image: docker://docker.***REMOVED***/monsoon/gobuild#1.6
+            inputs:
+              - name: arc.git
+                path: arc
+            run: { path: make, args: [-C, arc/, unit] }
+  - name: pr-test
+    public: true
+    plan:
+      - get: pullrequest
+        trigger: true
+      - put: pullrequest 
+        params:
+          path: pullrequest
+          status: pending
+      - task: run
+        privileged: true
+        config: 
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon/gobuild#1.6
+          inputs: 
+            - name: pullrequest
+              path: source.git
+          run: { path: make, args: [-C, source.git/, metalint, unit] }
+        on_failure:
+          put: pullrequest
+          params:
+            path: pullrequest
+            status: failure
+      - put: pullrequest
+        params:
+          path: pullrequest 
+          status: success
+
+  - name: arc-build
+    plan:
+      - aggregate:
+        - get: arc.git
+          trigger: true
+          passed: [ arc-unit ]
+        - get: arc.version
+          params: { bump: true }
+      - task: run
+        privileged: true
+        config: 
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs: 
+            - name: arc.git
+              path: source.git
+            - name: arc.version 
+              path: version
+          run: { path: /tasks/compile }
+      - aggregate:
+        - task: upload-checksums
+          config:
+            platform: 'linux'
+            image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+            inputs:
+              - name: run
+              - name: arc.version
+            run: { path: /tasks/checksums, args: [run/source.git/bin] }
+            params:
+              DOMAIN: {{swift-domain}}
+              OS_USERNAME: {{swift-username}}
+              OS_PASSWORD: {{swift-api-key}}
+              CONTAINER: {{swift-container-beta}}
+              OS_PROJECT_ID: {{swift-project-id}}
+              OS_AUTH_URL: {{swift-auth_url}}
+        - put: arc.version
+          params: { filename: arc.version/current}
+
+  - name: build-tests 
+    plan:
+      - aggregate:
+        - get: tests.git
+          trigger: true
+        - get: tests.version
+          params: { bump: true }
+      - task: run 
+        privileged: true
+        config: 
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs: 
+            - name: tests.git
+              path: source.git
+            - name: tests.version 
+              path: version
+          run: { path: /tasks/build, args: [source.git/integration-tests] }
+      - aggregate:
+        - put: tests.image
+        - put: tests.version
+          params: { filename: tests.version/current}
+
+  - name: api-test
+    plan:
+      - get: arc.git
+        trigger: true
+        passed: [ arc-unit ]
+      - task: run
+        privileged: true
+        config:
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: arc.git
+              path: arc
+          run: { path: /tasks/test, args: [arc/api-server] }
+
+  - name: api-build
+    plan:
+      - aggregate:
+        - get: arc.git
+          trigger: true
+          passed: [ api-test ] 
+        - get: api.version
+          params: { bump: true }
+      - task: run
+        privileged: true
+        config: 
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs: 
+            - name: arc.git
+              path: source.git
+            - name: api.version 
+              path: version
+          run: { path: /tasks/build, args: [source.git/api-server] }
+      - aggregate:
+        - put: api.image
+        - put: api.version
+          params: { filename: run/version/current}
+
+  - name: pki-test
+    plan:
+      - get: pki.git
+        trigger: true
+      - task: run
+        privileged: true
+        config:
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: pki.git 
+              path: pki 
+          run: { path: /tasks/test, args: [pki/] }
+
+  - name: pki-build
+    plan:
+      - aggregate:
+        - { get: pki.git, passed: [ pki-test ], trigger: true }
+        - get: pki.version
+          params: { bump: true }
+      - task: run
+        privileged: true
+        config: 
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs: 
+            - name: pki.git
+              path: pki 
+            - name: pki.version 
+              path: version
+          run: { path: /tasks/build, args: [pki/] }
+      - aggregate:
+        - put: pki.image
+        - put: pki.version
+          params: { filename: run/version/current}
+  - name: mosquitto-build
+    plan:
+      - aggregate:
+        - get: mosquitto.git
+          trigger: true
+        - get: mosquitto.version
+          params: { bump: true }
+      - task: run
+        privileged: true
+        config: 
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs: 
+            - name: mosquitto.git
+              path: mosquitto 
+            - name: mosquitto.version 
+              path: version
+          run: { path: /tasks/build, args: [mosquitto/] }
+      - aggregate:
+        - put: mosquitto.image
+        - put: mosquitto.version
+          params: { filename: run/version/current}
+  - name: mosquitto-staging
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.image, passed: [mosquitto-build], trigger: true }
+        - { get: mosquitto.version, passed: [mosquitto-build] }
+      - task: rolling-update
+        config: 
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: mosquitto.image
+              path: source.image
+          run: 
+            path: kubectl-rolling-update
+          params:
+            KUBE_MASTER: https://apiserver.***REMOVED***
+            RC_NAME: mosquitto 
+            NAMESPACE: arc
+            CLIENT_CERT: {{kube-staging-client-cert}}
+            CLIENT_KEY: {{kube-staging-client-key}}
+            CA_CERT: {{kube-staging-ca-cert}}
+  - name: pki-staging
+    serial: true
+    plan:
+      - aggregate:
+        - { get: pki.image, passed: [pki-build], trigger: true }
+        - { get: pki.version, passed: [pki-build] }
+      - task: rolling-update
+        config: 
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: pki.image
+              path: source.image
+          run: 
+            path: kubectl-rolling-update
+          params:
+            KUBE_MASTER: https://apiserver.***REMOVED***
+            RC_NAME: pki 
+            NAMESPACE: arc
+            CLIENT_CERT: {{kube-staging-client-cert}}
+            CLIENT_KEY: {{kube-staging-client-key}}
+            CA_CERT: {{kube-staging-ca-cert}}
+  - name: api-staging
+    serial: true
+    plan:
+      - aggregate:
+        - { get: api.image, passed: [api-build], trigger: true }
+        - { get: api.version, passed: [api-build] }
+      - task: rolling-update
+        config: 
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: api.image
+              path: source.image
+          run: 
+            path: kubectl-rolling-update
+          params:
+            KUBE_MASTER: https://apiserver.***REMOVED***
+            RC_NAME: api 
+            NAMESPACE: arc
+            CLIENT_CERT: {{kube-staging-client-cert}}
+            CLIENT_KEY: {{kube-staging-client-key}}
+            CA_CERT: {{kube-staging-ca-cert}}
+  - name: staging-tests
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.image, passed: [mosquitto-staging], trigger: true }
+        - { get: mosquitto.version, passed: [mosquitto-staging] }
+        - { get: api.image, passed: [api-staging], trigger: true }
+        - { get: api.version, passed: [api-staging] }
+        - { get: pki.image, passed: [pki-staging], trigger: true }
+        - { get: pki.version, passed: [pki-staging] }
+        - { get: tests.image, trigger: true }
+        - { get: arc.version, passed: [arc-build], trigger: true }
+      - task: tests 
+        privileged: true
+        config:
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: mosquitto.image
+            - name: api.image
+            - name: api.version
+            - name: pki.image
+            - name: pki.version
+            - name: tests.image
+            - name: arc.version 
+          run: { path: /tasks/staging }
+          params:
+            API_SERVER: https://arc.***REMOVED***
+            UPDATE_SERVER: https://arc-updates.***REMOVED***
+            KEYSTONE_ENDPOINT: https://identity.***REMOVED***:5000/v3 
+            DOMAIN: monsoon2
+            PROJECT: Arc_Test
+            USERNAME: arc_test
+            PASSWORD: {{staging-tests-password}}
+      - aggregate:
+        - put: mosquitto.image
+          params: {tag: tests/mosquitto.image/newtag}
+        - put: api.image
+          params: {tag: tests/api.image/newtag}
+        - put: pki.image
+          params: {tag: tests/pki.image/newtag}
+        - put: tests.image
+          params: {tag: tests/tests.image/newtag}
+  - name: release-stable
+    serial: true
+    plan:
+      - get: arc.version
+        passed: [staging-tests]
+        trigger: true
+      - task: swift-copy 
+        config:
+          platform: 'linux'
+          image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+          inputs:
+            - name: arc.version
+          run: { path: /tasks/swift_copy }
+          params:
+            DOMAIN: {{swift-domain}}
+            OS_USERNAME: {{swift-username}}
+            OS_PASSWORD: {{swift-api-key}}
+            CONTAINER: {{swift-container-stable}}
+            SOURCE_CONTAINER: {{swift-container-beta}}
+            OS_PROJECT_ID: {{swift-project-id}}
+            OS_AUTH_URL: {{swift-auth_url}}
+  - name: mosquitto-production
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.image, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests] }
+      - task: rolling-update
+        config: 
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon3/kubectl#v1.2.4
+          inputs:
+            - name: mosquitto.image
+          run: 
+            path: sh 
+            args:
+              - -exc
+              - |
+                repository=$(cat mosquitto.image/repository)
+                tag=$(cat mosquitto.image/tag)
+                kubectl rolling-update mosquitto --namespace=arc --image=$repository:$tag
+          params:
+            REGION: eu-de-1
+            GITHUB_TOKEN: {{github-access-token}} 
+  - name: pki-production
+    serial: true
+    plan:
+      - aggregate:
+        - { get: pki.image, passed: [staging-tests], trigger: true }
+        - { get: pki.version, passed: [staging-tests] }
+      - task: rolling-update
+        config: 
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon3/kubectl#v1.2.4
+          inputs:
+            - name: pki.image
+          run: 
+            path: sh 
+            args:
+              - -exc
+              - |
+                repository=$(cat pki.image/repository)
+                tag=$(cat pki.image/tag)
+                kubectl rolling-update pki --namespace=arc --image=$repository:$tag
+          params:
+            REGION: eu-de-1
+            GITHUB_TOKEN: {{github-access-token}}
+  - name: api-production
+    serial: true
+    plan:
+      - aggregate:
+        - { get: api.image, passed: [staging-tests], trigger: true }
+        - { get: api.version, passed: [staging-tests] }
+      - task: rolling-update
+        config: 
+          platform: linux
+          image: docker://docker.***REMOVED***/monsoon3/kubectl#v1.2.4
+          inputs:
+            - name: api.image
+          run: 
+            path: sh 
+            args:
+              - -exc
+              - |
+                repository=$(cat api.image/repository)
+                tag=$(cat api.image/tag)
+                kubectl rolling-update api --namespace=arc --image=$repository:$tag
+          params:
+            REGION: eu-de-1
+            GITHUB_TOKEN: {{github-access-token}} 
+  #- name: production-tests
+  #  serial: true
+  #  plan:
+  #    - aggregate:
+  #      - { get: mosquitto.image, passed: [mosquitto-production], trigger: true }
+  #      - { get: mosquitto.version, passed: [mosquitto-production] }
+  #      - { get: api.image, passed: [api-production], trigger: true }
+  #      - { get: api.version, passed: [api-production] }
+  #      - { get: pki.image, passed: [pki-production], trigger: true }
+  #      - { get: pki.version, passed: [pki-production] }
+  #      - { get: tests.image, trigger: true }
+  #      - { get: arc.version, passed: [staging-tests], trigger: true }
+  #    - task: tests 
+  #      privileged: true
+  #      config:
+  #        platform: linux
+  #        image: docker://docker.***REMOVED***/monsoon-concourse/arc-pipeline#current
+  #        inputs:
+  #          - name: mosquitto.image
+  #          - name: api.image
+  #          - name: api.version
+  #          - name: pki.image
+  #          - name: pki.version
+  #          - name: tests.image
+  #          - name: arc.version 
+  #        run: { path: /tasks/production }
+  #        params:
+  #          API_SERVER: https://arc-production.***REMOVED***
+  #          UPDATE_SERVER: http://arc-update-site-production.***REMOVED***:8080
+  #          KEYSTONE_ENDPOINT: https://identity.***REMOVED***:5000/v3
+  #          DOMAIN: sap_default 
+  #          PROJECT: D062284_sandbox 
+  #          USERNAME: arc_test
+  #          PASSWORD: {{production-tests-password}}
+  #    - aggregate:
+  #      - put: mosquitto.image
+  #        params: {tag: tests/mosquitto.image/newtag}
+  #      - put: api.image
+  #        params: {tag: tests/api.image/newtag}
+  #      - put: update-site.image
+  #        params: {tag: tests/update-site.image/newtag}
+  #      - put: pki.image
+  #        params: {tag: tests/pki.image/newtag}
+  #      - put: tests.image
+  #        params: {tag: tests/tests.image/newtag}
+
+resources:
+  - name: website.git
+    type: git
+    source:
+      uri: git@gitHub.***REMOVED***:monsoon/arc.git
+      branch: master 
+      private_key: {{arc-deploy-key}} 
+      paths: [ website/ ]
+  - name: arc.git
+    type: git
+    source:
+      uri: git://gitHub.***REMOVED***/monsoon/arc.git
+      branch: master 
+      ignore_paths: [ website/, integration-tests/, update-server/ ]
+  - name: tests.git
+    type: git
+    source:
+      uri: git://gitHub.***REMOVED***/monsoon/arc.git
+      branch: master 
+      paths: [ integration-tests/ ]
+  - name: arc.version
+    type: monsoon-version
+    source: 
+      key:  arc
+      initial:   "00010101"
+      username:  {{swift-username}}
+      api_key:    {{swift-api-key}}
+      auth_url:  {{swift-auth_url}}
+      domain:    {{swift-domain}}
+      tenant_id: {{swift-project-id}}
+      container: {{swift-container-version}}
+  - name: api.image
+    type: monsoon-image
+    source: 
+      host:       {{docker-registry-host}}
+      email:      {{docker-registry-email}}
+      username:   {{docker-registry-username}}
+      password:   {{docker-registry-password}}
+      repository: docker.***REMOVED***/monsoon/arc-api
+      initial_prefix: build
+      file:       run/image.tar
+      tag:        run/tag
+  - name: api.version
+    type: monsoon-version
+    source: 
+      key:  arc-api
+      initial:   "00010101"
+      username:  {{swift-username}}
+      api_key:    {{swift-api-key}}
+      auth_url:  {{swift-auth_url}}
+      domain:    {{swift-domain}}
+      tenant_id: {{swift-project-id}}
+      container: {{swift-container-version}}
+  - name: pki.git
+    type: git
+    source:
+      uri: git://gitHub.***REMOVED***/monsoon/arc-pki.git
+      branch: master 
+  - name: pki.image
+    type: monsoon-image
+    source: 
+      host:       {{docker-registry-host}}
+      email:      {{docker-registry-email}}
+      username:   {{docker-registry-username}}
+      password:   {{docker-registry-password}}
+      repository: docker.***REMOVED***/monsoon/arc-pki
+      initial_prefix: build
+      file:       run/image.tar
+      tag:        run/tag
+  - name: pki.version
+    type: monsoon-version
+    source: 
+      key:  arc-pki
+      initial:   "00010101"
+      username:  {{swift-username}}
+      api_key:    {{swift-api-key}}
+      auth_url:  {{swift-auth_url}}
+      domain:    {{swift-domain}}
+      tenant_id: {{swift-project-id}}
+      container: {{swift-container-version}}
+  - name: mosquitto.git
+    type: git
+    source:
+      uri: git://gitHub.***REMOVED***/monsoon/mosquitto.git
+      branch: master 
+  - name: mosquitto.image
+    type: monsoon-image
+    source: 
+      host:       {{docker-registry-host}}
+      email:      {{docker-registry-email}}
+      username:   {{docker-registry-username}}
+      password:   {{docker-registry-password}}
+      repository: docker.***REMOVED***/monsoon/mosquitto
+      initial_prefix: build
+      file:       run/image.tar
+      tag:        run/tag
+  - name: mosquitto.version
+    type: monsoon-version
+    source: 
+      key:  arc-mosquitto
+      initial:   "00010101"
+      username:  {{swift-username}}
+      api_key:    {{swift-api-key}}
+      auth_url:  {{swift-auth_url}}
+      domain:    {{swift-domain}}
+      tenant_id: {{swift-project-id}}
+      container: {{swift-container-version}}
+  - name: tests.image
+    type: monsoon-image
+    source: 
+      host:       {{docker-registry-host}}
+      email:      {{docker-registry-email}}
+      username:   {{docker-registry-username}}
+      password:   {{docker-registry-password}}
+      repository: docker.***REMOVED***/monsoon/arc-tests
+      initial_prefix: build
+      file:       run/image.tar
+      tag:        run/tag
+  - name: tests.version
+    type: monsoon-version
+    source: 
+      key:  arc-tests
+      initial:   "00010101"
+      username:  {{swift-username}}
+      api_key:    {{swift-api-key}}
+      auth_url:  {{swift-auth_url}}
+      domain:    {{swift-domain}}
+      tenant_id: {{swift-project-id}}
+      container: {{swift-container-version}}
+  - name: pullrequest
+    type: pullrequest
+    check_every: 30s
+    source:
+      repo: monsoon/arc
+      uri:  https://gitHub.***REMOVED***/monsoon/arc
+      base_url: http://concourse.***REMOVED***:8080/
+      api_endpoint: https://gitHub.***REMOVED***/api/v3
+      access_token: {{github-access-token}} 
