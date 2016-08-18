@@ -1,6 +1,6 @@
 SHELL       := /bin/sh
 PKG_NAME    := gitHub.***REMOVED***/monsoon/arc
-GITVERSION  := -X command-line-arguments.GITCOMMIT `git rev-parse --short HEAD`
+GITVERSION  := -X command-line-arguments.GITCOMMIT=`git rev-parse --short HEAD`
 LDFLAGS     := -w -s $(GITVERSION)
 REPOSITORY  := docker.***REMOVED***/monsoon/arc-tests
 TAG         ?= latest
