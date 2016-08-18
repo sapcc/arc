@@ -6,18 +6,13 @@ image_resource:
   source: { repository: docker.***REMOVED***/monsoon-concourse/arc-pipeline, tag: 'current'}
 
 inputs:
-  - name: context
-  - name: version
-
-outputs:
-  - name: image
+  - name: source
 
 run:
   path: sh
   args:
     - -exc
     - |
-      cd image
-      /tasks/build ../context/$SUBDIR ../version/current
+      /tasks/test source/$SUBDIR
 params:
   SUBDIR: 
