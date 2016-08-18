@@ -38,23 +38,18 @@ type ServerType int
 const (
 	_ ServerType = iota
 	ApiServer
-	UpdateServer
 )
 
 type Client struct {
-	Client          *http.Client
-	ApiServerUrl    string
-	UpdateServerUrl string
-	Token           string
+	Client       *http.Client
+	ApiServerUrl string
+	Token        string
 }
 
 func NewTestClient() (*Client, error) {
 	// override flags if enviroment variable exists
 	if e := os.Getenv("API_SERVER"); e != "" {
 		apiServer = &e
-	}
-	if e := os.Getenv("UPDATE_SERVER"); e != "" {
-		updateServer = &e
 	}
 	if e := os.Getenv("KEYSTONE_ENDPOINT"); e != "" {
 		keystoneEndpoint = &e
@@ -85,10 +80,9 @@ func NewTestClient() (*Client, error) {
 	}
 
 	c := &Client{
-		Client:          &http.Client{},
-		ApiServerUrl:    *apiServer,
-		UpdateServerUrl: *updateServer,
-		Token:           *token,
+		Client:       &http.Client{},
+		ApiServerUrl: *apiServer,
+		Token:        *token,
 	}
 	return c, nil
 }
@@ -171,8 +165,6 @@ func (c *Client) serverUrl(s ServerType) string {
 	switch s {
 	case ApiServer:
 		return c.ApiServerUrl
-	case UpdateServer:
-		return c.UpdateServerUrl
 	}
 	return ""
 }
