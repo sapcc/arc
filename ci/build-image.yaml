@@ -17,6 +17,7 @@ run:
   args:
     - -exc
     - |
-      /tasks/build context/$SUBDIR
+      cd image
+      /tasks/build context/$SUBDIR ../version
 params:
   DIR: 
