@@ -9,16 +9,14 @@ inputs:
   - name: context
   - name: version
 
-output:
+outputs:
   - name: image
-
 
 run:
   path: sh
   args:
     - -exc
     - |
-      DIR=${DIR:-context/}
-      /tasks/build $DIR
+      /tasks/build context/$SUBDIR
 params:
   DIR: 

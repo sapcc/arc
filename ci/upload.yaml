@@ -3,7 +3,7 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: { repository: docker.***REMOVED***/monsoon/arc-pipeline, tag: 'current'}
+  source: { repository: docker.***REMOVED***/monsoon-concourse/arc-pipeline, tag: 'current'}
 
 inputs:
 - name: bin
