@@ -2,6 +2,7 @@
 
 DOMAIN=${DOMAIN:-monsoon2}
 PROJECT=${PROJECT:-Arc_Test}
+PROJECT_DOMAIN=${PROJECT_DOMAIN:-$DOMAIN}
 USERNAME=${USERNAME:-$USER}
 KEYSTONE_ENDPOINT=${KEYSTONE_ENDPOINT:-https://identity.***REMOVED***:5000/v3}
 
@@ -59,7 +60,7 @@ json=$(curl --silent -D /dev/stderr \
     "scope": {
       "project": {
         "name": "'$PROJECT'",
-        "domain": {"name":"'$DOMAIN'"} 
+        "domain": {"name":"'$PROJECT_DOMAIN'"} 
       }
     }
   }
