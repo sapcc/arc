@@ -46,13 +46,13 @@
 		},
 		{
 			"ImportPath": "github.com/eclipse/paho.mqtt.golang",
-			"Comment": "v1.0.0-2-g946fb4c",
-			"Rev": "946fb4cba30a0318a7ff7f236e88a89446a6c273"
+			"Comment": "v1.0.0-4-gb0f0cce",
+			"Rev": "b0f0cce24f138f7a1d034f55069883c7dcb6a9d7"
 		},
 		{
 			"ImportPath": "github.com/eclipse/paho.mqtt.golang/packets",
-			"Comment": "v1.0.0-2-g946fb4c",
-			"Rev": "946fb4cba30a0318a7ff7f236e88a89446a6c273"
+			"Comment": "v1.0.0-4-gb0f0cce",
+			"Rev": "b0f0cce24f138f7a1d034f55069883c7dcb6a9d7"
 		},
 		{
 			"ImportPath": "github.com/go-ole/go-ole",
