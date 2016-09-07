@@ -1,26 +1,11 @@
 {
 	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v66",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
-		{
-			"ImportPath": "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git",
-			"Comment": "v0.9.1-14-g546c47a",
-			"Rev": "546c47a6d0e9492e77f6f37473d59c36a708e08b"
-		},
-		{
-			"ImportPath": "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git/packets",
-			"Comment": "v0.9.1-14-g546c47a",
-			"Rev": "546c47a6d0e9492e77f6f37473d59c36a708e08b"
-		},
-		{
-			"ImportPath": "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git/samples",
-			"Comment": "v0.9.1-14-g546c47a",
-			"Rev": "546c47a6d0e9492e77f6f37473d59c36a708e08b"
-		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.9.0-17-ga26f435",
@@ -58,6 +43,16 @@
 		{
 			"ImportPath": "github.com/databus23/requestutil",
 			"Rev": "5ff8e981f38fcabfc52ff8fd7fc7cf401d6bec67"
+		},
+		{
+			"ImportPath": "github.com/eclipse/paho.mqtt.golang",
+			"Comment": "v1.0.0-2-g946fb4c",
+			"Rev": "946fb4cba30a0318a7ff7f236e88a89446a6c273"
+		},
+		{
+			"ImportPath": "github.com/eclipse/paho.mqtt.golang/packets",
+			"Comment": "v1.0.0-2-g946fb4c",
+			"Rev": "946fb4cba30a0318a7ff7f236e88a89446a6c273"
 		},
 		{
 			"ImportPath": "github.com/go-ole/go-ole",

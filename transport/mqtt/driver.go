@@ -9,15 +9,15 @@ import (
 	"sync"
 	"time"
 
-	MQTT "git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	"github.com/Sirupsen/logrus"
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
 )
 
 type MQTTClient struct {
-	client        *MQTT.Client
+	client        MQTT.Client
 	identity      string
 	project       string
 	organization  string
@@ -99,10 +99,10 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	}
 
 	// set callbacks
-	opts.OnConnect = func(_ *MQTT.Client) {
+	opts.OnConnect = func(_ MQTT.Client) {
 		transport.onConnect()
 	}
-	opts.OnConnectionLost = func(_ *MQTT.Client, err error) {
+	opts.OnConnectionLost = func(_ MQTT.Client, err error) {
 		transport.onConnectionLost(err)
 	}
 
@@ -156,7 +156,7 @@ func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 	canceled := make(chan struct{})
 	var mutex sync.Mutex
 
-	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
+	messageCallback := func(mClient MQTT.Client, mMessage MQTT.Message) {
 		payload := mMessage.Payload()
 		msg, err := arc.ParseRequest(&payload)
 		if err != nil {
@@ -215,7 +215,7 @@ func (c *MQTTClient) SubscribeJob(requestId string) (<-chan *arc.Reply, func()) 
 	canceled := make(chan struct{})
 	var mutex sync.Mutex
 
-	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
+	messageCallback := func(mClient MQTT.Client, mMessage MQTT.Message) {
 		payload := mMessage.Payload()
 		msg, err := arc.ParseReply(&payload)
 		if err != nil {
@@ -266,7 +266,7 @@ func (c *MQTTClient) SubscribeRegistrations() (<-chan *arc.Registration, func())
 	canceled := make(chan struct{})
 	var mutex sync.Mutex
 
-	messageCallback := func(mClient *MQTT.Client, mMessage MQTT.Message) {
+	messageCallback := func(mClient MQTT.Client, mMessage MQTT.Message) {
 		payload := mMessage.Payload()
 		msg, err := arc.ParseRegistration(&payload)
 		if err != nil {
