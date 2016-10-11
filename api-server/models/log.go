@@ -174,7 +174,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 
 	// save log part
 	if reply.Payload != "" {
-		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, reply.Payload)
+		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, truncate(reply.Payload, 100))
 
 		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
 		err := logPart.Save(db)
@@ -221,4 +221,14 @@ func aggregateLogParts(db *sql.DB, id string) (err error) {
 	}
 
 	return
+}
+
+func truncate(text string, length int) string {
+	output := text
+
+	if len(text) > length {
+		output = text[0:length] + "...(truncated)"
+	}
+
+	return output
 }

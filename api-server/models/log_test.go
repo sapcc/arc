@@ -342,4 +342,16 @@ var _ = Describe("Log", func() {
 
 	})
 
+	Describe("truncate payload log", func() {
+
+		It("should truncate if text length is greater than 100 and not trhough an error", func() {
+			newJob := Job{}
+			newJob.ExecuteScriptExample()
+			newJob.Payload = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec qu"
+			err := newJob.Save(db)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+	})
+
 })
