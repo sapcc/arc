@@ -102,6 +102,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest, r)
 		return
 	}
+	defer r.Body.Close()
 
 	// create job
 	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)
