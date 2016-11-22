@@ -6,7 +6,7 @@ US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
 LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
-BUILD_IMAGE:=docker.***REMOVED***/monsoon/gobuild:1.6
+BUILD_IMAGE:=hub.***REMOVED***/monsoon/gobuild:1.7
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
 ifneq ($(BUILD_VERSION),)
@@ -34,7 +34,7 @@ help:
 	@echo "  * up                - run dev stack in iTerm tabs" 
 
 .PHONY: build
-build: ensure_gopath
+build:
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(ARC_BINARY) -ldflags="$(LDFLAGS)" $(PKG_NAME)
 
@@ -42,7 +42,7 @@ build: ensure_gopath
 test: metalint unit
 
 .PHONY: unit
-unit: ensure_gopath 
+unit:
 	go test -v -timeout=4s $(packages)
 
 .PHONY: metalint
@@ -86,26 +86,10 @@ build-rhel:
 build-ubuntu:
 	docker build -f scripts/Dockerfile.ubuntu -t ubuntu-arc scripts/
 
-.PHONY: ensure_gopath
-ensure_gopath:
-	@goDir=$${GOPATH%%:*}/src/$(PKG_NAME) && \
-				mkdir -p $$(dirname $$goDir) && \
-				if [ ! -e "$$goDir" ]; then \
-					ln -sfv "$(CURDIR)" "$$goDir"; \
-				fi
-
-.PHONY: install-deps
-install-deps:
-	jq -r .Deps[].ImportPath < Godeps/Godeps.json |xargs -L1 go install
-
 
 .PHONY: build-image
-build-image: gonative_linux
+build-image:
 	docker build -t $(BUILD_IMAGE) .
-
-gonative_linux:
-	docker run --rm -i -e https_proxy=http://proxy.***REMOVED***:8080 golang@1.4.2 bash -c "go get -u github.com/inconshreveable/gonative && cat /go/bin/gonative" > gonative_linux
-	chmod +x gonative_linux
 
 .PHONY: cross
 cross:
@@ -119,7 +103,7 @@ cross:
 		make cross-compile TARGETS="$(TARGETS)" BUILD_VERSION=$(BUILD_VERSION)
 
 .PHONY: cross-compile
-cross-compile: ensure_gopath 
+cross-compile:
 	gox -osarch="$(TARGETS)" -output="bin/$(ARC_BIN_TPL)" -ldflags="$(LDFLAGS)" $(PKG_NAME)
 
 .PHONY: up
@@ -146,4 +130,3 @@ service/assets_windows/nssm.exe:
 clean:
 	make -C api-server clean
 	make -C update-server clean
-	rm -f gonative_linux
