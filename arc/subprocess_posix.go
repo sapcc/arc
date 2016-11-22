@@ -25,7 +25,7 @@ func (s *Subprocess) Kill() {
 }
 
 func (s *Subprocess) prepareCmd() *exec.Cmd {
-	cmd := exec.Command(s.Command[0], s.Command[1:]...)
+	cmd := exec.Command(s.Command[0], s.Command[1:]...) // #nosec
 	if s.Env != nil {
 		cmd.Env = s.Env
 	}

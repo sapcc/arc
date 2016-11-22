@@ -36,7 +36,7 @@ func ipBinary() string {
 func (h Source) Facts() (map[string]interface{}, error) {
 
 	facts := newFacts()
-	cmd := exec.Command(ipBinary(), "addr")
+	cmd := exec.Command(ipBinary(), "addr") // #nosec
 	interfaces := make(map[string]*interf)
 	var currentInterface string
 	if out, err := cmd.Output(); err == nil {
@@ -66,7 +66,7 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	//  fmt.Println("interface", i)
 	//}
 
-	cmd = exec.Command(ipBinary(), "-o", "-f", "inet", "route", "show")
+	cmd = exec.Command(ipBinary(), "-o", "-f", "inet", "route", "show") // #nosec
 	if out, err := cmd.Output(); err == nil {
 		scanner := bufio.NewScanner(bytes.NewReader(out))
 		for scanner.Scan() {

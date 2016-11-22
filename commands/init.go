@@ -30,7 +30,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 	keySize := 2048
 	dir := c.String("install-dir")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0755); /* #nosec */ err != nil {
 			return 1, fmt.Errorf("Failed to create %s", dir)
 		}
 	}
@@ -73,7 +73,10 @@ func Init(c *cli.Context, appName string) (int, error) {
 				return nil
 			},
 		}
-		req, _ := http.NewRequest("POST", c.String("registration-url"), &csr)
+		req, err := http.NewRequest("POST", c.String("registration-url"), &csr)
+		if err != nil {
+			return 1, fmt.Errorf("Failed to create registration http request: %s", err)
+		}
 		req.Header["Accept"] = []string{"application/json"}
 		req.Header["User-Agent"] = []string{appName + " " + version.String()}
 		resp, err := client.Do(req)

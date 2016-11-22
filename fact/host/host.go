@@ -17,7 +17,7 @@ func (h Source) Name() string {
 }
 
 func fqdn_and_domain() (fqdn, domain string) {
-	cmd := exec.Command("hostname", "-f")
+	cmd := exec.Command("/bin/hostname", "-f") // #nosec
 	if out, err := cmd.Output(); err == nil {
 		fqdn_str := strings.TrimSpace(string(out))
 		domain_regexp := regexp.MustCompile(`.*?\.(.+)$`)

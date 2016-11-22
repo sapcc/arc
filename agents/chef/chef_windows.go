@@ -13,7 +13,7 @@ var (
 )
 
 func install(installer string) error {
-	cmd := exec.Command("msiexec", "/qn", "/i", installer)
+	cmd := exec.Command("msiexec", "/qn", "/i", installer) // #nosec
 	log.Infof("Running %s", strings.Join(cmd.Args, " "))
 	if output, err := cmd.CombinedOutput(); err != nil {
 		log.Warnf("Command failed: %s", output)

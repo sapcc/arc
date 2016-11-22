@@ -19,12 +19,12 @@ func install(installer string) error {
 	var cmd *exec.Cmd
 	switch installerType {
 	case "rpm":
-		cmd = exec.Command("rpm", "-U", installer)
+		cmd = exec.Command("/bin/rpm", "-U", installer)
 	case "deb":
-		cmd = exec.Command("dpkg", "-i", installer)
+		cmd = exec.Command("/usr/bin/dpkg", "-i", installer)
 	default:
 		return fmt.Errorf("Unknown package format: %s", installerType)
-	}
+	} // #nosec
 
 	log.Infof("Running %s", strings.Join(cmd.Args, " "))
 

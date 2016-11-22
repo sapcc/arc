@@ -14,7 +14,10 @@ func (h Source) Name() string {
 
 func (h Source) Facts() (map[string]interface{}, error) {
 	facts := make(map[string]interface{})
-	m, _ := mem.VirtualMemory()
+	m, err := mem.VirtualMemory()
+	if err != nil {
+		return facts, nil
+	}
 
 	facts["memory_total"] = m.Total
 	facts["memory_used"] = m.Used

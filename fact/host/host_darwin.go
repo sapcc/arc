@@ -20,7 +20,7 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = hostname
 	}
-	if out, err := exec.Command("/usr/bin/sw_vers").Output(); err == nil {
+	if out, err := exec.Command("/usr/bin/sw_vers").Output(); /* #nosec */ err == nil {
 		re := regexp.MustCompile(`ProductVersion:\s+(.+)`)
 		for _, line := range strings.Split(string(out), "\n") {
 			if match := re.FindStringSubmatch(line); match != nil {
