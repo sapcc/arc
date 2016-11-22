@@ -91,7 +91,7 @@ func (s service) Install() error {
 	if err != nil {
 		return errors.New("Can't locate running executable")
 	}
-	if err := os.MkdirAll(path.Join(s.dir, "log"), 0755); err != nil {
+	if err := os.MkdirAll(path.Join(s.dir, "log"), 0700); err != nil {
 		return err
 	}
 
@@ -118,7 +118,7 @@ func (s service) Install() error {
 }
 
 func (s service) svCmd(args ...string) *exec.Cmd {
-	cmd := exec.Command(path.Join(s.dir, "service", "service"), args...)
+	cmd := exec.Command(path.Join(s.dir, "service", "service"), args...) // #nosec
 	cmd.Env = []string{fmt.Sprintf("SVDIR=%s", s.dir)}
 	return cmd
 }
@@ -139,7 +139,7 @@ func detectInitSystem() (string, error) {
 func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 	log.Info("Installing supervisor")
 
-	if err := os.MkdirAll(serviceDir, 0755); err != nil {
+	if err := os.MkdirAll(serviceDir, 0755); /* #nosec */ err != nil {
 		return err
 	}
 	//Write our the runit binaries
@@ -180,7 +180,7 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 		return err
 	}
 
-	err = os.MkdirAll(path.Join(serviceDir, "log"), 0755)
+	err = os.MkdirAll(path.Join(serviceDir, "log"), 0700)
 	if err != nil {
 		return err
 	}
@@ -212,11 +212,11 @@ func systemdService(cmd string) error {
 	}
 	unitFile.Close()
 
-	if out, err := exec.Command("systemctl", "enable", "arc").CombinedOutput(); err != nil {
+	if out, err := exec.Command("/bin/systemctl", "enable", "arc").CombinedOutput(); /* #nosec */ err != nil {
 		return fmt.Errorf("Failed to enable systemd service: %s", string(out))
 	}
 
-	if out, err := exec.Command("systemctl", "start", "arc").CombinedOutput(); err != nil {
+	if out, err := exec.Command("/bin/systemctl", "start", "arc").CombinedOutput(); /* #nosec */ err != nil {
 		return fmt.Errorf("Failed to start systemd service: %s", string(out))
 	}
 
@@ -238,7 +238,7 @@ func upstartService(cmd string) error {
 	}
 	upstartFile.Close()
 
-	if out, err := exec.Command("start", "arc").CombinedOutput(); err != nil {
+	if out, err := exec.Command("start", "arc").CombinedOutput(); /* #nosec */ err != nil {
 		return fmt.Errorf("Failed to job: %s", string(out))
 	}
 
@@ -264,7 +264,7 @@ func sysvService(cmd string) error {
 		return err
 	}
 	inittabFile.Close()
-	if out, err := exec.Command("telinit", "q").CombinedOutput(); err != nil {
+	if out, err := exec.Command("telinit", "q").CombinedOutput(); /* #nosec */ err != nil {
 		return fmt.Errorf("Failed to reload inittab: %s", string(out))
 	}
 	return nil

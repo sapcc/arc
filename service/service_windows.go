@@ -42,7 +42,7 @@ func (s service) Stop() error {
 
 func (s service) nssmCmd(cmd string, args ...string) *exec.Cmd {
 	args = append([]string{cmd, serviceName}, args...)
-	return exec.Command(filepath.Join(s.dir, "nssm.exe"), args...)
+	return exec.Command(filepath.Join(s.dir, "nssm.exe"), args...) // #nosec
 }
 
 func (s service) Install() error {
@@ -51,7 +51,7 @@ func (s service) Install() error {
 		return errors.New("Can't locate running executable")
 	}
 
-	if err := os.MkdirAll(path.Join(s.dir, "log"), 0755); err != nil {
+	if err := os.MkdirAll(path.Join(s.dir, "log"), 0700); err != nil {
 		return err
 	}
 

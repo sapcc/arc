@@ -7,5 +7,5 @@ func (s *Subprocess) Kill() {
 }
 
 func (s *Subprocess) prepareCmd() *exec.Cmd {
-	return exec.Command(s.Command[0], s.Command[1:]...)
+	return exec.Command(s.Command[0], s.Command[1:]...) // #nosec
 }

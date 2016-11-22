@@ -57,7 +57,7 @@ func init() {
 }
 
 func chefVersion() string {
-	cmd := exec.Command(chefClientBinary, "-v")
+	cmd := exec.Command(chefClientBinary, "-v") // #nosec
 	out, err := cmd.Output()
 	if err != nil {
 		return ""
@@ -180,6 +180,9 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	configFile.Close()
 
 	installedVersion, err := version.NewVersion(chefVersion())
+	if err != nil {
+		return "", err
+	}
 	chefZeroMinimalVersion, err := version.NewVersion("12.1.0")
 	if err != nil {
 		return "", err
@@ -187,7 +190,7 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 
 	if data.Nodes != nil {
 		var nodesDir = path.Join(tmpDir, "nodes")
-		if err = os.Mkdir(nodesDir, 0755); err != nil {
+		if err = os.Mkdir(nodesDir, 0755); /* #nosec */ err != nil {
 			return "", fmt.Errorf("Failed to create %s: %s", nodesDir, err)
 		}
 		for i, node := range data.Nodes {
@@ -257,6 +260,9 @@ func downloadInstaller(omnitruckUrl, platform, platform_version, chef_version st
 	log.Infof("Fetching Omnitruck metadata from %s", metadata_url)
 	var client http.Client
 	req, err := http.NewRequest("GET", metadata_url, nil)
+	if err != nil {
+		return "", fmt.Errorf("Failed to create http request: %s", err)
+	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {

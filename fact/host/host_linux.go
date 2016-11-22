@@ -37,9 +37,9 @@ func (h Source) Facts() (map[string]interface{}, error) {
 		var cmd *exec.Cmd
 		switch facts["platform_family"] {
 		case "debian":
-			cmd = exec.Command("dpkg", "-S", "/sbin/init")
+			cmd = exec.Command("/usr/bin/dpkg", "-S", "/sbin/init") // #nosec
 		case "rhel", "fedora", "suse":
-			cmd = exec.Command("rpm", "--qf", "%{name}", "-qf", "/sbin/init")
+			cmd = exec.Command("/bin/rpm", "--qf", "%{name}", "-qf", "/sbin/init") // #nosec
 		}
 		if cmd != nil {
 			if out, err := cmd.Output(); err == nil {

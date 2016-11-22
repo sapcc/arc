@@ -31,11 +31,11 @@ func (h Source) Facts() (map[string]interface{}, error) {
 func getAdapterList() (*syscall.IpAdapterInfo, error) {
 	b := make([]byte, 1000)
 	l := uint32(len(b))
-	a := (*syscall.IpAdapterInfo)(unsafe.Pointer(&b[0]))
+	a := (*syscall.IpAdapterInfo)(unsafe.Pointer(&b[0])) // #nosec
 	err := syscall.GetAdaptersInfo(a, &l)
 	if err == syscall.ERROR_BUFFER_OVERFLOW {
 		b = make([]byte, l)
-		a = (*syscall.IpAdapterInfo)(unsafe.Pointer(&b[0]))
+		a = (*syscall.IpAdapterInfo)(unsafe.Pointer(&b[0])) // #nosec
 		err = syscall.GetAdaptersInfo(a, &l)
 	}
 	if err != nil {
