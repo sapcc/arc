@@ -7,10 +7,12 @@ image_resource:
 
 inputs:
 - name: arc.git 
+  path: gopath/src/gitHub.***REMOVED***/monsoon/arc
 
 run:
   path: sh
   args:
     - -exc
     - |
-      make -C arc.git/ unit
+      export GOPATH=$PWD/gopath
+      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc unit
