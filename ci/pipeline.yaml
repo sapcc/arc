@@ -48,7 +48,7 @@ jobs:
           image_resource:
             type: docker-image
             source:
-              repository: docker.***REMOVED***/monsoon/arc-website-builder
+              repository: hub.***REMOVED***/monsoon/arc-website-builder
           inputs:
             - name: website.git
               path: source
@@ -169,7 +169,6 @@ jobs:
       - get: pki.git
         trigger: true
       - task: test 
-        privileged: true
         file: pki.git/ci/test.yaml
         input_mapping: { source: pki.git }
 
@@ -180,13 +179,21 @@ jobs:
         - get: pki.version
           params: { bump: true }
       - task: build 
-        privileged: true
-        file: pki.git/ci/build-image.yaml
-        input_mapping: 
-          context: pki.git
-          version: pki.version
+        file: pki.git/ci/build.yaml
+      - put: pki.image
+        params:
+          build: build
+          tag: pki.version/current
+          tag_as_latest: true
+          cache: true
+          cache_tag: latest
+          build_args:
+            http_proxy: http://proxy.***REMOVED***:8080
+            https_proxy: http://proxy.***REMOVED***:8080
+            no_proxy: ***REMOVED***,127.0.0.1,localhost
       - put: pki.version
         params: { filename: pki.version/current}
+
 
   - name: mosquitto-build
     plan:
@@ -195,14 +202,24 @@ jobs:
           trigger: true
         - get: mosquitto.version
           params: { bump: true }
-      - task: run
+      - task: build-packages
         privileged: true
-        file: mosquitto.git/ci/build-image.yaml
+        file: mosquitto.git/ci/build-packages.yaml
         input_mapping: 
-          context: mosquitto.git
-          version: mosquitto.version
-      - put: mosquitto.version
-        params: { filename: mosquitto.version/current}
+          aport: mosquitto.git
+        params: { SUBDIR: mosquitto}
+      - put: mosquitto.image
+        params:
+          build: build
+          tag: mosquitto.version/current
+          tag_as_latest: true
+          build_args:
+            http_proxy: http://proxy.***REMOVED***:8080
+            https_proxy: http://proxy.***REMOVED***:8080
+            no_proxy: ***REMOVED***,127.0.0.1,localhost
+#          cache_tag: latest
+#          cache: true
+
 
   - name: mosquitto-staging
     serial: true
@@ -486,6 +503,12 @@ resources:
     source:
       uri: git://gitHub.***REMOVED***/monsoon/arc-pki.git
       branch: master 
+  - name: pki.image
+    type: docker-image
+    source:
+      repository: hub.***REMOVED***/monsoon/arc-pki
+      username:   {{internal-registry-username}}
+      password:   {{internal-registry-password}}
   - name: pki.version
     type: monsoon-version
     source: 
@@ -502,6 +525,12 @@ resources:
     source:
       uri: git://gitHub.***REMOVED***/monsoon/mosquitto.git
       branch: master 
+  - name: mosquitto.image
+    type: docker-image
+    source:
+      repository: hub.***REMOVED***/monsoon/mosquitto
+      username:   {{internal-registry-username}}
+      password:   {{internal-registry-password}}
   - name: mosquitto.version
     type: monsoon-version
     source: 
@@ -538,8 +567,8 @@ resource_types:
   - name: monsoon-version
     type: docker-image
     source:
-      repository: docker.***REMOVED***/concourse/monsoon-version
+      repository: hub.***REMOVED***/concourse/monsoon-version
   - name: pullrequest 
     type: docker-image
     source:
-      repository: docker.***REMOVED***/concourse/pullrequest-resource
+      repository: hub.***REMOVED***/concourse/pullrequest-resource
