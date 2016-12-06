@@ -8,7 +8,7 @@ image_resource:
 inputs:
 - name: arc.git
   path: gopath/src/gitHub.***REMOVED***/monsoon/arc
-- name: arc.version
+- name: api.version
 
 outputs:
 - name: build
@@ -19,6 +19,6 @@ run:
     - -exc
     - |
       export GOPATH=$PWD/gopath
-      export BUILD_VERSION=$(cat arc.version/current)
+      export BUILD_VERSION=$(cat api.version/current)
       make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/api-server build
       cp -r gopath/src/gitHub.***REMOVED***/monsoon/arc/ build/

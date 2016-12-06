@@ -16,7 +16,7 @@ groups:
       - arc-unit
       - build-arc
       - build-tests
-      - api-test
+      - api-tests
       - api-build
       - pki-test
       - pki-build
@@ -103,16 +103,15 @@ jobs:
           params: { bump: true }
       - task: compile
         file: arc.git/ci/build-arc.yaml
-      - aggregate:
-        - task: upload
-          file: arc.git/ci/upload.yaml
-          params:
-            DOMAIN: {{swift-domain}}
-            OS_USERNAME: {{swift-username}}
-            OS_PASSWORD: {{swift-api-key}}
-            CONTAINER: {{swift-container-beta}}
-            OS_PROJECT_ID: {{swift-project-id}}
-            OS_AUTH_URL: {{swift-auth_url}}
+      - task: upload
+        file: arc.git/ci/upload.yaml
+        params:
+          DOMAIN: {{swift-domain}}
+          OS_USERNAME: {{swift-username}}
+          OS_PASSWORD: {{swift-api-key}}
+          CONTAINER: {{swift-container-beta}}
+          OS_PROJECT_ID: {{swift-project-id}}
+          OS_AUTH_URL: {{swift-auth_url}}
         - put: arc.version
           params: { filename: arc.version/current}
 
@@ -140,7 +139,6 @@ jobs:
         trigger: true
         passed: [ arc-unit ]
       - task: test
-        privileged: true
         file: arc.git/ci/api-tests.yaml
 
   - name: api-build
