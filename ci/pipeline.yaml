@@ -8,13 +8,13 @@ kubectl_image: &kubectl_image
   image_resource:
     type: docker-image
     source:
-      repository: docker.***REMOVED***/monsoon3/kubectl 
+      repository: docker.***REMOVED***/monsoon3/kubectl
       tag: 'v1.2.4'
 groups:
-  - name: master 
+  - name: master
     jobs:
       - arc-unit
-      - build-arc 
+      - build-arc
       - build-tests
       - api-test
       - api-build
@@ -42,7 +42,7 @@ jobs:
     plan:
       - get: website.git
         trigger: true
-      - task: deploy 
+      - task: deploy
         config:
           platform: 'linux'
           image_resource:
@@ -62,25 +62,25 @@ jobs:
     plan:
       - get: arc.git
         trigger: true
-      - aggregate: 
-        - task: metalint 
+      - aggregate:
+        - task: metalint
           file: arc.git/ci/metalint.yaml
-        - task: unit 
+        - task: unit
           file: arc.git/ci/unit.yaml
   - name: pr-test
     public: true
     plan:
       - get: pullrequest
         trigger: true
-      - get: arc.git 
-      - put: pullrequest 
+      - get: arc.git
+      - put: pullrequest
         params:
           path: pullrequest
           status: pending
       - aggregate:
         - task: metalint
           file: arc.git/ci/metalint.yaml
-        - task: unit 
+        - task: unit
           file: arc.git/ci/unit.yaml
         on_failure:
           put: pullrequest
@@ -89,7 +89,7 @@ jobs:
             status: failure
       - put: pullrequest
         params:
-          path: pullrequest 
+          path: pullrequest
           status: success
 
   - name: build-arc
@@ -101,7 +101,7 @@ jobs:
           passed: [ arc-unit ]
         - get: arc.version
           params: { bump: true }
-      - task: compile 
+      - task: compile
         file: arc.git/ci/build-arc.yaml
       - aggregate:
         - task: upload
@@ -116,17 +116,17 @@ jobs:
         - put: arc.version
           params: { filename: arc.version/current}
 
-  - name: build-tests 
+  - name: build-tests
     plan:
       - aggregate:
         - get: tests.git
           trigger: true
         - get: tests.version
           params: { bump: true }
-      - task: build 
+      - task: build
         privileged: true
         file: tests.git/ci/build-image.yaml
-        input_mapping: 
+        input_mapping:
           context: tests.git
           version: tests.version
         params:
@@ -139,36 +139,42 @@ jobs:
       - get: arc.git
         trigger: true
         passed: [ arc-unit ]
-      - task: test 
+      - task: test
         privileged: true
-        file: arc.git/ci/test.yaml
-        input_mapping: { source: arc.git }
-        params: {SUBDIR: api-server}
+        file: arc.git/ci/api-test.yaml
 
   - name: api-build
     plan:
       - aggregate:
         - get: arc.git
           trigger: true
-          passed: [ api-test ] 
+          passed: [ api-test ]
         - get: api.version
           params: { bump: true }
       - task: build
-        privileged: true
-        file: arc.git/ci/build-image.yaml
-        input_mapping: 
-          context: arc.git
-          version: api.version
+        file: arc.git/ci/api-image.yaml
+      - task: build
+        file: pki.git/ci/build.yaml
+      - put: api.image
         params:
-          SUBDIR: api-server/
+          build: build
+          tag: api.version/current
+          tag_as_latest: true
+          cache: true
+          cache_tag: latest
+          build_args:
+            http_proxy: http://proxy.***REMOVED***:8080
+            https_proxy: http://proxy.***REMOVED***:8080
+            no_proxy: ***REMOVED***,127.0.0.1,localhost
       - put: api.version
         params: { filename: api.version/current}
+
 
   - name: pki-test
     plan:
       - get: pki.git
         trigger: true
-      - task: test 
+      - task: test
         file: pki.git/ci/test.yaml
         input_mapping: { source: pki.git }
 
@@ -178,7 +184,7 @@ jobs:
         - { get: pki.git, passed: [ pki-test ], trigger: true }
         - get: pki.version
           params: { bump: true }
-      - task: build 
+      - task: build
         file: pki.git/ci/build.yaml
       - put: pki.image
         params:
@@ -205,7 +211,7 @@ jobs:
       - task: build-packages
         privileged: true
         file: mosquitto.git/ci/build-packages.yaml
-        input_mapping: 
+        input_mapping:
           aport: mosquitto.git
         params: { SUBDIR: mosquitto}
       - put: mosquitto.image
@@ -217,8 +223,8 @@ jobs:
             http_proxy: http://proxy.***REMOVED***:8080
             https_proxy: http://proxy.***REMOVED***:8080
             no_proxy: ***REMOVED***,127.0.0.1,localhost
-#          cache_tag: latest
-#          cache: true
+          cache_tag: latest
+          cache: true
 
 
   - name: mosquitto-staging
@@ -233,8 +239,8 @@ jobs:
           <<: *kubectl_image
           inputs:
             - name: mosquitto.version
-          run: 
-            path: sh 
+          run:
+            path: sh
             args:
               - -exc
               - |
@@ -256,8 +262,8 @@ jobs:
           <<: *kubectl_image
           inputs:
             - name: pki.version
-          run: 
-            path: sh 
+          run:
+            path: sh
             args:
               - -exc
               - |
@@ -279,8 +285,8 @@ jobs:
           <<: *kubectl_image
           inputs:
             - name: api.version
-          run: 
-            path: sh 
+          run:
+            path: sh
             args:
               - -exc
               - |
@@ -302,7 +308,7 @@ jobs:
         - { get: tests.version, passed: [build-tests], trigger: true }
         - { get: arc.version, passed: [build-arc], trigger: true }
         - { get: arc.git, passed: [build-arc] }
-      - task: tests 
+      - task: tests
         privileged: true
         config:
           platform: linux
@@ -311,11 +317,11 @@ jobs:
             - name: api.version
             - name: pki.version
             - name: tests.version
-            - name: arc.version 
+            - name: arc.version
           run: { path: /tasks/staging }
           params:
             API_SERVER: https://arc.***REMOVED***
-            KEYSTONE_ENDPOINT: https://identity.***REMOVED***:5000/v3 
+            KEYSTONE_ENDPOINT: https://identity.***REMOVED***:5000/v3
             DOMAIN: monsoon2
             PROJECT: Arc_Test
             USERNAME: arc_test
@@ -326,7 +332,7 @@ jobs:
       - aggregate:
         - { get: arc.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
-      - task: swift-copy 
+      - task: swift-copy
         config:
           platform: 'linux'
           <<: *pipeline_image
@@ -348,13 +354,13 @@ jobs:
         - { get: mosquitto.version, passed: [staging-tests], trigger: true }
         - { get: mosquitto.git, passed: [staging-tests] }
       - task: rolling-update
-        config: 
+        config:
           platform: linux
           <<: *kubectl_image
           inputs:
             - name: mosquitto.version
-          run: 
-            path: sh 
+          run:
+            path: sh
             args:
               - -exc
               - |
@@ -363,7 +369,7 @@ jobs:
                 kubectl rolling-update mosquitto --namespace=arc --image=$repository:$tag
           params:
             REGION: eu-de-1
-            GITHUB_TOKEN: {{github-access-token}} 
+            GITHUB_TOKEN: {{github-access-token}}
   - name: pki-production
     serial: true
     plan:
@@ -371,13 +377,13 @@ jobs:
         - { get: pki.version, passed: [staging-tests], trigger: true }
         - { get: pki.git, passed: [staging-tests] }
       - task: rolling-update
-        config: 
+        config:
           platform: linux
           <<: *kubectl_image
           inputs:
             - name: pki.version
-          run: 
-            path: sh 
+          run:
+            path: sh
             args:
               - -exc
               - |
@@ -394,13 +400,13 @@ jobs:
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
       - task: rolling-update
-        config: 
+        config:
           platform: linux
           <<: *kubectl_image
           inputs:
             - name: api.version
-          run: 
-            path: sh 
+          run:
+            path: sh
             args:
               - -exc
               - |
@@ -409,7 +415,7 @@ jobs:
                 kubectl rolling-update api --namespace=arc --image=$repository:$tag
           params:
             REGION: eu-de-1
-            GITHUB_TOKEN: {{github-access-token}} 
+            GITHUB_TOKEN: {{github-access-token}}
   #- name: production-tests
   #  serial: true
   #  plan:
@@ -422,7 +428,7 @@ jobs:
   #      - { get: pki.version, passed: [pki-production] }
   #      - { get: tests.image, trigger: true }
   #      - { get: arc.version, passed: [staging-tests], trigger: true }
-  #    - task: tests 
+  #    - task: tests
   #      privileged: true
   #      config:
   #        platform: linux
@@ -434,14 +440,14 @@ jobs:
   #          - name: pki.image
   #          - name: pki.version
   #          - name: tests.image
-  #          - name: arc.version 
+  #          - name: arc.version
   #        run: { path: /tasks/production }
   #        params:
   #          API_SERVER: https://arc-production.***REMOVED***
   #          UPDATE_SERVER: http://arc-update-site-production.***REMOVED***:8080
   #          KEYSTONE_ENDPOINT: https://identity.***REMOVED***:5000/v3
-  #          DOMAIN: sap_default 
-  #          PROJECT: D062284_sandbox 
+  #          DOMAIN: sap_default
+  #          PROJECT: D062284_sandbox
   #          USERNAME: arc_test
   #          PASSWORD: {{production-tests-password}}
   #    - aggregate:
@@ -461,24 +467,24 @@ resources:
     type: git
     source:
       uri: git@gitHub.***REMOVED***:monsoon/arc.git
-      branch: master 
-      private_key: {{arc-deploy-key}} 
+      branch: master
+      private_key: {{arc-deploy-key}}
       paths: [ website/, ci/ ]
   - name: arc.git
     type: git
     source:
       uri: git://gitHub.***REMOVED***/monsoon/arc.git
-      branch: master 
+      branch: master
       ignore_paths: [ website/, integration-tests/, update-server/ ]
   - name: tests.git
     type: git
     source:
       uri: git://gitHub.***REMOVED***/monsoon/arc.git
-      branch: master 
+      branch: master
       paths: [ integration-tests/, ci/ ]
   - name: arc.version
     type: monsoon-version
-    source: 
+    source:
       key:  arc
       initial:   "00010101"
       username:  {{swift-username}}
@@ -487,9 +493,15 @@ resources:
       domain:    {{swift-domain}}
       tenant_id: {{swift-project-id}}
       container: {{swift-container-version}}
+  - name: api.image
+    type: docker-image
+    source:
+      repository: hub.***REMOVED***/monsoon/arc-api
+      username:   {{internal-registry-username}}
+      password:   {{internal-registry-password}}
   - name: api.version
     type: monsoon-version
-    source: 
+    source:
       key:  arc-api
       initial:   "00010101"
       username:  {{swift-username}}
@@ -502,7 +514,7 @@ resources:
     type: git
     source:
       uri: git://gitHub.***REMOVED***/monsoon/arc-pki.git
-      branch: master 
+      branch: master
   - name: pki.image
     type: docker-image
     source:
@@ -511,7 +523,7 @@ resources:
       password:   {{internal-registry-password}}
   - name: pki.version
     type: monsoon-version
-    source: 
+    source:
       key:  arc-pki
       initial:   "00010101"
       username:  {{swift-username}}
@@ -524,7 +536,7 @@ resources:
     type: git
     source:
       uri: git://gitHub.***REMOVED***/monsoon/mosquitto.git
-      branch: master 
+      branch: master
   - name: mosquitto.image
     type: docker-image
     source:
@@ -533,7 +545,7 @@ resources:
       password:   {{internal-registry-password}}
   - name: mosquitto.version
     type: monsoon-version
-    source: 
+    source:
       key:  arc-mosquitto
       initial:   "00010101"
       username:  {{swift-username}}
@@ -544,7 +556,7 @@ resources:
       container: {{swift-container-version}}
   - name: tests.version
     type: monsoon-version
-    source: 
+    source:
       key:  arc-tests
       initial:   "00010101"
       username:  {{swift-username}}
@@ -561,14 +573,14 @@ resources:
       uri:  https://gitHub.***REMOVED***/monsoon/arc
       base_url: http://concourse.***REMOVED***:8080/
       api_endpoint: https://gitHub.***REMOVED***/api/v3
-      access_token: {{github-access-token}} 
+      access_token: {{github-access-token}}
 
 resource_types:
   - name: monsoon-version
     type: docker-image
     source:
       repository: hub.***REMOVED***/concourse/monsoon-version
-  - name: pullrequest 
+  - name: pullrequest
     type: docker-image
     source:
       repository: hub.***REMOVED***/concourse/pullrequest-resource

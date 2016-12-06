@@ -1,24 +1,23 @@
-export GO15VENDOREXPERIMENT=1
 REPO_PATH   := gitHub.***REMOVED***/monsoon/arc
 LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
-REPOSITORY  := docker.***REMOVED***/monsoon/arc-api
+REPOSITORY  := hub.***REMOVED***/monsoon/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
-BUILD_IMAGE := docker.***REMOVED***/monsoon/gobuild@1.6
+BUILD_IMAGE := hub.***REMOVED***/monsoon/gobuild:1.7-alpine
 
 ifneq ($(BUILD_VERSION),)
 LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
 endif
 
-DOCKER = docker
-WAIT   = $(DOCKER) run --rm --link $(WAIT_ID):wait  \
-				 docker.***REMOVED***/monsoon/docker-build:1.4.0 \
-				 wait
+ifneq ($(http_proxy),)
+BUILD_ARGS+= --build-arg http_proxy=$(http_proxy) --build-arg https_proxy=$(https_proxy) --build-arg no_proxy=$(no_proxy)
+endif
 
-### Variables that are expanded dynamically
-postgres = $(shell cat postgres 2> /dev/null)
+PKG_ROOT := $(realpath $(CURDIR)/.. )
+GOFILES:= $(shell find $(PKG_ROOT) -name '*.go' -not -path '$(PKG_ROOT)/vendor/*' )
 
-.PHONY: help 
+
+.PHONY: help
 help:
 	@echo
 	@echo "Available targets:"
@@ -26,76 +25,32 @@ help:
 	@echo "  * build-docker - build static binary via golang container, output to bin/api-server"
 	@echo "  * image        - build docker image containing the update site"
 
-.PHONY: ensure_gopath
-ensure_gopath:
-	goDir=$${GOPATH%%:*}/src/$(REPO_PATH) && \
-				mkdir -p $$(dirname $$goDir) && \
-				if [ ! -e "$$goDir" ]; then \
-					ln -sfv "$(realpath $(CURDIR)/..)" "$$goDir"; \
-				fi
+build: bin/api-server
 
-.PHONY: build
-build: ensure_gopath 
-	mkdir -p bin/ 
+bin/api-server: $(GOFILES)
+	@mkdir -p bin/
 	go build -o bin/api-server -ldflags="$(LDFLAGS)" $(REPO_PATH)/api-server
 
-.PHONY: gencert
-gencert:
+bin/gencert:
+	@mkdir -p bin/
 	go get -d gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
 	go build -o bin/gencert -ldflags="-s -w" gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
 
 .PHONY: build-docker
-build-docker: ensure_gopath 
-	$(DOCKER) run \
+build-docker: build
+	docker run \
 		--rm \
-		-v $(CURDIR)/..:/arc \
+		-v $(CURDIR)/..:/go/src/$(REPO_PATH) \
+		-w /go/src/$(REPO_PATH)/api-server \
 		$(BUILD_IMAGE) \
-		make -C /arc/api-server build gencert BUILD_VERSION=$(BUILD_VERSION)
+		make build bin/gencert BUILD_VERSION=$(BUILD_VERSION)
 
 .PHONY: image
-image: build-docker 
-image: 
-	$(DOCKER) pull $(REPOSITORY):latest || true
-	$(DOCKER) build -t $(IMAGE) --rm . 
-	echo $(IMAGE) > image 
-
-.PHONY: test
-test: postgres migrate-test
-	$(DOCKER) run \
-		--rm \
-		--link $(postgres):postgres \
-		-v $(CURDIR)/..:/arc \
-		$(BUILD_IMAGE) \
-		make -C /arc/api-server run-tests
-
-.PHONY: run-tests
-run-tests: ensure_gopath
-	go test -v $(REPO_PATH)/api-server
-	go test -v -p=1 -timeout=60s -tags=integration $(REPO_PATH)/api-server
-
-.PHONY:
-migrate-%:
-	$(DOCKER) exec $(postgres) createdb -U postgres arc_$* || true
-	$(DOCKER) run --rm \
-		--link $(postgres):postgres \
-		-v $(CURDIR):/api-server \
-		-w /api-server \
-		$(BUILD_IMAGE) \
-	  goose --env=$* up 
-
-# ----------------------------------------------------------------------------------
-#   postgres 
-# ----------------------------------------------------------------------------------
-#
-# Start postgres database and wait for it to become available. 
-#
-postgres: WAIT_ID = $$(cat postgres)
-postgres: 
-	$(DOCKER) run -d postgres > postgres 
-	$(WAIT)
+image: build-docker
+image:
+	docker build $(BUILD_ARGS) -t $(IMAGE) --rm .
 
 .PHONY: clean
 clean:
 	rm -f bin/api-server
 	rm -f bin/gencert
-	rm -f postgres

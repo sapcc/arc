@@ -1,18 +1,10 @@
-FROM progrium/busybox
+FROM alpine:3.4 
 
-ADD https://gitHub.***REMOVED***/userID/goose/releases/download/0.1/goose_linux_amd64_static /usr/bin/goose
-RUN chmod +x /usr/bin/goose
-
-RUN http_proxy=http://proxy.***REMOVED***:8080 opkg-install ca-certificates && \
-    wget -qO- http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt | tr -d '\r' > /etc/ssl/certs/SAP_Global_Root.crt
-
-# satisfy go crypto/x509
-RUN for cert in `ls -1 /etc/ssl/certs/*.crt | grep -v /etc/ssl/certs/ca-certificates.crt`; \
-      do cat "$cert" >> /etc/ssl/certs/ca-certificates.crt; \
-    done
-
-COPY env.sh /env.sh
-ENTRYPOINT ["/env.sh"]
+RUN apk add --no-cache curl
+RUN curl -fL http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt | tr -d '\r' > /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
+      && update-ca-certificates
+RUN curl -fLo /usr/bin/goose https://gitHub.***REMOVED***/userID/goose/releases/download/0.1/goose_linux_amd64_static \
+      && chmod +x /usr/bin/goose
 
 ENV ARC_ENV=development \
     DBHOST=postgres \
