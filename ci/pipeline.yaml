@@ -112,8 +112,8 @@ jobs:
           CONTAINER: {{swift-container-beta}}
           OS_PROJECT_ID: {{swift-project-id}}
           OS_AUTH_URL: {{swift-auth_url}}
-        - put: arc.version
-          params: { filename: arc.version/current}
+      - put: arc.version
+        params: { filename: arc.version/current}
 
   - name: build-tests
     plan:
@@ -156,8 +156,8 @@ jobs:
           build: build
           tag: api.version/current
           tag_as_latest: true
-          cache: true
-          cache_tag: latest
+#          cache: true
+#          cache_tag: latest
           build_args:
             http_proxy: http://proxy.***REMOVED***:8080
             https_proxy: http://proxy.***REMOVED***:8080
