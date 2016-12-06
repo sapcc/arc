@@ -21,4 +21,4 @@ run:
       export GOPATH=$PWD/gopath
       export BUILD_VERSION=$(cat api.version/current)
       make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/api-server build
-      cp -r gopath/src/gitHub.***REMOVED***/monsoon/arc/ build/
+      cp -r gopath/src/gitHub.***REMOVED***/monsoon/arc/. build/
