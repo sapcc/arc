@@ -134,27 +134,25 @@ jobs:
       - put: tests.version
         params: { filename: tests.version/current}
 
-  - name: api-test
+  - name: api-tests
     plan:
       - get: arc.git
         trigger: true
         passed: [ arc-unit ]
       - task: test
         privileged: true
-        file: arc.git/ci/api-test.yaml
+        file: arc.git/ci/api-tests.yaml
 
   - name: api-build
     plan:
       - aggregate:
         - get: arc.git
           trigger: true
-          passed: [ api-test ]
+          passed: [ api-tests ]
         - get: api.version
           params: { bump: true }
       - task: build
-        file: arc.git/ci/api-image.yaml
-      - task: build
-        file: pki.git/ci/build.yaml
+        file: arc.git/ci/build-api.yaml
       - put: api.image
         params:
           build: build

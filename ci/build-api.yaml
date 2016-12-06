@@ -18,7 +18,7 @@ run:
   args:
     - -exc
     - |
-      GOPATH=$PWD/gopath
-      VERSION=$(cat arc.version/current)
-      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc bin/api-server bin/gencert BUILD_VERSION=$VERSION
+      export GOPATH=$PWD/gopath
+      export BUILD_VERSION=$(cat arc.version/current)
+      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/api-server build
       cp -r gopath/src/gitHub.***REMOVED***/monsoon/arc/ build/
