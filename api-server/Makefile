@@ -25,7 +25,7 @@ help:
 	@echo "  * build-docker - build static binary via golang container, output to bin/api-server"
 	@echo "  * image        - build docker image containing the update site"
 
-build: bin/api-server
+build: bin/api-server bin/gencert
 
 bin/api-server: $(GOFILES)
 	@mkdir -p bin/
@@ -43,7 +43,7 @@ build-docker: build
 		-v $(CURDIR)/..:/go/src/$(REPO_PATH) \
 		-w /go/src/$(REPO_PATH)/api-server \
 		$(BUILD_IMAGE) \
-		make build bin/gencert BUILD_VERSION=$(BUILD_VERSION)
+		make build BUILD_VERSION=$(BUILD_VERSION)
 
 .PHONY: image
 image: build-docker
