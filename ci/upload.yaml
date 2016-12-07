@@ -3,23 +3,25 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: { repository: docker.***REMOVED***/monsoon-concourse/arc-pipeline, tag: 'current'}
+  source: { repository: hub.***REMOVED***/monsoon/swift-cli}
 
 inputs:
-- name: bin
+
+- name: binaries
 - name: arc.version
+- name: arc.git
 
 run:
   path: sh
   args:
     - -exc
     - |
-      /tasks/checksums bin/
+      export ARC_VERSION=$(cat arc.version/current)
+      arc.git/ci/scripts/publish_binaries.sh binaries/
 params:
-  DOMAIN:
+  CONTAINER:
+  OS_AUTH_URL:
   OS_USERNAME:
   OS_PASSWORD:
-  CONTAINER:
+  OS_USER_DOMAIN_NAME:
   OS_PROJECT_ID:
-  OS_AUTH_URL:
-
