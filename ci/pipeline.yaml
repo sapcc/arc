@@ -153,18 +153,17 @@ jobs:
         file: arc.git/ci/build-api.yaml
       - put: api.image
         params:
-          build: build
+          build: build/api-server
           tag: api.version/current
           tag_as_latest: true
-#          cache: true
-#          cache_tag: latest
+          cache: true
+          cache_tag: latest
           build_args:
             http_proxy: http://proxy.***REMOVED***:8080
             https_proxy: http://proxy.***REMOVED***:8080
             no_proxy: ***REMOVED***,127.0.0.1,localhost
       - put: api.version
         params: { filename: api.version/current}
-
 
   - name: pki-test
     plan:
