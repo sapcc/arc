@@ -11,8 +11,10 @@ ENV ARC_ENV=development \
     DBUSER=postgres
 
 WORKDIR /opt/api
+COPY entrypoint.sh /entrypoint.sh
 COPY db/ db/
 COPY bin/gencert /usr/bin/gencert
 COPY bin/api-server /usr/bin/api-server
 
-CMD goose -env=$ARC_ENV status && goose -env=$ARC_ENV up && exec api-server
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["api-server"]

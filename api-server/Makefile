@@ -37,7 +37,7 @@ bin/gencert:
 	go build -o bin/gencert -ldflags="-s -w" gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
 
 .PHONY: build-docker
-build-docker: build
+build-docker:
 	docker run \
 		--rm \
 		-v $(CURDIR)/..:/go/src/$(REPO_PATH) \
