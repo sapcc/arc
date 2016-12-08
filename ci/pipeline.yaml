@@ -8,8 +8,29 @@ kubectl_image: &kubectl_image
   image_resource:
     type: docker-image
     source:
-      repository: docker.***REMOVED***/monsoon3/kubectl
-      tag: 'v1.2.4'
+      repository: hub.***REMOVED***/monsoon/kubectl
+      tag: 'v1.4.6'
+deployment_command: &deployment_command
+  run:
+    path: sh
+    args:
+      - -ec
+      - |
+        tag=$(cat version/current)
+        echo kubectl set image deployment/$DEPLOYMENT --namespace=$NAMESPACE $DEPLOYMENT=$REPOSITORY:$tag
+        kubectl set image deployment/$DEPLOYMENT --namespace=$NAMESPACE $DEPLOYMENT=$REPOSITORY:$tag
+        echo Waiting for deployment to succeed 
+        STEP=${STEP:-2}
+        TIMEOUT=${TIMEOUT:-60}
+        sleep $STEP #give the deployment a little time
+        until kubectl get deployment $DEPLOYMENT --namespace=$NAMESPACE -o json | \
+                jq -e '.status | .unavailableReplicas == null and .replicas == .updatedReplicas' >/dev/null; do
+          if [ $TIMEOUT -le 0 ]; then echo -e "\nTimeout waiting for deployment"; exit 1; fi 
+          TIMEOUT=$((TIMEOUT-STEP))
+          sleep $STEP 
+          printf .
+        done
+        echo -e "\nDeployment completed"
 groups:
   - name: master
     jobs:
@@ -234,17 +255,14 @@ jobs:
           <<: *kubectl_image
           inputs:
             - name: mosquitto.version
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                repository=docker.***REMOVED***/monsoon/mosquitto
-                tag=$(cat mosquitto.version/current)
-                kubectl rolling-update mosquitto --namespace=arc --image=$repository:$tag
+              path: version
+          <<: *deployment_command
           params:
             REGION: staging
             GITHUB_TOKEN: {{github-access-token}}
+            REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
+            NAMESPACE: arc
+            DEPLOYMENT: mosquitto
   - name: pki-staging
     serial: true
     plan:
@@ -257,17 +275,14 @@ jobs:
           <<: *kubectl_image
           inputs:
             - name: pki.version
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                repository=docker.***REMOVED***/monsoon/arc-pki
-                tag=$(cat pki.version/current)
-                kubectl rolling-update pki --namespace=arc --image=$repository:$tag
+              path: version
+          <<: *deployment_command
           params:
             REGION: staging
             GITHUB_TOKEN: {{github-access-token}}
+            REPOSITORY: hub.***REMOVED***/monsoon/arc-pki
+            NAMESPACE: arc
+            DEPLOYMENT: pki
   - name: api-staging
     serial: true
     plan:
@@ -280,17 +295,14 @@ jobs:
           <<: *kubectl_image
           inputs:
             - name: api.version
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                repository=docker.***REMOVED***/monsoon/arc-api
-                tag=$(cat api.version/current)
-                kubectl rolling-update api --namespace=arc --image=$repository:$tag
+              path: version
+          <<: *deployment_command
           params:
             REGION: staging
             GITHUB_TOKEN: {{github-access-token}}
+            REPOSITORY: hub.***REMOVED***/monsoon/arc-api
+            NAMESPACE: arc
+            DEPLOYMENT: api
   - name: staging-tests
     serial: true
     plan:
