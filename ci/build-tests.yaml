@@ -21,4 +21,4 @@ run:
       export GOPATH=$PWD/gopath
       export BUILD_VERSION=$(cat tests.version/current)
       git clone gopath/src/gitHub.***REMOVED***/monsoon/arc/ build/
-      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/integration-tests build BIN_DIR=$PWD/build/bin
+      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/integration-tests build BIN_DIR=$PWD/build/integration-tests/bin
