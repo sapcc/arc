@@ -1,0 +1,24 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: { repository: hub.***REMOVED***/monsoon/gobuild, tag: '1.7-alpine'}
+
+inputs:
+- name: tests.git
+  path: gopath/src/gitHub.***REMOVED***/monsoon/arc
+- name: tests.version
+
+outputs:
+- name: build
+
+run:
+  path: sh
+  args:
+    - -exc
+    - |
+      export GOPATH=$PWD/gopath
+      export BUILD_VERSION=$(cat tests.version/current)
+      git clone gopath/src/gitHub.***REMOVED***/monsoon/arc/ build/
+      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/integration-tests build BIN_DIR=$PWD/build/bin

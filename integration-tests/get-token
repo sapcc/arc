@@ -1,0 +1,77 @@
+#!/bin/sh
+
+DOMAIN=${DOMAIN:-monsoon2}
+PROJECT=${PROJECT:-Arc_Test}
+USERNAME=${USERNAME:-$USER}
+KEYSTONE_ENDPOINT=${KEYSTONE_ENDPOINT:-https://identity.***REMOVED***:5000/v3}
+
+HELP () {
+  echo usage $0 [-d DOMAIN] [-p PROJECT] [-u USER] [-e KEYSTONE_ENDPOINT]
+}
+
+while getopts u:d:p:e:vh FLAG; do
+  case $FLAG in
+    u)
+      USERNAME=$OPTARG
+      ;;
+    d)
+      DOMAIN=$OPTARG
+      ;;
+    p)
+      PROJECT=$OPTARG
+      ;;
+    e)
+      KEYSTONE_ENDPOINT=$OPTARG
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    h)
+      HELP
+      exit 0
+      ;;
+    \?)
+      HELP
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$PASSWORD" ]; then
+  read -p "Enter password for user $USERNAME: " -s PASSWORD
+  echo
+fi
+
+headers=$(curl --silent -o /dev/null -D -  \
+      -H "Content-Type: application/json" \
+      -d '
+{ "auth": {
+    "identity": {
+      "methods": ["password"],
+      "password": {
+        "user": {
+          "name": "'$USERNAME'",
+          "domain": { "name": "'$DOMAIN'"   },
+          "password": "'$PASSWORD'"
+        }
+      }
+    },
+    "scope": {
+      "project": {
+        "name": "'$PROJECT'",
+        "domain": {"name":"'$DOMAIN'"} 
+      }
+    }
+  }
+}
+' \
+  $KEYSTONE_ENDPOINT/auth/tokens?nocatalog)
+
+token=$(echo "$headers" | sed -n 's/X-Subject-Token: \([0-9a-f]*\)/\1/p')
+if [ -n "$token" ]; then
+  echo $token
+else
+  echo "Failed to get token from $KEYSTONE_ENDPOINT for user: $USERNAME, domain: $DOMAIN, project:$PROJECT" 1>&2
+  echo -e "Response headers:\n$headers" 1>&2
+  exit 1
+fi
