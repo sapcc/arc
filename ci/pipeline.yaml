@@ -35,8 +35,8 @@ groups:
   - name: master
     jobs:
       - arc-unit
-      - build-arc
-      - build-tests
+      - arc-build
+      - tests-build 
       - api-tests
       - api-build
       - pki-test
@@ -113,7 +113,7 @@ jobs:
           path: pullrequest
           status: success
 
-  - name: build-arc
+  - name: arc-build
     serial: true
     plan:
       - aggregate:
@@ -127,16 +127,16 @@ jobs:
       - task: upload
         file: arc.git/ci/upload.yaml
         params:
-          DOMAIN: {{swift-domain}}
+          CONTAINER: {{swift-container-beta}}
+          OS_AUTH_URL: {{swift-auth_url}}
           OS_USERNAME: {{swift-username}}
           OS_PASSWORD: {{swift-api-key}}
-          CONTAINER: {{swift-container-beta}}
+          OS_USER_DOMAIN_NAME: {{swift-domain}}
           OS_PROJECT_ID: {{swift-project-id}}
-          OS_AUTH_URL: {{swift-auth_url}}
       - put: arc.version
         params: { filename: arc.version/current}
 
-  - name: build-tests
+  - name: tests-build
     plan:
       - aggregate:
         - get: tests.git
@@ -144,13 +144,16 @@ jobs:
         - get: tests.version
           params: { bump: true }
       - task: build
-        privileged: true
-        file: tests.git/ci/build-image.yaml
-        input_mapping:
-          context: tests.git
-          version: tests.version
+        file: tests.git/ci/build-tests.yaml
+      - put: tests.image
         params:
-          SUBDIR: integration-tests/
+          build: build/integration-tests
+          tag: tests.version/current
+          tag_as_latest: true
+          build_args:
+            http_proxy: http://proxy.***REMOVED***:8080
+            https_proxy: http://proxy.***REMOVED***:8080
+            no_proxy: ***REMOVED***,127.0.0.1,localhost
       - put: tests.version
         params: { filename: tests.version/current}
 
@@ -241,6 +244,9 @@ jobs:
             no_proxy: ***REMOVED***,127.0.0.1,localhost
           cache_tag: latest
           cache: true
+      - put: mosquitto.version
+        params:
+          filename: mosquitto.version/current
 
 
   - name: mosquitto-staging
@@ -312,9 +318,9 @@ jobs:
         - { get: api.version, passed: [api-staging], trigger: true }
         - { get: pki.version, passed: [pki-staging], trigger: true }
         - { get: pki.git, passed: [pki-staging] }
-        - { get: tests.version, passed: [build-tests], trigger: true }
-        - { get: arc.version, passed: [build-arc], trigger: true }
-        - { get: arc.git, passed: [build-arc] }
+        - { get: tests.version, passed: [tests-build], trigger: true }
+        - { get: arc.version, passed: [arc-build], trigger: true }
+        - { get: arc.git, passed: [arc-build] }
       - task: tests
         privileged: true
         config:
@@ -561,6 +567,12 @@ resources:
       domain:    {{swift-domain}}
       tenant_id: {{swift-project-id}}
       container: {{swift-container-version}}
+  - name: tests.image
+    type: docker-image
+    source:
+      repository: hub.***REMOVED***/monsoon/arc-tests
+      username:   {{internal-registry-username}}
+      password:   {{internal-registry-password}}
   - name: tests.version
     type: monsoon-version
     source:
