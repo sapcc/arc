@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
+	"runtime"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -15,9 +17,38 @@ import (
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
+
+/*
+ * Pki
+ */
+
+func servePkiToken(w http.ResponseWriter, r *http.Request) {
+	// get authentication
+	authorization := auth.GetIdentity(r)
+
+	// create token
+	tokenStruct, err := pki.CreateToken(db, authorization, r)
+	if err != nil {
+		if _, ok := err.(pki.TokenBodyError); ok {
+			logAndReturnHttpPkiError(w, http.StatusNotFound, err)
+			return
+		} else {
+			logAndReturnHttpPkiError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	err = json.NewEncoder(w).Encode(map[string]string{"token": tokenStruct["token"], "url": tokenStruct["url"]})
+	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+}
+
+func signPkiToken(w http.ResponseWriter, r *http.Request) {
+}
 
 /*
  * Jobs
@@ -502,6 +533,18 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 // private
+
+func logAndReturnHttpPkiError(w http.ResponseWriter, status int, err error) {
+	_, file, line, _ := runtime.Caller(1)
+	log.Errorf("PKI request error. status=%d location=%s:%d error=%v", status, path.Base(file), line, err)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	}
+	w.WriteHeader(status)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	}
+}
 
 func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
 	// status string, code int, title string, detail string
