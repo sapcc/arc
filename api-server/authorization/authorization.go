@@ -25,9 +25,10 @@ func (e NotAuthorized) Error() string {
 }
 
 type Authorization struct {
-	IdentityStatus string
-	ProjectId      string
-	User           User
+	IdentityStatus  string
+	ProjectId       string
+	ProjectDomainId string
+	User            User
 }
 
 type User struct {
@@ -47,8 +48,9 @@ func (auth *Authorization) CheckIdentity() error {
 
 func GetIdentity(r *http.Request) *Authorization {
 	return &Authorization{
-		IdentityStatus: r.Header.Get("X-Identity-Status"),
-		ProjectId:      r.Header.Get("X-Project-Id"),
+		IdentityStatus:  r.Header.Get("X-Identity-Status"),
+		ProjectId:       r.Header.Get("X-Project-Id"),
+		ProjectDomainId: r.Header.Get("X-Project-Domain-Id"),
 		User: User{
 			Id:         r.Header.Get("X-User-Id"),
 			Name:       r.Header.Get("X-User-Name"),

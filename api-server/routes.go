@@ -105,6 +105,18 @@ var v1RoutesDefinition = routes{
 		"/agents/{agentId}/tags/{value}",
 		deleteAgentTag,
 	},
+	route{
+		"Validate token",
+		"POST",
+		"/pki/sign/{token}",
+		serveVersion,
+	},
+	route{
+		"Create one time token",
+		"POST",
+		"/pki/token",
+		servePkiToken,
+	},
 }
 
 func newRouter(env string) *mux.Router {

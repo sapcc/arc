@@ -1,0 +1,90 @@
+package pki
+
+import (
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"code.google.com/p/go-uuid/uuid"
+	"github.com/cloudflare/cfssl/csr"
+	"github.com/cloudflare/cfssl/signer"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+)
+
+type TokenBodyError struct {
+	Msg string
+}
+
+func (e TokenBodyError) Error() string {
+	return e.Msg
+}
+
+type CreateTokenPayload struct {
+	signer.Subject
+	Profile string
+}
+
+func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request) (map[string]string, error) {
+	// check db
+	if db == nil {
+		return map[string]string{}, errors.New("Db connection is nil")
+	}
+
+	// read the request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		//httpError(w, 400, err)
+		return map[string]string{}, TokenBodyError{Msg: err.Error()}
+	}
+	r.Body.Close()
+
+	// create payload
+	var payload CreateTokenPayload
+	if err = json.Unmarshal(body, &payload); err != nil {
+		//httpError(w, 400, fmt.Errorf("Failed to parse body"))
+		return map[string]string{}, TokenBodyError{Msg: "Failed to parse body"}
+	}
+	profile := "default"
+	// no need for now to change the profile
+	/*if payload.Profile != "" {
+		profile = payload.Profile
+	}*/
+	token := uuid.New()
+
+	// At least 1 name entry and max 1 entry
+	if len(payload.Subject.Names) == 0 {
+		payload.Subject.Names = []csr.Name{
+			csr.Name{
+				OU: authorization.ProjectId,
+				O:  authorization.ProjectDomainId,
+			},
+		}
+	} else {
+		// Override project and domain
+		payload.Subject.Names[0].OU = authorization.ProjectId
+		payload.Subject.Names[0].O = authorization.ProjectDomainId
+		payload.Subject.Names[0].SerialNumber = ""
+		// just on name entry
+		payload.Subject.Names = []csr.Name{payload.Subject.Names[0]}
+	}
+
+	var subject []byte
+	subject, err = json.Marshal(payload.Subject)
+	if err != nil {
+		//httpError(w, 500, err)
+		return map[string]string{}, err
+	}
+
+	// save to db
+	_, err = db.Exec("INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)", token, profile, subject)
+	if err != nil {
+		// httpError(w, 500, err)
+		return map[string]string{}, err
+	}
+
+	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", Scheme(r), HostWithPort(r), token)
+	return map[string]string{"token": token, "url": url}, nil
+}
