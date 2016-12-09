@@ -21,12 +21,13 @@ require_env "USERNAME"
 require_env "PASSWORD"
 
 TOKEN=$(get-token)
+export TOKEN
 
 echo "Running smoke tests"
 smoke
 
 echo "Checking that agents are running the current version"
-updated-test
+updated-test -latest-version=$ARC_VERSION
 
 for id in $(curl -s -H X-Auth-Token:$TOKEN $API_SERVER/api/v1/agents | jq -r '.[]|.agent_id')
 do
