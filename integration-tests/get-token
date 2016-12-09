@@ -67,7 +67,7 @@ headers=$(curl --silent -o /dev/null -D -  \
 ' \
   $KEYSTONE_ENDPOINT/auth/tokens?nocatalog)
 
-token=$(echo "$headers" | sed -n 's/X-Subject-Token: \([0-9a-f]*\)/\1/p')
+token=$(echo "$headers" | sed -n 's/X-Subject-Token: \([-_0-9a-zA-Z]*\).*/\1/p' | xargs) #xargs trims whitespaces
 if [ -n "$token" ]; then
   echo $token
 else
