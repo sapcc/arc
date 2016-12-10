@@ -257,7 +257,7 @@ jobs:
       - aggregate:
         - { get: mosquitto.version, passed: [mosquitto-build], trigger: true }
         - { get: mosquitto.git, passed: [mosquitto-build] }
-      - task: rolling-update
+      - task: deployment 
         config:
           platform: linux
           <<: *kubectl_image
@@ -277,7 +277,7 @@ jobs:
       - aggregate:
         - { get: pki.version, passed: [pki-build], trigger: true }
         - { get: pki.git, passed: [pki-build] }
-      - task: rolling-update
+      - task: deployment
         config:
           platform: linux
           <<: *kubectl_image
@@ -297,7 +297,7 @@ jobs:
       - aggregate:
         - { get: api.version, passed: [api-build], trigger: true }
         - { get: arc.git, passed: [api-build] }
-      - task: rolling-update
+      - task: deployment
         config:
           platform: linux
           <<: *kubectl_image
@@ -370,69 +370,60 @@ jobs:
       - aggregate:
         - { get: mosquitto.version, passed: [staging-tests], trigger: true }
         - { get: mosquitto.git, passed: [staging-tests] }
-      - task: rolling-update
+      - task: deployment
         config:
           platform: linux
           <<: *kubectl_image
           inputs:
             - name: mosquitto.version
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                repository=docker.***REMOVED***/monsoon/mosquitto
-                tag=$(cat mosquitto.version/current)
-                kubectl rolling-update mosquitto --namespace=arc --image=$repository:$tag
+              path: version
+          <<: *deployment_command
           params:
             REGION: eu-de-1
             GITHUB_TOKEN: {{github-access-token}}
+            REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
+            NAMESPACE: arc
+            DEPLOYMENT: mosquitto
   - name: pki-production
     serial: true
     plan:
       - aggregate:
         - { get: pki.version, passed: [staging-tests], trigger: true }
         - { get: pki.git, passed: [staging-tests] }
-      - task: rolling-update
+      - task: deployment
         config:
           platform: linux
           <<: *kubectl_image
           inputs:
             - name: pki.version
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                repository=docker.***REMOVED***/monsoon/arc-pki
-                tag=$(cat pki.version/current)
-                kubectl rolling-update pki --namespace=arc --image=$repository:$tag
+              path: version
+          <<: *deployment_command
           params:
             REGION: eu-de-1
             GITHUB_TOKEN: {{github-access-token}}
+            REPOSITORY: hub.***REMOVED***/monsoon/arc-pki
+            NAMESPACE: arc
+            DEPLOYMENT: pki
   - name: api-production
     serial: true
     plan:
       - aggregate:
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
-      - task: rolling-update
+      - task: deployment
         config:
           platform: linux
           <<: *kubectl_image
           inputs:
             - name: api.version
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                repository=docker.***REMOVED***/monsoon/arc-api
-                tag=$(cat api.version/current)
-                kubectl rolling-update api --namespace=arc --image=$repository:$tag
+              path: version
+          <<: *deployment_command
           params:
             REGION: eu-de-1
             GITHUB_TOKEN: {{github-access-token}}
+            REPOSITORY: hub.***REMOVED***/monsoon/arc-api
+            NAMESPACE: arc
+            DEPLOYMENT: api
   #- name: production-tests
   #  serial: true
   #  plan:
