@@ -78,7 +78,52 @@ var _ = Describe("Tokens", func() {
 		Expect(subject.Names[0].O).To(Equal("test-project-domain"))
 	})
 
-	//It("Returns a token", func() {})
+	It("should let just one csr.name, all other will be removed and all SerialNumber entries set to emtpy string", func() {
+		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
+		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
+		Expect(err).NotTo(HaveOccurred())
+		result, err := CreateToken(db, &authorization, req)
+
+		var subjectData []byte
+		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", result["token"]).Scan(&subjectData)
+		Expect(err).NotTo(HaveOccurred())
+		var subject signer.Subject
+		err = json.Unmarshal(subjectData, &subject)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(len(subject.Names)).To(Equal(1))
+		Expect(subject.SerialNumber).To(Equal(""))                  // should be removed
+		Expect(subject.Names[0].OU).To(Equal("test-project"))       // should take the OU from the authorization
+		Expect(subject.Names[0].O).To(Equal("test-project-domain")) // should take the O from the authorization
+		Expect(subject.Names[0].SerialNumber).To(Equal(""))         // should be removed
+	})
+
+	It("Returns a token even if empty json is send in the body request", func() {
+		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
+		Expect(err).NotTo(HaveOccurred())
+		result, err := CreateToken(db, &authorization, req)
+
+		var tokenId string
+		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", result["token"]).Scan(&tokenId)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(result["token"]).To(Equal(tokenId))
+		Expect(result["url"]).To(Equal(fmt.Sprintf("http://production.***REMOVED***/api/v1/pki/sign/%s", result["token"])))
+	})
+
+	It("Returns a token", func() {
+		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
+		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
+		Expect(err).NotTo(HaveOccurred())
+		result, err := CreateToken(db, &authorization, req)
+
+		var tokenId string
+		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", result["token"]).Scan(&tokenId)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(result["token"]).To(Equal(tokenId))
+		Expect(result["url"]).To(Equal(fmt.Sprintf("http://production.***REMOVED***/api/v1/pki/sign/%s", result["token"])))
+	})
 
 })
 
@@ -103,6 +148,7 @@ func newAuthorizedRequest(method, urlStr string, body io.Reader, headerOptions m
 func getUrl(path string, params url.Values) string {
 	//var newUrl *url.URL
 	newUrl, _ := url.Parse("")
+	newUrl.Host = "production.***REMOVED***"
 	newUrl.Path = fmt.Sprint("/api/v1", path)
 	newUrl.RawQuery = params.Encode()
 	return newUrl.String()
