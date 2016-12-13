@@ -109,7 +109,7 @@ var v1RoutesDefinition = routes{
 		"Validate token",
 		"POST",
 		"/pki/sign/{token}",
-		serveVersion,
+		signPkiToken,
 	},
 	route{
 		"Create one time token",

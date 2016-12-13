@@ -1,6 +1,5 @@
 package pki
 
-/*
 import (
 	"crypto/x509"
 	"database/sql"
@@ -13,28 +12,42 @@ import (
 
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/info"
-	"github.com/cloudflare/cfssl/log"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/universal"
-	"github.com/gorilla/mux"
 )
 
-func signHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+// SignForbidden should be used to return a 403
+type SignForbidden struct {
+	Msg string
+}
 
-	token := vars["token"]
+func (e SignForbidden) Error() string {
+	return e.Msg
+}
 
+// TokenLifetime should set the standard token time life time
+var TokenLifetime = "1 hour"
+
+// SignToken should sign a given token
+func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]byte, string, error) {
+	// check db
+	if db == nil {
+		return nil, "", errors.New("Db connection is nil")
+	}
+
+	// get the csr
 	csr, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		httpError(w, 500, err)
-		return
+		// httpError(w, 500, err)
+		return nil, "", err
 	}
 	r.Body.Close()
 
+	// create db transaction
 	tx, err := db.Begin()
 	if err != nil {
-		httpError(w, 500, err)
-		return
+		//httpError(w, 500, err)
+		return nil, "", err
 	}
 	defer func() {
 		if err != nil {
@@ -44,33 +57,33 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	// retrieve db data
 	var profile string
 	var subjectData []byte
-
 	err = tx.QueryRow(fmt.Sprintf("SELECT profile, subject FROM tokens WHERE id=$1 AND created_at > NOW() - INTERVAL '%s' FOR UPDATE", TokenLifetime), token).Scan(&profile, &subjectData)
 
 	switch {
 	case err == sql.ErrNoRows:
-		httpError(w, 403, errors.New("token not found"))
-		return
+		//httpError(w, 403, errors.New("token not found"))
+		return nil, "", SignForbidden{Msg: "Token not found"}
 	case err != nil:
-		httpError(w, 500, err)
-		return
+		// httpError(w, 500, err)
+		return nil, "", err
 	}
 
 	var subject signer.Subject
 	err = json.Unmarshal(subjectData, &subject)
 	if err != nil {
-		httpError(w, 500, err)
-		return
+		// httpError(w, 500, err)
+		return nil, "", err
 	}
 
-	root := cli.RootFromConfig(&cfg)
+	root := cli.RootFromConfig(cfg)
 
 	s, err := universal.NewSigner(root, cfg.CFG.Signing)
 	if err != nil {
-		httpError(w, 500, err)
-		return
+		//httpError(w, 500, err)
+		return nil, "", err
 	}
 
 	req := signer.SignRequest{
@@ -82,20 +95,20 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	pemCert, err := s.Sign(req)
 	if err != nil {
-		httpError(w, 500, err)
-		return
+		//httpError(w, 500, err)
+		return nil, "", err
 	}
 
 	certData, _ := pem.Decode(pemCert)
 	if certData == nil {
-		httpError(w, 500, errors.New("Failed to parse PEM encoded certificate."))
-		return
+		//httpError(w, 500, errors.New("Failed to parse PEM encoded certificate."))
+		return nil, "", errors.New("Failed to parse PEM encoded certificate.")
 	}
 
 	x509Cert, err := x509.ParseCertificate(certData.Bytes)
 	if err != nil {
-		httpError(w, 500, errors.New("Failed to parse signed certificate."))
-		return
+		//httpError(w, 500, errors.New("Failed to parse signed certificate."))
+		return nil, "", errors.New("Failed to parse signed certificate.")
 	}
 	certSubject := x509Cert.Subject
 
@@ -113,41 +126,29 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		pemCert,
 	)
 	if err != nil {
-		httpError(w, 500, err)
-		return
+		//httpError(w, 500, err)
+		return nil, "", err
 	}
 
 	_, err = tx.Exec("DELETE FROM tokens where id=$1", token)
-
 	if err != nil {
-		httpError(w, 500, errors.New("Failed to delete token."))
-		return
+		//httpError(w, 500, errors.New("Failed to delete token."))
+		return nil, "", errors.New("Failed to delete token.")
 	}
 
-	acceptHeader := ""
-	for _, v := range r.Header["Accept"] {
-		acceptHeader = v
-		break
+	//get the signing CA
+	caInfo, err := s.Info(info.Req{Profile: profile})
+	if err != nil {
+		//httpError(w, 500, err)
+		return nil, "", err
 	}
 
-	if acceptHeader == "application/json" {
-		//get the signing CA
-		caInfo, err := s.Info(info.Req{Profile: profile})
-		if err != nil {
-			httpError(w, 500, err)
-			return
-		}
+	return &pemCert, caInfo.Certificate, nil
+}
 
-		w.Header().Set("Content-Type", "application/json")
-		response := map[string]string{
-			"certificate": string(pemCert),
-			"ca":          caInfo.Certificate,
-		}
-		json.NewEncoder(w).Encode(response)
-	} else {
-		log.Error("plain")
-		w.Header().Set("Content-Type", "application/pkix-cert")
-		w.Write(pemCert)
+func firstOrNull(s []string) sql.NullString {
+	if len(s) == 0 {
+		return sql.NullString{}
 	}
-
-}*/
+	return sql.NullString{String: s[0], Valid: true}
+}

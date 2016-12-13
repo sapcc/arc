@@ -48,6 +48,40 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func signPkiToken(w http.ResponseWriter, r *http.Request) {
+	// get token from the request
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	pemCert, ca, err := pki.SignToken(db, token, r, &pkiConfig)
+	if err != nil {
+		if _, ok := err.(pki.SignForbidden); ok {
+			logAndReturnHttpPkiError(w, http.StatusForbidden, err)
+			return
+		} else {
+			logAndReturnHttpPkiError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	acceptHeader := ""
+	for _, v := range r.Header["Accept"] {
+		acceptHeader = v
+		break
+	}
+
+	if acceptHeader == "application/json" {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]string{
+			"certificate": string(*pemCert),
+			"ca":          ca,
+		}
+		err = json.NewEncoder(w).Encode(response)
+		checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+	} else {
+		log.Error("plain")
+		w.Header().Set("Content-Type", "application/pkix-cert")
+		w.Write(*pemCert)
+	}
 }
 
 /*

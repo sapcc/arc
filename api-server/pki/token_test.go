@@ -18,7 +18,7 @@ import (
 	"net/url"
 )
 
-var _ = Describe("Tokens", func() {
+var _ = Describe("Token Create", func() {
 
 	var (
 		authorization = auth.Authorization{}
