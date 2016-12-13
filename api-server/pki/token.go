@@ -49,9 +49,9 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 	}
 	profile := "default"
 	// no need for now to change the profile
-	/*if payload.Profile != "" {
-		profile = payload.Profile
-	}*/
+	//if payload.Profile != "" {
+	//	profile = payload.Profile
+	//}
 	token := uuid.New()
 
 	// At least 1 name entry and max 1 entry
@@ -88,3 +88,14 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", Scheme(r), HostWithPort(r), token)
 	return map[string]string{"token": token, "url": url}, nil
 }
+
+/*import (
+	"database/sql"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	"net/http"
+)
+
+func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request) (map[string]string, error) {
+	return map[string]string{}, nil
+}
+*/

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	cffsl_cli "github.com/cloudflare/cfssl/cli"
+	cfssl_config "github.com/cloudflare/cfssl/config"
 	"github.com/codegangsta/cli"
 	"github.com/databus23/keystone"
 	"github.com/databus23/keystone/cache/postgres"
@@ -24,11 +26,12 @@ const (
 )
 
 var (
-	config = arc_config.New()
-	db     *sql.DB
-	tp     transport.Transport
-	ks     = keystone.Auth{}
-	env    string
+	config    = arc_config.New()
+	db        *sql.DB
+	tp        transport.Transport
+	ks        = keystone.Auth{}
+	env       string
+	pkiConfig cffsl_cli.Config
 )
 
 func main() {
@@ -105,15 +108,33 @@ func main() {
 			Usage:  "Endpoint url for Keystone",
 			EnvVar: envPrefix + "KEYSTONE_ENDPOINT",
 		},
+		cli.StringFlag{
+			Name:   "pki-profile-config",
+			Usage:  "Path to PKI profile configuration file",
+			Value:  "etc/pki_default_conf.json",
+			EnvVar: envPrefix + "PKI_CONFIG",
+		},
+		cli.StringFlag{
+			Name:   "pki-ca",
+			Usage:  "PKI CA used to sign the new certificate",
+			EnvVar: envPrefix + "PKI_CA",
+		},
+		cli.StringFlag{
+			Name:   "pki-ca-key",
+			Usage:  "PKI CA private key",
+			EnvVar: envPrefix + "PKI_CA_KEY",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
+		// load app configuraion
 		err := config.Load(c)
 		if err != nil {
 			log.Fatalf("Invalid configuration: %s\n", err.Error())
 			return err
 		}
 
+		// set log level
 		lvl, err := log.ParseLevel(config.LogLevel)
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
@@ -161,6 +182,19 @@ func runServer(c *cli.Context) {
 
 	// start the routine scheduler
 	go routineScheduler(db, 60*time.Second)
+
+	// load pki configuration
+	if c.GlobalString("pki-ca") != "" {
+		pkiConfig.CAFile = c.GlobalString("pki-ca")
+	}
+	if c.GlobalString("pki-ca-key") != "" {
+		pkiConfig.CAKeyFile = c.GlobalString("pki-ca-key")
+	}
+	if c.GlobalString("pki-profile-config") != "" {
+		pkiConfig.ConfigFile = c.GlobalString("pki-profile-config")
+	}
+	pkiConfig.CFG, err = cfssl_config.LoadFile(pkiConfig.ConfigFile)
+	checkErrAndPanic(err, fmt.Sprintf("Failed to load PKI profile config file: %s", err))
 
 	// init the router
 	router := newRouter(env)

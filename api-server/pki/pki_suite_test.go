@@ -4,6 +4,7 @@ package pki_test
 
 import (
 	"os"
+	"path"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -39,3 +40,8 @@ var _ = AfterSuite(func() {
 var _ = BeforeEach(func() {
 	DeleteAllRowsFromTable(db, "tokens")
 })
+
+func pathTo(p string) string {
+	pwd, _ := os.Getwd()
+	return path.Join(pwd, "../", p)
+}
