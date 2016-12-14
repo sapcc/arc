@@ -35,6 +35,12 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 		return map[string]string{}, errors.New("Db connection is nil")
 	}
 
+	// check the identity status
+	err := authorization.CheckIdentity()
+	if err != nil {
+		return map[string]string{}, err
+	}
+
 	// read the request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {

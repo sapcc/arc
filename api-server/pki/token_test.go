@@ -40,7 +40,7 @@ var _ = Describe("Token Create", func() {
 		Expect(result).To(Equal(map[string]string{}))
 	})
 
-	It("returns an error if no body is set in the request", func() {
+	It("returns a TokenBodyError error if no body is set in the request", func() {
 		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
@@ -50,7 +50,7 @@ var _ = Describe("Token Create", func() {
 		Expect(ok).To(Equal(true))
 	})
 
-	It("returns an error if body is json malformated", func() {
+	It("returns a TokenBodyError error if body is json malformated", func() {
 		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent name"`), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)

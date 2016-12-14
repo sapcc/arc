@@ -80,6 +80,11 @@ func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]b
 
 	root := cli.RootFromConfig(cfg)
 
+	// check if cfg is nil else panic!!
+	if cfg.CFG == nil {
+		return nil, "", errors.New("Signer configuration is nil.")
+	}
+
 	s, err := universal.NewSigner(root, cfg.CFG.Signing)
 	if err != nil {
 		//httpError(w, 500, err)

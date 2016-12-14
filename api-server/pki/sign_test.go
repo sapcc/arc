@@ -27,15 +27,15 @@ var _ = Describe("Sign csr", func() {
 
 	JustBeforeEach(func() {
 		var err error
-		cfg.CAFile = pathTo("test/ca.pem")
-		cfg.CAKeyFile = pathTo("test/ca-key.pem")
-		cfg.CFG, err = config.LoadFile(pathTo("test/local.json"))
+		cfg.CAFile = PathTo("../test/ca.pem")
+		cfg.CAKeyFile = PathTo("../test/ca-key.pem")
+		cfg.CFG, err = config.LoadFile(PathTo("../test/local.json"))
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("Signs a CSR", func() {
-		token := createToken(`{}`)
-		csr, err := os.Open(pathTo("test/test.csr"))
+		token := CreateTestToken(db, `{}`)
+		csr, err := os.Open(PathTo("../test/test.csr"))
 		Expect(err).NotTo(HaveOccurred())
 		defer csr.Close()
 
@@ -50,7 +50,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Requires a valid token", func() {
 		token := uuid.New()
-		csr, err := os.Open(pathTo("test/test.csr"))
+		csr, err := os.Open(PathTo("../test/test.csr"))
 		Expect(err).NotTo(HaveOccurred())
 		defer csr.Close()
 
@@ -67,8 +67,8 @@ var _ = Describe("Sign csr", func() {
 	})
 
 	It("Invalidates a token", func() {
-		token := createToken(`{"CN":"blafasel"}`)
-		csr, err := os.Open(pathTo("test/test.csr"))
+		token := CreateTestToken(db, `{"CN":"blafasel"}`)
+		csr, err := os.Open(PathTo("../test/test.csr"))
 		Expect(err).NotTo(HaveOccurred())
 		defer csr.Close()
 
@@ -84,8 +84,8 @@ var _ = Describe("Sign csr", func() {
 	})
 
 	It("Enforces the certificate subject", func() {
-		token := createToken(`{"CN":"testcn", "names":[{"OU":"testou"}]}`)
-		csr, err := os.Open(pathTo("test/test.csr"))
+		token := CreateTestToken(db, `{"CN":"testcn", "names":[{"OU":"testou"}]}`)
+		csr, err := os.Open(PathTo("../test/test.csr"))
 		Expect(err).NotTo(HaveOccurred())
 		defer csr.Close()
 
@@ -106,12 +106,3 @@ var _ = Describe("Sign csr", func() {
 	})
 
 })
-
-func createToken(subject string) string {
-	token := uuid.New()
-	_, err := db.Exec("INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)", token, "default", subject)
-	if err != nil {
-		panic(err)
-	}
-	return token
-}
