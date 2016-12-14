@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,13 +16,129 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pborman/uuid"
 
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
+
+var _ = Describe("Pki handlers", func() {
+
+	Describe("servePkiToken", func() {
+
+		It("returns a token", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
+			req.Host = "localhost:1234"
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(200))
+
+			var response struct {
+				Token string
+				Url   string
+			}
+			err = json.NewDecoder(w.Body).Decode(&response)
+			Expect(err).To(BeNil())
+			Expect(response.Token).ToNot(BeZero())
+			Expect(response.Url).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+		})
+
+		It("returns a HTTP 401 if not authorized", func() {
+			checkIdentityInvalidRequest("POST", getUrl("/pki/token", url.Values{}), "{}")
+		})
+
+		It("returns a HTTP 400 on body emtpy", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(""), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(400))
+		})
+
+		It("returns a HTTP 400 on body malformated", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{miau:test"), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(400))
+		})
+
+	})
+
+	Describe("signPkiToken", func() {
+
+		It("signs a token", func() {
+			token := pki.CreateTestToken(db, `{}`)
+			csr, err := os.Open(pki.PathTo("test/test.csr"))
+			Expect(err).NotTo(HaveOccurred())
+			defer csr.Close()
+
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), csr)
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			//check response code, header and body
+			Expect(w.Code).To(Equal(200))
+			cert, _ := pem.Decode(w.Body.Bytes())
+			Expect(cert.Type).To(Equal("CERTIFICATE"))
+		})
+
+		It("returns json optionally", func() {
+			token := pki.CreateTestToken(db, `{}`)
+			csr, err := os.Open(pki.PathTo("test/test.csr"))
+			Expect(err).NotTo(HaveOccurred())
+			defer csr.Close()
+
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), csr)
+			Expect(err).NotTo(HaveOccurred())
+			req.Header["Accept"] = []string{"application/json"}
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Code).To(Equal(200))
+			var response struct {
+				Ca          string
+				Certificate string
+			}
+			json.NewDecoder(w.Body).Decode(&response)
+			Expect(response.Ca).NotTo(BeZero())
+			Expect(response.Certificate).NotTo(BeZero())
+		})
+
+		It("returns a 403 forbidden when token not valid", func() {
+			csr, err := os.Open(pki.PathTo("test/test.csr"))
+			Expect(err).NotTo(HaveOccurred())
+			defer csr.Close()
+
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", "123456789"), url.Values{}), csr) // fake token
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
+			Expect(w.Code).To(Equal(403))
+		})
+
+	})
+
+})
 
 var _ = Describe("Job Handlers", func() {
 
@@ -33,7 +150,7 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns a 500 error if something goes wrong", func() {
 			// save bad data
-			job := models.Job{}
+			job = models.Job{}
 			job.RpcVersionExample()
 			job.Status = 6 // not existing status
 			err := job.Save(db)
@@ -118,7 +235,7 @@ var _ = Describe("Job Handlers", func() {
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 
 			// add job with special target
-			job := models.Job{}
+			job = models.Job{}
 			job.ExecuteScriptExample()
 			job.To = "my_test_laptop"
 			err := job.Save(db)
@@ -150,7 +267,7 @@ var _ = Describe("Job Handlers", func() {
 				jobs.CreateAndSaveRpcVersionExamples(db, 10)
 
 				// add job with other target jus to check that pagination with agent id filter works fine
-				job := models.Job{}
+				job = models.Job{}
 				job.ExecuteScriptExample()
 				job.To = "other_target"
 				err := job.Save(db)
@@ -422,7 +539,7 @@ var _ = Describe("Agent Handlers", func() {
 			checkIdentityInvalidRequest("GET", getUrl("/agents", url.Values{}), "")
 
 			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
-			agents := models.Agents{}
+			agents = models.Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
 			req, err := http.NewRequest("GET", getUrl("/agents", url.Values{}), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
@@ -1421,4 +1538,13 @@ func getUrl(path string, params url.Values) string {
 	newUrl.Path = fmt.Sprint("/api/v1", path)
 	newUrl.RawQuery = params.Encode()
 	return newUrl.String()
+}
+
+func CreateTestToken(subject string) string {
+	token := uuid.New()
+	_, err := db.Exec("INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)", token, "default", subject)
+	if err != nil {
+		panic(err)
+	}
+	return token
 }
