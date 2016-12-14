@@ -14,6 +14,7 @@ import (
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 )
 
+// TokenBodyError should return a http 400 error
 type TokenBodyError struct {
 	Msg string
 }
@@ -22,11 +23,12 @@ func (e TokenBodyError) Error() string {
 	return e.Msg
 }
 
-type CreateTokenPayload struct {
+type createTokenPayload struct {
 	signer.Subject
 	Profile string
 }
 
+// CreateToken should return a new token
 func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request) (map[string]string, error) {
 	// check db
 	if db == nil {
@@ -42,7 +44,7 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 	r.Body.Close()
 
 	// create payload
-	var payload CreateTokenPayload
+	var payload createTokenPayload
 	if err = json.Unmarshal(body, &payload); err != nil {
 		//httpError(w, 400, fmt.Errorf("Failed to parse body"))
 		return map[string]string{}, TokenBodyError{Msg: "Failed to parse body"}
@@ -88,14 +90,3 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", Scheme(r), HostWithPort(r), token)
 	return map[string]string{"token": token, "url": url}, nil
 }
-
-/*import (
-	"database/sql"
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
-	"net/http"
-)
-
-func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request) (map[string]string, error) {
-	return map[string]string{}, nil
-}
-*/
