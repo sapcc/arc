@@ -34,7 +34,8 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 	tokenStruct, err := pki.CreateToken(db, authorization, r)
 	if err != nil {
 		if _, ok := err.(pki.TokenBodyError); ok {
-			logAndReturnHttpPkiError(w, http.StatusNotFound, err)
+			// return status 400 (StatusBadRequest)
+			logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
 			return
 		} else {
 			logAndReturnHttpPkiError(w, http.StatusInternalServerError, err)
