@@ -28,7 +28,7 @@ type createTokenPayload struct {
 	Profile string
 }
 
-// CreateToken should return a new token
+// CreateToken return a new sign token
 func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request) (map[string]string, error) {
 	// check db
 	if db == nil {
@@ -74,7 +74,7 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 		// Override project and domain
 		payload.Subject.Names[0].OU = authorization.ProjectId
 		payload.Subject.Names[0].O = authorization.ProjectDomainId
-		payload.Subject.Names[0].SerialNumber = ""
+		//payload.Subject.Names[0].SerialNumber = "" // no SereialNumber in the cffsl version of arc-pki
 		// just on name entry
 		payload.Subject.Names = []csr.Name{payload.Subject.Names[0]}
 	}
