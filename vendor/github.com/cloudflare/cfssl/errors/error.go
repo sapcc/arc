@@ -52,6 +52,12 @@ const (
 
 	// CSRError indicates a problem with CSR parsing
 	CSRError // 9XXX
+
+	// CTError indicates a problem with the certificate transparency process
+	CTError // 10XXX
+
+	// CertStoreError indicates a problem with the certificate store
+	CertStoreError // 11XXX
 )
 
 // None is a non-specified error.
@@ -88,8 +94,10 @@ const (
 	// BadRequest indicates that the certificate request is invalid.
 	BadRequest // Code 13XX
 
-	// SerialSeqParseError -- SerialSeq failed to parse as hex digits
-	SerialSeqParseError // Code 14XX
+	// MissingSerial indicates that the profile specified
+	// 'ClientProvidesSerialNumbers', but the SignRequest did not include a serial
+	// number.
+	MissingSerial // Code 14XX
 )
 
 const (
@@ -138,6 +146,11 @@ const (
 	// InvalidRequest indicates a certificate request violated the
 	// constraints of the policy being applied to the request.
 	InvalidRequest // 53XX
+
+	// UnknownProfile indicates that the profile does not exist.
+	UnknownProfile // 54XX
+
+	UnmatchedWhitelist // 55xx
 )
 
 // The following are API client related errors, and should be
@@ -171,6 +184,25 @@ const (
 	// InvalidStatus occurs when the OCSP signing requests includes an
 	// invalid value for the certificate status.
 	InvalidStatus
+)
+
+// Certificate transparency related errors specified with CTError
+const (
+	// PrecertSubmissionFailed occurs when submitting a precertificate to
+	// a log server fails
+	PrecertSubmissionFailed = 100 * (iota + 1)
+	// CTClientConstructionFailed occurs when the construction of a new
+	// github.com/google/certificate-transparency client fails.
+	CTClientConstructionFailed
+)
+
+// Certificate persistence related errors specified with CertStoreError
+const (
+	// InsertionFailed occurs when a SQL insert query failes to complete.
+	InsertionFailed = 100 * (iota + 1)
+	// RecordNotFound occurs when a SQL query targeting on one unique
+	// record failes to update the specified row in the table.
+	RecordNotFound
 )
 
 // The error interface implementation, which formats to a JSON object string.
@@ -215,6 +247,8 @@ func New(category Category, reason Reason) *Error {
 			msg = "Unable to verify certificate"
 		case BadRequest:
 			msg = "Invalid certificate request"
+		case MissingSerial:
+			msg = "Missing serial number in request"
 		default:
 			panic(fmt.Sprintf("Unsupported CFSSL error reason %d under category CertificateError.",
 				reason))
@@ -282,6 +316,10 @@ func New(category Category, reason Reason) *Error {
 			msg = "Invalid or unknown policy"
 		case InvalidRequest:
 			msg = "Policy violation request"
+		case UnknownProfile:
+			msg = "Unknown policy profile"
+		case UnmatchedWhitelist:
+			msg = "Request does not match policy whitelist"
 		default:
 			panic(fmt.Sprintf("Unsupported CFSSL error reason %d under category PolicyError.",
 				reason))
@@ -325,6 +363,22 @@ func New(category Category, reason Reason) *Error {
 		default:
 			panic(fmt.Sprintf("Unsupported CF-SSL error reason %d under category APIClientError.", reason))
 		}
+	case CTError:
+		switch reason {
+		case Unknown:
+			msg = "Certificate transparency parsing failed due to unknown error"
+		case PrecertSubmissionFailed:
+			msg = "Certificate transparency precertificate submission failed"
+		default:
+			panic(fmt.Sprintf("Unsupported CF-SSL error reason %d under category CTError.", reason))
+		}
+	case CertStoreError:
+		switch reason {
+		case Unknown:
+			msg = "Certificate store action failed due to unknown error"
+		default:
+			panic(fmt.Sprintf("Unsupported CF-SSL error reason %d under category CertStoreError.", reason))
+		}
 
 	default:
 		panic(fmt.Sprintf("Unsupported CFSSL error type: %d.",
@@ -360,8 +414,9 @@ func Wrap(category Category, reason Reason, err error) *Error {
 				errorCode += unknownAuthority
 			}
 		}
-	case PrivateKeyError, IntermediatesError, RootError, PolicyError, DialError, APIClientError, CSRError:
-		// no-op, just use the error
+	case PrivateKeyError, IntermediatesError, RootError, PolicyError, DialError,
+		APIClientError, CSRError, CTError, CertStoreError:
+	// no-op, just use the error
 	default:
 		panic(fmt.Sprintf("Unsupported CFSSL error type: %d.",
 			category))

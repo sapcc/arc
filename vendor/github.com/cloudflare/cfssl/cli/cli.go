@@ -24,8 +24,8 @@ Use "cfssl [command] -help" to find out more about a command.
 */
 
 import (
+	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
@@ -78,7 +78,7 @@ func PopFirstArgument(args []string) (string, []string, error) {
 }
 
 // Start is the entrance point of cfssl command line tools.
-func Start(cmds map[string]*Command) {
+func Start(cmds map[string]*Command) error {
 	// cfsslFlagSet is the flag sets for cfssl.
 	var cfsslFlagSet = flag.NewFlagSet("cfssl", flag.ExitOnError)
 	var c Config
@@ -101,7 +101,7 @@ func Start(cmds map[string]*Command) {
 	if flag.NArg() < 1 {
 		fmt.Fprintf(os.Stderr, "No command is given.\n")
 		flag.Usage()
-		return
+		return errors.New("no command was given")
 	}
 
 	// Clip out the command name and args for the command
@@ -111,8 +111,10 @@ func Start(cmds map[string]*Command) {
 	if !found {
 		fmt.Fprintf(os.Stderr, "Command %s is not defined.\n", cmdName)
 		flag.Usage()
-		return
+		return errors.New("undefined command")
 	}
+	// always have flag 'loglevel' for each command
+	cmd.Flags = append(cmd.Flags, "loglevel")
 	// The usage of each individual command is re-written to mention
 	// flags defined and referenced only in that command.
 	cfsslFlagSet.Usage = func() {
@@ -129,15 +131,20 @@ func Start(cmds map[string]*Command) {
 	args = cfsslFlagSet.Args()
 
 	var err error
-	c.CFG, err = config.LoadFile(c.ConfigFile)
-	if c.ConfigFile != "" && err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load config file: %v", err)
-		os.Exit(1)
+	if c.ConfigFile != "" {
+		c.CFG, err = config.LoadFile(c.ConfigFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load config file: %v", err)
+			return errors.New("failed to load config file")
+		}
 	}
 
 	if err := cmd.Main(args, c); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return err
 	}
+
+	return nil
 }
 
 // ReadStdin reads from stdin if the file is "-"
@@ -171,14 +178,21 @@ func PrintCert(key, csrBytes, cert []byte) {
 }
 
 // PrintOCSPResponse outputs an OCSP response to stdout
+// ocspResponse is base64 encoded
 func PrintOCSPResponse(resp []byte) {
-	pemResponse := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: resp})
+	b64Resp := base64.StdEncoding.EncodeToString(resp)
 
-	out := map[string]string{}
-	out["ocspResponse"] = string(pemResponse)
+	out := map[string]string{"ocspResponse": b64Resp}
 	jsonOut, err := json.Marshal(out)
 	if err != nil {
 		return
 	}
 	fmt.Printf("%s\n", jsonOut)
+}
+
+// PrintCRL outputs the CRL to stdout
+func PrintCRL(certList []byte) {
+	b64Resp := base64.StdEncoding.EncodeToString(certList)
+
+	fmt.Printf("%s\n", b64Resp)
 }

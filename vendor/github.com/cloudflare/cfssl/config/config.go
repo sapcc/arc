@@ -2,6 +2,7 @@
 package config
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/json"
@@ -31,48 +32,76 @@ import (
 // mechanism.
 type CSRWhitelist struct {
 	Subject, PublicKeyAlgorithm, PublicKey, SignatureAlgorithm bool
-	DNSNames, IPAddresses                                      bool
+	DNSNames, IPAddresses, EmailAddresses                      bool
 }
 
 // OID is our own version of asn1's ObjectIdentifier, so we can define a custom
 // JSON marshal / unmarshal.
 type OID asn1.ObjectIdentifier
 
-// CertificatePolicy is a flattening of the ASN.1 PolicyInformation structure from
+// CertificatePolicy represents the ASN.1 PolicyInformation structure from
 // https://tools.ietf.org/html/rfc3280.html#page-106.
 // Valid values of Type are "id-qt-unotice" and "id-qt-cps"
 type CertificatePolicy struct {
-	ID        OID
-	Type      string
-	Qualifier string
+	ID         OID
+	Qualifiers []CertificatePolicyQualifier
+}
+
+// CertificatePolicyQualifier represents a single qualifier from an ASN.1
+// PolicyInformation structure.
+type CertificatePolicyQualifier struct {
+	Type  string
+	Value string
+}
+
+// AuthRemote is an authenticated remote signer.
+type AuthRemote struct {
+	RemoteName  string `json:"remote"`
+	AuthKeyName string `json:"auth_key"`
+}
+
+// CAConstraint specifies various CA constraints on the signed certificate.
+// CAConstraint would verify against (and override) the CA
+// extensions in the given CSR.
+type CAConstraint struct {
+	IsCA           bool `json:"is_ca"`
+	MaxPathLen     int  `json:"max_path_len"`
+	MaxPathLenZero bool `json:"max_path_len_zero"`
 }
 
 // A SigningProfile stores information that the CA needs to store
 // signature policy.
 type SigningProfile struct {
-	Usage               []string  `json:"usages"`
-	IssuerURL           []string  `json:"issuer_urls"`
-	OCSP                string    `json:"ocsp_url"`
-	CRL                 string    `json:"crl_url"`
-	CA                  bool      `json:"is_ca"`
-	PolicyStrings       []string  `json:"policies"`
-	OCSPNoCheck         bool      `json:"ocsp_no_check"`
-	ExpiryString        string    `json:"expiry"`
-	BackdateString      string    `json:"backdate"`
-	AuthKeyName         string    `json:"auth_key"`
-	RemoteName          string    `json:"remote"`
-	NotBefore           time.Time `json:"not_before"`
-	NotAfter            time.Time `json:"not_after"`
-	NameWhitelistString string    `json:"name_whitelist"`
+	Usage               []string     `json:"usages"`
+	IssuerURL           []string     `json:"issuer_urls"`
+	OCSP                string       `json:"ocsp_url"`
+	CRL                 string       `json:"crl_url"`
+	CAConstraint        CAConstraint `json:"ca_constraint"`
+	OCSPNoCheck         bool         `json:"ocsp_no_check"`
+	ExpiryString        string       `json:"expiry"`
+	BackdateString      string       `json:"backdate"`
+	AuthKeyName         string       `json:"auth_key"`
+	RemoteName          string       `json:"remote"`
+	NotBefore           time.Time    `json:"not_before"`
+	NotAfter            time.Time    `json:"not_after"`
+	NameWhitelistString string       `json:"name_whitelist"`
+	AuthRemote          AuthRemote   `json:"auth_remote"`
+	CTLogServers        []string     `json:"ct_log_servers"`
+	AllowedExtensions   []OID        `json:"allowed_extensions"`
+	CertStore           string       `json:"cert_store"`
 
-	Policies      []CertificatePolicy
-	Expiry        time.Duration
-	Backdate      time.Duration
-	Provider      auth.Provider
-	RemoteServer  string
-	UseSerialSeq  bool
-	CSRWhitelist  *CSRWhitelist
-	NameWhitelist *regexp.Regexp
+	Policies                    []CertificatePolicy
+	Expiry                      time.Duration
+	Backdate                    time.Duration
+	Provider                    auth.Provider
+	RemoteProvider              auth.Provider
+	RemoteServer                string
+	RemoteCAs                   *x509.CertPool
+	ClientCert                  *tls.Certificate
+	CSRWhitelist                *CSRWhitelist
+	NameWhitelist               *regexp.Regexp
+	ExtensionWhitelist          map[string]bool
+	ClientProvidesSerialNumbers bool
 }
 
 // UnmarshalJSON unmarshals a JSON string into an OID.
@@ -86,7 +115,6 @@ func (oid *OID) UnmarshalJSON(data []byte) (err error) {
 		return err
 	}
 	*oid = OID(parsedOid)
-	log.Debugf("Parsed OID %v", *oid)
 	return
 }
 
@@ -136,7 +164,7 @@ func (p *SigningProfile) populate(cfg *Config) error {
 	}
 
 	var err error
-	if p.RemoteName == "" {
+	if p.RemoteName == "" && p.AuthRemote.RemoteName == "" {
 		log.Debugf("parse expiry in profile")
 		if p.ExpiryString == "" {
 			return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy, errors.New("empty expiry string"))
@@ -165,14 +193,31 @@ func (p *SigningProfile) populate(cfg *Config) error {
 
 		if len(p.Policies) > 0 {
 			for _, policy := range p.Policies {
-				if policy.Type != "" && policy.Type != "id-qt-unotice" && policy.Type != "id-qt-cps" {
-					return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy, err)
+				for _, qualifier := range policy.Qualifiers {
+					if qualifier.Type != "" && qualifier.Type != "id-qt-unotice" && qualifier.Type != "id-qt-cps" {
+						return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
+							errors.New("invalid policy qualifier type"))
+					}
 				}
 			}
 		}
-	} else {
+	} else if p.RemoteName != "" {
 		log.Debug("match remote in profile to remotes section")
+		if p.AuthRemote.RemoteName != "" {
+			log.Error("profile has both a remote and an auth remote specified")
+			return cferr.New(cferr.PolicyError, cferr.InvalidPolicy)
+		}
 		if remote := cfg.Remotes[p.RemoteName]; remote != "" {
+			if err := p.updateRemote(remote); err != nil {
+				return err
+			}
+		} else {
+			return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
+				errors.New("failed to find remote in remotes section"))
+		}
+	} else {
+		log.Debug("match auth remote in profile to remotes section")
+		if remote := cfg.Remotes[p.AuthRemote.RemoteName]; remote != "" {
 			if err := p.updateRemote(remote); err != nil {
 				return err
 			}
@@ -203,6 +248,27 @@ func (p *SigningProfile) populate(cfg *Config) error {
 		}
 	}
 
+	if p.AuthRemote.AuthKeyName != "" {
+		log.Debug("match auth remote key in profile to auth_keys section")
+		if key, ok := cfg.AuthKeys[p.AuthRemote.AuthKeyName]; ok == true {
+			if key.Type == "standard" {
+				p.RemoteProvider, err = auth.New(key.Key, nil)
+				if err != nil {
+					log.Debugf("failed to create new standard auth provider: %v", err)
+					return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
+						errors.New("failed to create new standard auth provider"))
+				}
+			} else {
+				log.Debugf("unknown authentication type %v", key.Type)
+				return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
+					errors.New("unknown authentication type"))
+			}
+		} else {
+			return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
+				errors.New("failed to find auth_remote's auth_key in auth_keys section"))
+		}
+	}
+
 	if p.NameWhitelistString != "" {
 		log.Debug("compiling whitelist regular expression")
 		rule, err := regexp.Compile(p.NameWhitelistString)
@@ -213,11 +279,16 @@ func (p *SigningProfile) populate(cfg *Config) error {
 		p.NameWhitelist = rule
 	}
 
+	p.ExtensionWhitelist = map[string]bool{}
+	for _, oid := range p.AllowedExtensions {
+		p.ExtensionWhitelist[asn1.ObjectIdentifier(oid).String()] = true
+	}
+
 	return nil
 }
 
 // updateRemote takes a signing profile and initializes the remote server object
-// to the hostname:port combination sent by remote
+// to the hostname:port combination sent by remote.
 func (p *SigningProfile) updateRemote(remote string) error {
 	if remote != "" {
 		p.RemoteServer = remote
@@ -244,14 +315,53 @@ func (p *Signing) OverrideRemotes(remote string) error {
 	return nil
 }
 
+// SetClientCertKeyPairFromFile updates the properties to set client certificates for mutual
+// authenticated TLS remote requests
+func (p *Signing) SetClientCertKeyPairFromFile(certFile string, keyFile string) error {
+	if certFile != "" && keyFile != "" {
+		cert, err := helpers.LoadClientCertificate(certFile, keyFile)
+		if err != nil {
+			return err
+		}
+		for _, profile := range p.Profiles {
+			profile.ClientCert = cert
+		}
+		p.Default.ClientCert = cert
+	}
+	return nil
+}
+
+// SetRemoteCAsFromFile reads root CAs from file and updates the properties to set remote CAs for TLS
+// remote requests
+func (p *Signing) SetRemoteCAsFromFile(caFile string) error {
+	if caFile != "" {
+		remoteCAs, err := helpers.LoadPEMCertPool(caFile)
+		if err != nil {
+			return err
+		}
+		p.SetRemoteCAs(remoteCAs)
+	}
+	return nil
+}
+
+// SetRemoteCAs updates the properties to set remote CAs for TLS
+// remote requests
+func (p *Signing) SetRemoteCAs(remoteCAs *x509.CertPool) {
+	for _, profile := range p.Profiles {
+		profile.RemoteCAs = remoteCAs
+	}
+	p.Default.RemoteCAs = remoteCAs
+}
+
 // NeedsRemoteSigner returns true if one of the profiles has a remote set
 func (p *Signing) NeedsRemoteSigner() bool {
 	for _, profile := range p.Profiles {
-		if profile.RemoteName != "" {
+		if profile.RemoteServer != "" {
 			return true
 		}
 	}
-	if p.Default.RemoteName != "" {
+
+	if p.Default.RemoteServer != "" {
 		return true
 	}
 
@@ -261,11 +371,12 @@ func (p *Signing) NeedsRemoteSigner() bool {
 // NeedsLocalSigner returns true if one of the profiles doe not have a remote set
 func (p *Signing) NeedsLocalSigner() bool {
 	for _, profile := range p.Profiles {
-		if profile.RemoteName == "" {
+		if profile.RemoteServer == "" {
 			return true
 		}
 	}
-	if p.Default.RemoteName == "" {
+
+	if p.Default.RemoteServer == "" {
 		return true
 	}
 
@@ -299,6 +410,11 @@ func (p *SigningProfile) validProfile(isDefault bool) bool {
 		return false
 	}
 
+	if p.AuthRemote.RemoteName == "" && p.AuthRemote.AuthKeyName != "" {
+		log.Debugf("invalid auth remote profile: no remote signer specified")
+		return false
+	}
+
 	if p.RemoteName != "" {
 		log.Debugf("validate remote profile")
 
@@ -309,6 +425,22 @@ func (p *SigningProfile) validProfile(isDefault bool) bool {
 
 		if p.AuthKeyName != "" && p.Provider == nil {
 			log.Debugf("invalid remote profile: auth key name is defined but no auth provider is set")
+			return false
+		}
+
+		if p.AuthRemote.RemoteName != "" {
+			log.Debugf("invalid remote profile: auth remote is also specified")
+			return false
+		}
+	} else if p.AuthRemote.RemoteName != "" {
+		log.Debugf("validate auth remote profile")
+		if p.RemoteServer == "" {
+			log.Debugf("invalid auth remote profile: no remote signer specified")
+			return false
+		}
+
+		if p.AuthRemote.AuthKeyName == "" || p.RemoteProvider == nil {
+			log.Debugf("invalid auth remote profile: no auth key is defined")
 			return false
 		}
 	} else {
@@ -331,6 +463,43 @@ func (p *SigningProfile) validProfile(isDefault bool) bool {
 
 	log.Debugf("profile is valid")
 	return true
+}
+
+// This checks if the SigningProfile object contains configurations that are only effective with a local signer
+// which has access to CA private key.
+func (p *SigningProfile) hasLocalConfig() bool {
+	if p.Usage != nil ||
+		p.IssuerURL != nil ||
+		p.OCSP != "" ||
+		p.ExpiryString != "" ||
+		p.BackdateString != "" ||
+		p.CAConstraint.IsCA != false ||
+		!p.NotBefore.IsZero() ||
+		!p.NotAfter.IsZero() ||
+		p.NameWhitelistString != "" ||
+		len(p.CTLogServers) != 0 {
+		return true
+	}
+	return false
+}
+
+// warnSkippedSettings prints a log warning message about skipped settings
+// in a SigningProfile, usually due to remote signer.
+func (p *Signing) warnSkippedSettings() {
+	const warningMessage = `The configuration value by "usages", "issuer_urls", "ocsp_url", "crl_url", "ca_constraint", "expiry", "backdate", "not_before", "not_after", "cert_store" and "ct_log_servers" are skipped`
+	if p == nil {
+		return
+	}
+
+	if (p.Default.RemoteName != "" || p.Default.AuthRemote.RemoteName != "") && p.Default.hasLocalConfig() {
+		log.Warning("default profile points to a remote signer: ", warningMessage)
+	}
+
+	for name, profile := range p.Profiles {
+		if (profile.RemoteName != "" || profile.AuthRemote.RemoteName != "") && profile.hasLocalConfig() {
+			log.Warningf("Profiles[%s] points to a remote signer: %s", name, warningMessage)
+		}
+	}
 }
 
 // Signing codifies the signature configuration policy for a CA.
@@ -374,6 +543,9 @@ func (p *Signing) Valid() bool {
 			return false
 		}
 	}
+
+	p.warnSkippedSettings()
+
 	return true
 }
 
@@ -383,6 +555,7 @@ var KeyUsage = map[string]x509.KeyUsage{
 	"digital signature":   x509.KeyUsageDigitalSignature,
 	"content committment": x509.KeyUsageContentCommitment,
 	"key encipherment":    x509.KeyUsageKeyEncipherment,
+	"key agreement":       x509.KeyUsageKeyAgreement,
 	"data encipherment":   x509.KeyUsageDataEncipherment,
 	"cert sign":           x509.KeyUsageCertSign,
 	"crl sign":            x509.KeyUsageCRLSign,
@@ -456,6 +629,10 @@ func LoadConfig(config []byte) (*Config, error) {
 	if err != nil {
 		return nil, cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
 			errors.New("failed to unmarshal configuration: "+err.Error()))
+	}
+
+	if cfg.Signing == nil {
+		return nil, errors.New("No \"signing\" field present")
 	}
 
 	if cfg.Signing.Default == nil {

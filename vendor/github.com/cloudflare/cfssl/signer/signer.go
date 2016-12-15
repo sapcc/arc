@@ -5,52 +5,57 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"errors"
-	"fmt"
-	"math"
 	"math/big"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/cloudflare/cfssl/certdb"
 	"github.com/cloudflare/cfssl/config"
 	"github.com/cloudflare/cfssl/csr"
 	cferr "github.com/cloudflare/cfssl/errors"
+	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/info"
 )
-
-// MaxPathLen is the default path length for a new CA certificate.
-var MaxPathLen = 2
-
-// A Whitelist marks which fields should be set. As a bool's default
-// value is false, a whitelist should only keep those fields marked
-// true.
-type Whitelist struct {
-	CN, C, ST, L, O, OU bool
-}
 
 // Subject contains the information that should be used to override the
 // subject information when signing a certificate.
 type Subject struct {
-	CN        string
-	Names     []csr.Name `json:"names"`
-	Whitelist *Whitelist `json:"whitelist,omitempty"`
+	CN           string
+	Names        []csr.Name `json:"names"`
+	SerialNumber string
+}
+
+// Extension represents a raw extension to be included in the certificate.  The
+// "value" field must be hex encoded.
+type Extension struct {
+	ID       config.OID `json:"id"`
+	Critical bool       `json:"critical"`
+	Value    string     `json:"value"`
 }
 
 // SignRequest stores a signature request, which contains the hostname,
 // the CSR, optional subject information, and the signature profile.
+//
+// Extensions provided in the signRequest are copied into the certificate, as
+// long as they are in the ExtensionWhitelist for the signer's policy.
+// Extensions requested in the CSR are ignored, except for those processed by
+// ParseCertificateRequest (mainly subjectAltName).
 type SignRequest struct {
-	Hosts     []string `json:"hosts"`
-	Request   string   `json:"certificate_request"`
-	Subject   *Subject `json:"subject,omitempty"`
-	Profile   string   `json:"profile"`
-	Label     string   `json:"label"`
-	SerialSeq string   `json:"serial_sequence,omitempty"`
+	Hosts       []string    `json:"hosts"`
+	Request     string      `json:"certificate_request"`
+	Subject     *Subject    `json:"subject,omitempty"`
+	Profile     string      `json:"profile"`
+	CRLOverride string      `json:"crl_override"`
+	Label       string      `json:"label"`
+	Serial      *big.Int    `json:"serial,omitempty"`
+	Extensions  []Extension `json:"extensions,omitempty"`
 }
 
 // appendIf appends to a if s is not an empty string.
@@ -72,6 +77,7 @@ func (s *Subject) Name() pkix.Name {
 		appendIf(n.O, &name.Organization)
 		appendIf(n.OU, &name.OrganizationalUnit)
 	}
+	name.SerialNumber = s.SerialNumber
 	return name
 }
 
@@ -90,9 +96,11 @@ func SplitHosts(hostList string) []string {
 type Signer interface {
 	Info(info.Req) (*info.Resp, error)
 	Policy() *config.Signing
+	SetDBAccessor(certdb.Accessor)
 	SetPolicy(*config.Signing)
 	SigAlgo() x509.SignatureAlgorithm
 	Sign(req SignRequest) (cert []byte, err error)
+	SetReqModifier(func(*http.Request, []byte))
 }
 
 // Profile gets the specific profile from the signer
@@ -149,73 +157,49 @@ func DefaultSigAlgo(priv crypto.Signer) x509.SignatureAlgorithm {
 // ParseCertificateRequest takes an incoming certificate request and
 // builds a certificate template from it.
 func ParseCertificateRequest(s Signer, csrBytes []byte) (template *x509.Certificate, err error) {
-	csr, err := x509.ParseCertificateRequest(csrBytes)
+	csrv, err := x509.ParseCertificateRequest(csrBytes)
 	if err != nil {
 		err = cferr.Wrap(cferr.CSRError, cferr.ParseFailed, err)
 		return
 	}
 
-	err = CheckSignature(csr, csr.SignatureAlgorithm, csr.RawTBSCertificateRequest, csr.Signature)
+	err = helpers.CheckSignature(csrv, csrv.SignatureAlgorithm, csrv.RawTBSCertificateRequest, csrv.Signature)
 	if err != nil {
 		err = cferr.Wrap(cferr.CSRError, cferr.KeyMismatch, err)
 		return
 	}
 
 	template = &x509.Certificate{
-		Subject:            csr.Subject,
-		PublicKeyAlgorithm: csr.PublicKeyAlgorithm,
-		PublicKey:          csr.PublicKey,
+		Subject:            csrv.Subject,
+		PublicKeyAlgorithm: csrv.PublicKeyAlgorithm,
+		PublicKey:          csrv.PublicKey,
 		SignatureAlgorithm: s.SigAlgo(),
-		DNSNames:           csr.DNSNames,
-		IPAddresses:        csr.IPAddresses,
+		DNSNames:           csrv.DNSNames,
+		IPAddresses:        csrv.IPAddresses,
+		EmailAddresses:     csrv.EmailAddresses,
+	}
+
+	for _, val := range csrv.Extensions {
+		// Check the CSR for the X.509 BasicConstraints (RFC 5280, 4.2.1.9)
+		// extension and append to template if necessary
+		if val.Id.Equal(asn1.ObjectIdentifier{2, 5, 29, 19}) {
+			var constraints csr.BasicConstraints
+			var rest []byte
+
+			if rest, err = asn1.Unmarshal(val.Value, &constraints); err != nil {
+				return nil, cferr.Wrap(cferr.CSRError, cferr.ParseFailed, err)
+			} else if len(rest) != 0 {
+				return nil, cferr.Wrap(cferr.CSRError, cferr.ParseFailed, errors.New("x509: trailing data after X.509 BasicConstraints"))
+			}
+
+			template.BasicConstraintsValid = true
+			template.IsCA = constraints.IsCA
+			template.MaxPathLen = constraints.MaxPathLen
+			template.MaxPathLenZero = template.MaxPathLen == 0
+		}
 	}
 
 	return
-}
-
-// CheckSignature verifies a signature made by the key on a CSR, such
-// as on the CSR itself.
-func CheckSignature(csr *x509.CertificateRequest, algo x509.SignatureAlgorithm, signed, signature []byte) error {
-	var hashType crypto.Hash
-
-	switch algo {
-	case x509.SHA1WithRSA, x509.ECDSAWithSHA1:
-		hashType = crypto.SHA1
-	case x509.SHA256WithRSA, x509.ECDSAWithSHA256:
-		hashType = crypto.SHA256
-	case x509.SHA384WithRSA, x509.ECDSAWithSHA384:
-		hashType = crypto.SHA384
-	case x509.SHA512WithRSA, x509.ECDSAWithSHA512:
-		hashType = crypto.SHA512
-	default:
-		return x509.ErrUnsupportedAlgorithm
-	}
-
-	if !hashType.Available() {
-		return x509.ErrUnsupportedAlgorithm
-	}
-	h := hashType.New()
-
-	h.Write(signed)
-	digest := h.Sum(nil)
-
-	switch pub := csr.PublicKey.(type) {
-	case *rsa.PublicKey:
-		return rsa.VerifyPKCS1v15(pub, hashType, digest, signature)
-	case *ecdsa.PublicKey:
-		ecdsaSig := new(struct{ R, S *big.Int })
-		if _, err := asn1.Unmarshal(signature, ecdsaSig); err != nil {
-			return err
-		}
-		if ecdsaSig.R.Sign() <= 0 || ecdsaSig.S.Sign() <= 0 {
-			return errors.New("x509: ECDSA signature contained zero or negative values")
-		}
-		if !ecdsa.Verify(pub, digest, ecdsaSig.R, ecdsaSig.S) {
-			return errors.New("x509: ECDSA verification failure")
-		}
-		return nil
-	}
-	return x509.ErrUnsupportedAlgorithm
 }
 
 type subjectPublicKeyInfo struct {
@@ -245,9 +229,9 @@ func ComputeSKI(template *x509.Certificate) ([]byte, error) {
 
 // FillTemplate is a utility function that tries to load as much of
 // the certificate template as possible from the profiles and current
-// template. It fills in the key uses, expiration, revocation URLs,
-// serial number, and SKI.
-func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.SigningProfile, serialSeq string) error {
+// template. It fills in the key uses, expiration, revocation URLs
+// and SKI.
+func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.SigningProfile) error {
 	ski, err := ComputeSKI(template)
 
 	var (
@@ -258,6 +242,7 @@ func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.Si
 		notBefore       time.Time
 		notAfter        time.Time
 		crlURL, ocspURL string
+		issuerURL       = profile.IssuerURL
 	)
 
 	// The third value returned from Usages is a list of unknown key usages.
@@ -265,7 +250,7 @@ func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.Si
 	// here.
 	ku, eku, _ = profile.Usages()
 	if profile.IssuerURL == nil {
-		profile.IssuerURL = defaultProfile.IssuerURL
+		issuerURL = defaultProfile.IssuerURL
 	}
 
 	if ku == 0 && len(eku) == 0 {
@@ -300,27 +285,20 @@ func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.Si
 		notAfter = notBefore.Add(expiry).UTC()
 	}
 
-	serialNumber, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
-
-	if err != nil {
-		return cferr.Wrap(cferr.CertificateError, cferr.Unknown, err)
-	}
-
-	if serialSeq != "" {
-		randomPart := fmt.Sprintf("%016X", serialNumber) // 016 ensures we're left-0-padded
-		_, ok := serialNumber.SetString(serialSeq+randomPart, 16)
-		if !ok {
-			return cferr.Wrap(cferr.CertificateError, cferr.SerialSeqParseError, err)
-		}
-	}
-
-	template.SerialNumber = serialNumber
 	template.NotBefore = notBefore
 	template.NotAfter = notAfter
 	template.KeyUsage = ku
 	template.ExtKeyUsage = eku
 	template.BasicConstraintsValid = true
-	template.IsCA = profile.CA
+	template.IsCA = profile.CAConstraint.IsCA
+	if template.IsCA {
+		template.MaxPathLen = profile.CAConstraint.MaxPathLen
+		if template.MaxPathLen == 0 {
+			template.MaxPathLenZero = profile.CAConstraint.MaxPathLenZero
+		}
+		template.DNSNames = nil
+		template.EmailAddresses = nil
+	}
 	template.SubjectKeyId = ski
 
 	if ocspURL != "" {
@@ -330,8 +308,8 @@ func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.Si
 		template.CRLDistributionPoints = []string{crlURL}
 	}
 
-	if len(profile.IssuerURL) != 0 {
-		template.IssuingCertificateURL = profile.IssuerURL
+	if len(issuerURL) != 0 {
+		template.IssuingCertificateURL = issuerURL
 	}
 	if len(profile.Policies) != 0 {
 		err = addPolicies(template, profile.Policies)
@@ -351,17 +329,14 @@ func FillTemplate(template *x509.Certificate, defaultProfile, profile *config.Si
 	return nil
 }
 
-type policyQualifier struct {
-	PolicyQualifierID asn1.ObjectIdentifier
-	Qualifier         string `asn1:"tag:optional,ia5"`
-}
 type policyInformation struct {
 	PolicyIdentifier asn1.ObjectIdentifier
-	PolicyQualifiers []policyQualifier `asn1:"omitempty"`
-	// User Notice policy qualifiers have a slightly different ASN.1 structure
-	// from that used for CPS policy qualifiers. At most one of PolicyQualifiers
-	// or UserNoticePolicyQualifiers should be filled.
-	UserNoticePolicyQualifiers []userNoticePolicyQualifier `asn1:"omitempty"`
+	Qualifiers       []interface{} `asn1:"tag:optional,omitempty"`
+}
+
+type cpsPolicyQualifier struct {
+	PolicyQualifierID asn1.ObjectIdentifier
+	Qualifier         string `asn1:"tag:optional,ia5"`
 }
 
 type userNotice struct {
@@ -380,6 +355,14 @@ var (
 	// iso(1) identified-organization(3) dod(6) internet(1) security(5)
 	//   mechanisms(5) pkix(7) id-qt(2) id-qt-unotice(2)
 	iDQTUserNotice = asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 2, 2}
+
+	// CTPoisonOID is the object ID of the critical poison extension for precertificates
+	// https://tools.ietf.org/html/rfc6962#page-9
+	CTPoisonOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 4, 3}
+
+	// SCTListOID is the object ID for the Signed Certificate Timestamp certificate extension
+	// https://tools.ietf.org/html/rfc6962#page-14
+	SCTListOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 4, 2}
 )
 
 // addPolicies adds Certificate Policies and optional Policy Qualifiers to a
@@ -394,34 +377,25 @@ func addPolicies(template *x509.Certificate, policies []config.CertificatePolicy
 			// The PolicyIdentifier is an OID assigned to a given issuer.
 			PolicyIdentifier: asn1.ObjectIdentifier(policy.ID),
 		}
-		switch policy.Type {
-		case "id-qt-unotice":
-			pi.UserNoticePolicyQualifiers = []userNoticePolicyQualifier{
-				userNoticePolicyQualifier{
-					PolicyQualifierID: iDQTUserNotice,
-					Qualifier: userNotice{
-						ExplicitText: policy.Qualifier,
-					},
-				},
+		for _, qualifier := range policy.Qualifiers {
+			switch qualifier.Type {
+			case "id-qt-unotice":
+				pi.Qualifiers = append(pi.Qualifiers,
+					userNoticePolicyQualifier{
+						PolicyQualifierID: iDQTUserNotice,
+						Qualifier: userNotice{
+							ExplicitText: qualifier.Value,
+						},
+					})
+			case "id-qt-cps":
+				pi.Qualifiers = append(pi.Qualifiers,
+					cpsPolicyQualifier{
+						PolicyQualifierID: iDQTCertificationPracticeStatement,
+						Qualifier:         qualifier.Value,
+					})
+			default:
+				return errors.New("Invalid qualifier type in Policies " + qualifier.Type)
 			}
-		case "id-qt-cps":
-			pi.PolicyQualifiers = []policyQualifier{
-				policyQualifier{
-					PolicyQualifierID: iDQTUserNotice,
-					Qualifier:         policy.Qualifier,
-				},
-			}
-			pi.PolicyQualifiers = []policyQualifier{
-				policyQualifier{
-					PolicyQualifierID: iDQTCertificationPracticeStatement,
-					Qualifier:         policy.Qualifier,
-				},
-			}
-		case "":
-			// Empty qualifier type is fine: Include this Certificate Policy, but
-			// don't include a Policy Qualifier.
-		default:
-			return errors.New("Invalid qualifier type in Policies " + policy.Type)
 		}
 		asn1PolicyList = append(asn1PolicyList, pi)
 	}

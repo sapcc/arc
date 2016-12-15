@@ -28,7 +28,7 @@ func (e SignForbidden) Error() string {
 // TokenLifetime should set the standard token time life time
 var TokenLifetime = "1 hour"
 
-// SignToken sign a given token
+// SignToken sign a given token returning the certificate
 func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]byte, string, error) {
 	// check db
 	if db == nil {
