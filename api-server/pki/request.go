@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Scheme returns the request schema
 func Scheme(req *http.Request) string {
 
 	if len(req.Header["X-Forwarded-Ssl"]) > 0 && req.Header["X-Forwarded-Ssl"][0] == "on" {
@@ -25,6 +26,7 @@ func Scheme(req *http.Request) string {
 
 }
 
+// HostWithPort returns the request host and port
 func HostWithPort(req *http.Request) string {
 	if len(req.Header["X-Forwarded-Host"]) > 0 {
 		forwarded_hosts := regexp.MustCompile(`,\s?`).Split(req.Header["X-Forwarded-Host"][0], -1)
@@ -33,10 +35,12 @@ func HostWithPort(req *http.Request) string {
 	return req.Host
 }
 
+// Host returns the request host
 func Host(req *http.Request) string {
 	return strings.Split(HostWithPort(req), ":")[0]
 }
 
+// Port returns the request port
 func Port(req *http.Request) int {
 	if parts := strings.Split(HostWithPort(req), ":"); len(parts) > 1 {
 		port, _ := strconv.Atoi(parts[1])
