@@ -92,10 +92,10 @@ var _ = Describe("Token Create", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(len(subject.Names)).To(Equal(1))
-		//Expect(subject.SerialNumber).To(Equal(""))                  // should be removed. Not needed in the old version of cfssl from arc-pki
+		Expect(subject.SerialNumber).To(Equal(""))                  // should be removed. Not needed in the old version of cfssl from arc-pki
 		Expect(subject.Names[0].OU).To(Equal("test-project"))       // should take the OU from the authorization
 		Expect(subject.Names[0].O).To(Equal("test-project-domain")) // should take the O from the authorization
-		//Expect(subject.Names[0].SerialNumber).To(Equal(""))         // should be removed. Not needed in the old version of cfssl from arc-pki
+		Expect(subject.Names[0].SerialNumber).To(Equal(""))         // should be removed. Not needed in the old version of cfssl from arc-pki
 	})
 
 	It("Returns a token even if empty json is send in the body request", func() {
