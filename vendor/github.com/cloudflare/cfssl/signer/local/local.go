@@ -7,26 +7,40 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
+	"io"
 	"io/ioutil"
+	"math/big"
 	"net"
+	"net/http"
+	"net/mail"
+	"os"
 
+	"github.com/cloudflare/cfssl/certdb"
 	"github.com/cloudflare/cfssl/config"
 	cferr "github.com/cloudflare/cfssl/errors"
 	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/info"
 	"github.com/cloudflare/cfssl/log"
 	"github.com/cloudflare/cfssl/signer"
+	"github.com/google/certificate-transparency/go"
+	"github.com/google/certificate-transparency/go/client"
+	"github.com/google/certificate-transparency/go/jsonclient"
+	"golang.org/x/net/context"
 )
 
 // Signer contains a signer that uses the standard library to
 // support both ECDSA and RSA CA keys.
 type Signer struct {
-	ca      *x509.Certificate
-	priv    crypto.Signer
-	policy  *config.Signing
-	sigAlgo x509.SignatureAlgorithm
+	ca         *x509.Certificate
+	priv       crypto.Signer
+	policy     *config.Signing
+	sigAlgo    x509.SignatureAlgorithm
+	dbAccessor certdb.Accessor
 }
 
 // NewSigner creates a new Signer directly from a
@@ -69,7 +83,13 @@ func NewSignerFromFile(caFile, caKeyFile string, policy *config.Signing) (*Signe
 		return nil, err
 	}
 
-	priv, err := helpers.ParsePrivateKeyPEM(cakey)
+	strPassword := os.Getenv("CFSSL_CA_PK_PASSWORD")
+	password := []byte(strPassword)
+	if strPassword == "" {
+		password = nil
+	}
+
+	priv, err := helpers.ParsePrivateKeyPEMWithPassword(cakey, password)
 	if err != nil {
 		log.Debug("Malformed private key %v", err)
 		return nil, err
@@ -78,13 +98,16 @@ func NewSignerFromFile(caFile, caKeyFile string, policy *config.Signing) (*Signe
 	return NewSigner(priv, parsedCa, signer.DefaultSigAlgo(priv), policy)
 }
 
-func (s *Signer) sign(template *x509.Certificate, profile *config.SigningProfile, serialSeq string) (cert []byte, err error) {
-	err = signer.FillTemplate(template, s.policy.Default, profile, serialSeq)
+func (s *Signer) sign(template *x509.Certificate, profile *config.SigningProfile) (cert []byte, err error) {
+	var distPoints = template.CRLDistributionPoints
+	err = signer.FillTemplate(template, s.policy.Default, profile)
+	if distPoints != nil && len(distPoints) > 0 {
+		template.CRLDistributionPoints = distPoints
+	}
 	if err != nil {
 		return
 	}
 
-	serialNumber := template.SerialNumber
 	var initRoot bool
 	if s.ca == nil {
 		if !template.IsCA {
@@ -92,12 +115,9 @@ func (s *Signer) sign(template *x509.Certificate, profile *config.SigningProfile
 			return
 		}
 		template.DNSNames = nil
+		template.EmailAddresses = nil
 		s.ca = template
 		initRoot = true
-		template.MaxPathLen = signer.MaxPathLen
-	} else if template.IsCA {
-		template.MaxPathLen = 1
-		template.DNSNames = nil
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, template, s.ca, template.PublicKey, s.priv)
@@ -112,7 +132,7 @@ func (s *Signer) sign(template *x509.Certificate, profile *config.SigningProfile
 	}
 
 	cert = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	log.Infof("signed certificate with serial number %s", serialNumber)
+	log.Infof("signed certificate with serial number %d", template.SerialNumber)
 	return
 }
 
@@ -144,21 +164,26 @@ func PopulateSubjectFromCSR(s *signer.Subject, req pkix.Name) pkix.Name {
 	replaceSliceIfEmpty(&name.Locality, &req.Locality)
 	replaceSliceIfEmpty(&name.Organization, &req.Organization)
 	replaceSliceIfEmpty(&name.OrganizationalUnit, &req.OrganizationalUnit)
-
+	if name.SerialNumber == "" {
+		name.SerialNumber = req.SerialNumber
+	}
 	return name
 }
 
-// OverrideHosts fills template's IPAddresses and DNSNames with the
+// OverrideHosts fills template's IPAddresses, EmailAddresses, and DNSNames with the
 // content of hosts, if it is not nil.
 func OverrideHosts(template *x509.Certificate, hosts []string) {
 	if hosts != nil {
 		template.IPAddresses = []net.IP{}
+		template.EmailAddresses = []string{}
 		template.DNSNames = []string{}
 	}
 
 	for i := range hosts {
 		if ip := net.ParseIP(hosts[i]); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
+		} else if email, err := mail.ParseAddress(hosts[i]); err == nil && email != nil {
+			template.EmailAddresses = append(template.EmailAddresses, email.Address)
 		} else {
 			template.DNSNames = append(template.DNSNames, hosts[i])
 		}
@@ -175,17 +200,12 @@ func (s *Signer) Sign(req signer.SignRequest) (cert []byte, err error) {
 		return
 	}
 
-	serialSeq := ""
-	if profile.UseSerialSeq {
-		serialSeq = req.SerialSeq
-	}
-
 	block, _ := pem.Decode([]byte(req.Request))
 	if block == nil {
 		return nil, cferr.New(cferr.CSRError, cferr.DecodeFailed)
 	}
 
-	if block.Type != "CERTIFICATE REQUEST" {
+	if block.Type != "NEW CERTIFICATE REQUEST" && block.Type != "CERTIFICATE REQUEST" {
 		return nil, cferr.Wrap(cferr.CSRError,
 			cferr.BadRequest, errors.New("not a certificate or csr"))
 	}
@@ -220,6 +240,32 @@ func (s *Signer) Sign(req signer.SignRequest) (cert []byte, err error) {
 		if profile.CSRWhitelist.IPAddresses {
 			safeTemplate.IPAddresses = csrTemplate.IPAddresses
 		}
+		if profile.CSRWhitelist.EmailAddresses {
+			safeTemplate.EmailAddresses = csrTemplate.EmailAddresses
+		}
+	}
+
+	if req.CRLOverride != "" {
+		safeTemplate.CRLDistributionPoints = []string{req.CRLOverride}
+	}
+
+	if safeTemplate.IsCA {
+		if !profile.CAConstraint.IsCA {
+			log.Error("local signer policy disallows issuing CA certificate")
+			return nil, cferr.New(cferr.PolicyError, cferr.InvalidRequest)
+		}
+
+		if s.ca != nil && s.ca.MaxPathLen > 0 {
+			if safeTemplate.MaxPathLen >= s.ca.MaxPathLen {
+				log.Error("local signer certificate disallows CA MaxPathLen extending")
+				// do not sign a cert with pathlen > current
+				return nil, cferr.New(cferr.PolicyError, cferr.InvalidRequest)
+			}
+		} else if s.ca != nil && s.ca.MaxPathLen == 0 && s.ca.MaxPathLenZero {
+			log.Error("local signer certificate disallows issuing CA certificate")
+			// signer has pathlen of 0, do not sign more intermediate CAs
+			return nil, cferr.New(cferr.PolicyError, cferr.InvalidRequest)
+		}
 	}
 
 	OverrideHosts(&safeTemplate, req.Hosts)
@@ -229,17 +275,156 @@ func (s *Signer) Sign(req signer.SignRequest) (cert []byte, err error) {
 	if profile.NameWhitelist != nil {
 		if safeTemplate.Subject.CommonName != "" {
 			if profile.NameWhitelist.Find([]byte(safeTemplate.Subject.CommonName)) == nil {
-				return nil, cferr.New(cferr.PolicyError, cferr.InvalidPolicy)
+				return nil, cferr.New(cferr.PolicyError, cferr.UnmatchedWhitelist)
 			}
 		}
 		for _, name := range safeTemplate.DNSNames {
 			if profile.NameWhitelist.Find([]byte(name)) == nil {
-				return nil, cferr.New(cferr.PolicyError, cferr.InvalidPolicy)
+				return nil, cferr.New(cferr.PolicyError, cferr.UnmatchedWhitelist)
+			}
+		}
+		for _, name := range safeTemplate.EmailAddresses {
+			if profile.NameWhitelist.Find([]byte(name)) == nil {
+				return nil, cferr.New(cferr.PolicyError, cferr.UnmatchedWhitelist)
 			}
 		}
 	}
 
-	return s.sign(&safeTemplate, profile, serialSeq)
+	if profile.ClientProvidesSerialNumbers {
+		if req.Serial == nil {
+			return nil, cferr.New(cferr.CertificateError, cferr.MissingSerial)
+		}
+		safeTemplate.SerialNumber = req.Serial
+	} else {
+		// RFC 5280 4.1.2.2:
+		// Certificate users MUST be able to handle serialNumber
+		// values up to 20 octets.  Conforming CAs MUST NOT use
+		// serialNumber values longer than 20 octets.
+		//
+		// If CFSSL is providing the serial numbers, it makes
+		// sense to use the max supported size.
+		serialNumber := make([]byte, 20)
+		_, err = io.ReadFull(rand.Reader, serialNumber)
+		if err != nil {
+			return nil, cferr.Wrap(cferr.CertificateError, cferr.Unknown, err)
+		}
+
+		// SetBytes interprets buf as the bytes of a big-endian
+		// unsigned integer. The leading byte should be masked
+		// off to ensure it isn't negative.
+		serialNumber[0] &= 0x7F
+
+		safeTemplate.SerialNumber = new(big.Int).SetBytes(serialNumber)
+	}
+
+	if len(req.Extensions) > 0 {
+		for _, ext := range req.Extensions {
+			oid := asn1.ObjectIdentifier(ext.ID)
+			if !profile.ExtensionWhitelist[oid.String()] {
+				return nil, cferr.New(cferr.CertificateError, cferr.InvalidRequest)
+			}
+
+			rawValue, err := hex.DecodeString(ext.Value)
+			if err != nil {
+				return nil, cferr.Wrap(cferr.CertificateError, cferr.InvalidRequest, err)
+			}
+
+			safeTemplate.ExtraExtensions = append(safeTemplate.ExtraExtensions, pkix.Extension{
+				Id:       oid,
+				Critical: ext.Critical,
+				Value:    rawValue,
+			})
+		}
+	}
+
+	var certTBS = safeTemplate
+
+	if len(profile.CTLogServers) > 0 {
+		// Add a poison extension which prevents validation
+		var poisonExtension = pkix.Extension{Id: signer.CTPoisonOID, Critical: true, Value: []byte{0x05, 0x00}}
+		var poisonedPreCert = certTBS
+		poisonedPreCert.ExtraExtensions = append(safeTemplate.ExtraExtensions, poisonExtension)
+		cert, err = s.sign(&poisonedPreCert, profile)
+		if err != nil {
+			return
+		}
+
+		derCert, _ := pem.Decode(cert)
+		prechain := []ct.ASN1Cert{derCert.Bytes, s.ca.Raw}
+		var sctList []ct.SignedCertificateTimestamp
+
+		for _, server := range profile.CTLogServers {
+			log.Infof("submitting poisoned precertificate to %s", server)
+			ctclient, err := client.New(server, nil, jsonclient.Options{})
+			if err != nil {
+				return nil, cferr.Wrap(cferr.CTError, cferr.PrecertSubmissionFailed, err)
+			}
+			var resp *ct.SignedCertificateTimestamp
+			ctx := context.Background()
+			resp, err = ctclient.AddPreChain(ctx, prechain)
+			if err != nil {
+				return nil, cferr.Wrap(cferr.CTError, cferr.PrecertSubmissionFailed, err)
+			}
+			sctList = append(sctList, *resp)
+		}
+
+		var serializedSCTList []byte
+		serializedSCTList, err = serializeSCTList(sctList)
+		if err != nil {
+			return nil, cferr.Wrap(cferr.CTError, cferr.Unknown, err)
+		}
+
+		// Serialize again as an octet string before embedding
+		serializedSCTList, err = asn1.Marshal(serializedSCTList)
+		if err != nil {
+			return nil, cferr.Wrap(cferr.CTError, cferr.Unknown, err)
+		}
+
+		var SCTListExtension = pkix.Extension{Id: signer.SCTListOID, Critical: false, Value: serializedSCTList}
+		certTBS.ExtraExtensions = append(certTBS.ExtraExtensions, SCTListExtension)
+	}
+	var signedCert []byte
+	signedCert, err = s.sign(&certTBS, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.dbAccessor != nil {
+		var certRecord = certdb.CertificateRecord{
+			Serial: certTBS.SerialNumber.String(),
+			// this relies on the specific behavior of x509.CreateCertificate
+			// which updates certTBS AuthorityKeyId from the signer's SubjectKeyId
+			AKI:     hex.EncodeToString(certTBS.AuthorityKeyId),
+			CALabel: req.Label,
+			Status:  "good",
+			Expiry:  certTBS.NotAfter,
+			PEM:     string(signedCert),
+		}
+
+		err = s.dbAccessor.InsertCertificate(certRecord)
+		if err != nil {
+			return nil, err
+		}
+		log.Debug("saved certificate with serial number ", certTBS.SerialNumber)
+	}
+
+	return signedCert, nil
+}
+
+func serializeSCTList(sctList []ct.SignedCertificateTimestamp) ([]byte, error) {
+	var buf bytes.Buffer
+	for _, sct := range sctList {
+		sct, err := ct.SerializeSCT(sct)
+		if err != nil {
+			return nil, err
+		}
+		binary.Write(&buf, binary.BigEndian, uint16(len(sct)))
+		buf.Write(sct)
+	}
+
+	var sctListLengthField = make([]byte, 2)
+	binary.BigEndian.PutUint16(sctListLengthField, uint16(buf.Len()))
+	return bytes.Join([][]byte{sctListLengthField, buf.Bytes()}, nil), nil
 }
 
 // Info return a populated info.Resp struct or an error.
@@ -278,6 +463,16 @@ func (s *Signer) Certificate(label, profile string) (*x509.Certificate, error) {
 // SetPolicy sets the signer's signature policy.
 func (s *Signer) SetPolicy(policy *config.Signing) {
 	s.policy = policy
+}
+
+// SetDBAccessor sets the signers' cert db accessor
+func (s *Signer) SetDBAccessor(dba certdb.Accessor) {
+	s.dbAccessor = dba
+}
+
+// SetReqModifier does nothing for local
+func (s *Signer) SetReqModifier(func(*http.Request, []byte)) {
+	// noop
 }
 
 // Policy returns the signer's policy.
