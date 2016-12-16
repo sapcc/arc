@@ -78,7 +78,7 @@ var _ = Describe("Token Create", func() {
 		Expect(subject.Names[0].O).To(Equal("test-project-domain"))
 	})
 
-	It("should let just one csr.name, all other will be removed and all SerialNumber entries set to emtpy string", func() {
+	It("should let just one csr.name all others will be removed, override O and OU and all SerialNumber entries set to emtpy string", func() {
 		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
 		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
