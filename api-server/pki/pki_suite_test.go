@@ -38,4 +38,5 @@ var _ = AfterSuite(func() {
 
 var _ = BeforeEach(func() {
 	DeleteAllRowsFromTable(db, "tokens")
+	DeleteAllRowsFromTable(db, "certificates")
 })

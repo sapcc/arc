@@ -8,9 +8,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"code.google.com/p/go-uuid/uuid"
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/signer"
+	"github.com/databus23/requestutil"
+	"github.com/pborman/uuid"
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 )
 
@@ -93,6 +94,6 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 		return map[string]string{}, err
 	}
 
-	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", Scheme(r), HostWithPort(r), token)
+	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", requestutil.Scheme(r), requestutil.HostWithPort(r), token)
 	return map[string]string{"token": token, "url": url}, nil
 }

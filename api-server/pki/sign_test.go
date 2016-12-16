@@ -15,8 +15,7 @@ import (
 	"github.com/cloudflare/cfssl/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 )
 
 var _ = Describe("Sign csr", func() {
