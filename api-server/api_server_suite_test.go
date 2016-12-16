@@ -52,4 +52,5 @@ var _ = BeforeEach(func() {
 	DeleteAllRowsFromTable(db, "locks")
 	DeleteAllRowsFromTable(db, "tags")
 	DeleteAllRowsFromTable(db, "tokens")
+	DeleteAllRowsFromTable(db, "certificates")
 })
