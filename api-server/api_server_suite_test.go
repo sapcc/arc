@@ -31,13 +31,14 @@ var _ = BeforeSuite(func() {
 	// set the test database
 	db, err = NewConnection("db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
-	router = newRouter(env)
 
 	// set the pki configuration
 	pkiConfig.CAFile = pki.PathTo("test/ca.pem")
 	pkiConfig.CAKeyFile = pki.PathTo("test/ca-key.pem")
-	pkiConfig.CFG, err = cfssl_config.LoadFile(pki.PathTo("test/local.json"))
+	pkiConfig.CFG, err = cfssl_config.LoadFile(pki.PathTo("etc/pki_default_config.json"))
 	Expect(err).NotTo(HaveOccurred())
+
+	router = newRouter(env)
 })
 
 var _ = AfterSuite(func() {

@@ -194,7 +194,9 @@ func runServer(c *cli.Context) {
 		pkiConfig.ConfigFile = c.GlobalString("pki-profile-config")
 	}
 	pkiConfig.CFG, err = cfssl_config.LoadFile(pkiConfig.ConfigFile)
-	checkErrAndPanic(err, fmt.Sprintf("Failed to load PKI profile config file: %s", err))
+	if err != nil {
+		log.Infof(fmt.Sprintf("Failed to load PKI profile config file: %s", err))
+	}
 
 	// init the router
 	router := newRouter(env)

@@ -6,6 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 )
 
@@ -26,6 +27,8 @@ func runRoutineTasks(db *sql.DB) {
 	cleanJobs(db)
 	cleanLogParts(db)
 	cleanLocks(db)
+	cleanStaleTokens(db)
+	cleanOldCertificates(db)
 }
 
 func cleanJobs(db *sql.DB) {
@@ -50,4 +53,32 @@ func cleanLocks(db *sql.DB) {
 		log.Error("Clean locks routine: ", err.Error())
 	}
 	log.Infof("Clean locks routine: %v old (5 min) locks removed from the db", affectedLocks)
+}
+
+func cleanStaleTokens(db *sql.DB) {
+	res, err := db.Exec(ownDb.CleanPkiTokensQuery, 3600)
+	if err != nil {
+		log.Error("Failed to prune tokens: ", err.Error())
+		return
+	}
+	affectedRows, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Failed to get count of prune tokens: ", err.Error())
+		return
+	}
+	log.Infof("Clean pki tokens routine: %v tokens removed from the db", affectedRows)
+}
+
+func cleanOldCertificates(db *sql.DB) {
+	res, err := db.Exec(ownDb.CleanPkiCertificatesQuery)
+	if err != nil {
+		log.Error("Failed to prune tokens: ", err.Error())
+		return
+	}
+	affectedRows, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Failed to get count of removed certificates: ", err.Error())
+		return
+	}
+	log.Infof("Clean pki certificates routine: %v certificates removed from the db", affectedRows)
 }

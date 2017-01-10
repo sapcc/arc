@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/cloudflare/cfssl/info"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/universal"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 )
 
 // SignForbidden should be used to return a 403
@@ -24,9 +24,6 @@ type SignForbidden struct {
 func (e SignForbidden) Error() string {
 	return e.Msg
 }
-
-// TokenLifetime should set the standard token time life time
-var TokenLifetime = "1 hour"
 
 // SignToken sign a given token returning the certificate
 func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]byte, string, error) {
@@ -60,7 +57,7 @@ func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]b
 	// retrieve db data
 	var profile string
 	var subjectData []byte
-	err = tx.QueryRow(fmt.Sprintf("SELECT profile, subject FROM tokens WHERE id=$1 AND created_at > NOW() - INTERVAL '%s' FOR UPDATE", TokenLifetime), token).Scan(&profile, &subjectData)
+	err = tx.QueryRow(ownDb.GetTokenQuery, token).Scan(&profile, &subjectData)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -117,9 +114,7 @@ func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]b
 	}
 	certSubject := x509Cert.Subject
 
-	_, err = tx.Exec(`INSERT into certificates
-	(fingerprint, common_name, country, locality, organization, organizational_unit, not_before, not_after, pem)
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+	_, err = tx.Exec(ownDb.InsertCertificateQuery,
 		certificateFingerprint(*x509Cert),
 		certSubject.CommonName,
 		firstOrNull(certSubject.Country),

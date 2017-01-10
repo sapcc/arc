@@ -40,16 +40,6 @@ var _ = Describe("Token Create", func() {
 		Expect(result).To(Equal(map[string]string{}))
 	})
 
-	It("returns a TokenBodyError error if no body is set in the request", func() {
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(""), map[string]string{})
-		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
-		Expect(result).To(Equal(map[string]string{}))
-		Expect(err).To(HaveOccurred())
-		_, ok := err.(TokenBodyError)
-		Expect(ok).To(Equal(true))
-	})
-
 	It("returns a TokenBodyError error if body is json malformated", func() {
 		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent name"`), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
@@ -102,6 +92,7 @@ var _ = Describe("Token Create", func() {
 		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
+		Expect(err).NotTo(HaveOccurred())
 
 		var tokenId string
 		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", result["token"]).Scan(&tokenId)
@@ -109,6 +100,13 @@ var _ = Describe("Token Create", func() {
 
 		Expect(result["token"]).To(Equal(tokenId))
 		Expect(result["url"]).To(Equal(fmt.Sprintf("http://production.***REMOVED***/api/v1/pki/sign/%s", result["token"])))
+	})
+
+	It("should create a token even if the body is empty", func() {
+		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(``), map[string]string{})
+		Expect(err).NotTo(HaveOccurred())
+		_, err = CreateToken(db, &authorization, req)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("Returns a token", func() {
