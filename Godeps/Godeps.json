@@ -120,15 +120,15 @@
 		},
 		{
 			"ImportPath": "github.com/databus23/keystone",
-			"Rev": "da300d2fe98ed10eea5d9d86ba155393d824fa8c"
+			"Rev": "0ebc191910b56703ceb7e74437839e8ac30544e9"
 		},
 		{
 			"ImportPath": "github.com/databus23/keystone/cache/memory",
-			"Rev": "da300d2fe98ed10eea5d9d86ba155393d824fa8c"
+			"Rev": "0ebc191910b56703ceb7e74437839e8ac30544e9"
 		},
 		{
 			"ImportPath": "github.com/databus23/keystone/cache/postgres",
-			"Rev": "da300d2fe98ed10eea5d9d86ba155393d824fa8c"
+			"Rev": "0ebc191910b56703ceb7e74437839e8ac30544e9"
 		},
 		{
 			"ImportPath": "github.com/databus23/requestutil",
