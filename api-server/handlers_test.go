@@ -16,7 +16,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pborman/uuid"
 
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
@@ -55,17 +54,6 @@ var _ = Describe("Pki handlers", func() {
 			checkIdentityInvalidRequest("POST", getUrl("/pki/token", url.Values{}), "{}")
 		})
 
-		It("returns a HTTP 400 on body emtpy", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(""), map[string]string{})
-			Expect(err).NotTo(HaveOccurred())
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			// check response code, header and body
-			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-			Expect(w.Code).To(Equal(400))
-		})
-
 		It("returns a HTTP 400 on body malformated", func() {
 			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{miau:test"), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
@@ -83,9 +71,8 @@ var _ = Describe("Pki handlers", func() {
 
 		It("signs a token", func() {
 			token := pki.CreateTestToken(db, `{}`)
-			csr, err := os.Open(pki.PathTo("test/test.csr"))
+			csr, err := pki.CreateCsr("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
-			defer csr.Close()
 
 			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), csr)
 			Expect(err).NotTo(HaveOccurred())
@@ -100,9 +87,8 @@ var _ = Describe("Pki handlers", func() {
 
 		It("returns json optionally", func() {
 			token := pki.CreateTestToken(db, `{}`)
-			csr, err := os.Open(pki.PathTo("test/test.csr"))
+			csr, err := pki.CreateCsr("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
-			defer csr.Close()
 
 			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), csr)
 			Expect(err).NotTo(HaveOccurred())
@@ -122,9 +108,8 @@ var _ = Describe("Pki handlers", func() {
 		})
 
 		It("returns a 403 forbidden when token not valid", func() {
-			csr, err := os.Open(pki.PathTo("test/test.csr"))
+			csr, err := pki.CreateCsr("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
-			defer csr.Close()
 
 			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", "123456789"), url.Values{}), csr) // fake token
 			Expect(err).NotTo(HaveOccurred())
@@ -1538,13 +1523,4 @@ func getUrl(path string, params url.Values) string {
 	newUrl.Path = fmt.Sprint("/api/v1", path)
 	newUrl.RawQuery = params.Encode()
 	return newUrl.String()
-}
-
-func CreateTestToken(subject string) string {
-	token := uuid.New()
-	_, err := db.Exec("INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)", token, "default", subject)
-	if err != nil {
-		panic(err)
-	}
-	return token
 }

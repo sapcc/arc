@@ -93,12 +93,6 @@ func TestCommonNameFromHostName(t *testing.T) {
 
 // private
 
-func getParentCtx() *cli.Context {
-	flagSet := flag.NewFlagSet("global", 0)
-	globalContext := cli.NewContext(nil, flagSet, nil)
-	return globalContext
-}
-
 func testTools(code int, body string) *httptest.Server {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)

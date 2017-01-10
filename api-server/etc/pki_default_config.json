@@ -10,7 +10,8 @@
       ],
       "csrwhitelist": {
         "PublicKeyAlgorithm":true,
-        "PublicKey": true
+        "PublicKey": true,
+        "Subject": true
       }
     }
   }

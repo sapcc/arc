@@ -105,6 +105,9 @@ var v1RoutesDefinition = routes{
 		"/agents/{agentId}/tags/{value}",
 		deleteAgentTag,
 	},
+}
+
+var v1PkiRoutesDefinition = routes{
 	route{
 		"Validate token",
 		"POST",
@@ -144,7 +147,7 @@ func newRouter(env string) *mux.Router {
 		Name("Metrics").
 		Handler(middlewareChain.Then(prometheus.Handler()))
 
-		// add api/v1 routes
+		// add api/v1 std routes
 	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
 	for _, r := range v1RoutesDefinition {
 		v1SubRouter.
@@ -152,6 +155,17 @@ func newRouter(env string) *mux.Router {
 			Path(r.Pattern).
 			Name(r.Name).
 			Handler(middlewareChainApiV1.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
+	}
+
+	// add pki routes
+	if pkiConfig.CFG != nil {
+		for _, r := range v1PkiRoutesDefinition {
+			v1SubRouter.
+				Methods(r.Method).
+				Path(r.Pattern).
+				Name(r.Name).
+				Handler(middlewareChainApiV1.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
+		}
 	}
 
 	return router

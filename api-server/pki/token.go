@@ -13,6 +13,7 @@ import (
 	"github.com/databus23/requestutil"
 	"github.com/pborman/uuid"
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 )
 
 // TokenBodyError should return a http 400 error
@@ -24,7 +25,7 @@ func (e TokenBodyError) Error() string {
 	return e.Msg
 }
 
-type createTokenPayload struct {
+type CreateTokenPayload struct {
 	signer.Subject
 	Profile string
 }
@@ -51,7 +52,12 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 	r.Body.Close()
 
 	// create payload
-	var payload createTokenPayload
+	var payload CreateTokenPayload
+
+	if len(body) == 0 {
+		body = []byte(`{}`)
+	}
+
 	if err = json.Unmarshal(body, &payload); err != nil {
 		//httpError(w, 400, fmt.Errorf("Failed to parse body"))
 		return map[string]string{}, TokenBodyError{Msg: "Failed to parse body"}
@@ -88,7 +94,7 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, r *http.Request)
 	}
 
 	// save to db
-	_, err = db.Exec("INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)", token, profile, subject)
+	_, err = db.Exec(ownDb.InsertTokenQuery, token, profile, subject)
 	if err != nil {
 		// httpError(w, 500, err)
 		return map[string]string{}, err

@@ -11,8 +11,8 @@ var GetAllJobsQuery = "SELECT * FROM jobs %s order by created_at DESC %s"
 var CountAllJobsQuery = "SELECT count(*) FROM jobs %s %s"
 var GetJobQuery = "SELECT * FROM jobs WHERE id=$1"
 var CleanJobsTimeoutQuery = `
-	UPDATE jobs SET status=3,updated_at=NOW() 
-	WHERE id IN 
+	UPDATE jobs SET status=3,updated_at=NOW()
+	WHERE id IN
 	(
 		SELECT DISTINCT id
 		FROM jobs
@@ -21,8 +21,8 @@ var CleanJobsTimeoutQuery = `
 	)
 `
 var CleanJobsNonHeartbeatQuery = `
-	UPDATE jobs SET status=3,updated_at=NOW() 
-	WHERE id IN 
+	UPDATE jobs SET status=3,updated_at=NOW()
+	WHERE id IN
 	(
 		SELECT DISTINCT id
 		FROM jobs
@@ -63,7 +63,7 @@ var CountAgentsQuery = "SELECT count(*) FROM agents %s %s"
 var GetAgentQuery = "SELECT * FROM agents WHERE agent_id=$1"
 var InsertAgentQuery = `INSERT INTO agents(agent_id,project,organization,facts,created_at,updated_at,updated_with,updated_by,tags) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) returning agent_id`
 var UpdateAgentWithRegistration = `
-	UPDATE agents SET 
+	UPDATE agents SET
 	project=$2,
 	organization=$3,
 	facts=json_replace((SELECT facts::json FROM agents WHERE agent_id=$1),$4::json)::jsonb,
@@ -73,16 +73,16 @@ var UpdateAgentWithRegistration = `
 	WHERE agent_id=$1
 `
 var AddAgentTag = `
-	UPDATE agents SET 
+	UPDATE agents SET
 	updated_at=$2,
 	tags=json_set_key((SELECT tags::json FROM agents WHERE agent_id=$1),$3, $4::TEXT)::jsonb
 	WHERE agent_id=$1
 `
 var DeleteAgentQuery = `DELETE FROM agents WHERE agent_id=$1`
 var DeleteAgentTagQuery = `
-	UPDATE agents SET 
+	UPDATE agents SET
 	updated_at=$2,
-	tags=json_delete_keys((SELECT tags::json FROM agents WHERE agent_id=$1),$3)::jsonb 
+	tags=json_delete_keys((SELECT tags::json FROM agents WHERE agent_id=$1),$3)::jsonb
 	WHERE agent_id=$1`
 
 // Locks
@@ -97,3 +97,13 @@ var CleanLocksQuery = `
 		WHERE (created_at <= NOW() - INTERVAL '1 seconds' * $1)
 	)
 `
+
+// pki
+var CleanPkiTokensQuery = `DELETE FROM tokens WHERE created_at < NOW() - INTERVAL '1 second' * $1`
+var InsertTokenQuery = `INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)`
+var GetTokenQuery = `SELECT profile, subject FROM tokens WHERE id=$1 AND created_at > NOW() - INTERVAL '1 hour' FOR UPDATE`
+var InsertTokenWithCreatedAtQuery = `INSERT INTO tokens (id, profile, subject,created_at) VALUES($1, $2, $3, $4)`
+var CleanPkiCertificatesQuery = `DELETE FROM certificates WHERE not_after < NOW()`
+var InsertCertificateQuery = `INSERT into certificates
+(fingerprint, common_name, country, locality, organization, organizational_unit, not_before, not_after, pem)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`
