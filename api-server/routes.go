@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/cloudflare/cfssl/log"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/prometheus/client_golang/prometheus"
@@ -166,6 +167,7 @@ func newRouter(env string) *mux.Router {
 				Name(r.Name).
 				Handler(middlewareChainApiV1.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
 		}
+		log.Infof("PKI profile config found, adding pki routes...")
 	}
 
 	return router
