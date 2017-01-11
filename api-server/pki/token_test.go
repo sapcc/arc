@@ -33,7 +33,7 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("returns an error if no db connection is given", func() {
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(nil, &authorization, req)
 		Expect(err).To(HaveOccurred())
@@ -41,7 +41,7 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("returns a TokenBodyError error if body is json malformated", func() {
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent name"`), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent name"`), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
 		Expect(result).To(Equal(map[string]string{}))
@@ -51,7 +51,7 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("should set a csr.name with project id and domain id if json request body empty", func() {
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
 
@@ -70,7 +70,7 @@ var _ = Describe("Token Create", func() {
 
 	It("should let just one csr.name all others will be removed, override O and OU and all SerialNumber entries set to emtpy string", func() {
 		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
 
@@ -88,8 +88,22 @@ var _ = Describe("Token Create", func() {
 		Expect(subject.Names[0].SerialNumber).To(Equal(""))         // should be removed. Not needed in the old version of cfssl from arc-pki
 	})
 
+	It("should set the common name provided", func() {
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent test name"}`), map[string]string{})
+		Expect(err).NotTo(HaveOccurred())
+		result, err := CreateToken(db, &authorization, req)
+
+		var subjectData []byte
+		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", result["token"]).Scan(&subjectData)
+		Expect(err).NotTo(HaveOccurred())
+		var subject signer.Subject
+		err = json.Unmarshal(subjectData, &subject)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(subject.CN).To(Equal("agent test name"))
+	})
+
 	It("Returns a token even if empty json is send in the body request", func() {
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
 		Expect(err).NotTo(HaveOccurred())
@@ -103,7 +117,7 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("should create a token even if the body is empty", func() {
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(``), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(``), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		_, err = CreateToken(db, &authorization, req)
 		Expect(err).NotTo(HaveOccurred())
@@ -111,7 +125,7 @@ var _ = Describe("Token Create", func() {
 
 	It("Returns a token", func() {
 		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
-		req, err := newAuthorizedRequest("GET", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
+		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := CreateToken(db, &authorization, req)
 
