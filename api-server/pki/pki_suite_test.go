@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 	db, err = NewConnection("../db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
 	// set the pki configuration
-	err = pki.SetupSigner("../test/ca.pem", "../test/ca-key.pem", "../etc/pki_default_config.json")
+	err = pki.SetupSigner("../test/ca.pem", "../test/ca-key.pem", "../etc/pki.json")
 	Expect(err).NotTo(HaveOccurred())
 })
 

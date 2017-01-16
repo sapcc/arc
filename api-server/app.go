@@ -114,7 +114,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "pki-config",
 			Usage:  "Path to PKI profile configuration file",
-			Value:  "etc/pki_default_conf.json",
+			Value:  "etc/pki.json",
 			EnvVar: envPrefix + "PKI_CONFIG",
 		},
 		cli.StringFlag{
