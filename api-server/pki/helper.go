@@ -1,25 +1,12 @@
 package pki
 
 import (
-	"bytes"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"database/sql"
-	"encoding/pem"
-	"os"
-	"path"
 
+	"github.com/cloudflare/cfssl/csr"
 	"github.com/pborman/uuid"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 )
-
-// PathTo generates a path to the pki-package
-func PathTo(p string) string {
-	pwd, _ := os.Getwd()
-	return path.Join(pwd, p)
-}
 
 // CreateTestToken save a test token in the db
 func CreateTestToken(db *sql.DB, subject string) string {
@@ -42,34 +29,12 @@ func GetTestToken(db *sql.DB, token string) (string, error) {
 	return profile, nil
 }
 
-// CreateCsr creates a csr
-func CreateCsr(CommonName, Organization, OrganizationalUnit string) (*bytes.Buffer, error) {
-	// generate key
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
+// CreateCSR creates a privateKey and PEM encoded csr
+func CreateCSR(commonName, organization, organizationalUnit string) (csreq, key []byte, err error) {
 
-	// create csr template
-	csrTemplate := x509.CertificateRequest{
-		SignatureAlgorithm: x509.SHA256WithRSA,
-		Subject: pkix.Name{
-			CommonName:         CommonName,
-			Organization:       []string{Organization},
-			OrganizationalUnit: []string{OrganizationalUnit},
-		},
-	}
-
-	csrData, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
-	if err != nil {
-		return nil, err
-	}
-
-	var csr bytes.Buffer
-	err = pem.Encode(&csr, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrData})
-	if err != nil {
-		return nil, err
-	}
-
-	return &csr, nil
+	req := csr.New()
+	req.CN = commonName
+	req.Names = []csr.Name{csr.Name{O: organization, OU: organizationalUnit}}
+	csreq, key, err = csr.ParseRequest(req)
+	return
 }

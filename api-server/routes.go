@@ -159,7 +159,7 @@ func newRouter(env string) *mux.Router {
 	}
 
 	// add pki routes
-	if pkiConfig.CFG != nil {
+	if pkiEnabled {
 		for _, r := range v1PkiRoutesDefinition {
 			v1SubRouter.
 				Methods(r.Method).

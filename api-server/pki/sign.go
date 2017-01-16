@@ -10,10 +10,15 @@ import (
 	"net/http"
 
 	"github.com/cloudflare/cfssl/cli"
+	"github.com/cloudflare/cfssl/config"
 	"github.com/cloudflare/cfssl/info"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/universal"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+)
+
+var (
+	certSigner signer.Signer
 )
 
 // SignForbidden should be used to return a 403
@@ -25,8 +30,31 @@ func (e SignForbidden) Error() string {
 	return e.Msg
 }
 
+// SetupSigner initializes the Signer
+func SetupSigner(caCertFile, caKeyFile, configFile string) (err error) {
+	cfg := &cli.Config{
+		CAFile:    caCertFile,
+		CAKeyFile: caKeyFile,
+	}
+	if cfg.CFG, err = config.LoadFile(configFile); err != nil {
+		return
+	}
+
+	certSigner, err = universal.NewSigner(cli.RootFromConfig(cfg), cfg.CFG.Signing)
+	return
+}
+
+func Sign(csr []byte, subject signer.Subject, profile string) ([]byte, error) {
+	req := signer.SignRequest{
+		Request: string(csr),
+		Subject: &subject,
+		Profile: profile,
+	}
+	return certSigner.Sign(req)
+}
+
 // SignToken sign a given token returning the certificate
-func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]byte, string, error) {
+func SignToken(db *sql.DB, token string, r *http.Request) (*[]byte, string, error) {
 	// check db
 	if db == nil {
 		return nil, "", errors.New("Db connection is nil")
@@ -71,33 +99,11 @@ func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]b
 	var subject signer.Subject
 	err = json.Unmarshal(subjectData, &subject)
 	if err != nil {
-		// httpError(w, 500, err)
 		return nil, "", err
 	}
 
-	root := cli.RootFromConfig(cfg)
-
-	// check if cfg is nil else panic!!
-	if cfg.CFG == nil {
-		return nil, "", errors.New("Signer configuration is nil.")
-	}
-
-	s, err := universal.NewSigner(root, cfg.CFG.Signing)
+	pemCert, err := Sign(csr, subject, profile)
 	if err != nil {
-		//httpError(w, 500, err)
-		return nil, "", err
-	}
-
-	req := signer.SignRequest{
-		// Hosts:   signer.SplitHosts(c.Hostname),
-		Request: string(csr),
-		Subject: &subject,
-		Profile: profile,
-		// Label:   c.Label,
-	}
-	pemCert, err := s.Sign(req)
-	if err != nil {
-		//httpError(w, 500, err)
 		return nil, "", err
 	}
 
@@ -137,7 +143,7 @@ func SignToken(db *sql.DB, token string, r *http.Request, cfg *cli.Config) (*[]b
 	}
 
 	//get the signing CA
-	caInfo, err := s.Info(info.Req{Profile: profile})
+	caInfo, err := certSigner.Info(info.Req{Profile: profile})
 	if err != nil {
 		//httpError(w, 500, err)
 		return nil, "", err

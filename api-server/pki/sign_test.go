@@ -11,8 +11,6 @@ import (
 
 	"net/http"
 
-	"github.com/cloudflare/cfssl/cli"
-	"github.com/cloudflare/cfssl/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
@@ -20,27 +18,15 @@ import (
 
 var _ = Describe("Sign csr", func() {
 
-	var (
-		cfg cli.Config
-	)
-
-	JustBeforeEach(func() {
-		var err error
-		cfg.CAFile = PathTo("../test/ca.pem")
-		cfg.CAKeyFile = PathTo("../test/ca-key.pem")
-		cfg.CFG, err = config.LoadFile(PathTo("../etc/pki_default_config.json"))
-		Expect(err).NotTo(HaveOccurred())
-	})
-
 	It("Signs a CSR", func() {
 		token := CreateTestToken(db, `{}`)
-		csr, err := CreateCsr("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, csr)
+		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
 		Expect(err).NotTo(HaveOccurred())
 
-		pemCert, _, err := SignToken(db, token, req, &cfg)
+		pemCert, _, err := SignToken(db, token, req)
 		Expect(err).NotTo(HaveOccurred())
 		cert, _ := pem.Decode(*pemCert)
 		Expect(cert.Type).To(Equal("CERTIFICATE"))
@@ -48,13 +34,13 @@ var _ = Describe("Sign csr", func() {
 
 	It("Requires a valid token", func() {
 		token := uuid.New()
-		csr, err := CreateCsr("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, csr)
+		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
 		Expect(err).NotTo(HaveOccurred())
 
-		pemCert, ca, err := SignToken(db, token, req, &cfg)
+		pemCert, ca, err := SignToken(db, token, req)
 		Expect(err).To(HaveOccurred())
 		_, ok := err.(SignForbidden)
 		Expect(ok).To(Equal(true))
@@ -65,13 +51,13 @@ var _ = Describe("Sign csr", func() {
 
 	It("Invalidates a token", func() {
 		token := CreateTestToken(db, `{"CN":"blafasel"}`)
-		csr, err := CreateCsr("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, csr)
+		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
 		Expect(err).NotTo(HaveOccurred())
 
-		_, _, err = SignToken(db, token, req, &cfg)
+		_, _, err = SignToken(db, token, req)
 		Expect(err).NotTo(HaveOccurred())
 
 		r, err := db.Query("SELECT id from tokens where id=$1", token)
@@ -81,13 +67,13 @@ var _ = Describe("Sign csr", func() {
 
 	It("Allows CN from CSR if not set in the tokens subject", func() {
 		token := CreateTestToken(db, `{"names":[{"OU":"testou"}]}`)
-		csr, err := CreateCsr("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr.Bytes()))
+		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
 		Expect(err).NotTo(HaveOccurred())
 
-		pemCert, _, err := SignToken(db, token, req, &cfg)
+		pemCert, _, err := SignToken(db, token, req)
 		Expect(err).NotTo(HaveOccurred())
 
 		cert, _ := pem.Decode(*pemCert)
@@ -97,15 +83,15 @@ var _ = Describe("Sign csr", func() {
 		Expect(s.CommonName).To(Equal("testCsrCN"))
 	})
 
-	It("nforces CN, O and OU if set in the tokens subject", func() {
+	It("Enforces CN, O and OU if set in the tokens subject", func() {
 		token := CreateTestToken(db, `{"names":[{"O": "enforced O", "OU":"enforced OU"}]}`)
-		csr, err := CreateCsr("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr.Bytes()))
+		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
 		Expect(err).NotTo(HaveOccurred())
 
-		pemCert, _, err := SignToken(db, token, req, &cfg)
+		pemCert, _, err := SignToken(db, token, req)
 		Expect(err).NotTo(HaveOccurred())
 
 		cert, _ := pem.Decode(*pemCert)

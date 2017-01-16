@@ -5,7 +5,6 @@ package main
 import (
 	"os"
 
-	cfssl_config "github.com/cloudflare/cfssl/config"
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,9 +32,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// set the pki configuration
-	pkiConfig.CAFile = pki.PathTo("test/ca.pem")
-	pkiConfig.CAKeyFile = pki.PathTo("test/ca-key.pem")
-	pkiConfig.CFG, err = cfssl_config.LoadFile(pki.PathTo("etc/pki_default_config.json"))
+	err = pki.SetupSigner("test/ca.pem", "test/ca-key.pem", "etc/pki_default_config.json")
+	pkiEnabled = true
 	Expect(err).NotTo(HaveOccurred())
 
 	router = newRouter(env)
