@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -165,14 +164,12 @@ func runServer(c *cli.Context) {
 	// create db connection
 	var err error
 	db, err = ownDb.NewConnection(c.GlobalString("db-config"), env)
-	checkErrAndPanic(err, "Error connecting to the DB:")
+	FatalfOnError(err, "Error connecting to the DB: %s", err)
 	defer db.Close()
 
 	if c.GlobalString("pki-ca") != "" {
 		err = pki.SetupSigner(c.GlobalString("pki-ca"), c.GlobalString("pki-ca-key"), c.GlobalString("pki-config"))
-		if err != nil {
-			log.Fatalf("Failed to initialize PKI subsystem: %s", err)
-		}
+		FatalfOnError(err, "Failed to initialize PKI subsystem: %s", err)
 		pkiEnabled = true
 		// dynamically generate transport certificate if CA is given but client certificate is missing
 		if config.ClientCert == nil {
@@ -182,36 +179,29 @@ func runServer(c *cli.Context) {
 					log.Fatalf("Couldn't determine hostname: %s", err)
 				}
 			}
-			log.Infof("Generating ephemeral client certificate for identity %s", cn)
+			log.Infof("Generating ephemeral client certificate for identity %#v", cn)
 			csr, clientKey, err := pki.CreateCSR(cn, "", "")
-			if err != nil {
-				log.Fatalf("Failed to create CSR: %s", err)
-			}
+			FatalfOnError(err, "Failed to create CSR: %s", err)
 			clientCert, err := pki.Sign(csr, signer.Subject{CN: cn}, "default")
-			if err != nil {
-				log.Fatalf("Failed to sign ephemeral ceritficate: %s", err)
-			}
-
+			FatalfOnError(err, "Failed to sign ephemeral certificate: %s", err)
 			tlsCert, err := tls.X509KeyPair(clientCert, clientKey)
-			if err != nil {
-				log.Fatalf("Failed to use generated certs", err)
-			}
+			FatalfOnError(err, "Failed to use generated certificate: %s", err)
 			config.ClientCert = &tlsCert
 
 			caCert, err := ioutil.ReadFile(c.GlobalString("pki-ca"))
-			if err != nil {
-				log.Fatalf("Failed to read path %s: %s", c.GlobalString("pki-ca"), err)
-			}
+			FatalfOnError(err, "Failed to read path %#v: %s", c.GlobalString("pki-ca"), err)
 			config.CACerts = x509.NewCertPool()
 			if !config.CACerts.AppendCertsFromPEM(caCert) {
-				log.Fatalf("Failed to load CA from %s. Not PEM encoded?", c.GlobalString("pki-ca"))
+				log.Fatalf("Failed to load CA from %#v. Not PEM encoded?", c.GlobalString("pki-ca"))
 			}
 		}
 	}
 
 	// global transport instance
 	tp, err = arcNewConnection(config)
-	checkErrAndPanic(err, "")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer tp.Disconnect()
 
 	// keystone initialization
@@ -233,11 +223,11 @@ func runServer(c *cli.Context) {
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
 	err = http.ListenAndServe(c.GlobalString("bind-address"), router)
-	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")))
+	FatalfOnError(err, "Failed to bind on %s: ", c.GlobalString("bind-address"))
 }
 
-func checkErrAndPanic(err error, msg string) {
+func FatalfOnError(err error, msg string, args ...interface{}) {
 	if err != nil {
-		log.Fatalf(msg, err)
+		log.Fatalf(msg, args...)
 	}
 }

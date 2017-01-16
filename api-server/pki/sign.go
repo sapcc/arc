@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/config"
@@ -32,6 +34,16 @@ func (e SignForbidden) Error() string {
 
 // SetupSigner initializes the Signer
 func SetupSigner(caCertFile, caKeyFile, configFile string) (err error) {
+
+	if _, err := os.Stat(caCertFile); err != nil {
+		return fmt.Errorf("CA certificate not found at path %#v", caCertFile)
+	}
+	if _, err := os.Stat(caKeyFile); err != nil {
+		return fmt.Errorf("CA private key not found at path %#v", caKeyFile)
+	}
+	if _, err := os.Stat(configFile); err != nil {
+		return fmt.Errorf("CA config file not found at path %#v", configFile)
+	}
 	cfg := &cli.Config{
 		CAFile:    caCertFile,
 		CAKeyFile: caKeyFile,
