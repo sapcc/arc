@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 
 	"database/sql"
 	"testing"
@@ -29,6 +30,9 @@ var _ = BeforeSuite(func() {
 		env = "test"
 	}
 	db, err = NewConnection("../db/dbconf.yml", env)
+	Expect(err).NotTo(HaveOccurred())
+	// set the pki configuration
+	err = pki.SetupSigner("../test/ca.pem", "../test/ca-key.pem", "../etc/pki_default_config.json")
 	Expect(err).NotTo(HaveOccurred())
 })
 

@@ -54,7 +54,7 @@ func signPkiToken(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 
-	pemCert, ca, err := pki.SignToken(db, token, r, &pkiConfig)
+	pemCert, ca, err := pki.SignToken(db, token, r)
 	if err != nil {
 		if _, ok := err.(pki.SignForbidden); ok {
 			logAndReturnHttpPkiError(w, http.StatusForbidden, err)

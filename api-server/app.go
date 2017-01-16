@@ -1,20 +1,23 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	cffsl_cli "github.com/cloudflare/cfssl/cli"
-	cfssl_config "github.com/cloudflare/cfssl/config"
+	"github.com/cloudflare/cfssl/signer"
 	"github.com/codegangsta/cli"
 	"github.com/databus23/keystone"
 	"github.com/databus23/keystone/cache/postgres"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/version"
@@ -26,12 +29,12 @@ const (
 )
 
 var (
-	config    = arc_config.New()
-	db        *sql.DB
-	tp        transport.Transport
-	ks        = keystone.Auth{}
-	env       string
-	pkiConfig cffsl_cli.Config
+	config     = arc_config.New()
+	db         *sql.DB
+	tp         transport.Transport
+	ks         = keystone.Auth{}
+	env        string
+	pkiEnabled = false
 )
 
 func main() {
@@ -109,7 +112,7 @@ func main() {
 			EnvVar: envPrefix + "KEYSTONE_ENDPOINT",
 		},
 		cli.StringFlag{
-			Name:   "pki-profile-config",
+			Name:   "pki-config",
 			Usage:  "Path to PKI profile configuration file",
 			Value:  "etc/pki_default_conf.json",
 			EnvVar: envPrefix + "PKI_CONFIG",
@@ -165,6 +168,47 @@ func runServer(c *cli.Context) {
 	checkErrAndPanic(err, "Error connecting to the DB:")
 	defer db.Close()
 
+	if c.GlobalString("pki-ca") != "" {
+		err = pki.SetupSigner(c.GlobalString("pki-ca"), c.GlobalString("pki-ca-key"), c.GlobalString("pki-config"))
+		if err != nil {
+			log.Fatalf("Failed to initialize PKI subsystem: %s", err)
+		}
+		pkiEnabled = true
+		// dynamically generate transport certificate if CA is given but client certificate is missing
+		if config.ClientCert == nil {
+			cn := os.Getenv("COMMON_NAME")
+			if cn == "" {
+				if cn, err = os.Hostname(); err != nil {
+					log.Fatalf("Couldn't determine hostname: %s", err)
+				}
+			}
+			log.Infof("Generating ephemeral client certificate for identity %s", cn)
+			csr, clientKey, err := pki.CreateCSR(cn, "", "")
+			if err != nil {
+				log.Fatalf("Failed to create CSR: %s", err)
+			}
+			clientCert, err := pki.Sign(csr, signer.Subject{CN: cn}, "default")
+			if err != nil {
+				log.Fatalf("Failed to sign ephemeral ceritficate: %s", err)
+			}
+
+			tlsCert, err := tls.X509KeyPair(clientCert, clientKey)
+			if err != nil {
+				log.Fatalf("Failed to use generated certs", err)
+			}
+			config.ClientCert = &tlsCert
+
+			caCert, err := ioutil.ReadFile(c.GlobalString("pki-ca"))
+			if err != nil {
+				log.Fatalf("Failed to read path %s: %s", c.GlobalString("pki-ca"), err)
+			}
+			config.CACerts = x509.NewCertPool()
+			if !config.CACerts.AppendCertsFromPEM(caCert) {
+				log.Fatalf("Failed to load CA from %s. Not PEM encoded?", c.GlobalString("pki-ca"))
+			}
+		}
+	}
+
 	// global transport instance
 	tp, err = arcNewConnection(config)
 	checkErrAndPanic(err, "")
@@ -182,21 +226,6 @@ func runServer(c *cli.Context) {
 
 	// start the routine scheduler
 	go routineScheduler(db, 60*time.Second)
-
-	// load pki configuration
-	if c.GlobalString("pki-ca") != "" {
-		pkiConfig.CAFile = c.GlobalString("pki-ca")
-	}
-	if c.GlobalString("pki-ca-key") != "" {
-		pkiConfig.CAKeyFile = c.GlobalString("pki-ca-key")
-	}
-	if c.GlobalString("pki-profile-config") != "" {
-		pkiConfig.ConfigFile = c.GlobalString("pki-profile-config")
-	}
-	pkiConfig.CFG, err = cfssl_config.LoadFile(pkiConfig.ConfigFile)
-	if err != nil {
-		log.Infof(fmt.Sprintf("Failed to load PKI profile config file: %s", err))
-	}
 
 	// init the router
 	router := newRouter(env)

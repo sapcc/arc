@@ -71,10 +71,10 @@ var _ = Describe("Pki handlers", func() {
 
 		It("signs a token", func() {
 			token := pki.CreateTestToken(db, `{}`)
-			csr, err := pki.CreateCsr("testCsrCN", "test O", "test OU")
+			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
-			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), csr)
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), bytes.NewReader(csr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -87,10 +87,10 @@ var _ = Describe("Pki handlers", func() {
 
 		It("returns json optionally", func() {
 			token := pki.CreateTestToken(db, `{}`)
-			csr, err := pki.CreateCsr("testCsrCN", "test O", "test OU")
+			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
-			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), csr)
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), bytes.NewReader(csr))
 			Expect(err).NotTo(HaveOccurred())
 			req.Header["Accept"] = []string{"application/json"}
 			w := httptest.NewRecorder()
@@ -108,10 +108,10 @@ var _ = Describe("Pki handlers", func() {
 		})
 
 		It("returns a 403 forbidden when token not valid", func() {
-			csr, err := pki.CreateCsr("testCsrCN", "test O", "test OU")
+			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
-			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", "123456789"), url.Values{}), csr) // fake token
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", "123456789"), url.Values{}), bytes.NewReader(csr)) // fake token
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
