@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// set the pki configuration
-	err = pki.SetupSigner("test/ca.pem", "test/ca-key.pem", "etc/pki_default_config.json")
+	err = pki.SetupSigner("test/ca.pem", "test/ca-key.pem", "etc/pki.json")
 	pkiEnabled = true
 	Expect(err).NotTo(HaveOccurred())
 
