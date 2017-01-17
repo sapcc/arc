@@ -117,9 +117,9 @@ func main() {
 			EnvVar: envPrefix + "PKI_CONFIG",
 		},
 		cli.StringFlag{
-			Name:   "pki-ca",
-			Usage:  "PKI CA used to sign the new certificate",
-			EnvVar: envPrefix + "PKI_CA",
+			Name:   "pki-ca-cert",
+			Usage:  "PKI CA certfiicate used to sign the new certificate",
+			EnvVar: envPrefix + "PKI_CA_CERT",
 		},
 		cli.StringFlag{
 			Name:   "pki-ca-key",
@@ -167,8 +167,8 @@ func runServer(c *cli.Context) {
 	FatalfOnError(err, "Error connecting to the DB: %s", err)
 	defer db.Close()
 
-	if c.GlobalString("pki-ca") != "" {
-		err = pki.SetupSigner(c.GlobalString("pki-ca"), c.GlobalString("pki-ca-key"), c.GlobalString("pki-config"))
+	if c.GlobalString("pki-ca-cert") != "" {
+		err = pki.SetupSigner(c.GlobalString("pki-ca-cert"), c.GlobalString("pki-ca-key"), c.GlobalString("pki-config"))
 		FatalfOnError(err, "Failed to initialize PKI subsystem: %s", err)
 		pkiEnabled = true
 		// dynamically generate transport certificate if CA is given but client certificate is missing
@@ -188,11 +188,11 @@ func runServer(c *cli.Context) {
 			FatalfOnError(err, "Failed to use generated certificate: %s", err)
 			config.ClientCert = &tlsCert
 
-			caCert, err := ioutil.ReadFile(c.GlobalString("pki-ca"))
-			FatalfOnError(err, "Failed to read path %#v: %s", c.GlobalString("pki-ca"), err)
+			caCert, err := ioutil.ReadFile(c.GlobalString("pki-ca-cert"))
+			FatalfOnError(err, "Failed to read path %#v: %s", c.GlobalString("pki-ca-cert"), err)
 			config.CACerts = x509.NewCertPool()
 			if !config.CACerts.AppendCertsFromPEM(caCert) {
-				log.Fatalf("Failed to load CA from %#v. Not PEM encoded?", c.GlobalString("pki-ca"))
+				log.Fatalf("Failed to load CA from %#v. Not PEM encoded?", c.GlobalString("pki-ca-cert"))
 			}
 		}
 	}
