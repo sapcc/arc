@@ -13,7 +13,7 @@ ENV ARC_ENV=development \
 WORKDIR /opt/api
 COPY entrypoint.sh /entrypoint.sh
 COPY db/ db/
-COPY bin/gencert /usr/bin/gencert
+COPY etc/ etc/
 COPY bin/api-server /usr/bin/api-server
 
 ENTRYPOINT ["/entrypoint.sh"]
