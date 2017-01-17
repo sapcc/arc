@@ -159,19 +159,14 @@ func Init(c *cli.Context, appName string) (int, error) {
 }
 
 func commonName(c *cli.Context) string {
-	name := ""
 	if c.String("common-name") != "" {
-		name = c.String("common-name")
+		return c.String("common-name")
 	} else if instID := instanceID(); instID != "" {
-		name = instID
-	} else {
-		var err error
-		name, err = os.Hostname()
-		if err != nil {
-			return uuid.New()
-		}
+		return instID
+	} else if name, err := os.Hostname(); err == nil {
+		return name
 	}
-	return name
+	return uuid.New()
 }
 
 type metaDataID struct {
