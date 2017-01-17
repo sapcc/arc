@@ -39,16 +39,12 @@ groups:
       - tests-build 
       - api-tests
       - api-build
-      - pki-test
-      - pki-build
       - mosquitto-build
       - mosquitto-staging
-      - pki-staging
       - api-staging
       - staging-tests
       - release-stable
       - mosquitto-production
-      - pki-production
       - api-production
       #- production-tests
   - name: website
@@ -191,37 +187,6 @@ jobs:
       - put: api.version
         params: { filename: api.version/current}
 
-  - name: pki-test
-    plan:
-      - get: pki.git
-        trigger: true
-      - task: test
-        file: pki.git/ci/test.yaml
-        input_mapping: { source: pki.git }
-
-  - name: pki-build
-    plan:
-      - aggregate:
-        - { get: pki.git, passed: [ pki-test ], trigger: true }
-        - get: pki.version
-          params: { bump: true }
-      - task: build
-        file: pki.git/ci/build.yaml
-      - put: pki.image
-        params:
-          build: build
-          tag: pki.version/current
-          tag_as_latest: true
-          cache: true
-          cache_tag: latest
-          build_args:
-            http_proxy: http://proxy.***REMOVED***:8080
-            https_proxy: http://proxy.***REMOVED***:8080
-            no_proxy: ***REMOVED***,127.0.0.1,localhost
-      - put: pki.version
-        params: { filename: pki.version/current}
-
-
   - name: mosquitto-build
     plan:
       - aggregate:
@@ -271,26 +236,6 @@ jobs:
             REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
             NAMESPACE: arc
             DEPLOYMENT: mosquitto
-  - name: pki-staging
-    serial: true
-    plan:
-      - aggregate:
-        - { get: pki.version, passed: [pki-build], trigger: true }
-        - { get: pki.git, passed: [pki-build] }
-      - task: deployment
-        config:
-          platform: linux
-          <<: *kubectl_image
-          inputs:
-            - name: pki.version
-              path: version
-          <<: *deployment_command
-          params:
-            REGION: staging
-            GITHUB_TOKEN: {{github-access-token}}
-            REPOSITORY: hub.***REMOVED***/monsoon/arc-pki
-            NAMESPACE: arc
-            DEPLOYMENT: pki
   - name: api-staging
     serial: true
     plan:
@@ -312,8 +257,6 @@ jobs:
         - { get: mosquitto.version, passed: [mosquitto-staging], trigger: true }
         - { get: mosquitto.git, passed: [mosquitto-staging] }
         - { get: api.version, passed: [api-staging], trigger: true }
-        - { get: pki.version, passed: [pki-staging], trigger: true }
-        - { get: pki.git, passed: [pki-staging] }
         - { get: tests.image, passed: [tests-build], trigger: true }
         - { get: arc.version, passed: [arc-build], trigger: true }
         - { get: arc.git, passed: [arc-build] }
@@ -378,26 +321,6 @@ jobs:
             REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
             NAMESPACE: arc
             DEPLOYMENT: mosquitto
-  - name: pki-production
-    serial: true
-    plan:
-      - aggregate:
-        - { get: pki.version, passed: [staging-tests], trigger: true }
-        - { get: pki.git, passed: [staging-tests] }
-      - task: deployment
-        config:
-          platform: linux
-          <<: *kubectl_image
-          inputs:
-            - name: pki.version
-              path: version
-          <<: *deployment_command
-          params:
-            REGION: eu-de-1
-            GITHUB_TOKEN: {{github-access-token}}
-            REPOSITORY: hub.***REMOVED***/monsoon/arc-pki
-            NAMESPACE: arc
-            DEPLOYMENT: pki
   - name: api-production
     serial: true
     plan:
@@ -426,8 +349,6 @@ jobs:
   #      - { get: mosquitto.version, passed: [mosquitto-production] }
   #      - { get: api.image, passed: [api-production], trigger: true }
   #      - { get: api.version, passed: [api-production] }
-  #      - { get: pki.image, passed: [pki-production], trigger: true }
-  #      - { get: pki.version, passed: [pki-production] }
   #      - { get: tests.image, trigger: true }
   #      - { get: arc.version, passed: [staging-tests], trigger: true }
   #    - task: tests
@@ -439,8 +360,6 @@ jobs:
   #          - name: mosquitto.image
   #          - name: api.image
   #          - name: api.version
-  #          - name: pki.image
-  #          - name: pki.version
   #          - name: tests.image
   #          - name: arc.version
   #        run: { path: /tasks/production }
@@ -459,8 +378,6 @@ jobs:
   #        params: {tag: tests/api.image/newtag}
   #      - put: update-site.image
   #        params: {tag: tests/update-site.image/newtag}
-  #      - put: pki.image
-  #        params: {tag: tests/pki.image/newtag}
   #      - put: tests.image
   #        params: {tag: tests/tests.image/newtag}
 
@@ -516,28 +433,6 @@ resources:
     type: monsoon-version
     source:
       key:  arc-api
-      initial:   "00010101"
-      username:  {{swift-username}}
-      api_key:    {{swift-api-key}}
-      auth_url:  {{swift-auth_url}}
-      domain:    {{swift-domain}}
-      tenant_id: {{swift-project-id}}
-      container: {{swift-container-version}}
-  - name: pki.git
-    type: git
-    source:
-      uri: git://gitHub.***REMOVED***/monsoon/arc-pki.git
-      branch: master
-  - name: pki.image
-    type: docker-image
-    source:
-      repository: hub.***REMOVED***/monsoon/arc-pki
-      username:   {{internal-registry-username}}
-      password:   {{internal-registry-password}}
-  - name: pki.version
-    type: monsoon-version
-    source:
-      key:  arc-pki
       initial:   "00010101"
       username:  {{swift-username}}
       api_key:    {{swift-api-key}}
