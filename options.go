@@ -106,3 +106,8 @@ var optInstallDir = cli.StringFlag{
 	Usage: "Installation directory",
 	Value: defaultConfigDir(),
 }
+
+var optCommonName = cli.StringFlag{
+	Name:  "common-name,cn",
+	Usage: "The name of the arc agent",
+}

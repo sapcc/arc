@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -16,9 +17,11 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/pborman/uuid"
 
 	"gitHub.***REMOVED***/monsoon/arc/service"
 	"gitHub.***REMOVED***/monsoon/arc/version"
@@ -26,6 +29,7 @@ import (
 
 var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{{.Eol}}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}`))
 
+// Init install an arc agent/node
 func Init(c *cli.Context, appName string) (int, error) {
 	keySize := 2048
 	dir := c.String("install-dir")
@@ -46,19 +50,25 @@ func Init(c *cli.Context, appName string) (int, error) {
 		if err != nil {
 			return 1, fmt.Errorf("Failed to create %s: %v", path.Join(dir, "cert.key"), err)
 		}
-		if err := pem.Encode(keyfile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+		if err = pem.Encode(keyfile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
 			return 1, fmt.Errorf("Failed to write private key to file: %v", err)
 		}
 		keyfile.Close()
 
-		csrTemplate := x509.CertificateRequest{SignatureAlgorithm: x509.SHA256WithRSA}
+		// create csr template
+		csrTemplate := x509.CertificateRequest{
+			SignatureAlgorithm: x509.SHA256WithRSA,
+			Subject: pkix.Name{
+				CommonName: commonName(c),
+			},
+		}
 		log.Info("Creating signing request")
 		csrData, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
 		if err != nil {
 			return 1, fmt.Errorf("Failed to generate csr: %v", err)
 		}
 		var csr bytes.Buffer
-		if err := pem.Encode(&csr, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrData}); err != nil {
+		if err = pem.Encode(&csr, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrData}); err != nil {
 			return 1, fmt.Errorf("Failed to pem encode certificate request")
 		}
 
@@ -146,4 +156,49 @@ func Init(c *cli.Context, appName string) (int, error) {
 		return 1, fmt.Errorf("Failed to install service: %s", err)
 	}
 	return 0, nil
+}
+
+func commonName(c *cli.Context) string {
+	name := ""
+	if c.String("common-name") != "" {
+		name = c.String("common-name")
+	} else if instID := instanceID(); instID != "" {
+		name = instID
+	} else {
+		var err error
+		name, err = os.Hostname()
+		if err != nil {
+			return uuid.New()
+		}
+	}
+	return name
+}
+
+type metaDataID struct {
+	UUID string `json:"uuid"`
+}
+
+var metadataURL = "http://169.254.169.254/openstack/latest/meta_data.json"
+
+// InstanceID returns the instance id from the metadata
+func instanceID() string {
+	timeout := time.Duration(5 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	r, err := client.Get(metadataURL)
+	if err != nil {
+		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
+		return ""
+	}
+	defer r.Body.Close()
+
+	var metadata = new(metaDataID)
+	err = json.NewDecoder(r.Body).Decode(metadata)
+	if err != nil {
+		log.Warnf(fmt.Sprint("Error parsing metadata. ", err.Error()))
+		return ""
+	}
+
+	return metadata.UUID
 }

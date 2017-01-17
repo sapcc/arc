@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/cloudflare/cfssl/log"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/prometheus/client_golang/prometheus"
@@ -107,6 +108,21 @@ var v1RoutesDefinition = routes{
 	},
 }
 
+var v1PkiRoutesDefinition = routes{
+	route{
+		"Validate token",
+		"POST",
+		"/pki/sign/{token}",
+		signPkiToken,
+	},
+	route{
+		"Create one time token",
+		"POST",
+		"/pki/token",
+		servePkiToken,
+	},
+}
+
 func newRouter(env string) *mux.Router {
 	middlewareChain := alice.New(loggingHandler, combineLogHandler, servedByHandler)
 	middlewareChainApiV1 := alice.New(loggingHandler, combineLogHandler, servedByHandler)
@@ -132,7 +148,7 @@ func newRouter(env string) *mux.Router {
 		Name("Metrics").
 		Handler(middlewareChain.Then(prometheus.Handler()))
 
-		// add api/v1 routes
+		// add api/v1 std routes
 	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
 	for _, r := range v1RoutesDefinition {
 		v1SubRouter.
@@ -140,6 +156,18 @@ func newRouter(env string) *mux.Router {
 			Path(r.Pattern).
 			Name(r.Name).
 			Handler(middlewareChainApiV1.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
+	}
+
+	// add pki routes
+	if pkiEnabled {
+		for _, r := range v1PkiRoutesDefinition {
+			v1SubRouter.
+				Methods(r.Method).
+				Path(r.Pattern).
+				Name(r.Name).
+				Handler(middlewareChainApiV1.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
+		}
+		log.Infof("PKI profile config found, adding pki routes...")
 	}
 
 	return router

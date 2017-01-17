@@ -3,12 +3,16 @@
 package main
 
 import (
+	"database/sql"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pborman/uuid"
 
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
@@ -56,6 +60,74 @@ var _ = Describe("Routine scheduler", func() {
 		dbLog := Log{JobID: job.RequestID}
 		err = dbLog.Get(db)
 		Expect(err).NotTo(HaveOccurred())
+	})
+
+	It("should clean tokens older than 1 hour", func() {
+		token := uuid.New()
+		_, err := db.Exec(ownDb.InsertTokenWithCreatedAtQuery, token, "default", `{"CN":"blafasel"}`, time.Now().Add(-3700*time.Second))
+		Expect(err).NotTo(HaveOccurred())
+
+		runRoutineTasks(db)
+
+		_, err = pki.GetTestToken(db, token)
+		Expect(err).To(HaveOccurred())
+		Expect(err).To(Equal(sql.ErrNoRows))
+	})
+
+	It("should not clean tokens younger than 1 hour", func() {
+		token := uuid.New()
+		_, err := db.Exec(ownDb.InsertTokenWithCreatedAtQuery, token, "default", `{"CN":"blafasel"}`, time.Now().Add(-60*time.Second))
+		Expect(err).NotTo(HaveOccurred())
+
+		runRoutineTasks(db)
+
+		res, err := pki.GetTestToken(db, token)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res).To(Equal("default"))
+	})
+
+	It("should clean certificates older than 2 years", func() {
+		_, err := db.Exec(ownDb.InsertCertificateQuery,
+			`certificateFingerprint(*x509Cert)`,
+			`certSubject.CommonName`,
+			`certSubject.Country`,
+			`certSubject.Locality`,
+			`certSubject.Organization`,
+			`certSubject.OrganizationalUnit`,
+			time.Now().Add(-17521*time.Hour),
+			time.Now().Add(-1*time.Hour),
+			`pemCert`,
+		)
+		Expect(err).NotTo(HaveOccurred())
+
+		runRoutineTasks(db)
+
+		var rows int
+		err = db.QueryRow("SELECT COUNT(*) FROM certificates").Scan(&rows)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rows).To(Equal(0))
+	})
+
+	It("should not clean certificates younger than 2 years", func() {
+		_, err := db.Exec(ownDb.InsertCertificateQuery,
+			`certificateFingerprint(*x509Cert)`,
+			`certSubject.CommonName`,
+			`certSubject.Country`,
+			`certSubject.Locality`,
+			`certSubject.Organization`,
+			`certSubject.OrganizationalUnit`,
+			time.Now(),
+			time.Now().Add(17520*time.Hour),
+			`pemCert`,
+		)
+		Expect(err).NotTo(HaveOccurred())
+
+		runRoutineTasks(db)
+
+		var rows int
+		err = db.QueryRow("SELECT COUNT(*) FROM certificates").Scan(&rows)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rows).To(Equal(1))
 	})
 
 })

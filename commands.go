@@ -104,6 +104,7 @@ var cliCommands = []cli.Command{
 			optUpdateInterval,
 			optRegistrationUrl,
 			optInstallDir,
+			optCommonName,
 		},
 	},
 	{

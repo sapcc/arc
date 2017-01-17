@@ -181,12 +181,6 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 
 // private
 
-func getParentCtx() *cli.Context {
-	flagSet := flag.NewFlagSet("global", 0)
-	globalContext := cli.NewContext(nil, flagSet, nil)
-	return globalContext
-}
-
 func getLocalSet(noUpdate bool, force bool, serverUrl string) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("local", 0)
 	flagSet.Bool("no-update", noUpdate, "local")

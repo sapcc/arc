@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 
 	"testing"
 )
@@ -26,8 +27,15 @@ var _ = BeforeSuite(func() {
 	if env == "" {
 		env = "test"
 	}
+	// set the test database
 	db, err = NewConnection("db/dbconf.yml", env)
 	Expect(err).NotTo(HaveOccurred())
+
+	// set the pki configuration
+	err = pki.SetupSigner("test/ca.pem", "test/ca-key.pem", "etc/pki.json")
+	pkiEnabled = true
+	Expect(err).NotTo(HaveOccurred())
+
 	router = newRouter(env)
 })
 
@@ -42,4 +50,6 @@ var _ = BeforeEach(func() {
 	DeleteAllRowsFromTable(db, "log_parts")
 	DeleteAllRowsFromTable(db, "locks")
 	DeleteAllRowsFromTable(db, "tags")
+	DeleteAllRowsFromTable(db, "tokens")
+	DeleteAllRowsFromTable(db, "certificates")
 })
