@@ -297,20 +297,14 @@ jobs:
       - aggregate:
         - { get: api.version, passed: [api-build], trigger: true }
         - { get: arc.git, passed: [api-build] }
+        - { get: charts.git, }
+        - { get: secrets.git, }
       - task: deployment
-        config:
-          platform: linux
-          <<: *kubectl_image
-          inputs:
-            - name: api.version
-              path: version
-          <<: *deployment_command
-          params:
-            REGION: staging
-            GITHUB_TOKEN: {{github-access-token}}
-            REPOSITORY: hub.***REMOVED***/monsoon/arc-api
-            NAMESPACE: arc
-            DEPLOYMENT: api
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: staging
+          GITHUB_TOKEN: {{github-access-token}}
   - name: staging-tests
     serial: true
     plan:
@@ -484,6 +478,17 @@ resources:
       uri: git://gitHub.***REMOVED***/monsoon/arc.git
       branch: master
       ignore_paths: [ website/, integration-tests/, update-server/ ]
+  - name: charts.git
+    type: git
+    source:
+      uri: https://github.com/sapcc/helm-charts.git
+      branch: master
+  - name: secrets.git
+    type: git
+    source:
+      uri: git@gitHub.***REMOVED***:cc/secrets.git
+      private_key: {{secrets-ssh-key}}
+      branch: master
   - name: tests.git
     type: git
     source:
