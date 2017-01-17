@@ -15,11 +15,11 @@ run:
   args:
     - -ec
     - |
+      set -o pipefail
       tag=$(cat version/current)
-      helm upgrade arc charts.git/openstack/arc  --values secrets.git/$REGION/values/arc.yaml --set api.image.tag=$tag --debug
-      echo Waiting for deployment to succeed
-      sleep $STEP #give the deployment a little time
-      until kubectl get deployment $RELEASE  --namespace=$NAMESPACE -o json | \
+      helm upgrade $RELEASE charts.git/openstack/arc  --values secrets.git/$REGION/values/arc.yaml --set api.image.tag=$tag --debug
+      kubectl rollout status deployment/$RELEASE-api --namespace=$NAMESPACE
+      until kubectl get deployment $RELEASE-api  --namespace=$NAMESPACE -o json | \
               jq -e '.status | .unavailableReplicas == null and .replicas == .updatedReplicas' >/dev/null; do
         if [ $TIMEOUT -le 0 ]; then echo -e "\nTimeout waiting for deployment"; exit 1; fi 
         TIMEOUT=$((TIMEOUT-STEP))
