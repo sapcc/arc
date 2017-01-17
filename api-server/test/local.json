@@ -1,0 +1,17 @@
+{
+  "signing": {
+    "default": {
+      "expiry": "8760h",
+      "usages": [
+        "signing",
+        "key encipherment",
+        "server auth"
+      ],
+      "crl_url": "http://blafasel.tut.crl",
+      "csrwhitelist": {
+        "PublicKeyAlgorithm":true,
+        "PublicKey": true
+      }
+    }
+  }
+}

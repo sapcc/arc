@@ -1,18 +1,22 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
-	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/cloudflare/cfssl/signer"
 	"github.com/codegangsta/cli"
 	"github.com/databus23/keystone"
 	"github.com/databus23/keystone/cache/postgres"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 	"gitHub.***REMOVED***/monsoon/arc/version"
@@ -24,11 +28,12 @@ const (
 )
 
 var (
-	config = arc_config.New()
-	db     *sql.DB
-	tp     transport.Transport
-	ks     = keystone.Auth{}
-	env    string
+	config     = arc_config.New()
+	db         *sql.DB
+	tp         transport.Transport
+	ks         = keystone.Auth{}
+	env        string
+	pkiEnabled = false
 )
 
 func main() {
@@ -105,15 +110,33 @@ func main() {
 			Usage:  "Endpoint url for Keystone",
 			EnvVar: envPrefix + "KEYSTONE_ENDPOINT",
 		},
+		cli.StringFlag{
+			Name:   "pki-config",
+			Usage:  "Path to PKI profile configuration file",
+			Value:  "etc/pki.json",
+			EnvVar: envPrefix + "PKI_CONFIG",
+		},
+		cli.StringFlag{
+			Name:   "pki-ca",
+			Usage:  "PKI CA used to sign the new certificate",
+			EnvVar: envPrefix + "PKI_CA",
+		},
+		cli.StringFlag{
+			Name:   "pki-ca-key",
+			Usage:  "PKI CA private key",
+			EnvVar: envPrefix + "PKI_CA_KEY",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
+		// load app configuraion
 		err := config.Load(c)
 		if err != nil {
 			log.Fatalf("Invalid configuration: %s\n", err.Error())
 			return err
 		}
 
+		// set log level
 		lvl, err := log.ParseLevel(config.LogLevel)
 		if err != nil {
 			log.Fatalf("Invalid log level: %s\n", config.LogLevel)
@@ -141,12 +164,44 @@ func runServer(c *cli.Context) {
 	// create db connection
 	var err error
 	db, err = ownDb.NewConnection(c.GlobalString("db-config"), env)
-	checkErrAndPanic(err, "Error connecting to the DB:")
+	FatalfOnError(err, "Error connecting to the DB: %s", err)
 	defer db.Close()
+
+	if c.GlobalString("pki-ca") != "" {
+		err = pki.SetupSigner(c.GlobalString("pki-ca"), c.GlobalString("pki-ca-key"), c.GlobalString("pki-config"))
+		FatalfOnError(err, "Failed to initialize PKI subsystem: %s", err)
+		pkiEnabled = true
+		// dynamically generate transport certificate if CA is given but client certificate is missing
+		if config.ClientCert == nil {
+			cn := os.Getenv("COMMON_NAME")
+			if cn == "" {
+				if cn, err = os.Hostname(); err != nil {
+					log.Fatalf("Couldn't determine hostname: %s", err)
+				}
+			}
+			log.Infof("Generating ephemeral client certificate for identity %#v", cn)
+			csr, clientKey, err := pki.CreateCSR(cn, "", "")
+			FatalfOnError(err, "Failed to create CSR: %s", err)
+			clientCert, err := pki.Sign(csr, signer.Subject{CN: cn}, "default")
+			FatalfOnError(err, "Failed to sign ephemeral certificate: %s", err)
+			tlsCert, err := tls.X509KeyPair(clientCert, clientKey)
+			FatalfOnError(err, "Failed to use generated certificate: %s", err)
+			config.ClientCert = &tlsCert
+
+			caCert, err := ioutil.ReadFile(c.GlobalString("pki-ca"))
+			FatalfOnError(err, "Failed to read path %#v: %s", c.GlobalString("pki-ca"), err)
+			config.CACerts = x509.NewCertPool()
+			if !config.CACerts.AppendCertsFromPEM(caCert) {
+				log.Fatalf("Failed to load CA from %#v. Not PEM encoded?", c.GlobalString("pki-ca"))
+			}
+		}
+	}
 
 	// global transport instance
 	tp, err = arcNewConnection(config)
-	checkErrAndPanic(err, "")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer tp.Disconnect()
 
 	// keystone initialization
@@ -168,11 +223,11 @@ func runServer(c *cli.Context) {
 	// run server
 	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
 	err = http.ListenAndServe(c.GlobalString("bind-address"), router)
-	checkErrAndPanic(err, fmt.Sprintf("Failed to bind on %s: ", c.GlobalString("bind-address")))
+	FatalfOnError(err, "Failed to bind on %s: ", c.GlobalString("bind-address"))
 }
 
-func checkErrAndPanic(err error, msg string) {
+func FatalfOnError(err error, msg string, args ...interface{}) {
 	if err != nil {
-		log.Fatalf(msg, err)
+		log.Fatalf(msg, args...)
 	}
 }

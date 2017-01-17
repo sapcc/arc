@@ -1,0 +1,10 @@
+{
+  "signing": {
+    "default": {
+      "remote": "test"
+    }
+  },
+  "remotes": {
+    "test": "127.0.0.1:8888"
+  }
+}

@@ -25,16 +25,11 @@ help:
 	@echo "  * build-docker - build static binary via golang container, output to bin/api-server"
 	@echo "  * image        - build docker image containing the update site"
 
-build: bin/api-server bin/gencert
+build: bin/api-server
 
 bin/api-server: $(GOFILES)
 	@mkdir -p bin/
 	go build -o bin/api-server -ldflags="$(LDFLAGS)" $(REPO_PATH)/api-server
-
-bin/gencert:
-	@mkdir -p bin/
-	go get -d gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
-	go build -o bin/gencert -ldflags="-s -w" gitHub.***REMOVED***/monsoon/arc-pki.git/src/gencert
 
 .PHONY: build-docker
 build-docker:
@@ -53,4 +48,3 @@ image:
 .PHONY: clean
 clean:
 	rm -f bin/api-server
-	rm -f bin/gencert
