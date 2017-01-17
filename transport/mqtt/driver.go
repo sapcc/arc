@@ -63,10 +63,10 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 		switch url.Scheme {
 		case "tls", "ssl", "tcps", "wss":
 			if config.CACerts == nil {
-				return nil, fmt.Errof("CA certificate not given")
+				return nil, fmt.Errorf("CA certificate not given")
 			}
 			if config.ClientCert == nil {
-				return nil, fmt.Errof("Client certificate not given")
+				return nil, fmt.Errorf("Client certificate not given")
 			}
 
 			tlsc := tls.Config{
