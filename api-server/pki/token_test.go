@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,31 +32,24 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("returns an error if no db connection is given", func() {
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
+		var tr TokenRequest
+		err := json.Unmarshal([]byte("{}"), &tr)
 		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(nil, &authorization, req)
-		Expect(err).To(HaveOccurred())
-		Expect(result).To(Equal(map[string]string{}))
-	})
 
-	It("returns a TokenBodyError error if body is json malformated", func() {
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent name"`), map[string]string{})
-		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
-		Expect(result).To(Equal(map[string]string{}))
+		result, err := CreateToken(nil, &authorization, tr)
 		Expect(err).To(HaveOccurred())
-		_, ok := err.(TokenBodyError)
-		Expect(ok).To(Equal(true))
+		Expect(result).To(Equal(""))
 	})
 
 	It("should set a csr.name with project id and domain id if json request body empty", func() {
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
+		var tr TokenRequest
+		err := json.Unmarshal([]byte(`{}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
+		token, err := CreateToken(db, &authorization, tr)
 
 		var profile string
 		var subjectData []byte
-		err = db.QueryRow("SELECT profile, subject FROM tokens WHERE id=$1", result["token"]).Scan(&profile, &subjectData)
+		err = db.QueryRow("SELECT profile, subject FROM tokens WHERE id=$1", token).Scan(&profile, &subjectData)
 		Expect(err).NotTo(HaveOccurred())
 		var subject signer.Subject
 		err = json.Unmarshal(subjectData, &subject)
@@ -70,12 +62,13 @@ var _ = Describe("Token Create", func() {
 
 	It("should let just one csr.name all others will be removed, override O and OU and all SerialNumber entries set to emtpy string", func() {
 		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
+		var tr TokenRequest
+		err := json.Unmarshal([]byte(csrNames), &tr)
 		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
+		token, err := CreateToken(db, &authorization, tr)
 
 		var subjectData []byte
-		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", result["token"]).Scan(&subjectData)
+		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", token).Scan(&subjectData)
 		Expect(err).NotTo(HaveOccurred())
 		var subject signer.Subject
 		err = json.Unmarshal(subjectData, &subject)
@@ -89,12 +82,13 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("should set the common name provided", func() {
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{"CN": "agent test name"}`), map[string]string{})
+		var tr TokenRequest
+		err := json.Unmarshal([]byte(`{"CN": "agent test name"}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
+		token, err := CreateToken(db, &authorization, tr)
 
 		var subjectData []byte
-		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", result["token"]).Scan(&subjectData)
+		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", token).Scan(&subjectData)
 		Expect(err).NotTo(HaveOccurred())
 		var subject signer.Subject
 		err = json.Unmarshal(subjectData, &subject)
@@ -103,38 +97,36 @@ var _ = Describe("Token Create", func() {
 	})
 
 	It("Returns a token even if empty json is send in the body request", func() {
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
+		var tr TokenRequest
+		err := json.Unmarshal([]byte(`{}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
+		token, err := CreateToken(db, &authorization, tr)
 		Expect(err).NotTo(HaveOccurred())
 
 		var tokenId string
-		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", result["token"]).Scan(&tokenId)
+		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", token).Scan(&tokenId)
 		Expect(err).NotTo(HaveOccurred())
-
-		Expect(result["token"]).To(Equal(tokenId))
-		Expect(result["url"]).To(Equal(fmt.Sprintf("http://production.***REMOVED***/api/v1/pki/sign/%s", result["token"])))
+		Expect(token).To(Equal(tokenId))
 	})
 
-	It("should create a token even if the body is empty", func() {
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(``), map[string]string{})
-		Expect(err).NotTo(HaveOccurred())
-		_, err = CreateToken(db, &authorization, req)
+	It("should create a token even if the token request is empty", func() {
+		tr := TokenRequest{}
+		_, err := CreateToken(db, &authorization, tr)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("Returns a token", func() {
 		csrNames := `{"names": [{"C":"ES","OU": "projectId1", "O": "domainId1", "SerialNumber":"serialnumber1"}, {"C":"DE", "OU": "projectId2", "O": "domainId2", "SerialNumber":"serialnumber2"}] }`
-		req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(csrNames), map[string]string{})
+		var tr TokenRequest
+		err := json.Unmarshal([]byte(csrNames), &tr)
 		Expect(err).NotTo(HaveOccurred())
-		result, err := CreateToken(db, &authorization, req)
+		token, err := CreateToken(db, &authorization, tr)
 
 		var tokenId string
-		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", result["token"]).Scan(&tokenId)
+		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", token).Scan(&tokenId)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(result["token"]).To(Equal(tokenId))
-		Expect(result["url"]).To(Equal(fmt.Sprintf("http://production.***REMOVED***/api/v1/pki/sign/%s", result["token"])))
+		Expect(token).To(Equal(tokenId))
 	})
 
 })
