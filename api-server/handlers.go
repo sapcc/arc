@@ -68,7 +68,7 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 		UpdateURL:   agentUpdateURL,
 	}
 
-	switch r.Header.Get("Accept") {
+	switch strings.ToLower(r.Header.Get("Accept")) {
 	case "text/cloud-config":
 		w.Header().Set("Content-Type", "text/cloud-config")
 		err = cloudConfigInstaller.Execute(w, info)
