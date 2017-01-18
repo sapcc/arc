@@ -13,7 +13,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
