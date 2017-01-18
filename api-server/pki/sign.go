@@ -7,8 +7,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 
 	"github.com/cloudflare/cfssl/cli"
@@ -66,24 +64,15 @@ func Sign(csr []byte, subject signer.Subject, profile string) ([]byte, error) {
 }
 
 // SignToken sign a given token returning the certificate
-func SignToken(db *sql.DB, token string, r *http.Request) (*[]byte, string, error) {
+func SignToken(db *sql.DB, token string, csr []byte) (*[]byte, string, error) {
 	// check db
 	if db == nil {
 		return nil, "", errors.New("Db connection is nil")
 	}
 
-	// get the csr
-	csr, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		// httpError(w, 500, err)
-		return nil, "", err
-	}
-	r.Body.Close()
-
 	// create db transaction
 	tx, err := db.Begin()
 	if err != nil {
-		//httpError(w, 500, err)
 		return nil, "", err
 	}
 	defer func() {

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/databus23/requestutil"
 	"github.com/gorilla/mux"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
@@ -29,23 +30,34 @@ import (
 func servePkiToken(w http.ResponseWriter, r *http.Request) {
 	// get authentication
 	authorization := auth.GetIdentity(r)
-
-	// create token
-	tokenStruct, err := pki.CreateToken(db, authorization, r)
-	if err != nil {
-		if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "Error getting a pki token. ", http.StatusUnauthorized, r)
-		} else if _, ok := err.(pki.TokenBodyError); ok {
-			// return status 400 (StatusBadRequest)
-			logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
-		} else {
-			logAndReturnHttpPkiError(w, http.StatusInternalServerError, err)
-		}
+	if err := authorization.CheckIdentity(); err != nil {
+		logInfoAndReturnHttpErrStatus(w, err, "Error getting a pki token. ", http.StatusUnauthorized, r)
 		return
 	}
 
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
+	}
+	var tokenRequest pki.TokenRequest
+	if len(body) == 0 {
+		if err = json.Unmarshal(body, &tokenRequest); err != nil {
+			logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
+			return
+		}
+	}
+
+	// create token
+	token, err := pki.CreateToken(db, authorization, tokenRequest)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", requestutil.Scheme(r), requestutil.HostWithPort(r), token)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	err = json.NewEncoder(w).Encode(map[string]string{"token": tokenStruct["token"], "url": tokenStruct["url"]})
+	err = json.NewEncoder(w).Encode(map[string]string{"token": token, "url": url})
 	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
 }
 
@@ -54,7 +66,12 @@ func signPkiToken(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 
-	pemCert, ca, err := pki.SignToken(db, token, r)
+	csr, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
+	}
+
+	pemCert, ca, err := pki.SignToken(db, token, csr)
 	if err != nil {
 		if _, ok := err.(pki.SignForbidden); ok {
 			logAndReturnHttpPkiError(w, http.StatusForbidden, err)
@@ -64,11 +81,7 @@ func signPkiToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	acceptHeader := ""
-	for _, v := range r.Header["Accept"] {
-		acceptHeader = v
-		break
-	}
+	acceptHeader := r.Header.Get("Accept")
 
 	if acceptHeader == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
