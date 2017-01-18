@@ -40,7 +40,7 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 		logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
 	}
 	var tokenRequest pki.TokenRequest
-	if len(body) == 0 {
+	if len(body) > 0 {
 		if err = json.Unmarshal(body, &tokenRequest); err != nil {
 			logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
 			return
