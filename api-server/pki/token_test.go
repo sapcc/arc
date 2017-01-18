@@ -3,7 +3,7 @@
 package pki_test
 
 import (
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 
 	"github.com/cloudflare/cfssl/signer"
