@@ -12,7 +12,7 @@ import (
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/databus23/requestutil"
 	"github.com/pborman/uuid"
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 )
 

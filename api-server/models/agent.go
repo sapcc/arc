@@ -11,7 +11,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/filter"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"

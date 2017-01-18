@@ -9,7 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
