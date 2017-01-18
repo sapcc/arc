@@ -56,9 +56,37 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 
 	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", requestutil.Scheme(r), requestutil.HostWithPort(r), token)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	err = json.NewEncoder(w).Encode(map[string]string{"token": token, "url": url})
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+	info := struct {
+		Token       string `json:"token"`
+		SignURL     string `json:"url"`
+		EndpointURL string `json:"endpoint_url"`
+		UpdateURL   string `json:"update_url"`
+	}{
+		Token:       token,
+		SignURL:     url,
+		EndpointURL: agentEndpointURL,
+		UpdateURL:   agentUpdateURL,
+	}
+
+	switch r.Header.Get("Accept") {
+	case "text/cloud-config":
+		w.Header().Set("Content-Type", "text/cloud-config")
+		err = cloudConfigInstaller.Execute(w, info)
+		checkErrAndReturnStatus(w, err, "Error generating cloud-config reponse", http.StatusInternalServerError, r)
+	case "text/x-shellscript":
+		w.Header().Set("Content-Type", "text/x-shellscript")
+		err = shellScriptInstaller.Execute(w, info)
+		checkErrAndReturnStatus(w, err, "Error generating shell script", http.StatusInternalServerError, r)
+	case "text/x-powershellscript":
+		w.Header().Set("Content-Type", "text/x-powershellscript")
+		err = powershellScriptInstaller.Execute(w, info)
+		checkErrAndReturnStatus(w, err, "Error generating powershell script", http.StatusInternalServerError, r)
+	default:
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(info)
+		checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
+	}
+
 }
 
 func signPkiToken(w http.ResponseWriter, r *http.Request) {

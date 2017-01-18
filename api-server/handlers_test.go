@@ -17,7 +17,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
@@ -28,27 +28,6 @@ import (
 var _ = Describe("Pki handlers", func() {
 
 	Describe("servePkiToken", func() {
-
-		It("returns a token", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
-			req.Host = "localhost:1234"
-			Expect(err).NotTo(HaveOccurred())
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-
-			// check response code, header and body
-			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
-			Expect(w.Code).To(Equal(200))
-
-			var response struct {
-				Token string
-				Url   string
-			}
-			err = json.NewDecoder(w.Body).Decode(&response)
-			Expect(err).To(BeNil())
-			Expect(response.Token).ToNot(BeZero())
-			Expect(response.Url).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
-		})
 
 		It("returns a HTTP 401 if not authorized", func() {
 			checkIdentityInvalidRequest("POST", getUrl("/pki/token", url.Values{}), "{}")
@@ -63,6 +42,69 @@ var _ = Describe("Pki handlers", func() {
 			// check response code, header and body
 			Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=UTF-8"))
 			Expect(w.Code).To(Equal(400))
+		})
+
+		It("returns JSON format as a standard response when no accept header set", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
+			req.Host = "localhost:1234"
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(ContainSubstring("application/json"))
+			Expect(w.Code).To(Equal(200))
+
+			var response struct {
+				Token string
+				Url   string
+			}
+			err = json.NewDecoder(w.Body).Decode(&response)
+			Expect(err).To(BeNil())
+			Expect(response.Token).ToNot(BeZero())
+			Expect(response.Url).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+		})
+
+		It("returns a cloud config script", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/cloud-config"})
+			req.Host = "localhost:1234"
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/cloud-config"))
+			Expect(w.Code).To(Equal(200))
+
+			Expect(w.Body.String()).To(ContainSubstring("#cloud-config"))
+		})
+
+		It("returns a shellscript", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/x-shellscript"})
+			req.Host = "localhost:1234"
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/x-shellscript"))
+			Expect(w.Code).To(Equal(200))
+
+			Expect(w.Body.String()).To(ContainSubstring("#!/bin/sh"))
+		})
+
+		It("returns a powershellscript", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/x-powershellscript"})
+			req.Host = "localhost:1234"
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/x-powershellscript"))
+			Expect(w.Code).To(Equal(200))
+
+			Expect(w.Body.String()).To(ContainSubstring("#ps1_sysnative"))
 		})
 
 	})
