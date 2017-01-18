@@ -44,6 +44,31 @@ var _ = Describe("Pki handlers", func() {
 			Expect(w.Code).To(Equal(400))
 		})
 
+		It("returns even if the body of the request is empty", func() {
+			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(""), map[string]string{})
+			req.Host = "localhost:1234"
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code, header and body
+			Expect(w.Header().Get("Content-Type")).To(ContainSubstring("application/json"))
+			Expect(w.Code).To(Equal(200))
+
+			var response struct {
+				Token       string `json:"token"`
+				SignURL     string `json:"url"`
+				EndpointURL string `json:"endpoint_url"`
+				UpdateURL   string `json:"update_url"`
+			}
+			err = json.NewDecoder(w.Body).Decode(&response)
+			Expect(err).To(BeNil())
+			Expect(response.Token).ToNot(BeZero())
+			Expect(response.SignURL).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+			Expect(response.EndpointURL).To(Equal(agentEndpointURL))
+			Expect(response.UpdateURL).To(Equal(agentUpdateURL))
+		})
+
 		It("returns JSON format as a standard response when no accept header set", func() {
 			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
 			req.Host = "localhost:1234"
@@ -56,13 +81,17 @@ var _ = Describe("Pki handlers", func() {
 			Expect(w.Code).To(Equal(200))
 
 			var response struct {
-				Token string
-				Url   string
+				Token       string `json:"token"`
+				SignURL     string `json:"url"`
+				EndpointURL string `json:"endpoint_url"`
+				UpdateURL   string `json:"update_url"`
 			}
 			err = json.NewDecoder(w.Body).Decode(&response)
 			Expect(err).To(BeNil())
 			Expect(response.Token).ToNot(BeZero())
-			Expect(response.Url).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+			Expect(response.SignURL).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+			Expect(response.EndpointURL).To(Equal(agentEndpointURL))
+			Expect(response.UpdateURL).To(Equal(agentUpdateURL))
 		})
 
 		It("returns a cloud config script", func() {
