@@ -3,7 +3,7 @@
 package models_test
 
 import (
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"

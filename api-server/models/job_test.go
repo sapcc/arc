@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/authorization"
+	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	arc "gitHub.***REMOVED***/monsoon/arc/arc"
