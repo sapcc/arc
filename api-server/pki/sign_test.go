@@ -3,13 +3,10 @@
 package pki_test
 
 import (
-	"bytes"
 	"crypto/x509"
 	"encoding/pem"
 
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-
-	"net/http"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,10 +20,7 @@ var _ = Describe("Sign csr", func() {
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
-		Expect(err).NotTo(HaveOccurred())
-
-		pemCert, _, err := SignToken(db, token, req)
+		pemCert, _, err := SignToken(db, token, csr)
 		Expect(err).NotTo(HaveOccurred())
 		cert, _ := pem.Decode(*pemCert)
 		Expect(cert.Type).To(Equal("CERTIFICATE"))
@@ -37,10 +31,7 @@ var _ = Describe("Sign csr", func() {
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
-		Expect(err).NotTo(HaveOccurred())
-
-		pemCert, ca, err := SignToken(db, token, req)
+		pemCert, ca, err := SignToken(db, token, csr)
 		Expect(err).To(HaveOccurred())
 		_, ok := err.(SignForbidden)
 		Expect(ok).To(Equal(true))
@@ -54,10 +45,7 @@ var _ = Describe("Sign csr", func() {
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
-		Expect(err).NotTo(HaveOccurred())
-
-		_, _, err = SignToken(db, token, req)
+		_, _, err = SignToken(db, token, csr)
 		Expect(err).NotTo(HaveOccurred())
 
 		r, err := db.Query("SELECT id from tokens where id=$1", token)
@@ -70,10 +58,7 @@ var _ = Describe("Sign csr", func() {
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
-		Expect(err).NotTo(HaveOccurred())
-
-		pemCert, _, err := SignToken(db, token, req)
+		pemCert, _, err := SignToken(db, token, csr)
 		Expect(err).NotTo(HaveOccurred())
 
 		cert, _ := pem.Decode(*pemCert)
@@ -88,10 +73,7 @@ var _ = Describe("Sign csr", func() {
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
-		req, err := http.NewRequest("POST", "/api/v1/pki/sign/"+token, bytes.NewReader(csr))
-		Expect(err).NotTo(HaveOccurred())
-
-		pemCert, _, err := SignToken(db, token, req)
+		pemCert, _, err := SignToken(db, token, csr)
 		Expect(err).NotTo(HaveOccurred())
 
 		cert, _ := pem.Decode(*pemCert)
