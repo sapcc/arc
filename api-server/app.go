@@ -28,12 +28,14 @@ const (
 )
 
 var (
-	config     = arc_config.New()
-	db         *sql.DB
-	tp         transport.Transport
-	ks         = keystone.Auth{}
-	env        string
-	pkiEnabled = false
+	config           = arc_config.New()
+	db               *sql.DB
+	tp               transport.Transport
+	ks               = keystone.Auth{}
+	env              string
+	pkiEnabled       = false
+	agentUpdateURL   = "UPDATE_URL_NOT_CONFIGURED"
+	agentEndpointURL = "ENDPOINT_URL_NOT_CONFIGURED"
 )
 
 func main() {
@@ -126,6 +128,16 @@ func main() {
 			Usage:  "PKI CA private key",
 			EnvVar: envPrefix + "PKI_CA_KEY",
 		},
+		cli.StringFlag{
+			Name:   "agent-update-url",
+			Usage:  "The default update url for agents. Only used for token generation.",
+			EnvVar: envPrefix + "AGENT_UPDATE_URL",
+		},
+		cli.StringFlag{
+			Name:   "agent-endpoint-url",
+			Usage:  "The default endpoint url for agents. Only used for token generation",
+			EnvVar: envPrefix + "AGENT_ENDPOINT_URL",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -159,6 +171,16 @@ func runServer(c *cli.Context) {
 	// check endpoint
 	if len(config.Endpoints) == 0 {
 		log.Fatal("No endpoints for MQTT given")
+	}
+
+	if c.GlobalString("agent-update-url") != "" {
+		agentUpdateURL = c.GlobalString("agent-update-url")
+	}
+
+	if c.GlobalString("agent-update-url") != "" {
+		agentEndpointURL = c.GlobalString("agent-endpoint-url")
+	} else if len(config.Endpoints) > 0 {
+		agentEndpointURL = config.Endpoints[0]
 	}
 
 	// create db connection
