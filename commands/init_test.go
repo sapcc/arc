@@ -16,7 +16,7 @@ var mockMetadata = `{"random_seed": "TZutBbpShKDcvbpi60ud25dAP6ZsfzbAqc9PjnGqS03
 func TestInstanceId(t *testing.T) {
 	server := testTools(200, mockMetadata)
 	defer server.Close()
-	bakcupMetadataURL := metadataURL
+	backupMetadataURL := metadataURL
 	metadataURL = server.URL
 
 	res := instanceID()
@@ -25,7 +25,7 @@ func TestInstanceId(t *testing.T) {
 	}
 
 	// set back the metadatURL
-	metadataURL = bakcupMetadataURL
+	metadataURL = backupMetadataURL
 }
 
 func TestCommonNameFromFlag(t *testing.T) {
@@ -39,7 +39,7 @@ func TestCommonNameFromFlag(t *testing.T) {
 	flagSet.String("common-name", "cnameTest", "local")
 	ctx := cli.NewContext(nil, flagSet, getParentCtx())
 
-	name := commonName(ctx)
+	name := discoverIdentity(ctx)
 	if name != "cnameTest" {
 		t.Error(fmt.Sprint("Expected to get the cname from the flag. ", name, " != ", "cnameTest"))
 	}
@@ -58,7 +58,7 @@ func TestCommonNameFromMetadata(t *testing.T) {
 	flagSet := flag.NewFlagSet("local", 0)
 	ctx := cli.NewContext(nil, flagSet, getParentCtx())
 
-	name := commonName(ctx)
+	name := discoverIdentity(ctx)
 	if name != "16d2ef3a-da47-43bb-8204-e4fd6a5db689" {
 		t.Error(fmt.Sprint("Expected to get the cname from the metadata. ", name, " != ", "16d2ef3a-da47-43bb-8204-e4fd6a5db689"))
 	}
@@ -77,7 +77,7 @@ func TestCommonNameFromHostName(t *testing.T) {
 	flagSet := flag.NewFlagSet("local", 0)
 	ctx := cli.NewContext(nil, flagSet, getParentCtx())
 
-	name := commonName(ctx)
+	name := discoverIdentity(ctx)
 	if name == "16d2ef3a-da47-43bb-8204-e4fd6a5db689" || name == "cnameTest" {
 		t.Error(fmt.Sprint("Expected to get the cname from hostname. ", name, " == 16d2ef3a-da47-43bb-8204-e4fd6a5db689 || == cnameTest"))
 	}
