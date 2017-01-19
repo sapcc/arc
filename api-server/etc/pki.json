@@ -2,12 +2,14 @@
   "signing": {
     "default": {
       "expiry": "17520h",
+      "backdate": "5m",
       "usages": [
         "signing",
         "key encipherment",
         "client auth",
         "server auth"
       ],
+      "name_whitelist": "^[-_.0-9a-zA-Z]{1,64}$",
       "csrwhitelist": {
         "PublicKeyAlgorithm":true,
         "PublicKey": true,

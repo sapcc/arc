@@ -68,6 +68,15 @@ var _ = Describe("Sign csr", func() {
 		Expect(s.CommonName).To(Equal("testCsrCN"))
 	})
 
+	It("Refuses to Sign CSRs that contain a CN with funny characters", func() {
+		token := CreateTestToken(db, `{"names":[{"OU":"testou"}]}`)
+		csr, _, err := CreateCSR("testCsrCN; DROP TABLE", "test O", "test OU")
+		Expect(err).NotTo(HaveOccurred())
+
+		_, _, err = SignToken(db, token, csr)
+		Expect(err).To(HaveOccurred())
+	})
+
 	It("Enforces CN, O and OU if set in the tokens subject", func() {
 		token := CreateTestToken(db, `{"names":[{"O": "enforced O", "OU":"enforced OU"}]}`)
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")

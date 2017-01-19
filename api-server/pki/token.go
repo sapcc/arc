@@ -17,6 +17,8 @@ type TokenRequest struct {
 	Profile string
 }
 
+var InvalidCommonNameError = errors.New("Invalid Common Name provided")
+
 // CreateToken return a new sign token
 func CreateToken(db *sql.DB, authorization *auth.Authorization, payload TokenRequest) (string, error) {
 	// check db
@@ -30,6 +32,18 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, payload TokenReq
 	//	profile = payload.Profile
 	//}
 	token := uuid.New()
+
+	//If a CN is provided validate it against the same contraints that
+	//apply for csr (NameWhiteList from the signing profile)
+	if payload.Subject.CN != "" {
+		s, err := signer.Profile(certSigner, profile)
+		if err != nil {
+			return "", err
+		}
+		if s.NameWhitelist != nil && s.NameWhitelist.Find([]byte(payload.Subject.CN)) == nil {
+			return "", InvalidCommonNameError
+		}
+	}
 
 	// At least 1 name entry and max 1 entry
 	if len(payload.Subject.Names) == 0 {

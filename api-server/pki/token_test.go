@@ -83,7 +83,7 @@ var _ = Describe("Token Create", func() {
 
 	It("should set the common name provided", func() {
 		var tr TokenRequest
-		err := json.Unmarshal([]byte(`{"CN": "agent test name"}`), &tr)
+		err := json.Unmarshal([]byte(`{"CN": "agent-test-name"}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
 		token, err := CreateToken(db, &authorization, tr)
 
@@ -93,7 +93,15 @@ var _ = Describe("Token Create", func() {
 		var subject signer.Subject
 		err = json.Unmarshal(subjectData, &subject)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(subject.CN).To(Equal("agent test name"))
+		Expect(subject.CN).To(Equal("agent-test-name"))
+	})
+
+	It("refuses to create tokens with funny common names", func() {
+		var tr TokenRequest
+		err := json.Unmarshal([]byte(`{"CN": "agent-test-name; DROP TABLE users;"}`), &tr)
+		Expect(err).NotTo(HaveOccurred())
+		_, err = CreateToken(db, &authorization, tr)
+		Expect(err).To(Equal(InvalidCommonNameError))
 	})
 
 	It("Returns a token even if empty json is send in the body request", func() {
