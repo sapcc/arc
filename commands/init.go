@@ -55,14 +55,15 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 		keyfile.Close()
 
+		cn := discoverIdentity(c)
 		// create csr template
 		csrTemplate := x509.CertificateRequest{
 			SignatureAlgorithm: x509.SHA256WithRSA,
 			Subject: pkix.Name{
-				CommonName: commonName(c),
+				CommonName: cn,
 			},
 		}
-		log.Info("Creating signing request")
+		log.Infof("Creating signing request for itentity %#v", cn)
 		csrData, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
 		if err != nil {
 			return 1, fmt.Errorf("Failed to generate csr: %v", err)
@@ -158,7 +159,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 	return 0, nil
 }
 
-func commonName(c *cli.Context) string {
+func discoverIdentity(c *cli.Context) string {
 	if c.String("common-name") != "" {
 		return c.String("common-name")
 	} else if instID := instanceID(); instID != "" {
