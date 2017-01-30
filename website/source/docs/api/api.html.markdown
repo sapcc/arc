@@ -15,7 +15,8 @@ information from one or different Arc servers.
 * [Paginating lists](#paginating_lists)
 * [List all agents](#list_all_agents)
   * [Filtering agents](#filter_agents)
-  * [Showing specific agent facts](#show_facts_agents)	
+  * [Showing specific agent facts](#show_facts_agents)
+* [Bootstrap agent](#init_agent)
 * [Get an agent](#get_agent)
 * [Delete an agent](#delete_agent)
 * [Show agent facts](#show_agent_facts)
@@ -34,6 +35,7 @@ information from one or different Arc servers.
 | URL                               | GET                    | PUT                        | POST          | DELETE                    |
 |:----------------------------------|:-----------------------|:---------------------------|:--------------|:--------------------------|
 | /agents                           | List all agents        | N/A                        | N/A           | N/A                       |
+| /agents/init                      | N/A                    | N/A                        | Bootstrap agent | N/A               |
 | /agents/{agent-id}                | Get an agent           | N/A                        | N/A           | Delete an agent           |
 | /agents/{agent-id}/facts          | Show agent facts       | N/A                        | N/A           | N/A                       |
 | /agents/{agent-id}/tags           | Show agent tags        | N/A                        | Add a tag     | Delete a tag              |
@@ -186,6 +188,31 @@ A list of all available facts can be found [here](/docs/server/facts.html).
 Use the special key `all` as a value to the `facts` parameter to show all available facts. If the key is being added in combination with other facts this 
 will be ignored.
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
+
+<a name="init_agent"></a>
+## Bootstrap agent
+
+Create a one-time token for joining an arc agent.
+This endpoint supports different output formats that can be selected by providing an appriopiate `Accept` header in the request
+
+- Method: `POST`
+- URL: `/agents/init`
+- Supported Content-Types: `application/json` (default), `text/cloud-config`, `text/x-shellscript`, `text/x-powershellscript`
+
+Example response for `Accept: application/json`
+
+```text
+{
+	agent_id: "darwin",
+	created_at: "2015-06-18T15:13:10.164307Z",
+	updated_at: "2015-06-18T15:13:10.164307Z"
+}
+
+```
+Example  response fpr `Accept: text/cloud-config`
+
+```yaml
+```
 
 <a name="get_agent"></a>
 ## Get an agent
