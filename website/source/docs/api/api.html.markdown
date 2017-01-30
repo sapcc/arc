@@ -85,7 +85,7 @@ Transfer-Encoding: chunked
 - URL: `/agents`
 - Example response:
 
-```text
+```json
 [
 	{
 		agent_id: "darwin",
@@ -141,7 +141,7 @@ Following operators are available:
 - Example filter not encoded: `@os = "darwin" OR (landscape = "staging" AND pool = "green")`
 - Example response:
 
-```text
+```json
 [
 	{
 		agent_id: "darwin",
@@ -166,7 +166,7 @@ A list of all available facts can be found [here](/docs/server/facts.html).
 - Example URL: `/agents?facts=os,online`
 - Example response:
 
-```text
+```json
 [
 	{
 		agent_id: "mo-d90b4b6fe",
@@ -201,17 +201,26 @@ This endpoint supports different output formats that can be selected by providin
 
 Example response for `Accept: application/json`
 
-```text
+```json
 {
-	agent_id: "darwin",
-	created_at: "2015-06-18T15:13:10.164307Z",
-	updated_at: "2015-06-18T15:13:10.164307Z"
+  "token": "4d523051-089f-41ce-aaf7-727fee19c28a",
+  "url": "https://arc.example.com/api/v1/agents/init/4d523051-089f-41ce-aaf7-727fee19c28a",
+  "endpoint_url": "tls://arc-broker.example.com:8883",
+  "update_url": "https://stable.arc.example.com"
 }
-
 ```
+
 Example  response fpr `Accept: text/cloud-config`
 
 ```yaml
+#cloud-config
+runcmd:
+  - - sh
+    - -ec
+    - |
+      curl -f --create-dirs -o /opt/arc/arc https://stable.arc.example.com/arc/linux/amd64/latest
+      chmod +x /opt/arc/arc
+      /opt/arc/arc init --endpoint tls://arc-broker.example.com:8883 --update-uri https://stable.arc.example.com --registration-url https://arc.example.com/api/v1/agents/init/506a4692-84be-41cc-b5e5-9e4d4184f6cd
 ```
 
 <a name="get_agent"></a>
@@ -221,7 +230,7 @@ Example  response fpr `Accept: text/cloud-config`
 - Example URL: `/agents/darwin`
 - Example response:
 
-```text
+```json
 {
 	agent_id: "darwin",
 	created_at: "2015-06-18T15:13:10.164307Z",
@@ -249,7 +258,7 @@ Agent with id "darwin" deleted.
 - Example: `/agents/darwin/facts`
 - Example response:
 
-```text
+```json
 {
 	os: "darwin",
 	online: true,
@@ -276,7 +285,7 @@ Agent with id "darwin" deleted.
 - Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
 - Example response:
 
-```text
+```json
 {
 	pool: "green",
 	landscape: "staging",
@@ -323,7 +332,7 @@ Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" i
 - URL: `/jobs`
 - Example response:
 
-```text
+```json
 [
 	{
 		request: {
@@ -355,7 +364,7 @@ Adding the `agent_id` parameter in the [List all jobs](#list_all_jobs) call jobs
 - Example URL: `/jobs?agent_id=d84ca366-c963-454f-9bd7-854121a0117e`
 - Example response:
 
-```text
+```json
 [
 	{
 		request: {
@@ -384,7 +393,7 @@ Adding the `agent_id` parameter in the [List all jobs](#list_all_jobs) call jobs
 - Example URL: `/jobs/24c744df-1773-429d-b9cf-a0f280e514ca`
 - Example response:
 
-```text
+```json
 {
 	request: {
 		version: 1,
@@ -446,7 +455,7 @@ Setting up zip (3.0-8) ...
 - URL: `/jobs`
 - Example body:
 
-```text
+```json
 {
 	"to": "darwin",
 	"timeout": 60,
@@ -458,7 +467,7 @@ Setting up zip (3.0-8) ...
 
 - Example response:
 
-```text
+```json
 {
 	request_id: "692f9dd9-f0f4-4332-89e9-ac556a343bd4"
 }
