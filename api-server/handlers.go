@@ -54,7 +54,7 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s://%s/api/v1/pki/sign/%s", requestutil.Scheme(r), requestutil.HostWithPort(r), token)
+	url := fmt.Sprintf("%s://%s/api/v1/agents/init/%s", requestutil.Scheme(r), requestutil.HostWithPort(r), token)
 
 	info := struct {
 		Token       string `json:"token"`

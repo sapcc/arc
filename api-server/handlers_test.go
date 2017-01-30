@@ -30,11 +30,11 @@ var _ = Describe("Pki handlers", func() {
 	Describe("servePkiToken", func() {
 
 		It("returns a HTTP 401 if not authorized", func() {
-			checkIdentityInvalidRequest("POST", getUrl("/pki/token", url.Values{}), "{}")
+			checkIdentityInvalidRequest("POST", getUrl("/agents/init", url.Values{}), "{}")
 		})
 
 		It("returns a HTTP 400 on body malformated", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{miau:test"), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/agents/init", url.Values{}), bytes.NewBufferString("{miau:test"), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -45,7 +45,7 @@ var _ = Describe("Pki handlers", func() {
 		})
 
 		It("returns even if the body of the request is empty", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString(""), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/agents/init", url.Values{}), bytes.NewBufferString(""), map[string]string{})
 			req.Host = "localhost:1234"
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
@@ -64,13 +64,13 @@ var _ = Describe("Pki handlers", func() {
 			err = json.NewDecoder(w.Body).Decode(&response)
 			Expect(err).To(BeNil())
 			Expect(response.Token).ToNot(BeZero())
-			Expect(response.SignURL).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+			Expect(response.SignURL).To(Equal("http://localhost:1234/api/v1/agents/init/" + response.Token))
 			Expect(response.EndpointURL).To(Equal(agentEndpointURL))
 			Expect(response.UpdateURL).To(Equal(agentUpdateURL))
 		})
 
 		It("returns JSON format as a standard response when no accept header set", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
+			req, err := newAuthorizedRequest("POST", getUrl("/agents/init", url.Values{}), bytes.NewBufferString("{}"), map[string]string{})
 			req.Host = "localhost:1234"
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
@@ -89,13 +89,13 @@ var _ = Describe("Pki handlers", func() {
 			err = json.NewDecoder(w.Body).Decode(&response)
 			Expect(err).To(BeNil())
 			Expect(response.Token).ToNot(BeZero())
-			Expect(response.SignURL).To(Equal("http://localhost:1234/api/v1/pki/sign/" + response.Token))
+			Expect(response.SignURL).To(Equal("http://localhost:1234/api/v1/agents/init/" + response.Token))
 			Expect(response.EndpointURL).To(Equal(agentEndpointURL))
 			Expect(response.UpdateURL).To(Equal(agentUpdateURL))
 		})
 
 		It("returns a cloud config script", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/cloud-config"})
+			req, err := newAuthorizedRequest("POST", getUrl("/agents/init", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/cloud-config"})
 			req.Host = "localhost:1234"
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
@@ -109,7 +109,7 @@ var _ = Describe("Pki handlers", func() {
 		})
 
 		It("returns a shellscript", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/x-shellscript"})
+			req, err := newAuthorizedRequest("POST", getUrl("/agents/init", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/x-shellscript"})
 			req.Host = "localhost:1234"
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
@@ -123,7 +123,7 @@ var _ = Describe("Pki handlers", func() {
 		})
 
 		It("returns a powershellscript", func() {
-			req, err := newAuthorizedRequest("POST", getUrl("/pki/token", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/x-powershellscript"})
+			req, err := newAuthorizedRequest("POST", getUrl("/agents/init", url.Values{}), bytes.NewBufferString("{}"), map[string]string{"Accept": "text/x-powershellscript"})
 			req.Host = "localhost:1234"
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
@@ -145,7 +145,7 @@ var _ = Describe("Pki handlers", func() {
 			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
-			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), bytes.NewReader(csr))
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/agents/init/", token), url.Values{}), bytes.NewReader(csr))
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -161,7 +161,7 @@ var _ = Describe("Pki handlers", func() {
 			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
-			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", token), url.Values{}), bytes.NewReader(csr))
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/agents/init/", token), url.Values{}), bytes.NewReader(csr))
 			Expect(err).NotTo(HaveOccurred())
 			req.Header["Accept"] = []string{"application/json"}
 			w := httptest.NewRecorder()
@@ -182,7 +182,7 @@ var _ = Describe("Pki handlers", func() {
 			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
-			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/pki/sign/", "123456789"), url.Values{}), bytes.NewReader(csr)) // fake token
+			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/agents/init/", "123456789"), url.Values{}), bytes.NewReader(csr)) // fake token
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
