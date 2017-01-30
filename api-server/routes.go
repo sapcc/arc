@@ -110,15 +110,15 @@ var v1RoutesDefinition = routes{
 
 var v1PkiRoutesDefinition = routes{
 	route{
-		"Validate token",
+		"Create node",
 		"POST",
-		"/pki/sign/{token}",
+		"/agents/init/{token}",
 		signPkiToken,
 	},
 	route{
-		"Create one time token",
+		"Create node bootstrap credentials",
 		"POST",
-		"/pki/token",
+		"/agents/init",
 		servePkiToken,
 	},
 }
