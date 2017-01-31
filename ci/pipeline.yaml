@@ -43,12 +43,10 @@ groups:
       - api-tests
       - api-build
       - mosquitto-build
-      - mosquitto-staging
-      - api-staging
+      - staging
       - staging-tests
       - release-stable
-      - mosquitto-production
-      - api-production
+      - eu-de-1 
       - arc-website
   - name: pullrequests
     jobs:
@@ -230,32 +228,12 @@ jobs:
       <<: *post_failure_to_slack
 
 
-  - name: mosquitto-staging
+  - name: staging
     serial: true
     plan:
       - aggregate:
         - { get: mosquitto.version, passed: [mosquitto-build], trigger: true }
         - { get: mosquitto.git, passed: [mosquitto-build] }
-      - task: deployment 
-        config:
-          platform: linux
-          <<: *kubectl_image
-          inputs:
-            - name: mosquitto.version
-              path: version
-          <<: *deployment_command
-          params:
-            REGION: staging
-            GITHUB_TOKEN: {{github-access-token}}
-            REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
-            NAMESPACE: arc
-            DEPLOYMENT: mosquitto
-    on_failure:
-      <<: *post_failure_to_slack
-  - name: api-staging
-    serial: true
-    plan:
-      - aggregate:
         - { get: api.version, passed: [api-build], trigger: true }
         - { get: arc.git, passed: [api-build] }
         - { get: charts.git, }
@@ -272,9 +250,9 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [mosquitto-staging], trigger: true }
-        - { get: mosquitto.git, passed: [mosquitto-staging] }
-        - { get: api.version, passed: [api-staging], trigger: true }
+        - { get: mosquitto.version, passed: [staging], trigger: true }
+        - { get: mosquitto.git, passed: [staging] }
+        - { get: api.version, passed: [staging], trigger: true }
         - { get: tests.image, passed: [tests-build], trigger: true }
         - { get: arc.version, passed: [arc-build], trigger: true }
         - { get: arc.git, passed: [arc-build] }
@@ -323,48 +301,22 @@ jobs:
           OS_PROJECT_ID: {{swift-project-id}}
     on_failure:
       <<: *post_failure_to_slack
-  - name: mosquitto-production
+  - name: eu-de-1 
     serial: true
     plan:
       - aggregate:
         - { get: mosquitto.version, passed: [staging-tests], trigger: true }
         - { get: mosquitto.git, passed: [staging-tests] }
-      - task: deployment
-        config:
-          platform: linux
-          <<: *kubectl_image
-          inputs:
-            - name: mosquitto.version
-              path: version
-          <<: *deployment_command
-          params:
-            REGION: eu-de-1
-            GITHUB_TOKEN: {{github-access-token}}
-            REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
-            NAMESPACE: arc
-            DEPLOYMENT: mosquitto
-    on_failure:
-      <<: *post_failure_to_slack
-  - name: api-production
-    serial: true
-    plan:
-      - aggregate:
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
+        - { get: charts.git, }
+        - { get: secrets.git, }
       - task: deployment
-        config:
-          platform: linux
-          <<: *kubectl_image
-          inputs:
-            - name: api.version
-              path: version
-          <<: *deployment_command
-          params:
-            REGION: eu-de-1
-            GITHUB_TOKEN: {{github-access-token}}
-            REPOSITORY: hub.***REMOVED***/monsoon/arc-api
-            NAMESPACE: arc
-            DEPLOYMENT: api
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: eu-de-1
+          GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
   #- name: production-tests
