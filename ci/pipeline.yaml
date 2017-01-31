@@ -1,9 +1,12 @@
-pipeline_image: &pipeline_image
-  image_resource:
-    type: docker-image
-    source:
-      repository: docker.***REMOVED***/monsoon-concourse/arc-pipeline
-      tag: 'current'
+post_failure_to_slack: &post_failure_to_slack
+  put: slack-alert
+  params:
+    channel: '#automation'
+    username: 'Concourse'
+    icon_emoji: ':airplane:'
+    silent: 'true'
+    text: |
+      :boom: <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_JOB_NAME job #$BUILD_NAME failed>
 kubectl_image: &kubectl_image
   image_resource:
     type: docker-image
@@ -46,9 +49,6 @@ groups:
       - release-stable
       - mosquitto-production
       - api-production
-      #- production-tests
-  - name: website
-    jobs:
       - arc-website
   - name: pullrequests
     jobs:
@@ -74,6 +74,8 @@ jobs:
             args: [ source/website/ ]
           params:
             SSH_KEY: {{arc-deploy-key}}
+    on_failure:
+      <<: *post_failure_to_slack
   - name: arc-unit
     public: true
     plan:
@@ -84,6 +86,8 @@ jobs:
           file: arc.git/ci/metalint.yaml
         - task: unit
           file: arc.git/ci/unit.yaml
+    on_failure:
+      <<: *post_failure_to_slack
   - name: pr-test
     public: true
     plan:
@@ -131,6 +135,8 @@ jobs:
           OS_PROJECT_ID: {{swift-project-id}}
       - put: arc.version
         params: { filename: arc.version/current}
+    on_failure:
+      <<: *post_failure_to_slack
 
   - name: tests-build
     plan:
@@ -154,6 +160,8 @@ jobs:
             no_proxy: ***REMOVED***,127.0.0.1,localhost
       - put: tests.version
         params: { filename: tests.version/current}
+    on_failure:
+      <<: *post_failure_to_slack
 
   - name: api-tests
     plan:
@@ -162,6 +170,8 @@ jobs:
         passed: [ arc-unit ]
       - task: test
         file: arc.git/ci/api-tests.yaml
+    on_failure:
+      <<: *post_failure_to_slack
 
   - name: api-build
     plan:
@@ -186,6 +196,8 @@ jobs:
             no_proxy: ***REMOVED***,127.0.0.1,localhost
       - put: api.version
         params: { filename: api.version/current}
+    on_failure:
+      <<: *post_failure_to_slack
 
   - name: mosquitto-build
     plan:
@@ -214,6 +226,8 @@ jobs:
       - put: mosquitto.version
         params:
           filename: mosquitto.version/current
+    on_failure:
+      <<: *post_failure_to_slack
 
 
   - name: mosquitto-staging
@@ -236,6 +250,8 @@ jobs:
             REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
             NAMESPACE: arc
             DEPLOYMENT: mosquitto
+    on_failure:
+      <<: *post_failure_to_slack
   - name: api-staging
     serial: true
     plan:
@@ -250,6 +266,8 @@ jobs:
         params:
           REGION: staging
           GITHUB_TOKEN: {{github-access-token}}
+    on_failure:
+      <<: *post_failure_to_slack
   - name: staging-tests
     serial: true
     plan:
@@ -284,6 +302,8 @@ jobs:
             PROJECT: Arc_Test
             USERNAME: arc_test
             PASSWORD: {{staging-tests-password}}
+    on_failure:
+      <<: *post_failure_to_slack
 
   - name: release-stable
     serial: true
@@ -301,6 +321,8 @@ jobs:
           OS_PASSWORD: {{swift-api-key}}
           OS_USER_DOMAIN_NAME: {{swift-domain}}
           OS_PROJECT_ID: {{swift-project-id}}
+    on_failure:
+      <<: *post_failure_to_slack
   - name: mosquitto-production
     serial: true
     plan:
@@ -321,6 +343,8 @@ jobs:
             REPOSITORY: hub.***REMOVED***/monsoon/mosquitto
             NAMESPACE: arc
             DEPLOYMENT: mosquitto
+    on_failure:
+      <<: *post_failure_to_slack
   - name: api-production
     serial: true
     plan:
@@ -341,6 +365,8 @@ jobs:
             REPOSITORY: hub.***REMOVED***/monsoon/arc-api
             NAMESPACE: arc
             DEPLOYMENT: api
+    on_failure:
+      <<: *post_failure_to_slack
   #- name: production-tests
   #  serial: true
   #  plan:
@@ -488,6 +514,10 @@ resources:
       base_url: http://concourse.***REMOVED***:8080/
       api_endpoint: https://gitHub.***REMOVED***/api/v3
       access_token: {{github-access-token}}
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: {{slack-webhook-url}}
 
 resource_types:
   - name: monsoon-version
@@ -498,3 +528,8 @@ resource_types:
     type: docker-image
     source:
       repository: hub.***REMOVED***/concourse/pullrequest-resource
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
