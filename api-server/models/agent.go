@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"regexp"
 	"time"
 
@@ -382,7 +381,7 @@ func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization
 	return nil
 }
 
-func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, tags url.Values) error {
+func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, tags map[string]string) error {
 	if db == nil {
 		return errors.New("Db connection is nil")
 	}
@@ -404,7 +403,7 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 			continue
 		}
 		// check for empty values
-		if len(v) == 0 || len(v[0]) == 0 {
+		if len(v) == 0 {
 			tagsErrorMessages[k] = append(tagsErrorMessages[k], fmt.Sprintf("Tag key %s is empty.", k))
 			continue
 		}
@@ -416,7 +415,7 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 
 	for k, v := range tags {
 		keyTag := k
-		valueTag := v[0]
+		valueTag := v
 
 		err := agent.AddTagAuthorized(db, authorization, keyTag, valueTag)
 		// if something wrong happens we brake the process
