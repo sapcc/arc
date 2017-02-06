@@ -1150,7 +1150,7 @@ var _ = Describe("Tags", func() {
 			AddAgentTag = `INSERT INTO wrong_table(agent_id,project,value,created_at) VALUES($1,$2,$3) returning agent_id`
 
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(`{"cat":"miau","dog":"bup"}`), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1164,7 +1164,7 @@ var _ = Describe("Tags", func() {
 
 		It("returns a 404 error if Agent not found", func() {
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", "non_existing_agent", "/tags"), url.Values{}), bytes.NewBufferString(`{"cat":"miau","dog":"bup"}`), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1175,13 +1175,13 @@ var _ = Describe("Tags", func() {
 		})
 
 		It("returns a 401 error if not authorized", func() {
-			checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "tag1, tag2")
-			checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "tag1, tag2")
+			checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), `{"tag1":"tag2"}`)
+			checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), `{"tag1":"tag2"}`)
 		})
 
 		It("returns 400 if one of the tags is not alphanumeric", func() {
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup&test!!=test&hallo"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(`{"cat":"miau","dog!!":"bup"}`), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1201,7 +1201,7 @@ var _ = Describe("Tags", func() {
 
 		It("It should save the tags", func() {
 			// make request
-			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString("cat=miau&dog=bup"), map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(`{"cat":"miau","dog":"bup"}`), map[string]string{})
 			Expect(err).NotTo(HaveOccurred())
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1214,6 +1214,46 @@ var _ = Describe("Tags", func() {
 			err = dbAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			checkTags, err := models.JSONBfromString(`{"cat":"miau","dog":"bup"}`)
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
+			Expect(eq).To(Equal(true))
+		})
+
+		It("It should do nothing if json in the body is empty", func() {
+			// make request
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(`{}`), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(200))
+
+			dbAgent := models.Agent{AgentID: agent.AgentID}
+			err = dbAgent.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			checkTags, err := models.JSONBfromString(`{}`)
+			Expect(err).NotTo(HaveOccurred())
+			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
+			Expect(eq).To(Equal(true))
+		})
+
+		It("It should do nothing if body is empty", func() {
+			// make request
+			req, err := newAuthorizedRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), bytes.NewBufferString(``), map[string]string{})
+			Expect(err).NotTo(HaveOccurred())
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			// check response code and header
+			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+			Expect(w.Code).To(Equal(200))
+
+			dbAgent := models.Agent{AgentID: agent.AgentID}
+			err = dbAgent.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			checkTags, err := models.JSONBfromString(`{}`)
 			Expect(err).NotTo(HaveOccurred())
 			eq := reflect.DeepEqual(dbAgent.Tags, *checkTags)
 			Expect(eq).To(Equal(true))

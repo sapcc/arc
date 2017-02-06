@@ -457,11 +457,20 @@ func saveAgentTags(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	agentId := vars["agentId"]
 
-	// parse form
-	r.ParseForm()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		checkErrAndReturnStatus(w, err, fmt.Sprintf("Error saving agent tags."), http.StatusBadRequest, r)
+	}
+	var dataStruct map[string]string
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, &dataStruct); err != nil {
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Error saving agent tags."), http.StatusBadRequest, r)
+			return
+		}
+	}
 
 	// process data
-	err := models.ProcessTags(db, authorization, agentId, r.Form)
+	err = models.ProcessTags(db, authorization, agentId, dataStruct)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found", agentId), http.StatusNotFound, r)
