@@ -14,7 +14,6 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"reflect"
 	"time"
 )
@@ -798,7 +797,7 @@ var _ = Describe("Agent", func() {
 
 			It("should just allow keys alphanumeric and keys with no empty value. None tag will be saved if some key is not alphanumeric.", func() {
 				// add tag and return error
-				err := ProcessTags(db, &authorization, agent.AgentID, url.Values{"test": []string{"test"}, "test%test": []string{"test%test"}, "test3": []string{""}})
+				err := ProcessTags(db, &authorization, agent.AgentID, map[string]string{"test": "test", "test%test": "test%test", "test3": ""})
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal((&TagError{}).Error()))
 
@@ -820,7 +819,7 @@ var _ = Describe("Agent", func() {
 
 			It("save all tags if keys alphanumeric and values not empty", func() {
 				// add tag and return error
-				err := ProcessTags(db, &authorization, agent.AgentID, url.Values{"miau": []string{"miau"}, "bup": []string{"bup"}})
+				err := ProcessTags(db, &authorization, agent.AgentID, map[string]string{"miau": "miau", "bup": "bup"})
 				Expect(err).NotTo(HaveOccurred())
 
 				// check
@@ -840,7 +839,7 @@ var _ = Describe("Agent", func() {
 					authorization.IdentityStatus = "Something different from Confirmed"
 
 					// add tag
-					err := ProcessTags(db, &authorization, agent.AgentID, url.Values{})
+					err := ProcessTags(db, &authorization, agent.AgentID, map[string]string{})
 					Expect(err).To(HaveOccurred())
 					_, ok := err.(auth.IdentityStatusInvalid)
 					Expect(ok).To(Equal(true))
@@ -849,7 +848,7 @@ var _ = Describe("Agent", func() {
 				It("should return a project authorization error", func() {
 					authorization.ProjectId = "Some other project"
 
-					err := ProcessTags(db, &authorization, agent.AgentID, url.Values{})
+					err := ProcessTags(db, &authorization, agent.AgentID, map[string]string{})
 					Expect(err).To(HaveOccurred())
 					_, ok := err.(auth.NotAuthorized)
 					Expect(ok).To(Equal(true))
