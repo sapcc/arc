@@ -20,6 +20,7 @@ end
 activate :hashicorp do |h|
   h.bintray_enabled = false
   h.bintray_prefixed = false
+  h.releases_enabled = false
 end
 
 helpers do

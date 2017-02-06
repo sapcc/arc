@@ -62,7 +62,7 @@ In the response header extra parameters will be added to handle the pagination.
 | Pagination-Pages          | Returns total number of pages using same per_page parameter |
 | Link                      | Returns links to paginate the data                          |
 
-- Example URL: 
+- Example URL:
 
 `https://arc-staging.***REMOVED***/api/v1/jobs?page=2&per_page=50`
 
@@ -185,7 +185,7 @@ A list of all available facts can be found [here](/docs/server/facts.html).
 ]
 ```
 
-Use the special key `all` as a value to the `facts` parameter to show all available facts. If the key is being added in combination with other facts this 
+Use the special key `all` as a value to the `facts` parameter to show all available facts. If the key is being added in combination with other facts this
 will be ignored.
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
@@ -247,7 +247,7 @@ runcmd:
 - Example response:
 
 ```text
-Agent with id "darwin" deleted. 
+Agent with id "darwin" deleted.
 ```
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
@@ -297,17 +297,22 @@ Agent with id "darwin" deleted.
 ## Add an agent tags
 - Method: `POST`
 - URL: `/agents/{agent-id}/tags`
-- Example: 
-	- URL: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
-	- Body: `pool=green&lanscape=staging`
-	- Headers: `Content-Type: application/x-www-form-urlencoded`
+- Content-Types: `application/json`
+- Example request:
+	- URL: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`  
+	- Body:
+
+  ```text
+  {"pool":"green","landscape":"staging"}
+  ```
+
 - Example response:
 
 ```text
 All tags saved!
 ```
 
-All tag keys musst be `alphanumeric [a-z0-9A-Z]` and have non empty values. In case of an error 
+All tag keys musst be `alphanumeric [a-z0-9A-Z]` and have non empty values. In case of an error
 body will contain the error messages as JSON.
 
 In case of adding an existing tag the value will be replaced with the new submitted.
@@ -453,7 +458,8 @@ Setting up zip (3.0-8) ...
 ## Execute a job
 - Method: `POST`
 - URL: `/jobs`
-- Example body:
+- Content-Types: `application/json`
+- Example request body:
 
 ```json
 {
