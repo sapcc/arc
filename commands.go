@@ -183,10 +183,10 @@ func cmdServer(c *cli.Context) {
 	for {
 		select {
 		case s := <-shutdownChan:
-			log.Infof("Captured %v.", s)
+			log.Infof("Captured %v", s)
 			server.Stop()
 		case s := <-gracefulChan:
-			log.Infof("Captured %v.", s)
+			log.Infof("Captured %v", s)
 			server.GracefulShutdown()
 		case <-server.Done():
 			os.Exit(0)
