@@ -154,9 +154,9 @@ func (c *MQTTClient) subscribe(topic string, qos byte, cb MQTT.MessageHandler) {
 	c.client.Subscribe(topic, 0, cb).Wait()
 }
 
-func (c *MQTTClient) unsubscribe(topic string) {
+func (c *MQTTClient) unsubscribe(topic string) bool {
 	delete(c.subscriptions, topic)
-	c.client.Unsubscribe(topic).Wait()
+	return c.client.Unsubscribe(topic).WaitTimeout(500 * time.Millisecond)
 }
 
 func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
