@@ -22,15 +22,15 @@ deployment_command: &deployment_command
         tag=$(cat version/current)
         echo kubectl set image deployment/$DEPLOYMENT --namespace=$NAMESPACE $DEPLOYMENT=$REPOSITORY:$tag
         kubectl set image deployment/$DEPLOYMENT --namespace=$NAMESPACE $DEPLOYMENT=$REPOSITORY:$tag
-        echo Waiting for deployment to succeed 
+        echo Waiting for deployment to succeed
         STEP=${STEP:-2}
         TIMEOUT=${TIMEOUT:-60}
         sleep $STEP #give the deployment a little time
         until kubectl get deployment $DEPLOYMENT --namespace=$NAMESPACE -o json | \
                 jq -e '.status | .unavailableReplicas == null and .replicas == .updatedReplicas' >/dev/null; do
-          if [ $TIMEOUT -le 0 ]; then echo -e "\nTimeout waiting for deployment"; exit 1; fi 
+          if [ $TIMEOUT -le 0 ]; then echo -e "\nTimeout waiting for deployment"; exit 1; fi
           TIMEOUT=$((TIMEOUT-STEP))
-          sleep $STEP 
+          sleep $STEP
           printf .
         done
         echo -e "\nDeployment completed"
@@ -39,14 +39,15 @@ groups:
     jobs:
       - arc-unit
       - arc-build
-      - tests-build 
+      - tests-build
       - api-tests
       - api-build
       - mosquitto-build
       - staging
       - staging-tests
       - release-stable
-      - eu-de-1 
+      - eu-de-1
+      - ap-au-1
       - arc-website
   - name: pullrequests
     jobs:
@@ -301,7 +302,7 @@ jobs:
           OS_PROJECT_ID: {{swift-project-id}}
     on_failure:
       <<: *post_failure_to_slack
-  - name: eu-de-1 
+  - name: eu-de-1
     serial: true
     plan:
       - aggregate:
@@ -309,13 +310,31 @@ jobs:
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, }
-        - { get: secrets.git, }
+        - { get: charts.git }
+        - { get: secrets.git }
       - task: deployment
         input_mapping: { version: api.version }
         file: arc.git/ci/helm-upgrade.yaml
         params:
           REGION: eu-de-1
+          GITHUB_TOKEN: {{github-access-token}}
+    on_failure:
+      <<: *post_failure_to_slack
+  - name: ap-au-1
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.git, passed: [staging-tests] }
+        - { get: api.version, passed: [staging-tests], trigger: true }
+        - { get: arc.git, passed: [staging-tests] }
+        - { get: charts.git }
+        - { get: secrets.git }
+      - task: deployment
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: ap-au-1
           GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
