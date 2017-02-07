@@ -69,7 +69,6 @@ func (s *server) Run() {
 	defer log.Info("Server stopped")
 	defer close(s.doneChan)
 
-	s.transport.Connect()
 	defer func() {
 		log.Debug("Disconnecting transport")
 		s.transport.Disconnect()

@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -121,7 +122,9 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 func (c *MQTTClient) Connect() error {
 	logrus.Info("Connecting to MQTT broker")
 	token := c.client.Connect()
-	token.Wait()
+	if !token.WaitTimeout(10 * time.Second) {
+		return errors.New("Timeout connecting to broker")
+	}
 	return token.Error()
 }
 
