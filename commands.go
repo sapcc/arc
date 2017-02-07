@@ -168,6 +168,10 @@ func cmdServer(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if err := tp.Connect(); err != nil {
+		log.Fatalf("Failed to connect to broker: %s", err)
+	}
 	server := server.New(config, tp)
 
 	go server.Run()
