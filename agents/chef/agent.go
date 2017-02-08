@@ -145,8 +145,9 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	}
 
 	log_level := "info"
-	if data.Debug {
-		log_level = "debug"
+	if !data.Debug {
+		//this might overwhelm the broker atm, therefore we stay at info for the moment
+		//log_level = "debug"
 	} else {
 		//by default if we are not in debug mode we remove the temporary Directory
 		defer os.RemoveAll(tmpDir)
