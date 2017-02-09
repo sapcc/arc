@@ -964,9 +964,10 @@ var _ = Describe("Agent Handlers", func() {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// check response code and header
+			// check response code and header and not content
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(200))
+			Expect(w.Code).To(Equal(204))
+			Expect(w.Body.String()).To(Equal(""))
 		})
 
 	})
@@ -1210,9 +1211,10 @@ var _ = Describe("Tags", func() {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// check response code and header
+			// check response code and header and no content
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(200))
+			Expect(w.Code).To(Equal(204))
+			Expect(w.Body.String()).To(Equal(""))
 
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
@@ -1230,9 +1232,10 @@ var _ = Describe("Tags", func() {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// check response code and header
+			// check response code and header and no content
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(200))
+			Expect(w.Code).To(Equal(204))
+			Expect(w.Body.String()).To(Equal(""))
 
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
@@ -1250,9 +1253,10 @@ var _ = Describe("Tags", func() {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// check response code and header
+			// check response code and header and no content
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(200))
+			Expect(w.Code).To(Equal(204))
+			Expect(w.Body.String()).To(Equal(""))
 
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
@@ -1309,7 +1313,8 @@ var _ = Describe("Tags", func() {
 
 			// check response code and header
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(200))
+			Expect(w.Code).To(Equal(204))
+			Expect(w.Body.String()).To(Equal(""))
 		})
 
 		It("returns a 401 error if not authorized", func() {
@@ -1330,9 +1335,10 @@ var _ = Describe("Tags", func() {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// check response code and header
+			// check response code and header and no content
 			Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-			Expect(w.Code).To(Equal(200))
+			Expect(w.Code).To(Equal(204))
+			Expect(w.Body.String()).To(Equal(""))
 
 			dbAgent := models.Agent{AgentID: agent.AgentID}
 			err = dbAgent.Get(db)
