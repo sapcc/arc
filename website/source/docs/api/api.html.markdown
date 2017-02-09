@@ -243,19 +243,16 @@ runcmd:
 ## Delete an agent
 - Method: `DELETE`
 - URL: `/agents/{agent-id}`
+- No response body is provided if the request succeeds
 - Example URL: `/agents/darwin`
-- Example response:
 
-```text
-Agent with id "darwin" deleted.
-```
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="show_agent_facts"></a>
 ## Show agent facts
 - Method: `GET`
 - URL: `/agents/{agent-id}/facts`
-- Example: `/agents/darwin/facts`
+- Example URL: `/agents/darwin/facts`
 - Example response:
 
 ```json
@@ -282,7 +279,7 @@ Agent with id "darwin" deleted.
 ## Show agent tags
 - Method: `GET`
 - URL: `/agents/{agent-id}/tags`
-- Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
+- Example URL: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`
 - Example response:
 
 ```json
@@ -298,6 +295,7 @@ Agent with id "darwin" deleted.
 - Method: `POST`
 - URL: `/agents/{agent-id}/tags`
 - Content-Types: `application/json`
+- No response body is provided if the request succeeds
 - Example request:
 	- URL: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags`  
 	- Body:
@@ -305,12 +303,6 @@ Agent with id "darwin" deleted.
   ```text
   {"pool":"green","landscape":"staging"}
   ```
-
-- Example response:
-
-```text
-All tags saved!
-```
 
 All tag keys musst be `alphanumeric [a-z0-9A-Z]` and have non empty values. In case of an error
 body will contain the error messages as JSON.
@@ -323,12 +315,9 @@ In case of adding an existing tag the value will be replaced with the new submit
 ## Delete an agent tag
 - Method: `DELETE`
 - URL: `/agents/{agent-id}/tags/{tag-key}`
-- Example: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags/pool`
-- Example response:
+- No response body is provided if the request succeeds
+- Example URL: `/agents/d84ca366-c963-454f-9bd7-854121a0117e/tags/pool`
 
-```text
-Tag from agent with id "d84ca366-c963-454f-9bd7-854121a0117e" and value "pool" is removed!
-```
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
 <a name="list_all_jobs"></a>
