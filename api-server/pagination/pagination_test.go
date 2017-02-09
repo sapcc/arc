@@ -6,6 +6,8 @@ import (
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 
@@ -134,6 +136,34 @@ var _ = Describe("Pagination", func() {
 				// set total elements and correct actual page and offset
 				pagination.SetTotalElements(100)
 				Expect(pagination.GetLinks()).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev"`, "/relative_path?page=4&per_page=25", "/relative_path?page=1&per_page=25", "/relative_path?page=3&per_page=25")))
+			})
+
+		})
+
+		Describe("adding headers", func() {
+
+			It("should set pages, elements, perpage and links headers", func() {
+				pages := ""
+				elements := ""
+				per_page := ""
+				link := ""
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					pag := CreatePagination(*r.URL)
+					pag.SetHeaders(w)
+					pages = w.Header().Get("Pagination-Pages")
+					elements = w.Header().Get("Pagination-Elements")
+					per_page = w.Header().Get("Pagination-Per-Page")
+					link = w.Header().Get("Link")
+				}))
+				defer server.Close()
+				// send request
+				http.Get(server.URL)
+
+				Expect(pages).To(Equal("0"))
+				Expect(elements).To(Equal("0"))
+				Expect(per_page).To(Equal("25")) // default value
+				Expect(link).To(Equal(`<>;rel="self",<>;rel="first",<>;rel="prev",<>;rel="next",<>;rel="last"`))
 			})
 
 		})

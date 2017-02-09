@@ -340,6 +340,7 @@ var _ = Describe("Job Handlers", func() {
 				Expect(w.Code).To(Equal(200))
 				Expect(w.Header().Get("Pagination-Elements")).To(Equal("10"))
 				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Pagination-Per-Page")).To(Equal("5"))
 				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="next",<%s>;rel="last"`, "/api/v1/jobs?agent_id=darwin&page=1&per_page=5", "/api/v1/jobs?agent_id=darwin&page=2&per_page=5", "/api/v1/jobs?agent_id=darwin&page=2&per_page=5")))
 
 				// check json body response
@@ -359,6 +360,7 @@ var _ = Describe("Job Handlers", func() {
 				Expect(w.Code).To(Equal(200))
 				Expect(w.Header().Get("Pagination-Elements")).To(Equal("10"))
 				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Pagination-Per-Page")).To(Equal("5"))
 				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev"`, "/api/v1/jobs?agent_id=darwin&page=2&per_page=5", "/api/v1/jobs?agent_id=darwin&page=1&per_page=5", "/api/v1/jobs?agent_id=darwin&page=1&per_page=5")))
 
 				// check json body response
@@ -769,6 +771,7 @@ var _ = Describe("Agent Handlers", func() {
 				Expect(w.Code).To(Equal(200))
 				Expect(w.Header().Get("Pagination-Elements")).To(Equal("9"))
 				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Pagination-Per-Page")).To(Equal("5"))
 				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="next",<%s>;rel="last"`, `/api/v1/agents?page=1&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`)))
 
 				// check json body response
@@ -788,6 +791,7 @@ var _ = Describe("Agent Handlers", func() {
 				Expect(w.Code).To(Equal(200))
 				Expect(w.Header().Get("Pagination-Elements")).To(Equal("9"))
 				Expect(w.Header().Get("Pagination-Pages")).To(Equal("2"))
+				Expect(w.Header().Get("Pagination-Per-Page")).To(Equal("5"))
 				Expect(w.Header().Get("Link")).To(Equal(fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev"`, `/api/v1/agents?page=2&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=1&per_page=5&q=%40os+%3D+%22windows%22`, `/api/v1/agents?page=1&per_page=5&q=%40os+%3D+%22windows%22`)))
 
 				// check json body response
