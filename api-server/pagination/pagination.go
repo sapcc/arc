@@ -2,6 +2,7 @@ package pagination
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 )
@@ -100,6 +101,13 @@ func (pag *Pagination) GetLinks() string {
 		links = fmt.Sprintf(`<%s>;rel="self",<%s>;rel="first",<%s>;rel="prev",<%s>;rel="next",<%s>;rel="last"`, pag.LinkSelf, pag.LinkFirst, pag.LinkPrev, pag.LinkNext, pag.LinkLast)
 	}
 	return links
+}
+
+func (pag *Pagination) SetHeaders(w http.ResponseWriter) {
+	w.Header().Set("Pagination-Elements", fmt.Sprintf("%v", pag.TotalElements))
+	w.Header().Set("Pagination-Pages", fmt.Sprintf("%v", pag.TotalPages))
+	w.Header().Set("Pagination-Per-Page", fmt.Sprintf("%v", pag.Limit))
+	w.Header().Set("Link", pag.GetLinks())
 }
 
 // private methods

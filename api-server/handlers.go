@@ -155,9 +155,7 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// set pagination header
-	w.Header().Set("Pagination-Elements", fmt.Sprintf("%v", pagination.TotalElements))
-	w.Header().Set("Pagination-Pages", fmt.Sprintf("%v", pagination.TotalPages))
-	w.Header().Set("Link", pagination.GetLinks())
+	pagination.SetHeaders(w)
 
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -315,9 +313,7 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// set pagination header
-	w.Header().Set("Pagination-Elements", fmt.Sprintf("%v", pagination.TotalElements))
-	w.Header().Set("Pagination-Pages", fmt.Sprintf("%v", pagination.TotalPages))
-	w.Header().Set("Link", pagination.GetLinks())
+	pagination.SetHeaders(w)
 
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
