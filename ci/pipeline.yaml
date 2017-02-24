@@ -237,8 +237,8 @@ jobs:
         - { get: mosquitto.git, passed: [mosquitto-build] }
         - { get: api.version, passed: [api-build], trigger: true }
         - { get: arc.git, passed: [api-build] }
-        - { get: charts.git, }
-        - { get: secrets.git, }
+        - { get: charts.git }
+        - { get: secrets.git }
       - task: deployment
         input_mapping: { version: api.version }
         file: arc.git/ci/helm-upgrade.yaml
@@ -257,6 +257,7 @@ jobs:
         - { get: tests.image, passed: [tests-build], trigger: true }
         - { get: arc.version, passed: [arc-build], trigger: true }
         - { get: arc.git, passed: [arc-build] }
+        - { get: charts.git, passed: [staging] }
       - task: tests
         image: tests.image
         config:
@@ -310,7 +311,7 @@ jobs:
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git }
+        - { get: charts.git, passed: [staging-tests] }
         - { get: secrets.git }
       - task: deployment
         input_mapping: { version: api.version }
@@ -328,7 +329,7 @@ jobs:
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git }
+        - { get: charts.git, passed: [staging-tests] }
         - { get: secrets.git }
       - task: deployment
         input_mapping: { version: api.version }
@@ -482,7 +483,6 @@ resources:
     source:
       repo: monsoon/arc
       uri:  https://gitHub.***REMOVED***/monsoon/arc
-      base_url: http://concourse.***REMOVED***:8080/
       api_endpoint: https://gitHub.***REMOVED***/api/v3
       access_token: {{github-access-token}}
   - name: slack-alert
