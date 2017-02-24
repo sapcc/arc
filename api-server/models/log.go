@@ -7,13 +7,27 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 )
 
-//var ReplyExistsError = fmt.Errorf("Reply message already handeled.")
+var (
+	metricJobSucceeded = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "arc_job_succeeded",
+		Help: "Total number of jobs succeeded.",
+	})
+	metricJobFailed = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "arc_job_failed",
+		Help: "Total number of jobs failed.",
+	})
+	metricJobExpired = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "arc_job_expired",
+		Help: "Total number of jobs which no response or no final message has been received.",
+	})
+)
 
 type ReplyExistsError struct {
 	Msg string
@@ -150,6 +164,10 @@ func CleanLogParts(db *sql.DB) (int, error) {
 		if err != nil {
 			return 0, err
 		}
+
+		// increment expired jobs
+		metricJobExpired.Inc()
+
 		rowsCount++
 	}
 
@@ -190,6 +208,14 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 			return fmt.Errorf("Error aggregating log parts to log. Got %q", err.Error())
 		}
 		log.Infof("Aggregated log parts to log with id %q", reply.RequestID)
+
+		// increment metrics
+		if reply.State == arc.Complete {
+			metricJobSucceeded.Inc()
+		} else if reply.State == arc.Failed {
+			metricJobFailed.Inc()
+		}
+
 	}
 
 	return nil

@@ -8,11 +8,19 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
+)
+
+var (
+	metricJobExecuted = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "arc_job_executed",
+		Help: "Total number of jobs executed.",
+	})
 )
 
 type JobTargetAgentNotFoundError struct {
@@ -94,6 +102,9 @@ func CreateJob(db *sql.DB, data *[]byte, identity string, user *auth.User) (*Job
 		return nil, err
 	}
 	job.User = *userJsonb
+
+	// increment metric
+	metricJobExecuted.Inc()
 
 	return &job, nil
 }
