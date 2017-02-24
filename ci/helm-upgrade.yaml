@@ -19,7 +19,7 @@ run:
       set -o pipefail
       api_version=$(cat api.version/current)
       mosquitto_version=$(cat mosquitto.version/current)
-      helm upgrade $RELEASE charts.git/openstack/arc  --values secrets.git/$REGION/values/arc.yaml --set api.image.tag=$api_version,mosquitto.image.tag=$mosquitto_version --debug
+      helm upgrade $RELEASE charts.git/openstack/arc  --values secrets.git/$REGION/values/arc.yaml --set api.image.tag=$api_version,mosquitto.image.tag=$mosquitto_version
       kubectl rollout status deployment/$RELEASE-api --namespace=$NAMESPACE
       kubectl rollout status deployment/mosquitto --namespace=$NAMESPACE
       set +x
