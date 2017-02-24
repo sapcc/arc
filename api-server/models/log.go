@@ -44,6 +44,13 @@ type Log struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func init() {
+	// register the metric
+	prometheus.MustRegister(metricJobSucceeded)
+	prometheus.MustRegister(metricJobFailed)
+	prometheus.MustRegister(metricJobExpired)
+}
+
 func (log *Log) Get(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("Db connection is nil")

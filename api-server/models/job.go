@@ -56,6 +56,10 @@ type Jobs []Job
 
 type Status string
 
+func init() {
+	prometheus.MustRegister(metricJobExecuted)
+}
+
 func CreateJob(db *sql.DB, data *[]byte, identity string, user *auth.User) (*Job, error) {
 	if db == nil {
 		return nil, errors.New("Db is nil")
