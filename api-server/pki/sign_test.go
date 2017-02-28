@@ -5,7 +5,9 @@ package pki_test
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"time"
 
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 
 	. "github.com/onsi/ginkgo"
@@ -92,6 +94,56 @@ var _ = Describe("Sign csr", func() {
 		Expect(s.CommonName).To(Equal("testCsrCN"))
 		Expect(s.Organization[0]).To(Equal("enforced O"))
 		Expect(s.OrganizationalUnit[0]).To(Equal("enforced OU"))
+	})
+
+})
+
+var _ = Describe("CleanOldCertificates", func() {
+
+	It("returns an error if no db connection is given", func() {
+		occurrencies, err := CleanOldCertificates(nil)
+		Expect(err).To(HaveOccurred())
+		Expect(occurrencies).To(Equal(int64(0)))
+	})
+
+	It("should clean expired certificates", func() {
+		// add expired certificate (15 min)
+		_, err := db.Exec(ownDb.InsertCertificateQuery,
+			uuid.New(),
+			"common name",
+			"country",
+			"Locality",
+			"Organization",
+			"OrganizationalUnit",
+			time.Now().Add((-60)*time.Minute),
+			time.Now().Add((-15)*time.Minute),
+			"pemCert",
+		)
+		Expect(err).NotTo(HaveOccurred())
+
+		occurrencies, err := CleanOldCertificates(db)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(occurrencies).To(Equal(int64(1)))
+	})
+
+	It("should NOT clean not expired certificates ", func() {
+		// add not expired certificate (still valid 15 min)
+		_, err := db.Exec(ownDb.InsertCertificateQuery,
+			uuid.New(),
+			"common name",
+			"country",
+			"Locality",
+			"Organization",
+			"OrganizationalUnit",
+			time.Now().Add((-60)*time.Minute),
+			time.Now().Add((+15)*time.Minute),
+			"pemCert",
+		)
+		Expect(err).NotTo(HaveOccurred())
+
+		occurrencies, err := CleanOldCertificates(db)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(occurrencies).To(Equal(int64(0)))
 	})
 
 })
