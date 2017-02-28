@@ -16,6 +16,10 @@
 			"Rev": "f3e2bae1e0cb5aef83e319133eabfee30013a4a5"
 		},
 		{
+			"ImportPath": "github.com/bamzi/jobrunner",
+			"Rev": "273175f8b6ebabab8a639a4e6260a5c50fbf016a"
+		},
+		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
 			"Rev": "3ac7bf7a47d159a033b107610db8a1b6575507a4"
 		},
@@ -572,6 +576,11 @@
 		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "3826714b1e47586d04a2d62ccf2e8d13eca82790"
+		},
+		{
+			"ImportPath": "gopkg.in/robfig/cron.v2",
+			"Comment": "v1-11-gbe2e0b0",
+			"Rev": "be2e0b0deed5a68ffee390b4583a13aff8321535"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
