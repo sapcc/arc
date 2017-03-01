@@ -11,7 +11,7 @@ inputs:
 - name: api.version
 
 outputs:
-- name: api-binary
+- name: janitor-binary
 
 run:
   path: sh
@@ -20,5 +20,4 @@ run:
     - |
       export GOPATH=$PWD/gopath
       export BUILD_VERSION=$(cat api.version/current)
-      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/api-server build
-      cp gopath/src/gitHub.***REMOVED***/monsoon/arc/api-server/bin/* api-binary/
+      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/cmd/janitor build BUILD_DIR=janitor-binary
