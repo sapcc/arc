@@ -45,7 +45,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "bind-address,b",
-			Usage:  "Listen address for metrics HTTP endpoint",
+			Usage:  "Listen address for live cron jobs monitoring and metrics HTTP endpoint",
 			Value:  "0.0.0.0:3000",
 			EnvVar: "BIND_ADDRESS",
 		},
