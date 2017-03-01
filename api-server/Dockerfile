@@ -15,6 +15,7 @@ COPY entrypoint.sh /entrypoint.sh
 COPY db/ db/
 COPY etc/ etc/
 COPY bin/api-server /usr/bin/api-server
+COPY bin/janitor /usr/bin/janitor
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["api-server"]
