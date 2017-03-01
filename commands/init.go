@@ -53,7 +53,9 @@ func Init(c *cli.Context, appName string) (int, error) {
 		if err = pem.Encode(keyfile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
 			return 1, fmt.Errorf("Failed to write private key to file: %v", err)
 		}
-		keyfile.Close()
+		if err := keyfile.Close(); err != nil {
+			return 1, fmt.Errorf("Failed to close handle to private key file: %s", err)
+		}
 
 		cn := discoverIdentity(c)
 		// create csr template
@@ -121,7 +123,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 
 		log.Info("Retrieved and stored certificate")
 
-		cfgFile, err := os.OpenFile(path.Join(dir, "arc.cfg"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		cfgFile, err := os.OpenFile(path.Join(dir, "arc.cfg"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644) // #nosec
 		if err != nil {
 			return 1, fmt.Errorf("Failed to create %s: %v", path.Join(dir, "arc.cfg"), err)
 		}
