@@ -10,6 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/bamzi/jobrunner"
 	"github.com/kylelemons/go-gypsy/yaml"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var SCHEDULE_TIME = "@every 60s"
@@ -46,6 +47,8 @@ func (j *Janitor) InitServer() {
 	// live monitoring
 	http.HandleFunc("/", serveVersion)
 	http.HandleFunc("/jobrunner", serveJobrunner)
+	http.Handle("/metrics", prometheus.Handler())
+
 	log.Printf("Listening on %s...", j.Conf.BindAddress)
 	err := http.ListenAndServe(j.Conf.BindAddress, nil)
 	fatalfOnError(err, "Failed to bind on %s: ", j.Conf.BindAddress)

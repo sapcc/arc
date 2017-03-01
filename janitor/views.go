@@ -8,6 +8,7 @@ var landingPage = []byte(fmt.Sprintf(`<html>
 <h1>Arc Janitor</h1>
 <p>%s</p>
 <p><a href='/jobrunner'>Job Runner</a></p>
+<p><a href='/metrics'>Metrics</a></p>
 </body>
 </html>
 `, VersionString()))
