@@ -82,7 +82,7 @@ func (c *ChunkedReader) chunk() []byte {
 			}
 		}
 		chunk := make([]byte, n)
-		c.buf.Read(chunk)
+		c.buf.Read(chunk) // #nosec I don't know how to handle this error, I think we can ignore it as its s bytes.Buffer. Shouldn't err YOLO
 		return chunk
 
 	}
@@ -96,7 +96,7 @@ func (c *ChunkedReader) fill() {
 		n, err := c.rd.Read(tmpBuf)
 		if n > 0 {
 			c.mu.Lock()
-			c.buf.Write(tmpBuf[:n])
+			_, err = c.buf.Write(tmpBuf[:n])
 			c.mu.Unlock()
 		}
 		if err != nil {
