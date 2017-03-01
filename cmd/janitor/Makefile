@@ -3,17 +3,13 @@ BUILD_DIR:=../../bin
 ARC_JANITOR_BINARY:=$(BUILD_DIR)/janitor
 IMAGE := sapcc/arc_janitor
 VERSION=0.1.0
-LDFLAGS=-s -w -X main.Version=$(VERSION) -X main.GITCOMMIT=`git rev-parse --short HEAD`
+LDFLAGS=-X main.GITCOMMIT=`git rev-parse --short HEAD`
 CGO_ENABLED=0
 GOARCH=amd64
 
-.PHONY: help
-help:
-	@echo
-	@echo "Available targets:"
-	@echo "  * build             - build the binary, output to $(ARC_BINARY)"
-	@echo "  * linux             - build the binary, output to $(ARC_BINARY)"
-	@echo "  * docker            - build docker image"
+ifneq ($(BUILD_VERSION),)
+LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
+endif
 
 .PHONY: build
 build:
