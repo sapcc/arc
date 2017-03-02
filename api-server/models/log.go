@@ -27,6 +27,10 @@ var (
 		Name: "arc_job_expired",
 		Help: "Total number of jobs which no response or no final message has been received.",
 	})
+	metricJobLogSize = prometheus.NewSummary(prometheus.SummaryOpts{
+		Name: "arc_job_log_size_bytes",
+		Help: "The aggregated job logs in bytes.",
+	})
 )
 
 type ReplyExistsError struct {
@@ -49,6 +53,7 @@ func init() {
 	prometheus.MustRegister(metricJobSucceeded)
 	prometheus.MustRegister(metricJobFailed)
 	prometheus.MustRegister(metricJobExpired)
+	prometheus.MustRegister(metricJobLogSize)
 }
 
 func (log *Log) Get(db *sql.DB) error {
@@ -252,6 +257,10 @@ func aggregateLogParts(db *sql.DB, id string) (err error) {
 	if _, err = tx.Exec(ownDb.DeleteLogPartsQuery, id); err != nil {
 		return
 	}
+
+	// calculate the log size being aggregated
+	contentSize := len([]byte(content))
+	metricJobLogSize.Observe(float64(contentSize))
 
 	return
 }
