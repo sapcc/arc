@@ -301,7 +301,7 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	err := agents.GetAuthorizedAndShowFacts(db, filterFacts, authorization, showFacts, pagination)
 	if err != nil {
 		if _, ok := err.(models.FilterError); ok {
-			logInfoAndReturnHttpErrStatus(w, err, "Error serving filtered Agents.", http.StatusBadRequest, r)
+			logInfoAndReturnHttpErrStatus(w, err, "Invalid selector expression.", http.StatusBadRequest, r)
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
 			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 		} else if _, ok := err.(auth.NotAuthorized); ok {
