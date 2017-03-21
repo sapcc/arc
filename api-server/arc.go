@@ -22,7 +22,7 @@ func arcNewConnection(config arc_config.Config) (transport.Transport, error) {
 		return nil, err
 	}
 
-	// conect
+	// connect
 	if err := tp.Connect(); err != nil {
 		return nil, err
 	}
