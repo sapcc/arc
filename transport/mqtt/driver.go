@@ -47,8 +47,8 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	if logrus.GetLevel() >= logrus.ErrorLevel {
 		MQTT.ERROR = log.New(w, "MQTT ERROR ", 0)
 	}
-	if logrus.GetLevel() >= logrus.DebugLevel {
-		MQTT.WARN = log.New(w, "MQTT INFO ", 0)
+	if logrus.GetLevel() >= logrus.InfoLevel {
+		MQTT.WARN = log.New(w, "MQTT WARN ", 0)
 	}
 	if logrus.GetLevel() >= logrus.DebugLevel {
 		MQTT.DEBUG = log.New(w, "MQTT DEBUG ", 0)
@@ -338,7 +338,7 @@ func (c *MQTTClient) onConnect() {
 }
 
 func (c *MQTTClient) onConnectionLost(err error) {
-	logrus.Debug("Callback: onConnectionLost")
+	logrus.Warn("Lost connection to MQTT broker")
 	c.connected = false
 }
 
