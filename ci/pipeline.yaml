@@ -6,7 +6,7 @@ post_failure_to_slack: &post_failure_to_slack
     icon_emoji: ':airplane:'
     silent: 'true'
     text: |
-      :boom: <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_JOB_NAME job #$BUILD_NAME failed>
+      :boom: <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_PIPELINE_NAME $BUILD_JOB_NAME job #$BUILD_NAME failed>
 kubectl_image: &kubectl_image
   image_resource:
     type: docker-image
