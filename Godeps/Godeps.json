@@ -1,7 +1,7 @@
 {
 	"ImportPath": "gitHub.***REMOVED***/monsoon/arc",
-	"GoVersion": "go1.7",
-	"GodepVersion": "v75",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
@@ -144,13 +144,13 @@
 		},
 		{
 			"ImportPath": "github.com/eclipse/paho.mqtt.golang",
-			"Comment": "v1.0.0-13-gd4f545e",
-			"Rev": "d4f545eb108a2d19f9b1a735689dbfb719bc21fb"
+			"Comment": "v1.0.0-16-gc76e016",
+			"Rev": "c76e0160c5b829e2da3b73db11e9715423f8a0f5"
 		},
 		{
 			"ImportPath": "github.com/eclipse/paho.mqtt.golang/packets",
-			"Comment": "v1.0.0-13-gd4f545e",
-			"Rev": "d4f545eb108a2d19f9b1a735689dbfb719bc21fb"
+			"Comment": "v1.0.0-16-gc76e016",
+			"Rev": "c76e0160c5b829e2da3b73db11e9715423f8a0f5"
 		},
 		{
 			"ImportPath": "github.com/go-ole/go-ole",
