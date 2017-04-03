@@ -7,6 +7,28 @@ post_failure_to_slack: &post_failure_to_slack
     silent: 'true'
     text: |
       :boom: <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_PIPELINE_NAME $BUILD_JOB_NAME job #$BUILD_NAME failed>
+post_deployment_start_to_slack: &post_deployment_start_to_slack
+  put: slack-alert
+  params:
+    channel: '#automation'
+    username: 'Concourse'
+    icon_emoji: ':airplane:'
+    silent: 'true'
+    text_file: api.version/current
+    text: |
+      :airplane_departure: <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Started deploying $BUILD_PIPELINE_NAME $TEXT_FILE_CONTENT to $BUILD_JOB_NAME>
+
+post_deployment_end_to_slack: &post_deployment_end_to_slack
+  put: slack-alert
+  params:
+    channel: '#automation'
+    username: 'Concourse'
+    icon_emoji: ':airplane:'
+    silent: 'true'
+    text_file: api.version/current
+    text: |
+      :airplane_arriving: <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|Finished deploying $BUILD_PIPELINE_NAME $TEXT_FILE_CONTENT to $BUILD_JOB_NAME>
+
 kubectl_image: &kubectl_image
   image_resource:
     type: docker-image
@@ -48,6 +70,7 @@ groups:
       - release-stable
       - eu-de-1
       - ap-au-1
+      - eu-nl-1
       - arc-website
   - name: pullrequests
     jobs:
@@ -313,12 +336,14 @@ jobs:
         - { get: arc.git, passed: [staging-tests] }
         - { get: charts.git, passed: [staging-tests] }
         - { get: secrets.git }
+      - <<: *post_deployment_start_to_slack
       - task: deployment
         input_mapping: { version: api.version }
         file: arc.git/ci/helm-upgrade.yaml
         params:
           REGION: eu-de-1
           GITHUB_TOKEN: {{github-access-token}}
+      - <<: *post_deployment_end_to_slack
     on_failure:
       <<: *post_failure_to_slack
   - name: ap-au-1
@@ -331,12 +356,35 @@ jobs:
         - { get: arc.git, passed: [staging-tests] }
         - { get: charts.git, passed: [staging-tests] }
         - { get: secrets.git }
+      - <<: *post_deployment_start_to_slack
       - task: deployment
         input_mapping: { version: api.version }
         file: arc.git/ci/helm-upgrade.yaml
         params:
           REGION: ap-au-1
           GITHUB_TOKEN: {{github-access-token}}
+      - <<: *post_deployment_end_to_slack
+    on_failure:
+      <<: *post_failure_to_slack
+
+  - name: eu-nl-1
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.git, passed: [staging-tests] }
+        - { get: api.version, passed: [staging-tests], trigger: true }
+        - { get: arc.git, passed: [staging-tests] }
+        - { get: charts.git, passed: [staging-tests] }
+        - { get: secrets.git }
+      - <<: *post_deployment_start_to_slack
+      - task: deployment
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: eu-nl-1
+          GITHUB_TOKEN: {{github-access-token}}
+      - <<: *post_deployment_end_to_slack
     on_failure:
       <<: *post_failure_to_slack
   #- name: production-tests
