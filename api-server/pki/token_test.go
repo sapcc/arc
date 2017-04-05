@@ -3,12 +3,16 @@
 package pki_test
 
 import (
+	"time"
+
 	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 
 	"github.com/cloudflare/cfssl/signer"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pborman/uuid"
+	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 
 	"encoding/json"
 	"fmt"
@@ -135,6 +139,36 @@ var _ = Describe("Token Create", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(token).To(Equal(tokenId))
+	})
+
+})
+
+var _ = Describe("CleanOldTokens", func() {
+
+	It("returns an error if no db connection is given", func() {
+		occurrencies, err := CleanOldTokens(nil)
+		Expect(err).To(HaveOccurred())
+		Expect(occurrencies).To(Equal(int64(0)))
+	})
+
+	It("should clean pki tokens older than 1 hour", func() {
+		// insert old token
+		_, err := db.Exec(ownDb.InsertTokenWithCreatedAtQuery, uuid.New(), "default", `{}`, time.Now().Add((-65)*time.Minute))
+		Expect(err).NotTo(HaveOccurred())
+
+		occurrencies, err := CleanOldTokens(db)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(occurrencies).To(Equal(int64(1)))
+	})
+
+	It("should NOT clean pki tokens older than 1 hour", func() {
+		// insert old token
+		_, err := db.Exec(ownDb.InsertTokenWithCreatedAtQuery, uuid.New(), "default", `{}`, time.Now().Add((-15)*time.Minute))
+		Expect(err).NotTo(HaveOccurred())
+
+		occurrencies, err := CleanOldTokens(db)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(occurrencies).To(Equal(int64(0)))
 	})
 
 })

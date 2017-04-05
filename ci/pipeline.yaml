@@ -203,8 +203,13 @@ jobs:
           passed: [ api-tests ]
         - get: api.version
           params: { bump: true }
-      - task: build
-        file: arc.git/ci/build-api.yaml
+      - aggregate: 
+        - task: api
+          file: arc.git/ci/build-api.yaml
+        - task: janitor 
+          file: arc.git/ci/janitor-api.yaml
+      - task: prepare-image 
+        
       - put: api.image
         params:
           build: build/api-server
