@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	arcVersion "gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 var validOptions = map[string]string{
@@ -44,6 +46,11 @@ func TestUpdaterCheckNotAvailableWhenJSONnotFound(t *testing.T) {
 }
 
 func TestUpdaterCheckNotAvailable(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+	defer func() { arcVersion.Version = tmpVersion }()
+
 	server := testTools(200, `{
   "app_id": "arc",
   "os": "linux",
@@ -68,6 +75,11 @@ func TestUpdaterCheckNotAvailable(t *testing.T) {
 }
 
 func TestUpdaterCheckAvailable(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+	defer func() { arcVersion.Version = tmpVersion }()
+
 	server := testTools(200, `{
   "app_id": "arc",
   "os": "linux",
@@ -132,6 +144,11 @@ func TestUpdaterCheckAndUpdateFail(t *testing.T) {
 }
 
 func TestUpdaterCheckAndUpdateSuccess(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+	defer func() { arcVersion.Version = tmpVersion }()
+
 	// mock apply upload
 	origApplyUpdate := ApplyUpdate
 	ApplyUpdate = mock_apply_update
