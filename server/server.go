@@ -16,6 +16,7 @@ import (
 	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
 	"gitHub.***REMOVED***/monsoon/arc/fact/host"
 	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
+	"gitHub.***REMOVED***/monsoon/arc/fact/metadata"
 	"gitHub.***REMOVED***/monsoon/arc/fact/network"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
 )
@@ -151,5 +152,6 @@ func (s *server) setupFactStore() *fact.Store {
 	store.AddSource(network.New(), 1*time.Minute)
 	store.AddSource(arc_facts.New(s.config), 0)
 	store.AddSource(agents.New(), 1*time.Minute)
+	store.AddSource(metadata.New(), 1*time.Minute)
 	return store
 }
