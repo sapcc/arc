@@ -14,6 +14,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"gitHub.***REMOVED***/monsoon/arc/updater"
+	arcVersion "gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 var CheckResult = ""
@@ -43,6 +44,10 @@ func TestCmdUpdateMissingUri(t *testing.T) {
 }
 
 func TestCmdUpdateYes(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+
 	// mock apply upload
 	origApplyUpdate := updater.ApplyUpdate
 	updater.ApplyUpdate = mock_apply_update
@@ -77,10 +82,15 @@ func TestCmdUpdateYes(t *testing.T) {
 		confirmInput = os.Stdin
 		CheckResult = ""
 		updater.ApplyUpdate = origApplyUpdate
+		arcVersion.Version = tmpVersion
 	}()
 }
 
 func TestCmdUpdateNo(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+
 	// mock apply upload
 	origApplyUpdate := updater.ApplyUpdate
 	updater.ApplyUpdate = mock_apply_update
@@ -116,10 +126,15 @@ func TestCmdUpdateNo(t *testing.T) {
 		confirmInput = os.Stdin
 		CheckResult = ""
 		updater.ApplyUpdate = origApplyUpdate
+		arcVersion.Version = tmpVersion
 	}()
 }
 
 func TestCmdUpdateForce(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+
 	// mock apply upload
 	origApplyUpdate := updater.ApplyUpdate
 	updater.ApplyUpdate = mock_apply_update
@@ -146,10 +161,15 @@ func TestCmdUpdateForce(t *testing.T) {
 	defer func() {
 		CheckResult = ""
 		updater.ApplyUpdate = origApplyUpdate
+		arcVersion.Version = tmpVersion
 	}()
 }
 
 func TestCmdUpdateNoUpdate(t *testing.T) {
+	// mock app version
+	tmpVersion := arcVersion.Version
+	arcVersion.Version = "20150910.01"
+
 	// mock apply upload
 	origApplyUpdate := updater.ApplyUpdate
 	updater.ApplyUpdate = mock_apply_update
@@ -176,6 +196,7 @@ func TestCmdUpdateNoUpdate(t *testing.T) {
 	defer func() {
 		CheckResult = ""
 		updater.ApplyUpdate = origApplyUpdate
+		arcVersion.Version = tmpVersion
 	}()
 }
 
