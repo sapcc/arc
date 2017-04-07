@@ -2,10 +2,8 @@ package metadata
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -15,8 +13,11 @@ import (
 
 type Source struct{}
 
-var metadataURL = "http://169.254.169.254/openstack/latest/meta_data.json"
-var ipv4Url = "http://169.254.169.254/latest/meta-data/public-ipv4"
+// var metadataURL = "http://169.254.169.254/openstack/latest/meta_data.json"
+// var ipv4Url = "http://169.254.169.254/latest/meta-data/public-ipv4"
+
+var metadataURL = "http://localhost:3005/metadata"
+var ipv4Url = "http://localhost:3005/ipv4"
 
 func New() Source {
 	return Source{}
@@ -34,9 +35,17 @@ func (h Source) Facts() (map[string]interface{}, error) {
 		Timeout: timeout,
 	}
 
-	uuid := instanceID(client)
-	if uuid != "" {
-		facts["metadata_uuid"] = uuid
+	data := metaDataInfo(client)
+	if data != nil {
+		if data.UUID != "" {
+			facts["metadata_uuid"] = data.UUID
+		}
+		if data.AvailabilityZone != "" {
+			facts["metadata_availability_zone"] = data.AvailabilityZone
+		}
+		if data.Name != "" {
+			facts["metadata_name"] = data.Name
+		}
 	}
 
 	ips := floatingIP(client)
@@ -56,37 +65,42 @@ func floatingIP(client http.Client) []string {
 	}
 	defer r.Body.Close()
 
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return ips
-	}
-	scanner := bufio.NewScanner(bytes.NewReader(body))
+	scanner := bufio.NewScanner(r.Body)
 	for scanner.Scan() {
-		ips = append(ips, scanner.Text())
+		if scanner.Text() != "" {
+			ips = append(ips, scanner.Text())
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Warnf(fmt.Sprint("Error scanning ipv4s. ", err.Error()))
+		return ips
 	}
 
 	return ips
 }
 
-type metaDataID struct {
-	UUID string `json:"uuid"`
+type metaData struct {
+	UUID             string `json:"uuid"`
+	AvailabilityZone string `json:"availability_zone"`
+	Name             string `json:"name"`
 }
 
 // InstanceID returns the instance id from the metadata
-func instanceID(client http.Client) string {
+func metaDataInfo(client http.Client) *metaData {
 	r, err := client.Get(metadataURL)
 	if err != nil {
 		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
-		return ""
+		return nil
 	}
 	defer r.Body.Close()
 
-	var metadata = new(metaDataID)
+	var metadata = new(metaData)
 	err = json.NewDecoder(r.Body).Decode(metadata)
 	if err != nil {
 		log.Warnf(fmt.Sprint("Error parsing metadata. ", err.Error()))
-		return ""
+		return nil
 	}
 
-	return metadata.UUID
+	return metadata
 }
