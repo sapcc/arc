@@ -47,7 +47,7 @@ func (h Source) Facts() (map[string]interface{}, error) {
 
 	ips := floatingIP(client)
 	if len(ips) > 0 {
-		facts["metadata_ipv4"] = strings.Join(ips, ",")
+		facts["metadata_public_ipv4"] = strings.Join(ips, ",")
 	}
 
 	return facts, nil
