@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/prometheus/common/log"
@@ -45,36 +44,37 @@ func (h Source) Facts() (map[string]interface{}, error) {
 		}
 	}
 
-	ips := floatingIP(client)
-	if len(ips) > 0 {
-		facts["metadata_public_ipv4"] = strings.Join(ips, ",")
+	ipv4 := floatingIP(client)
+	if ipv4 != "" {
+		facts["metadata_public_ipv4"] = ipv4
 	}
 
 	return facts, nil
 }
 
-func floatingIP(client http.Client) []string {
-	ips := []string{}
+func floatingIP(client http.Client) string {
 	r, err := client.Get(ipv4Url)
 	if err != nil {
 		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
-		return ips
+		return ""
 	}
 	defer r.Body.Close()
 
+	ipv4 := ""
 	scanner := bufio.NewScanner(r.Body)
 	for scanner.Scan() {
 		if scanner.Text() != "" {
-			ips = append(ips, scanner.Text())
+			ipv4 = scanner.Text()
+			break
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		log.Warnf(fmt.Sprint("Error scanning ipv4s. ", err.Error()))
-		return ips
+		return ""
 	}
 
-	return ips
+	return ipv4
 }
 
 type metaData struct {
