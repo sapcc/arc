@@ -13,11 +13,8 @@ import (
 
 type Source struct{}
 
-// var metadataURL = "http://169.254.169.254/openstack/latest/meta_data.json"
-// var ipv4Url = "http://169.254.169.254/latest/meta-data/public-ipv4"
-
-var metadataURL = "http://localhost:3005/metadata"
-var ipv4Url = "http://localhost:3005/ipv4"
+var metadataURL = "http://169.254.169.254/openstack/latest/meta_data.json"
+var ipv4Url = "http://169.254.169.254/latest/meta-data/public-ipv4"
 
 func New() Source {
 	return Source{}
