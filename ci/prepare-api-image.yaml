@@ -19,7 +19,7 @@ run:
   args:
     - -exc
     - |
-      cp -r arc.git build/
+      cp -a arc.git/* arc.git/.[^.]* build/
       mkdir -p build/api-server/bin
       cp api-binary/* build/api-server/bin/
       cp janitor-binary/* build/api-server/bin/
