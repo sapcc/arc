@@ -171,8 +171,6 @@ func CleanLogParts(db *sql.DB) (int, error) {
 			return 0, err
 		}
 
-		log.Infof("TEST: logPartId %q to aggregate", logPartID)
-
 		// aggregate the log parts found to the log table
 		err = aggregateLogParts(db, logPartID)
 		if err != nil {
@@ -251,12 +249,15 @@ func aggregateLogParts(db *sql.DB, id string) (err error) {
 
 	var content string
 	if err = tx.QueryRow(ownDb.CollectLogPartsQuery, id).Scan(&content); err != nil {
+		log.Errorf("Error collecting log parts with id %q", id)
 		return
 	}
 	if _, err = tx.Exec(ownDb.InsertLogQuery, id, content, time.Now(), time.Now()); err != nil {
+		log.Errorf("Error inserting log parts with id %q", id)
 		return
 	}
 	if _, err = tx.Exec(ownDb.DeleteLogPartsQuery, id); err != nil {
+		log.Errorf("Error deleting log parts with id %q", id)
 		return
 	}
 
