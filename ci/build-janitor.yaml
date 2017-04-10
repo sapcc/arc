@@ -20,4 +20,4 @@ run:
     - |
       export GOPATH=$PWD/gopath
       export BUILD_VERSION=$(cat api.version/current)
-      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/cmd/janitor build BUILD_DIR=janitor-binary
+      make -C gopath/src/gitHub.***REMOVED***/monsoon/arc/cmd/janitor build BUILD_DIR=$PWD/janitor-binary

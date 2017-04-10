@@ -23,4 +23,3 @@ run:
       mkdir -p build/api-server/bin
       cp api-binary/* build/api-server/bin/
       cp janitor-binary/* build/api-server/bin/
-      
