@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/prometheus/common/log"
+	log "github.com/Sirupsen/logrus"
 )
 
 type Source struct{}
