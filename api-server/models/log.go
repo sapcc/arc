@@ -171,6 +171,8 @@ func CleanLogParts(db *sql.DB) (int, error) {
 			return 0, err
 		}
 
+		log.Infof("TEST: logPartId %q to aggregate", logPartID)
+
 		// aggregate the log parts found to the log table
 		err = aggregateLogParts(db, logPartID)
 		if err != nil {
