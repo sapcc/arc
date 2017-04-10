@@ -207,9 +207,9 @@ jobs:
         - task: api
           file: arc.git/ci/build-api.yaml
         - task: janitor 
-          file: arc.git/ci/janitor-api.yaml
+          file: arc.git/ci/build-janitor.yaml
       - task: prepare-image 
-        
+        file: arc.git/ci/prepare-api-image.yaml
       - put: api.image
         params:
           build: build/api-server
