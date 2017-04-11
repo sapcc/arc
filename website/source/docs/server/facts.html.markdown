@@ -6,7 +6,7 @@ description: |-
   TBD
 ---
 
-# Facts 
+# Facts
 
 Following facts are available:
 
@@ -25,6 +25,10 @@ Following facts are available:
 - memory_total
 - memory_used
 - memory_used_percent
+- metadata_availability_zone
+- metadata_name
+- metadata_public_ipv4
+- metadata_uuid
 - online
 - organization
 - os
