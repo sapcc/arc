@@ -3,12 +3,13 @@
 package pki_test
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"time"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+
+	"crypto/x509"
+	"encoding/pem"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -80,7 +81,7 @@ var _ = Describe("Sign csr", func() {
 	})
 
 	It("Enforces CN, O and OU if set in the tokens subject", func() {
-		token := CreateTestToken(db, `{"names":[{"O": "enforced O", "OU":"enforced OU"}]}`)
+		token := CreateTestToken(db, `{"CN":"enforced_CN", "names":[{"O": "enforced_O", "OU":"enforced_OU"}]}`)
 		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -91,9 +92,9 @@ var _ = Describe("Sign csr", func() {
 		x509Cert, err := x509.ParseCertificate(cert.Bytes)
 		s := x509Cert.Subject
 		Expect(err).NotTo(HaveOccurred())
-		Expect(s.CommonName).To(Equal("testCsrCN"))
-		Expect(s.Organization[0]).To(Equal("enforced O"))
-		Expect(s.OrganizationalUnit[0]).To(Equal("enforced OU"))
+		Expect(s.CommonName).To(Equal("enforced_CN"))
+		Expect(s.Organization[0]).To(Equal("enforced_O"))
+		Expect(s.OrganizationalUnit[0]).To(Equal("enforced_OU"))
 	})
 
 })
