@@ -23,10 +23,6 @@ var (
 		Name: "arc_job_failed",
 		Help: "Total number of jobs failed.",
 	})
-	metricJobExpired = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "arc_job_expired",
-		Help: "Total number of jobs which no response or no final message has been received.",
-	})
 	metricJobLogSize = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name: "arc_job_log_size_bytes",
 		Help: "The aggregated job logs in bytes.",
@@ -52,7 +48,6 @@ func init() {
 	// register the metric
 	prometheus.MustRegister(metricJobSucceeded)
 	prometheus.MustRegister(metricJobFailed)
-	prometheus.MustRegister(metricJobExpired)
 	prometheus.MustRegister(metricJobLogSize)
 }
 
@@ -150,13 +145,14 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 	return nil
 }
 
-func CleanLogParts(db *sql.DB) (int, error) {
+// aggregate log parts with final state which are older then 5 min
+func AggregateLogs(db *sql.DB) (int, error) {
 	if db == nil {
 		return 0, errors.New("Db connection is nil")
 	}
 
 	// get log parts to aggregate
-	rows, err := db.Query(ownDb.GetLogPartsToCleanQuery, 600, 84600) // 10 min and 1 day
+	rows, err := db.Query(ownDb.GetLogPartsToAggregateQuery, 300) // 5 min
 	if err != nil {
 		return 0, err
 	}
@@ -176,9 +172,6 @@ func CleanLogParts(db *sql.DB) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-
-		// increment expired jobs
-		metricJobExpired.Inc()
 
 		rowsCount++
 	}
@@ -205,29 +198,21 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 	// save log part
 	if reply.Payload != "" {
 		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, truncate(reply.Payload, 100))
-
 		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
+
 		err := logPart.Save(db)
 		if err != nil {
 			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
 		}
 	}
 
-	// collect log parts and save an entire log text
+	// increment metrics
 	if reply.Final == true {
-		err := aggregateLogParts(db, reply.RequestID)
-		if err != nil {
-			return fmt.Errorf("Error aggregating log parts to log. Got %q", err.Error())
-		}
-		log.Infof("Aggregated log parts to log with id %q", reply.RequestID)
-
-		// increment metrics
 		if reply.State == arc.Complete {
 			metricJobSucceeded.Inc()
 		} else if reply.State == arc.Failed {
 			metricJobFailed.Inc()
 		}
-
 	}
 
 	return nil

@@ -168,32 +168,6 @@ var _ = Describe("Log", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should collect all log parts, save a new log entry and remove all log parts if final attribute is true", func() {
-			chunck := "This is a chunck log for should collect all log parts, save a new log entry and remove all log parts if final attribute is true"
-
-			// add a job related to the log
-			newJob := Job{}
-			newJob.ExecuteScriptExample()
-			err := newJob.Save(db)
-			Expect(err).NotTo(HaveOccurred())
-
-			// process reply
-			reply := arc.Reply{RequestID: newJob.RequestID, Payload: chunck, Final: true}
-			err = ProcessLogReply(db, &reply, "darwin", true)
-			Expect(err).NotTo(HaveOccurred())
-
-			// check log parts
-			logPart := LogPart{JobID: newJob.RequestID}
-			_, err = logPart.Collect(db)
-			Expect(err).To(HaveOccurred())
-
-			// check log
-			newLog := Log{JobID: newJob.RequestID}
-			err = newLog.Get(db)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(newLog.Content).To(Equal(chunck))
-		})
-
 		It("should get an error if no job with the same id exists", func() {
 			job_id := uuid.New()
 			chunck := "This is a chunck log"
@@ -261,10 +235,10 @@ var _ = Describe("Log", func() {
 
 	})
 
-	Describe("CleanLogParts", func() {
+	Describe("AggregateLogs", func() {
 
 		It("returns an error if no db connection is given", func() {
-			occurrencies, err := CleanLogParts(nil)
+			occurrencies, err := AggregateLogs(nil)
 			Expect(err).To(HaveOccurred())
 			Expect(occurrencies).To(Equal(0))
 		})
@@ -290,41 +264,7 @@ var _ = Describe("Log", func() {
 			content := strings.Join(contentSlice[:], "")
 
 			// clean log parts
-			occurrencies, err := CleanLogParts(db)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(occurrencies).To(Equal(1))
-
-			// check log parts
-			logPart := LogPart{JobID: job.RequestID}
-			_, err = logPart.Collect(db)
-			Expect(err).To(HaveOccurred())
-
-			// check log
-			newLog := Log{JobID: job.RequestID}
-			err = newLog.Get(db)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(newLog.Content).To(Equal(content))
-		})
-
-		It("should clean log parts which are longer then 1 day", func() {
-			// add a job related to the log chuncks
-			job := Job{}
-			job.ExecuteScriptExample()
-			job.Save(db)
-
-			// save different chuncks
-			var contentSlice [3]string
-			for i := 0; i < 3; i++ {
-				chunck := fmt.Sprintf("This is the %d chunck", i)
-				contentSlice[i] = chunck
-				logPart := LogPart{job.RequestID, uint(i), chunck, false, time.Now().Add(-84601 * time.Second)} // bit more the 1 day
-				err := logPart.Save(db)
-				Expect(err).NotTo(HaveOccurred())
-			}
-			content := strings.Join(contentSlice[:], "")
-
-			// clean log parts
-			occurrencies, err := CleanLogParts(db)
+			occurrencies, err := AggregateLogs(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(occurrencies).To(Equal(1))
 

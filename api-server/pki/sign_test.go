@@ -99,10 +99,10 @@ var _ = Describe("Sign csr", func() {
 
 })
 
-var _ = Describe("CleanOldCertificates", func() {
+var _ = Describe("PruneCertificates", func() {
 
 	It("returns an error if no db connection is given", func() {
-		occurrencies, err := CleanOldCertificates(nil)
+		occurrencies, err := PruneCertificates(nil)
 		Expect(err).To(HaveOccurred())
 		Expect(occurrencies).To(Equal(int64(0)))
 	})
@@ -122,7 +122,7 @@ var _ = Describe("CleanOldCertificates", func() {
 		)
 		Expect(err).NotTo(HaveOccurred())
 
-		occurrencies, err := CleanOldCertificates(db)
+		occurrencies, err := PruneCertificates(db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(occurrencies).To(Equal(int64(1)))
 	})
@@ -142,7 +142,7 @@ var _ = Describe("CleanOldCertificates", func() {
 		)
 		Expect(err).NotTo(HaveOccurred())
 
-		occurrencies, err := CleanOldCertificates(db)
+		occurrencies, err := PruneCertificates(db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(occurrencies).To(Equal(int64(0)))
 	})
