@@ -60,11 +60,12 @@ func (j *Janitor) InitScheduler() {
 	fatalfOnError(err, "Failed to bind to database ")
 
 	// start clean jobs
-	jobrunner.Schedule(SCHEDULE_TIME, CleanJobs{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, CleanLogParts{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, CleanLocks{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, CleanTokens{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, CleanCertificates{db: db})
+	jobrunner.Schedule(SCHEDULE_TIME, FailQueuedJobs{db: db})
+	jobrunner.Schedule(SCHEDULE_TIME, FailExpiredJobs{db: db})
+	jobrunner.Schedule(SCHEDULE_TIME, PruneJobs{db: db})
+	jobrunner.Schedule(SCHEDULE_TIME, AggregateLogs{db: db})
+	jobrunner.Schedule(SCHEDULE_TIME, PruneLocks{db: db})
+	jobrunner.Schedule(SCHEDULE_TIME, PruneCertificates{db: db})
 }
 
 func dbConnection(dbConfigFile, env string) (*sql.DB, error) {

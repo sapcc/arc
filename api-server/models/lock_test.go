@@ -68,7 +68,7 @@ var _ = Describe("Lock", func() {
 
 	})
 
-	Describe("CleanLocks", func() {
+	Describe("PruneLocks", func() {
 
 		It("should clean logs older than 6 min", func() {
 			// save a locks 6 min old
@@ -85,7 +85,7 @@ var _ = Describe("Lock", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean locks
-			affectedLocks, err := CleanLocks(db)
+			affectedLocks, err := PruneLocks(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(affectedLocks).To(Equal(int64(1)))
 

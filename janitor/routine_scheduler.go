@@ -9,61 +9,89 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 )
 
-type CleanJobs struct {
+// fail jobs which no heartbeat was send back after created_at + 60 sec
+type FailQueuedJobs struct {
 	db *sql.DB
 }
 
-func (c CleanJobs) Run() {
-	affectHeartbeatJobs, affectTimeOutJobs, affectOldJobs, err := models.CleanJobs(c.db)
+func (c FailQueuedJobs) Run() {
+	affectedJobs, err := models.FailQueuedJobs(c.db)
 	if err != nil {
-		log.Error("Clean jobs: ", err.Error())
+		log.Error("FailQueuedJobs scheduler: ", err.Error())
 	}
-	log.Infof("Clean job routine : %v jobs without heartbeat answer and %v timeout jobs where updated. %v old jobs where deleted", affectHeartbeatJobs, affectTimeOutJobs, affectOldJobs)
+	log.Infof("FailQueuedJobs scheduler: %v jobs without heartbeat answer.", affectedJobs)
 }
 
-type CleanLogParts struct {
+// fail jobs which the timeout + 60 sec has exceeded and still in queued or executing status
+type FailExpiredJobs struct {
 	db *sql.DB
 }
 
-func (c CleanLogParts) Run() {
-	rowsCount, err := models.CleanLogParts(c.db)
+func (c FailExpiredJobs) Run() {
+	affectedJobs, err := models.FailExpiredJobs(c.db)
 	if err != nil {
-		log.Error("Clean log parts routine: ", err.Error())
+		log.Error("FailExpiredJobs scheduler: ", err.Error())
 	}
-	log.Infof("Clean log parts routine: %v aggregable log parts found", rowsCount)
+	log.Infof("FailExpiredJobs scheduler: %v timeout jobs.", affectedJobs)
 }
 
-type CleanLocks struct {
+// delete jobs which are older than 30 days
+type PruneJobs struct {
 	db *sql.DB
 }
 
-func (c CleanLocks) Run() {
-	affectedLocks, err := models.CleanLocks(c.db)
+func (c PruneJobs) Run() {
+	affectedJobs, err := models.PruneJobs(c.db)
 	if err != nil {
-		log.Error("Clean locks routine: ", err.Error())
+		log.Error("PruneJobs scheduler: ", err.Error())
 	}
-	log.Infof("Clean locks routine: %v old (5 min) locks removed from the db", affectedLocks)
+	log.Infof("PruneJobs scheduler: %v old jobs.", affectedJobs)
 }
 
-type CleanTokens struct {
+// aggregate all log parts when final log_part created_at > 5 min
+type AggregateLogs struct {
 	db *sql.DB
 }
 
-func (c CleanTokens) Run() {
-	affectedRows, err := pki.CleanOldTokens(c.db)
+func (c AggregateLogs) Run() {
+	rowsCount, err := models.AggregateLogs(c.db)
 	if err != nil {
-		log.Error("Failed to get count of prune tokens: ", err.Error())
+		log.Error("AggregateLogs scheduler: ", err.Error())
+	}
+	log.Infof("AggregateLogs scheduler: %v aggregable log parts found", rowsCount)
+}
+
+type PruneLocks struct {
+	db *sql.DB
+}
+
+func (c PruneLocks) Run() {
+	affectedLocks, err := models.PruneLocks(c.db)
+	if err != nil {
+		log.Error("PruneLocks scheduler: ", err.Error())
+	}
+	log.Infof("PruneLocks scheduler %v old (5 min) locks removed from the db", affectedLocks)
+}
+
+type PruneTokens struct {
+	db *sql.DB
+}
+
+func (c PruneTokens) Run() {
+	affectedRows, err := pki.PruneTokens(c.db)
+	if err != nil {
+		log.Error("PruneTokens scheduler: Failed to get count of prune tokens: ", err.Error())
 		return
 	}
-	log.Infof("Clean pki tokens routine: %v tokens removed from the db", affectedRows)
+	log.Infof("PruneTokens scheduler: %v tokens removed from the db", affectedRows)
 }
 
-type CleanCertificates struct {
+type PruneCertificates struct {
 	db *sql.DB
 }
 
-func (c CleanCertificates) Run() {
-	affectedRows, err := pki.CleanOldCertificates(c.db)
+func (c PruneCertificates) Run() {
+	affectedRows, err := pki.PruneCertificates(c.db)
 	if err != nil {
 		log.Error("Failed to get count of removed certificates: ", err.Error())
 		return

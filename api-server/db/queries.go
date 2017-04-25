@@ -10,7 +10,7 @@ var UpdateJobQuery = `UPDATE jobs SET status=$1,updated_at=$2 WHERE id=$3`
 var GetAllJobsQuery = "SELECT * FROM jobs %s order by created_at DESC %s"
 var CountAllJobsQuery = "SELECT count(*) FROM jobs %s %s"
 var GetJobQuery = "SELECT * FROM jobs WHERE id=$1"
-var CleanJobsTimeoutQuery = `
+var FailJobsTimeoutQuery = `
 	UPDATE jobs SET status=3,updated_at=NOW()
 	WHERE id IN
 	(
@@ -20,7 +20,7 @@ var CleanJobsTimeoutQuery = `
 		AND (status=1 OR status=2)
 	)
 `
-var CleanJobsNonHeartbeatQuery = `
+var FailJobsNonHeartbeatQuery = `
 	UPDATE jobs SET status=3,updated_at=NOW()
 	WHERE id IN
 	(
@@ -30,7 +30,7 @@ var CleanJobsNonHeartbeatQuery = `
 		AND status=1
 	)
 `
-var CleanJobsOldQuery = `
+var DeleteJobsOldQuery = `
 	DELETE FROM jobs
 	WHERE id IN
 	(
@@ -50,11 +50,10 @@ var GetLogPartQuery = `SELECT * FROM log_parts WHERE job_id=$1 AND number=$2`
 var InsertLogPartQuery = `INSERT INTO log_parts(job_id,number,content,final,created_at) VALUES($1,$2,$3,$4,$5) returning job_id;`
 var CollectLogPartsQuery = "SELECT array_to_string(array_agg(log_parts.content ORDER BY number, job_id), '') AS content FROM log_parts WHERE job_id=$1"
 var DeleteLogPartsQuery = `DELETE FROM log_parts WHERE job_id=$1`
-var GetLogPartsToCleanQuery = `
+var GetLogPartsToAggregateQuery = `
 	SELECT DISTINCT job_id
 	FROM log_parts
 	WHERE (created_at <= NOW() - INTERVAL '1 seconds' * $1 AND final = true)
-	OR created_at <= NOW() - INTERVAL '1 seconds' * $2
 `
 
 // Agents
@@ -88,7 +87,7 @@ var DeleteAgentTagQuery = `
 // Locks
 var GetLockQuery = "SELECT * FROM locks WHERE lock_id=$1"
 var InsertLockQuery = `INSERT INTO locks(lock_id,agent_id,created_at) VALUES($1,$2,$3) returning lock_id`
-var CleanLocksQuery = `
+var DeleteLocksQuery = `
 	DELETE FROM locks
 	WHERE lock_id IN
 	(
@@ -99,7 +98,7 @@ var CleanLocksQuery = `
 `
 
 // pki
-var CleanPkiTokensQuery = `DELETE FROM tokens WHERE created_at < NOW() - INTERVAL '1 second' * $1`
+var DeletePkiTokensQuery = `DELETE FROM tokens WHERE created_at < NOW() - INTERVAL '1 second' * $1`
 var InsertTokenQuery = `INSERT INTO tokens (id, profile, subject) VALUES($1, $2, $3)`
 var GetTokenQuery = `SELECT profile, subject FROM tokens WHERE id=$1 AND created_at > NOW() - INTERVAL '1 hour' FOR UPDATE`
 var InsertTokenWithCreatedAtQuery = `INSERT INTO tokens (id, profile, subject,created_at) VALUES($1, $2, $3, $4)`

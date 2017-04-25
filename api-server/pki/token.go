@@ -75,12 +75,12 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, payload TokenReq
 	return token, nil
 }
 
-func CleanOldTokens(db *sql.DB) (int64, error) {
+func PruneTokens(db *sql.DB) (int64, error) {
 	if db == nil {
 		return 0, errors.New("Clean PKI tokens: Db connection is nil")
 	}
 
-	res, err := db.Exec(ownDb.CleanPkiTokensQuery, 3600)
+	res, err := db.Exec(ownDb.DeletePkiTokensQuery, 3600)
 	if err != nil {
 		return 0, err
 	}

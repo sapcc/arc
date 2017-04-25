@@ -395,14 +395,14 @@ var _ = Describe("Job", func() {
 
 	})
 
-	Describe("CleanJobs", func() {
+	Describe("FailQueuedJobs", func() {
 
 		It("returns an error if no db connection is given", func() {
-			_, _, _, err := CleanJobs(nil)
+			_, err := FailQueuedJobs(nil)
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should clean jobs which no heartbeat was send back after created_at + 60 sec", func() {
+		It("fail jobs which no heartbeat was send back after created_at + 60 sec", func() {
 			// save a job
 			job := Job{}
 			job.CustomExecuteScriptExample(arc.Queued, time.Now().Add(-61*time.Second), 120)
@@ -410,11 +410,9 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			occurHeartbeat, occurTimeOut, occurOld, err := CleanJobs(db)
+			occurHeartbeat, err := FailQueuedJobs(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(occurHeartbeat).To(Equal(int64(1)))
-			Expect(occurTimeOut).To(Equal(int64(0)))
-			Expect(occurOld).To(Equal(int64(0)))
 
 			// check job
 			dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
@@ -423,7 +421,16 @@ var _ = Describe("Job", func() {
 			Expect(dbJob.Status).To(Equal(arc.Failed))
 		})
 
-		It("should clean jobs which the timeout + 60 sec has exceeded and still in queued or executing status", func() {
+	})
+
+	Describe("FailJobsTimeoutQuery", func() {
+
+		It("returns an error if no db connection is given", func() {
+			_, err := FailExpiredJobs(nil)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("fail jobs which the timeout + 60 sec has exceeded and still in queued or executing status", func() {
 			// save a job
 			job := Job{}
 			job.CustomExecuteScriptExample(arc.Executing, time.Now().Add((-20-60)*time.Second), 15) // 60 sec extra to be sure
@@ -436,11 +443,9 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			occurHeartbeat, occurTimeOut, occurOld, err := CleanJobs(db)
+			occurTimeOut, err := FailExpiredJobs(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(occurHeartbeat).To(Equal(int64(1))) // this overlap between hearbeat and timeout criteria
-			Expect(occurTimeOut).To(Equal(int64(1)))
-			Expect(occurOld).To(Equal(int64(0)))
+			Expect(occurTimeOut).To(Equal(int64(2)))
 
 			// check job
 			dbJob := Job{Request: arc.Request{RequestID: job.RequestID}}
@@ -452,6 +457,15 @@ var _ = Describe("Job", func() {
 			err = dbJob2.Get(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbJob2.Status).To(Equal(arc.Failed))
+		})
+
+	})
+
+	Describe("PruneJobs", func() {
+
+		It("returns an error if no db connection is given", func() {
+			_, err := PruneJobs(nil)
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("should clean jobs are older than 30 days", func() {
@@ -467,10 +481,8 @@ var _ = Describe("Job", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// clean jobs
-			occurHeartbeat, occurTimeOut, occurOld, err := CleanJobs(db)
+			occurOld, err := PruneJobs(db)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(occurHeartbeat).To(Equal(int64(0)))
-			Expect(occurTimeOut).To(Equal(int64(0)))
 			Expect(occurOld).To(Equal(int64(1)))
 		})
 

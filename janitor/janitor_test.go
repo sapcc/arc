@@ -40,11 +40,11 @@ var _ = Describe("Janitor", func() {
 	})
 
 	It("should run all clean jobs", func() {
-		routines := "CleanJobs CleanLogParts CleanLocks CleanTokens CleanCertificates"
+		routines := "FailQueuedJobs FailExpiredJobs PruneJobs AggregateLogs PruneLocks PruneCertificates"
 		janitor.InitScheduler()
 		time.Sleep(1 * time.Second)
 
-		Expect(len(jobrunner.Entries())).To(Equal(5))
+		Expect(len(jobrunner.Entries())).To(Equal(6))
 
 		for _, element := range jobrunner.Entries() {
 			// convert data
