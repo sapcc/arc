@@ -7,6 +7,10 @@ import (
 	"github.com/pborman/uuid"
 )
 
+const (
+	MAXIMUM_JOB_TIMEOUT = 86400
+)
+
 type Request struct {
 	Version   int    `json:"version"`
 	Sender    string `json:"sender"`
@@ -178,7 +182,7 @@ func ValidateRequest(request *Request) error {
 		return fmt.Errorf(field_error, "RequestID")
 	}
 
-	if request.Timeout < 1 {
+	if request.Timeout < 1 && request.Timeout > MAXIMUM_JOB_TIMEOUT {
 		return fmt.Errorf(field_error, "Timeout")
 	}
 
