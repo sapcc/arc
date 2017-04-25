@@ -182,7 +182,7 @@ func ValidateRequest(request *Request) error {
 		return fmt.Errorf(field_error, "RequestID")
 	}
 
-	if request.Timeout < 1 && request.Timeout > MAXIMUM_JOB_TIMEOUT {
+	if request.Timeout < 1 || request.Timeout > MAXIMUM_JOB_TIMEOUT {
 		return fmt.Errorf(field_error, "Timeout")
 	}
 
