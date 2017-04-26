@@ -18,11 +18,18 @@ func (h Source) Name() string {
 }
 
 func (h Source) Facts() (map[string]interface{}, error) {
-
 	facts := make(map[string]interface{})
+
 	facts["arc_version"] = version.String()
-	facts["project"] = h.config.Project
-	facts["identity"] = h.config.Identity
-	facts["organization"] = h.config.Organization
+
+	if h.config.Project != "" {
+		facts["project"] = h.config.Project
+	}
+	if h.config.Identity != "" {
+		facts["identity"] = h.config.Identity
+	}
+	if h.config.Organization != "" {
+		facts["organization"] = h.config.Organization
+	}
 	return facts, nil
 }

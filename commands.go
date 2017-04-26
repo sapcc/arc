@@ -77,7 +77,15 @@ var cliCommands = []cli.Command{
 		Name:        "facts",
 		Usage:       cmdUsage["docs-commands-facts"],
 		Description: cmdDescription["docs-commands-facts"],
-		Action:      cmdFacts,
+		Flags: []cli.Flag{
+			optTlsClientCert,
+			optTlsClientKey,
+			optTlsCaCert,
+		},
+		Before: func(c *cli.Context) error {
+			return config.Load(c)
+		},
+		Action: cmdFacts,
 	},
 	{
 		Name:        "update",
