@@ -145,7 +145,7 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 	return nil
 }
 
-// aggregate log parts with final state which are older then 5 min
+// aggregate log parts with final state which are older then 5 min or log parts older then 1 day
 func AggregateLogs(db *sql.DB) (int, error) {
 	if db == nil {
 		return 0, errors.New("Db connection is nil")

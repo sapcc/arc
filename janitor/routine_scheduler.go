@@ -48,7 +48,7 @@ func (c PruneJobs) Run() {
 	log.Infof("PruneJobs scheduler: %v old jobs.", affectedJobs)
 }
 
-// aggregate all log parts when final log_part created_at > 5 min
+// aggregate all log parts when final log_part created_at > 5 min or older the 1 day
 type AggregateLogs struct {
 	db *sql.DB
 }
