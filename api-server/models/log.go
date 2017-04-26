@@ -152,7 +152,7 @@ func AggregateLogs(db *sql.DB) (int, error) {
 	}
 
 	// get log parts to aggregate
-	rows, err := db.Query(ownDb.GetLogPartsToAggregateQuery, 300) // 5 min
+	rows, err := db.Query(ownDb.GetLogPartsToAggregateQuery, 300, 84600) // 5 min and 1 day
 	if err != nil {
 		return 0, err
 	}

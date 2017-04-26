@@ -54,6 +54,7 @@ var GetLogPartsToAggregateQuery = `
 	SELECT DISTINCT job_id
 	FROM log_parts
 	WHERE (created_at <= NOW() - INTERVAL '1 seconds' * $1 AND final = true)
+	OR created_at <= NOW() - INTERVAL '1 seconds' * $2
 `
 
 // Agents
