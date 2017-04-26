@@ -243,7 +243,7 @@ var _ = Describe("Log", func() {
 			Expect(occurrencies).To(Equal(0))
 		})
 
-		It("should clean log parts with final state which are longer then 10 min", func() {
+		It("should aggregate log parts with final state which are longer then 5 min", func() {
 			// add a job related to the log chuncks
 			job := Job{}
 			job.ExecuteScriptExample()
@@ -264,6 +264,41 @@ var _ = Describe("Log", func() {
 			content := strings.Join(contentSlice[:], "")
 
 			// clean log parts
+			occurrencies, err := AggregateLogs(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(occurrencies).To(Equal(1))
+
+			// check log parts
+			logPart := LogPart{JobID: job.RequestID}
+			_, err = logPart.Collect(db)
+			Expect(err).To(HaveOccurred())
+
+			// check log
+			newLog := Log{JobID: job.RequestID}
+			err = newLog.Get(db)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newLog.Content).To(Equal(content))
+		})
+
+		It("should aggregate log parts older than 1 day even if the if they don have the final part", func() {
+			// add a job related to the log chuncks
+			job := Job{}
+			job.ExecuteScriptExample()
+			job.Save(db)
+
+			// save different chuncks
+			var contentSlice [3]string
+			for i := 0; i < 3; i++ {
+				chunck := fmt.Sprintf("This is the %d chunck", i)
+				contentSlice[i] = chunck
+				// log parts with final set to false
+				logPart := LogPart{job.RequestID, uint(i), chunck, false, time.Now().Add(-84601 * time.Second)} // bit more the 1 day
+				err := logPart.Save(db)
+				Expect(err).NotTo(HaveOccurred())
+			}
+			content := strings.Join(contentSlice[:], "")
+
+			// aggregate log parts
 			occurrencies, err := AggregateLogs(db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(occurrencies).To(Equal(1))
