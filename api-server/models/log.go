@@ -136,7 +136,7 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 		if safe {
 			return processLogReply(db, reply)
 		} else {
-			return ReplyExistsError{Msg: fmt.Sprint("IsConcurrencySafe for ProcessLogReply is false. ", fmt.Sprint(reply.RequestID, "_", reply.Number))}
+			return ReplyExistsError{Msg: fmt.Sprint("IsConcurrencySafe: replay already processed. ", fmt.Sprint(reply.RequestID, "_", reply.Number))}
 		}
 	} else {
 		return processLogReply(db, reply)
