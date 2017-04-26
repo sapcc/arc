@@ -26,8 +26,8 @@ func New() Config {
 	//Should be moved to test files at some point
 	return Config{
 		Identity:     runtime.GOOS,
-		Project:      "test-project",
-		Organization: "test-org",
+		Project:      "",
+		Organization: "",
 	}
 }
 

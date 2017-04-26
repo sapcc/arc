@@ -22,13 +22,13 @@ func (h Source) Facts() (map[string]interface{}, error) {
 
 	facts["arc_version"] = version.String()
 
-	if len(h.config.Project) > 0 {
+	if h.config.Project != "" {
 		facts["project"] = h.config.Project
 	}
-	if len(h.config.Identity) > 0 {
+	if h.config.Identity != "" {
 		facts["identity"] = h.config.Identity
 	}
-	if len(h.config.Organization) > 0 {
+	if h.config.Organization != "" {
 		facts["organization"] = h.config.Organization
 	}
 	return facts, nil
