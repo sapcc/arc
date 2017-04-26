@@ -109,7 +109,7 @@ func (fs *Store) update(name string) error {
 	start := time.Now()
 	facts, err := source.plugin.Facts()
 	if err != nil {
-		log.Warn("Failed to update %s facts: %s", name, err)
+		log.Warnf("Failed to update %s facts: %s", name, err)
 		return err
 	}
 	source.mutex.Lock()
