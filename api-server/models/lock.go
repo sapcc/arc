@@ -57,7 +57,7 @@ func IsConcurrencySafe(db Db, messageId string, agentId string) (bool, error) {
 	return true, nil
 }
 
-func CleanLocks(db Db) (int64, error) {
+func PruneLocks(db Db) (int64, error) {
 	if db == nil {
 		return 0, errors.New("Db connection is nil")
 	}
@@ -66,7 +66,7 @@ func CleanLocks(db Db) (int64, error) {
 	affectedLocks = 0
 
 	// get log parts to aggregate
-	res, err := db.Exec(ownDb.CleanLocksQuery, 300) // 5 min
+	res, err := db.Exec(ownDb.DeleteLocksQuery, 300) // 5 min
 	if err != nil {
 		return affectedLocks, err
 	}

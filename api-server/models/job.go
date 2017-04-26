@@ -21,6 +21,10 @@ var (
 		Name: "arc_job_executed",
 		Help: "Total number of jobs executed.",
 	})
+	metricJobExpired = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "arc_job_expired",
+		Help: "Total number of jobs which no response or no final message has been received.",
+	})
 )
 
 type JobTargetAgentNotFoundError struct {
@@ -58,6 +62,7 @@ type Status string
 
 func init() {
 	prometheus.MustRegister(metricJobExecuted)
+	prometheus.MustRegister(metricJobExpired)
 }
 
 func CreateJob(db *sql.DB, data *[]byte, identity string, user *auth.User) (*Job, error) {
@@ -252,15 +257,46 @@ func (job *Job) Update(db *sql.DB) (err error) {
 	return
 }
 
-func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, affectOldJobs int64, err error) {
+// fail jobs which no heartbeat was send back after created_at + 60 sec
+func FailQueuedJobs(db *sql.DB) (affectedJobs int64, err error) {
+	affectedJobs, err = scheduleJob(db, ownDb.FailJobsNonHeartbeatQuery, 60)
+
+	// increment expired jobs
+	if affectedJobs > 0 {
+		metricJobExpired.Add(float64(affectedJobs))
+	}
+
+	return
+}
+
+// fail jobs which the timeout + 60 sec has exceeded and still in queued or executing status
+func FailExpiredJobs(db *sql.DB) (affectedJobs int64, err error) {
+	affectedJobs, err = scheduleJob(db, ownDb.FailJobsTimeoutQuery, 60)
+
+	// increment expired jobs
+	if affectedJobs > 0 {
+		metricJobExpired.Add(float64(affectedJobs))
+	}
+
+	return
+}
+
+// delete jobs which are older than 30 days
+func PruneJobs(db *sql.DB) (affectedJobs int64, err error) {
+	return scheduleJob(db, ownDb.DeleteJobsOldQuery, 30)
+}
+
+// private
+
+func scheduleJob(db *sql.DB, query string, time int) (affectedJobs int64, err error) {
 	if db == nil {
-		return 0, 0, 0, errors.New("Clean job routine: Db connection is nil")
+		return 0, errors.New("schedulerJob: Db connection is nil")
 	}
 
 	// start transaction
 	tx, err := db.Begin()
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, err
 	}
 
 	defer func() {
@@ -271,47 +307,20 @@ func CleanJobs(db *sql.DB) (affectHeartbeatJobs int64, affectTimeOutJobs int64, 
 		err = tx.Commit()
 	}()
 
-	affectHeartbeatJobs = 0
-	affectTimeOutJobs = 0
-	affectOldJobs = 0
+	affectedJobs = 0
 
-	// clean jobs which no heartbeat was send back after created_at + 60 sec
-	res, err := tx.Exec(ownDb.CleanJobsNonHeartbeatQuery, 60)
+	res, err := tx.Exec(query, time)
 	if err != nil {
 		return
 	}
 
-	affectHeartbeatJobs, err = res.RowsAffected()
-	if err != nil {
-		return
-	}
-
-	// clean jobs which the timeout + 60 sec has exceeded and still in queued or executing status
-	res, err = tx.Exec(ownDb.CleanJobsTimeoutQuery, 60)
-	if err != nil {
-		return
-	}
-
-	affectTimeOutJobs, err = res.RowsAffected()
-	if err != nil {
-		return
-	}
-
-	// clean jobs which are older than 30 days
-	res, err = tx.Exec(ownDb.CleanJobsOldQuery, 30)
-	if err != nil {
-		return
-	}
-
-	affectOldJobs, err = res.RowsAffected()
+	affectedJobs, err = res.RowsAffected()
 	if err != nil {
 		return
 	}
 
 	return
 }
-
-// private
 
 func buildJobsQuery(baseQuery string, authProjectId, agentId string, pag *pagination.Pagination) string {
 	resultQuery := fmt.Sprintf(baseQuery, "", "")
@@ -359,7 +368,7 @@ func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
 	for rows.Next() {
 		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
 		if err != nil {
-			log.Errorf("Error scaning job results. Got ", err.Error())
+			log.Errorf("Error scaning job results. Got %v", err)
 			continue
 		}
 		*jobs = append(*jobs, job)
