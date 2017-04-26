@@ -54,7 +54,7 @@ var _ = Describe("Arc", func() {
 		close(done)
 	}, 2.0)
 
-	It("should receive all replies, update job and save log", func(done Done) {
+	It("should receive all replies, update job and save log part", func(done Done) {
 		// save a job
 		job := models.Job{}
 		job.RpcVersionExample()
@@ -83,11 +83,11 @@ var _ = Describe("Arc", func() {
 		Expect(dbJob.Status).To(Equal(arc.Complete))
 		Expect(dbJob.UpdatedAt.Format("2006-01-02 15:04:05.999")).NotTo(Equal(job.UpdatedAt.Format("2006-01-02 15:04:05.999")))
 
-		// check the log is been saved
-		dbLog := models.Log{JobID: job.RequestID}
-		err = dbLog.Get(db)
+		// check the log part is saved
+		dbLogPart := models.LogPart{JobID: job.RequestID, Number: 2}
+		err = dbLogPart.Get(db)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(dbLog.Content).To(Equal(reply.Payload))
+		Expect(dbLogPart.Content).To(Equal(reply.Payload))
 		close(done)
 	}, 2.0)
 

@@ -160,7 +160,7 @@ func firstOrNull(s []string) sql.NullString {
 	return sql.NullString{String: s[0], Valid: true}
 }
 
-func CleanOldCertificates(db *sql.DB) (int64, error) {
+func PruneCertificates(db *sql.DB) (int64, error) {
 	if db == nil {
 		return 0, errors.New("Clean PKI tokens: Db connection is nil")
 	}

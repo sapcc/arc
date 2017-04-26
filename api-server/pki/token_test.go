@@ -143,10 +143,10 @@ var _ = Describe("Token Create", func() {
 
 })
 
-var _ = Describe("CleanOldTokens", func() {
+var _ = Describe("PruneTokens", func() {
 
 	It("returns an error if no db connection is given", func() {
-		occurrencies, err := CleanOldTokens(nil)
+		occurrencies, err := PruneTokens(nil)
 		Expect(err).To(HaveOccurred())
 		Expect(occurrencies).To(Equal(int64(0)))
 	})
@@ -156,7 +156,7 @@ var _ = Describe("CleanOldTokens", func() {
 		_, err := db.Exec(ownDb.InsertTokenWithCreatedAtQuery, uuid.New(), "default", `{}`, time.Now().Add((-65)*time.Minute))
 		Expect(err).NotTo(HaveOccurred())
 
-		occurrencies, err := CleanOldTokens(db)
+		occurrencies, err := PruneTokens(db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(occurrencies).To(Equal(int64(1)))
 	})
@@ -166,7 +166,7 @@ var _ = Describe("CleanOldTokens", func() {
 		_, err := db.Exec(ownDb.InsertTokenWithCreatedAtQuery, uuid.New(), "default", `{}`, time.Now().Add((-15)*time.Minute))
 		Expect(err).NotTo(HaveOccurred())
 
-		occurrencies, err := CleanOldTokens(db)
+		occurrencies, err := PruneTokens(db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(occurrencies).To(Equal(int64(0)))
 	})
