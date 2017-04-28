@@ -145,14 +145,14 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 	return nil
 }
 
-// aggregate log parts with final state which are older then 5 min
+// aggregate log parts with final state which are older then 5 min or log parts older then 1 day
 func AggregateLogs(db *sql.DB) (int, error) {
 	if db == nil {
 		return 0, errors.New("Db connection is nil")
 	}
 
 	// get log parts to aggregate
-	rows, err := db.Query(ownDb.GetLogPartsToAggregateQuery, 300) // 5 min
+	rows, err := db.Query(ownDb.GetLogPartsToAggregateQuery, 300, 84600) // 5 min and 1 day
 	if err != nil {
 		return 0, err
 	}
@@ -196,7 +196,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 	}
 
 	// save log part
-	if reply.Payload != "" {
+	if reply.Payload != "" || reply.Final == true {
 		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, truncate(reply.Payload, 100))
 		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
 
