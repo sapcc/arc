@@ -37,9 +37,7 @@ var _ = Describe("Agents", func() {
 			err := dbAgents.Get(db, "")
 			Expect(err).NotTo(HaveOccurred())
 			// check that the agents are sorted descending
-			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
-			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
-			Expect(dbAgents[2].AgentID).To(Equal(agents[0].AgentID))
+			Expect(len(dbAgents)).To(Equal(3))
 		})
 
 		It("should return an error if the filter syntax is wrong", func() {
@@ -50,8 +48,9 @@ var _ = Describe("Agents", func() {
 		})
 
 		It("should return all agents filtered", func() {
-			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+			facts := `{"os": "%s", "online": true, "project": "test-project", "hostname": "%s", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 			os := []string{"darwin", "windows", "windows"}
+			hostname := []string{"c_hostname", "b_hostname", "a_hostname"}
 
 			// create 3 examples
 			agents := Agents{}
@@ -59,7 +58,7 @@ var _ = Describe("Agents", func() {
 			// update facts in the examples
 			for i := 0; i < len(agents); i++ {
 				currentAgent := agents[i]
-				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i])), &currentAgent.Facts); err != nil {
+				if err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], hostname[i])), &currentAgent.Facts); err != nil {
 					Expect(err).NotTo(HaveOccurred())
 				}
 				err := currentAgent.Update(db)
@@ -106,13 +105,13 @@ var _ = Describe("Agents", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should return all agents sorted by update and descending", func() {
-			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+		It("should return all agents", func() {
+			facts := `{"os": "%s", "online": true, "project": "miau", "hostname": "%s", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 			agents := Agents{}
 			agents.CreateAndSaveAgentExamples(db, 3)
 
 			agent1 := agents[0]
-			json.Unmarshal([]byte(fmt.Sprintf(facts, "windows")), &agent1.Facts)
+			json.Unmarshal([]byte(fmt.Sprintf(facts, "windows", "z_test_hostname")), &agent1.Facts)
 			agent1.Project = "miau"
 			agent1.UpdatedAt = time.Now().Add(-5 * time.Minute)
 			err := agent1.Update(db)
@@ -120,14 +119,14 @@ var _ = Describe("Agents", func() {
 
 			agent2 := agents[1]
 			agent2.Project = "miau"
-			json.Unmarshal([]byte(fmt.Sprintf(facts, "darwin")), &agent2.Facts)
+			json.Unmarshal([]byte(fmt.Sprintf(facts, "darwin", "test_hostname")), &agent2.Facts)
 			agent2.UpdatedAt = time.Now().Add(-30 * time.Minute)
 			err = agent2.Update(db)
 			Expect(err).NotTo(HaveOccurred())
 
 			agent3 := agents[1]
 			agent3.Project = "miau"
-			json.Unmarshal([]byte(fmt.Sprintf(facts, "windows")), &agent3.Facts)
+			json.Unmarshal([]byte(fmt.Sprintf(facts, "windows", "a_test_hostname")), &agent3.Facts)
 			agent3.UpdatedAt = time.Now().Add(-20 * time.Minute)
 			err = agent3.Update(db)
 			Expect(err).NotTo(HaveOccurred())
@@ -139,7 +138,57 @@ var _ = Describe("Agents", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbAgents)).To(Equal(2))
 			// check the right sort
-			Expect(dbAgents[0].CreatedAt.Sub(dbAgents[1].CreatedAt)).To(BeNumerically(">", 0))
+			Expect(dbAgents[0].DisplayName).To(Equal("a_test_hostname"))
+			Expect(dbAgents[1].DisplayName).To(Equal("z_test_hostname"))
+		})
+
+		Describe("sort", func() {
+
+			It("should sort by name", func() {
+				// change authorization
+				authorization.ProjectId = "miau_project"
+
+				// create new custom agents
+				var (
+					// facts
+					os     = []string{"darwin", "windows", "windows"}
+					online = []string{"true", "false", "true"}
+					facts  = `{"os": "%s", "online": "%s", "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+					// tags
+					tagsKey   = []string{"name", "name", "test"}
+					tagsValue = []string{"miau", "bup", "test"}
+				)
+
+				agents := Agents{}
+				agents.CreateAndSaveAgentExamples(db, 3)
+				for i := 0; i < len(agents); i++ {
+					currentAgent := agents[i]
+					// change facts
+					if i == 2 {
+						err := json.Unmarshal([]byte("{}"), &currentAgent.Facts)
+						Expect(err).NotTo(HaveOccurred())
+					}
+					err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i])), &currentAgent.Facts)
+					Expect(err).NotTo(HaveOccurred())
+					currentAgent.Project = "miau_project"
+					err = currentAgent.Update(db)
+					Expect(err).NotTo(HaveOccurred())
+					// add tags
+					err = currentAgent.AddTagAuthorized(db, &authorization, tagsKey[i], tagsValue[i])
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				// insert facts / agent
+				dbAgents := Agents{}
+				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
+				Expect(err).NotTo(HaveOccurred())
+				// check that the agents are sorted descending
+				Expect(len(dbAgents)).To(Equal(3))
+				Expect(dbAgents[0].DisplayName).To(Equal("BERM32186999A"))
+				Expect(dbAgents[1].DisplayName).To(Equal("bup"))
+				Expect(dbAgents[2].DisplayName).To(Equal("miau"))
+			})
+
 		})
 
 		Describe("filter", func() {
@@ -157,9 +206,10 @@ var _ = Describe("Agents", func() {
 
 				// create new custom agents
 				var (
-					facts      = `{"os": "%s", "online": "%s", "project": "miau", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+					facts      = `{"os": "%s", "online": "%s", "project": "miau", "hostname": "%s", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
 					os         = []string{"darwin", "windows", "windows"}
 					online     = []string{"true", "false", "true"}
+					hostname   = []string{"c_hostname", "b_hostname", "a_hostname"}
 					tagsKey    = []string{"landscape", "landscape", "landscape"}
 					tagsValue  = []string{"development", "staging", "production"}
 					tagsKey2   = []string{"pool", "pool", "pool"}
@@ -171,7 +221,7 @@ var _ = Describe("Agents", func() {
 				for i := 0; i < len(agents); i++ {
 					currentAgent := agents[i]
 					// change facts
-					err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i])), &currentAgent.Facts)
+					err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i], hostname[i])), &currentAgent.Facts)
 					Expect(err).NotTo(HaveOccurred())
 					currentAgent.Project = "miau"
 					err = currentAgent.Update(db)

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -138,13 +139,17 @@ func (agent *Agent) Example() {
 }
 
 func (agents *Agents) CreateAndSaveAgentExamples(db *sql.DB, number int) {
-	now := time.Now()
+	// now := time.Now()
 	for i := 0; i < number; i++ {
 		agent := Agent{}
 		agent.Example()
-		agent.CreatedAt = now.Add(time.Duration(i) * time.Minute)
-		agent.UpdatedAt = now.Add(time.Duration(i+1) * time.Minute)
-		err := agent.Save(db)
+		facts := `{"hostname": "%s"}`
+		facts_test := fmt.Sprintf(facts, fmt.Sprint("hostname-", strconv.Itoa(i)))
+		err := json.Unmarshal([]byte(facts_test), &agent.Facts)
+		if err != nil {
+			log.Error(err)
+		}
+		err = agent.Save(db)
 		if err != nil {
 			log.Error(err)
 		}

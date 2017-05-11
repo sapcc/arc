@@ -233,7 +233,6 @@ func ValidateRegistration(reg *Registration) error {
 	if reg.Version < 1 {
 		return fmt.Errorf(field_error, "Version")
 	}
-
 	if reg.Organization == "" {
 		return fmt.Errorf(field_error, "Organization")
 	}
