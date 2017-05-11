@@ -152,6 +152,6 @@ func (s *server) setupFactStore() *fact.Store {
 	store.AddSource(network.New(), 1*time.Minute)
 	store.AddSource(arc_facts.New(s.config), 0)
 	store.AddSource(agents.New(), 1*time.Minute)
-	store.AddSource(metadata.New(), 1*time.Minute)
+	store.AddSource(metadata.New(false), 1*time.Minute)
 	return store
 }
