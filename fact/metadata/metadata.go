@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -14,8 +15,10 @@ type Source struct{}
 
 var metadataURL = "http://169.254.169.254/openstack/latest/meta_data.json"
 var ipv4Url = "http://169.254.169.254/latest/meta-data/public-ipv4"
+var ignoreNilFacts = false
 
-func New() Source {
+func New(ignoreNil bool) Source {
+	ignoreNilFacts = ignoreNil
 	return Source{}
 }
 
@@ -25,6 +28,14 @@ func (h Source) Name() string {
 
 func (h Source) Facts() (map[string]interface{}, error) {
 	facts := make(map[string]interface{})
+	if !ignoreNilFacts {
+		facts = map[string]interface{}{
+			"metadata_uuid":              nil,
+			"metadata_availability_zone": nil,
+			"metadata_name":              nil,
+			"metadata_public_ipv4":       nil,
+		}
+	}
 
 	timeout := time.Duration(1 * time.Second)
 	client := http.Client{
@@ -63,7 +74,7 @@ func floatingIP(client http.Client) string {
 	ipv4 := ""
 	scanner := bufio.NewScanner(r.Body)
 	for scanner.Scan() {
-		if scanner.Text() != "" {
+		if scanner.Text() != "" && net.ParseIP(scanner.Text()) != nil {
 			ipv4 = scanner.Text()
 			break
 		}
