@@ -393,6 +393,14 @@ var _ = Describe("Agent", func() {
 			// insert facts / agent
 			agent := Agent{}
 			agent.Example()
+			facts := `{"hostname": "miua_hostname"}`
+			if err := json.Unmarshal([]byte(facts), &agent.Facts); err != nil {
+				Expect(err).NotTo(HaveOccurred())
+			}
+			tags := `{"name": "arturo"}`
+			if err := json.Unmarshal([]byte(tags), &agent.Tags); err != nil {
+				Expect(err).NotTo(HaveOccurred())
+			}
 			err := agent.Save(db)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -400,10 +408,12 @@ var _ = Describe("Agent", func() {
 			newAgent := Agent{AgentID: agent.AgentID}
 			err = newAgent.Get(db)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(newAgent.DisplayName).To(Equal("arturo"))
 			Expect(agent.AgentID).To(Equal(newAgent.AgentID))
 			Expect(agent.Project).To(Equal(newAgent.Project))
 			Expect(agent.Organization).To(Equal(newAgent.Organization))
 			Expect(agent.Facts).To(Equal(newAgent.Facts))
+			Expect(agent.Tags).To(Equal(newAgent.Tags))
 			Expect(agent.CreatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(newAgent.CreatedAt.Format("2006-01-02 15:04:05.99")))
 			Expect(agent.UpdatedAt.Format("2006-01-02 15:04:05.99")).To(Equal(newAgent.UpdatedAt.Format("2006-01-02 15:04:05.99")))
 		})
