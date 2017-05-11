@@ -650,15 +650,15 @@ var _ = Describe("Agent Handlers", func() {
 			dbAgents := make(models.Agents, 0)
 			err = json.Unmarshal(w.Body.Bytes(), &dbAgents)
 			Expect(err).NotTo(HaveOccurred())
-
-			Expect(dbAgents[0].AgentID).To(Equal(agents[2].AgentID))
+			Expect(dbAgents[0].AgentID).To(Equal(agents[0].AgentID))
 			Expect(dbAgents[1].AgentID).To(Equal(agents[1].AgentID))
-			Expect(dbAgents[2].AgentID).To(Equal(agents[0].AgentID))
+			Expect(dbAgents[2].AgentID).To(Equal(agents[2].AgentID))
 		})
 
 		It("returns all agents filtered", func() {
 			var (
-				facts      = `{"os": "%s", "online": "%s", "project": "test-project", "hostname": "BERM32186999A", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+				facts      = `{"os": "%s", "online": "%s", "project": "test-project", "hostname": "%s", "identity": "darwin", "platform": "mac_os_x", "arc_version": "0.1.0-dev(69f43fd)", "memory_used": 9206046720, "memory_total": 17179869184, "organization": "test-org"}`
+				hostname   = []string{"c_hostname", "b_hostname", "a_hostname"}
 				os         = []string{"darwin", "windows", "windows"}
 				online     = []string{"true", "false", "true"}
 				tagsKey    = []string{"landscape", "landscape", "landscape"}
@@ -671,7 +671,7 @@ var _ = Describe("Agent Handlers", func() {
 			for i := 0; i < len(agents); i++ {
 				currentAgent := agents[i]
 				// change facts
-				err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i])), &currentAgent.Facts)
+				err := json.Unmarshal([]byte(fmt.Sprintf(facts, os[i], online[i], hostname[i])), &currentAgent.Facts)
 				Expect(err).NotTo(HaveOccurred())
 				err = currentAgent.Update(db)
 				Expect(err).NotTo(HaveOccurred())
