@@ -50,6 +50,7 @@ func (e *TagError) MessagesToJson() (string, error) {
 }
 
 type Agent struct {
+	DisplayName  string    `json:"display_name"`
 	AgentID      string    `json:"agent_id"`
 	Project      string    `json:"project"`
 	Organization string    `json:"organization"`
@@ -443,7 +444,7 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) err
 
 	for rows.Next() {
 		agent := Agent{}
-		err = rows.Scan(&agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
+		err = rows.Scan(&agent.DisplayName, &agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
 		if err != nil {
 			log.Errorf("Error scaning agent results. Got ", err.Error())
 			continue
