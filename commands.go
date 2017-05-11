@@ -314,7 +314,7 @@ func cmdFacts(c *cli.Context) {
 	store.AddSource(network.New(), 0)
 	store.AddSource(arc_facts.New(config), 0)
 	store.AddSource(agents.New(), 0)
-	store.AddSource(metadata.New(), 0)
+	store.AddSource(metadata.New(true), 0)
 	j, err := json.MarshalIndent(store.Facts(), " ", "  ")
 	if err != nil {
 		log.Warnf("Failed to generate json: %s", err)
