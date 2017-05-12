@@ -11,6 +11,9 @@ description: The main interface to Arc is a RESTful HTTP API. The API can be use
 The main interface to Arc is a RESTful HTTP API. The API can be used to perform operations or collect
 information from one or different Arc servers.
 
+-> **Note:** The term `agent` will be changed to `node` in the near future. Allthough it is not yet changed in the Arc API and this documentation, it is already being used in the <b>[Elektra dashboard](https://dashboard.***REMOVED***)</b>, <b>[Lyra-CLI](https://documentation.***REMOVED***/docs/automation/cli/)</b> and in the <b>[global documentation](https://documentation.***REMOVED***/docs/automation/details.html)</b>.
+
+
 * [Definition](#definition)
 * [Paginating lists](#paginating_lists)
 * [List all agents](#list_all_agents)
@@ -89,6 +92,7 @@ Transfer-Encoding: chunked
 [
 	{
 		agent_id: "darwin",
+		display_name: "test_server",
 		created_at: "2015-06-18T15:13:10.164307Z",
 		updated_at: "2015-06-18T15:13:10.164307Z"
 	},
@@ -96,7 +100,11 @@ Transfer-Encoding: chunked
 ]
 ```
 
-Agents are `sorted` by creation date newest first.
+Agents are `sorted` by the attribute `display_name`. The `display_name` attribute is a virtual attribute created on time of retrieving the agent information as following:
+
+- check tag with key `name`, if not given
+- check fact with key `hostname`, if not given
+- set the `agent_id` attribute
 
 <a href="#back_to_top" class="back_to_top">Top &uarr;</a>
 
