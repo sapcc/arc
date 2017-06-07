@@ -10,6 +10,7 @@ import (
 var (
 	chefClientBinary = "C:/opscode/chef/bin/chef-client.bat"
 	chefSoloBinary   = "C:/opscode/chef/bin/chef-solo.bat"
+	eol              = "\r\n"
 )
 
 func install(installer string) error {

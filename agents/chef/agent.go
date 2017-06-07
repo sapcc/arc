@@ -25,9 +25,10 @@ type chefAgent struct{}
 
 var (
 	defaultOmnitruckUrl = "https://www.chef.io/chef/metadata"
-	clientRbTemplate    = template.Must(template.New("client.rb").Parse(`chef_repo_path '{{ .chefRepoPath }}'
+	clientRbTemplate    = template.Must(template.New("client.rb").Parse(`chef_repo_path '{{ .chefRepoPath }}'{{.eol -}}
+recipe_url '{{.recipeURL}}'{{ .eol -}}
 {{ if .nodeName -}}
-node_name '{{.nodeName}}'
+node_name '{{.nodeName}}'{{ .eol -}}
 {{ end -}}`))
 )
 
@@ -143,6 +144,8 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	if err != nil {
 		return "", fmt.Errorf("Failed to create temporary directory: %s", tmpDir)
 	}
+	//on windows ioutil.TempDir returns backslashes
+	tmpDir = strings.Replace(tmpDir, `\`, "/", -1)
 
 	log_level := "info"
 	if data.Debug {
@@ -172,6 +175,8 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	configVars := map[string]string{
 		"nodeName":     data.NodeName,
 		"chefRepoPath": tmpDir,
+		"recipeURL":    data.RecipeURL,
+		"eol":          eol,
 	}
 
 	if err = clientRbTemplate.Execute(configFile, configVars); err != nil {
@@ -215,9 +220,9 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	var process *arc.Subprocess
 	if installedVersion.LessThan(chefZeroMinimalVersion) {
 		log.Warnf("Detected chef version < %s, falling back to chef-solo", chefZeroMinimalVersion)
-		process = arc.NewSubprocess(chefSoloBinary, "--no-fork", "--recipe-url", data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
+		process = arc.NewSubprocess(chefSoloBinary, "--no-fork", "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
 	} else {
-		process = arc.NewSubprocess(chefClientBinary, "--local-mode", "--no-fork", "--recipe-url", data.RecipeURL, "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
+		process = arc.NewSubprocess(chefClientBinary, "--local-mode", "--no-fork", "-c", configFile.Name(), "-j", dnaFile.Name(), "--log_level", log_level)
 	}
 	log.Info("Running ", strings.Join(process.Command, " "))
 
@@ -226,7 +231,7 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 		return "", err
 	}
 	//send heartbeat so that the caller knows the command is executing
-	job.Heartbeat("Running " + strings.Join(process.Command, " "))
+	job.Heartbeat(fmt.Sprintf("Running %s\nusing recipe tarball at %s\n", strings.Join(process.Command, " "), data.RecipeURL))
 
 	for {
 		select {
