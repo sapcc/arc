@@ -47,7 +47,7 @@ unit:
 
 .PHONY: metalint
 metalint:
-	gometalinter -E goimports -D goconst -D unconvert -D gotype -D aligncheck -D structcheck -D deadcode -D gocyclo -D interfacer -D errcheck -D dupl -D vetshadow -D golint -D vet -D varcheck -D gosimple --deadline=10s $(shell echo $(packages) | sed -e 's!$(PKG_NAME)!.!g')
+	gometalinter -E goimports -D goconst -D unconvert -D gotype -D aligncheck -D structcheck -D deadcode -D gocyclo -D interfacer -D errcheck -D dupl -D vetshadow -D golint -D vet -D varcheck -D gosimple -D staticcheck --deadline=60s $(shell echo $(packages) | sed -e 's!$(PKG_NAME)!.!g')
 
 .PHONY: test-win
 test-win: 
