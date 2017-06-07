@@ -6,7 +6,7 @@ import "text/template"
 
 var powershellScriptInstaller = template.Must(template.New("name").Parse(`#ps1_sysnative
 mkdir C:\\monsoon\\arc
-powershell (new-object System.Net.WebClient).DownloadFile('{{ .UpdateURL }}/arc/windows/amd64/latest','C:\\monsoon\\arc\\arc.exe')
+(New-Object System.Net.WebClient).DownloadFile('{{ .UpdateURL }}/arc/windows/amd64/latest','C:\\monsoon\\arc\\arc.exe')
 C:\\monsoon\\arc\\arc.exe init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }}
 `))
 
