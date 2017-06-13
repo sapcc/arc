@@ -1,6 +1,6 @@
 package filter
 
-//go:generate go tool yacc -v "" -o parser.go expr.y
+//go:generate goyacc -v "" -o parser.go expr.y
 //go:generate gofmt -w parser.go
 //go:generate nex -e -o lexer.go expr.nex
 //go:generate gofmt -w lexer.go

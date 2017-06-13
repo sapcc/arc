@@ -91,6 +91,48 @@ func TestNumberNotEqualFilter(t *testing.T) {
 	}
 }
 
+func TestStringLikeFilter(t *testing.T) {
+	filter, err := Postgresql(`column ^ "*query*"`)
+	if err != nil {
+		t.Error("Parsing query failed: ", err)
+	}
+
+	expected := fmt.Sprintf(`%s->>'column' LIKE '%%query%%'`, tagsColumn) // %% = % (escaping)
+
+	if filter != expected {
+		t.Errorf("Unexpected filter result, got `%s` expected `%s`", filter, expected)
+	}
+
+	filter, err = Postgresql(`"*query*" ^ column`)
+	if err != nil {
+		t.Error("Parsing query failed: ", err)
+	}
+	if filter != expected {
+		t.Errorf("Unexpected filter result, got `%s` expected `%s`", filter, expected)
+	}
+}
+
+func TestStringNotLikeFilter(t *testing.T) {
+	filter, err := Postgresql(`column !^ "*que+ry*"`)
+	if err != nil {
+		t.Error("Parsing query failed: ", err)
+	}
+
+	expected := fmt.Sprintf(`%s->>'column' NOT LIKE '%%que_ry%%'`, tagsColumn) // %% = % (escaping)
+
+	if filter != expected {
+		t.Errorf("Unexpected filter result, got `%s` expected `%s`", filter, expected)
+	}
+
+	filter, err = Postgresql(`"*que+ry*" !^ column`)
+	if err != nil {
+		t.Error("Parsing query failed: ", err)
+	}
+	if filter != expected {
+		t.Errorf("Unexpected filter result, got `%s` expected `%s`", filter, expected)
+	}
+}
+
 func TestEmptyFilter(t *testing.T) {
 	_, err := Postgresql(``)
 	if err == nil {
@@ -99,13 +141,12 @@ func TestEmptyFilter(t *testing.T) {
 }
 
 func TestCompoundFilter(t *testing.T) {
-	filter, err := Postgresql(`@fact1 = "1" OR tag2 != "2" AND NOT (tag3 = "3" AND @fact4 = "4")`)
+	filter, err := Postgresql(`@fact1 = "1" OR tag2 != "2" AND NOT (tag3 ^ "*3*" AND @fact4 = "4")`)
 	if err != nil {
 		t.Error("Parsing query failed: ", err)
 	}
-	expected := "( facts->>'fact1' = '1' OR ( tags->>'tag2' <> '2' AND NOT ( ( tags->>'tag3' = '3' AND facts->>'fact4' = '4' ) ) ) )"
+	expected := "( facts->>'fact1' = '1' OR ( tags->>'tag2' <> '2' AND NOT ( ( tags->>'tag3' LIKE '%3%' AND facts->>'fact4' = '4' ) ) ) )"
 	if filter != expected {
 		t.Errorf("Unexpected filter result: `%s`", filter)
 	}
-
 }
