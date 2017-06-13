@@ -369,6 +369,55 @@ func NewLexerWithInit(in io.Reader, initFun func(*Lexer)) *Lexer {
 			},
 		}, []int{ /* Start-of-input transitions */ -1, -1}, []int{ /* End-of-input transitions */ -1, -1}, nil},
 
+		// !\^
+		{[]bool{false, false, true}, []func(rune) int{ // Transitions
+			func(r rune) int {
+				switch r {
+				case 33:
+					return 1
+				case 94:
+					return -1
+				}
+				return -1
+			},
+			func(r rune) int {
+				switch r {
+				case 33:
+					return -1
+				case 94:
+					return 2
+				}
+				return -1
+			},
+			func(r rune) int {
+				switch r {
+				case 33:
+					return -1
+				case 94:
+					return -1
+				}
+				return -1
+			},
+		}, []int{ /* Start-of-input transitions */ -1, -1, -1}, []int{ /* End-of-input transitions */ -1, -1, -1}, nil},
+
+		// \^
+		{[]bool{false, true}, []func(rune) int{ // Transitions
+			func(r rune) int {
+				switch r {
+				case 94:
+					return 1
+				}
+				return -1
+			},
+			func(r rune) int {
+				switch r {
+				case 94:
+					return -1
+				}
+				return -1
+			},
+		}, []int{ /* Start-of-input transitions */ -1, -1}, []int{ /* End-of-input transitions */ -1, -1}, nil},
+
 		// \(
 		{[]bool{false, true}, []func(rune) int{ // Transitions
 			func(r rune) int {
@@ -522,23 +571,42 @@ func NewLexerWithInit(in io.Reader, initFun func(*Lexer)) *Lexer {
 		}, []int{ /* Start-of-input transitions */ -1, -1, -1, -1, -1, -1}, []int{ /* End-of-input transitions */ -1, -1, -1, -1, -1, -1}, nil},
 
 		// @?[-_a-zA-Z][-_a-zA-Z0-9]*
-		{[]bool{false, true, false, true}, []func(rune) int{ // Transitions
+		{[]bool{false, false, true, true}, []func(rune) int{ // Transitions
 			func(r rune) int {
 				switch r {
 				case 45:
-					return 1
-				case 64:
 					return 2
-				case 95:
+				case 64:
 					return 1
+				case 95:
+					return 2
 				}
 				switch {
-				case 97 <= r && r <= 122:
-					return 1
 				case 48 <= r && r <= 57:
 					return -1
 				case 65 <= r && r <= 90:
-					return 1
+					return 2
+				case 97 <= r && r <= 122:
+					return 2
+				}
+				return -1
+			},
+			func(r rune) int {
+				switch r {
+				case 45:
+					return 2
+				case 64:
+					return -1
+				case 95:
+					return 2
+				}
+				switch {
+				case 48 <= r && r <= 57:
+					return -1
+				case 65 <= r && r <= 90:
+					return 2
+				case 97 <= r && r <= 122:
+					return 2
 				}
 				return -1
 			},
@@ -552,31 +620,12 @@ func NewLexerWithInit(in io.Reader, initFun func(*Lexer)) *Lexer {
 					return 3
 				}
 				switch {
-				case 97 <= r && r <= 122:
-					return 3
 				case 48 <= r && r <= 57:
 					return 3
 				case 65 <= r && r <= 90:
 					return 3
-				}
-				return -1
-			},
-			func(r rune) int {
-				switch r {
-				case 45:
-					return 1
-				case 64:
-					return -1
-				case 95:
-					return 1
-				}
-				switch {
 				case 97 <= r && r <= 122:
-					return 1
-				case 48 <= r && r <= 57:
-					return -1
-				case 65 <= r && r <= 90:
-					return 1
+					return 3
 				}
 				return -1
 			},
@@ -590,11 +639,11 @@ func NewLexerWithInit(in io.Reader, initFun func(*Lexer)) *Lexer {
 					return 3
 				}
 				switch {
-				case 97 <= r && r <= 122:
-					return 3
 				case 48 <= r && r <= 57:
 					return 3
 				case 65 <= r && r <= 90:
+					return 3
+				case 97 <= r && r <= 122:
 					return 3
 				}
 				return -1
@@ -731,35 +780,43 @@ OUTER0:
 			}
 		case 6:
 			{
-				return '('
+				return NLIKE
 			}
 		case 7:
 			{
-				return ')'
+				return '^'
 			}
 		case 8:
 			{
-				t := yylex.Text()
-				lval.str = t[1 : len(t)-1]
-				return STRING
+				return '('
 			}
 		case 9:
+			{
+				return ')'
+			}
+		case 10:
 			{
 				t := yylex.Text()
 				lval.str = t[1 : len(t)-1]
 				return STRING
 			}
-		case 10:
+		case 11:
+			{
+				t := yylex.Text()
+				lval.str = t[1 : len(t)-1]
+				return STRING
+			}
+		case 12:
 			{
 				lval.str = yylex.Text()
 				return FIELD
 			}
-		case 11:
+		case 13:
 			{
 				lval.num, _ = strconv.Atoi(yylex.Text())
 				return NUMBER
 			}
-		case 12:
+		case 14:
 			{
 				return 1
 			}

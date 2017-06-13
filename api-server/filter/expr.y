@@ -3,11 +3,14 @@
 package filter
 
 import (
-	"fmt"
+  "fmt"
+  "strings"
 )
 
 var factsColumn = "facts"
 var tagsColumn = "tags"
+
+var likeSyntax = strings.NewReplacer("*", "%", "+", "_")
 
 %}
 
@@ -19,20 +22,20 @@ var tagsColumn = "tags"
 %type <str> expr term comp
 
 %token <str> FIELD
-%token <str> STRING 
-%token <num> NUMBER 
+%token <str> STRING
+%token <num> NUMBER
 
-%token '='  '(' ')'
-%token NEQ AND OR NOT
+%token '=' '(' ')' '^'
+%token NEQ NLIKE AND OR NOT
 
 %left OR
 %left AND
-%left NOT 
+%left NOT
 
 %%
 
 expr:
-   term 
+   term
    {
       yylex.(*Lexer).parseResult = $1
    }
@@ -46,7 +49,7 @@ term:
   '(' term ')'
   {
     $$ = fmt.Sprintf(`( %s )`, $2)
-  } 
+  }
 |
   term OR term
   {
@@ -74,7 +77,7 @@ comp:
       $$ = fmt.Sprintf("%s = '%s'", stringKey($3), $1)
    }
 |
-  FIELD NEQ STRING 
+  FIELD NEQ STRING
    {
       $$ = fmt.Sprintf("%s <> '%s'", stringKey($1), $3)
    }
@@ -82,6 +85,26 @@ comp:
   STRING NEQ FIELD
    {
       $$ = fmt.Sprintf("%s <> '%s'", stringKey($3), $1)
+   }
+|
+  FIELD '^' STRING
+   {
+      $$ = fmt.Sprintf("%s LIKE '%s'", stringKey($1), likeSyntax.Replace($3))
+   }
+|
+  STRING '^' FIELD
+   {
+      $$ = fmt.Sprintf("%s LIKE '%s'", stringKey($3), likeSyntax.Replace($1))
+   }
+|
+  FIELD NLIKE STRING
+   {
+      $$ = fmt.Sprintf("%s NOT LIKE '%s'", stringKey($1), likeSyntax.Replace($3))
+   }
+|
+  STRING NLIKE FIELD
+   {
+      $$ = fmt.Sprintf("%s NOT LIKE '%s'", stringKey($3), likeSyntax.Replace($1))
    }
 |
   FIELD '=' NUMBER
@@ -106,7 +129,7 @@ comp:
 %%
 
 func stringKey(field string) string {
-  
+
   column := tagsColumn
   if field[0] == '@' {
     field=field[1:]

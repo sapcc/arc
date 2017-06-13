@@ -116,10 +116,12 @@ Following operators are available:
 
 <div class="filter-operators">
 
-| Comparison Operators      | Description                                |
-|:--------------------------|:-------------------------------------------|
-| =                         | Performs a equal-to comparison             |
-| !=                        | Performs a not-equal-to comparison         |
+| Comparison Operators      | Description                                       |
+|:--------------------------|:--------------------------------------------------|
+| =                         | Performs a equal-to comparison                    |
+| !=                        | Performs a not-equal-to comparison                |
+| ^                         | Performs a comparison with wildcards, where `*` matches zero or more characters and `+` matches exactly one character. (e.g `"hallo" ^ "*ll+"` would be a match) |
+| !^                        | The negation of the ^ comparison (does not match) |
 
 </div>
 

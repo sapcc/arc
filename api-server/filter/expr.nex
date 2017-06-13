@@ -4,6 +4,8 @@
 /NOT/           { return NOT }
 /!=/            { return NEQ }
 /=/             { return '='  }
+/!\^/           { return NLIKE  }
+/\^/            { return '^' }
 /\(/             { return '(' }
 /\)/             { return ')' }
 /"([^"]|\\")+"/ { t := yylex.Text(); lval.str = t[1:len(t)-1]; return STRING }
