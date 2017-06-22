@@ -274,6 +274,11 @@ jobs:
         params:
           REGION: staging
           GITHUB_TOKEN: {{github-access-token}}
+      - task: prune replicasets
+        file: arc.git/ci/tasks/prune-replicasets.yaml
+        params:
+          REGION: staging
+          GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
   - name: staging-tests
@@ -349,7 +354,13 @@ jobs:
         params:
           REGION: eu-de-1
           GITHUB_TOKEN: {{github-access-token}}
-      - <<: *post_deployment_end_to_slack
+      - aggregate:
+        - <<: *post_deployment_end_to_slack
+        - task: prune replicasets
+          file: arc.git/ci/tasks/prune-replicasets.yaml
+          params:
+            REGION: eu-de-1
+            GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
   - name: ap-au-1
@@ -369,7 +380,13 @@ jobs:
         params:
           REGION: ap-au-1
           GITHUB_TOKEN: {{github-access-token}}
-      - <<: *post_deployment_end_to_slack
+      - aggregate:
+        - <<: *post_deployment_end_to_slack
+        - task: prune replicasets
+          file: arc.git/ci/tasks/prune-replicasets.yaml
+          params:
+            REGION: ap-au-1
+            GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
 
@@ -390,7 +407,13 @@ jobs:
         params:
           REGION: eu-nl-1
           GITHUB_TOKEN: {{github-access-token}}
-      - <<: *post_deployment_end_to_slack
+      - aggregate:
+        - <<: *post_deployment_end_to_slack
+        - task: prune replicasets
+          file: arc.git/ci/tasks/prune-replicasets.yaml
+          params:
+            REGION: ap-nl-1
+            GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
 
@@ -411,7 +434,13 @@ jobs:
         params:
           REGION: ap-cn-1
           GITHUB_TOKEN: {{github-access-token}}
-      - <<: *post_deployment_end_to_slack
+      - aggregate:
+        - <<: *post_deployment_end_to_slack
+        - task: prune replicasets
+          file: arc.git/ci/tasks/prune-replicasets.yaml
+          params:
+            REGION: ap-cn-1
+            GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
   #- name: production-tests
