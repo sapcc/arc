@@ -316,10 +316,10 @@ jobs:
 
           params:
             API_SERVER: https://arc.***REMOVED***
-            KEYSTONE_ENDPOINT: https://identity.***REMOVED***:5000/v3
-            DOMAIN: monsoon2
-            PROJECT: Arc_Test
-            USERNAME: arc_test
+            KEYSTONE_ENDPOINT: https://identity.***REMOVED***/v3
+            DOMAIN: monsoon3
+            PROJECT: Arc Test
+            USERNAME: T4B96B3205DB2E42F
             PASSWORD: {{staging-tests-password}}
     on_failure:
       <<: *post_failure_to_slack

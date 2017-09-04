@@ -4,7 +4,7 @@
 set -e
 require_env () {
   val=$(eval echo \${$1})
-  if [ -z $val ]; then
+  if [ -z "$val" ]; then
     echo "$1 environment variable missing"
     exit 1
   fi

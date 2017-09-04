@@ -51,15 +51,15 @@ headers=$(curl --silent -o /dev/null -D -  \
       "password": {
         "user": {
           "name": "'$USERNAME'",
-          "domain": { "name": "'$DOMAIN'"   },
+          "domain": { "name": "'"$DOMAIN"'"   },
           "password": "'$PASSWORD'"
         }
       }
     },
     "scope": {
       "project": {
-        "name": "'$PROJECT'",
-        "domain": {"name":"'$DOMAIN'"} 
+        "name": "'"$PROJECT"'",
+        "domain": {"name":"'"$DOMAIN"'"}
       }
     }
   }
@@ -71,7 +71,7 @@ token=$(echo "$headers" | sed -n 's/X-Subject-Token: \([-_0-9a-zA-Z]*\).*/\1/p' 
 if [ -n "$token" ]; then
   echo $token
 else
-  echo "Failed to get token from $KEYSTONE_ENDPOINT for user: $USERNAME, domain: $DOMAIN, project:$PROJECT" 1>&2
+  echo "Failed to get token from $KEYSTONE_ENDPOINT for user: $USERNAME, domain: $DOMAIN, project: $PROJECT" 1>&2
   echo -e "Response headers:\n$headers" 1>&2
   exit 1
 fi
