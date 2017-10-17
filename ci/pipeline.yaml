@@ -347,7 +347,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -373,7 +373,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -399,7 +399,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -426,7 +426,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -453,7 +453,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -479,7 +479,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -505,7 +505,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -531,7 +531,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -557,7 +557,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
@@ -583,7 +583,7 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true, version: { ref: '20161207.1'} }
         - { get: mosquitto.git, passed: [staging-tests] }
         - { get: api.version, passed: [staging-tests], trigger: true }
         - { get: arc.git, passed: [staging-tests] }
