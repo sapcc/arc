@@ -205,7 +205,7 @@ func runServer(c *cli.Context) {
 			log.Infof("Generating ephemeral client certificate for identity %#v", cn)
 			csrBytes, clientKey, err := pki.CreateCSR(cn, "arc-api", "arc-api")
 			FatalfOnError(err, "Failed to create CSR: %s", err)
-			clientCert, err := pki.Sign(csrBytes, signer.Subject{CN: cn, Names: []csr.Name{O: "arc-api", OU: "arc-api"}}, "default")
+			clientCert, err := pki.Sign(csrBytes, signer.Subject{CN: cn, Names: []csr.Name{csr.Name{O: "arc-api", OU: "arc-api"}}}, "default")
 			FatalfOnError(err, "Failed to sign ephemeral certificate: %s", err)
 			tlsCert, err := tls.X509KeyPair(clientCert, clientKey)
 			FatalfOnError(err, "Failed to use generated certificate: %s", err)
