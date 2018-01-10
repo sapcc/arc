@@ -65,14 +65,14 @@ func Init(c *cli.Context, appName string) (int, error) {
 				CommonName: cn,
 			},
 		}
-		log.Infof("Creating signing request for itentity %#v", cn)
+		log.Infof("Creating signing request for identity %#v", cn)
 		csrData, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
 		if err != nil {
 			return 1, fmt.Errorf("Failed to generate csr: %v", err)
 		}
 		var csr bytes.Buffer
 		if err = pem.Encode(&csr, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrData}); err != nil {
-			return 1, fmt.Errorf("Failed to pem encode certificate request")
+			return 1, fmt.Errorf("Failed to PEM encode certificate request")
 		}
 
 		log.Info("Requesting certificate from registration endpoint")
