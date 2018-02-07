@@ -71,6 +71,7 @@ groups:
       - ap-au-1
       - ap-cn-1
       - ap-jp-1
+      - ap-jp-2
       - eu-de-1
       - eu-nl-1
       - eu-ru-1
@@ -527,6 +528,32 @@ jobs:
           file: arc.git/ci/prune-replicasets.yaml
           params:
             REGION: ap-jp-1
+            GITHUB_TOKEN: {{github-access-token}}
+    on_failure:
+      <<: *post_failure_to_slack
+  - name: ap-jp-2
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
+        - { get: mosquitto.git, passed: [staging-tests] }
+        - { get: api.version, passed: [staging-tests], trigger: true }
+        - { get: arc.git, passed: [staging-tests] }
+        - { get: charts.git, passed: [staging-tests] }
+        - { get: secrets.git }
+      - <<: *post_deployment_start_to_slack
+      - task: deployment
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: ap-jp-2
+          GITHUB_TOKEN: {{github-access-token}}
+      - aggregate:
+        - <<: *post_deployment_end_to_slack
+        - task: prune replicasets
+          file: arc.git/ci/prune-replicasets.yaml
+          params:
+            REGION: ap-jp-2
             GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
