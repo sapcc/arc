@@ -67,6 +67,7 @@ groups:
       - mosquitto-build
       - staging
       - staging-tests
+      - promote
       - release-stable
       - ap-ae-1
       - ap-au-1
@@ -215,12 +216,12 @@ jobs:
           passed: [ api-tests ]
         - get: api.version
           params: { bump: true }
-      - aggregate: 
+      - aggregate:
         - task: api
           file: arc.git/ci/build-api.yaml
-        - task: janitor 
+        - task: janitor
           file: arc.git/ci/build-janitor.yaml
-      - task: prepare-image 
+      - task: prepare-image
         file: arc.git/ci/prepare-api-image.yaml
       - put: api.image
         params:
@@ -324,13 +325,21 @@ jobs:
             PASSWORD: {{staging-tests-password}}
     on_failure:
       <<: *post_failure_to_slack
-
+  - name: promote
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [staging-tests] }
+        - { get: mosquitto.git, passed: [staging-tests] }
+        - { get: api.version, passed: [staging-tests] }
+        - { get: arc.git, passed: [staging-tests] }
+        - { get: charts.git, passed: [staging-tests] }
+        - { get: arc.version, passed: [staging-tests] }
   - name: release-stable
     serial: true
     plan:
       - aggregate:
-        - { get: arc.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
+        - { get: arc.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
       - task: swift-copy
         file: arc.git/ci/swift-copy.yaml
         params:
@@ -347,11 +356,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -367,11 +376,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -387,11 +396,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -408,11 +417,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -428,11 +437,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -449,11 +458,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -470,11 +479,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -491,11 +500,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -512,11 +521,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -533,11 +542,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -554,11 +563,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -575,11 +584,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -596,11 +605,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -612,15 +621,15 @@ jobs:
       - <<: *post_deployment_end_to_slack
     on_failure:
       <<: *post_failure_to_slack
-  - name: na-us-1 
+  - name: na-us-1
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -637,11 +646,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests], trigger: true }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests], trigger: true }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [promote], trigger: true }
+        - { get: mosquitto.git, passed: [promote] }
+        - { get: api.version, passed: [promote], trigger: true }
+        - { get: arc.git, passed: [promote] }
+        - { get: charts.git, passed: [promote] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -662,7 +671,7 @@ jobs:
   #      - { get: api.image, passed: [api-production], trigger: true }
   #      - { get: api.version, passed: [api-production] }
   #      - { get: tests.image, trigger: true }
-  #      - { get: arc.version, passed: [staging-tests], trigger: true }
+  #      - { get: arc.version, passed: [promote], trigger: true }
   #    - task: tests
   #      privileged: true
   #      config:
