@@ -822,6 +822,8 @@ var _ = Describe("Agent", func() {
 				// check
 				dbAgent := Agent{AgentID: agent.AgentID}
 				err = dbAgent.Get(db)
+				Expect(err).NotTo(HaveOccurred())
+
 				// conver to JSON string
 				tags, err := json.Marshal(dbAgent.Tags)
 				Expect(err).NotTo(HaveOccurred())
@@ -960,6 +962,7 @@ var _ = Describe("Agent", func() {
 				// check
 				dbAgent := Agent{AgentID: agent.AgentID}
 				err = dbAgent.Get(db)
+				Expect(err).NotTo(HaveOccurred())
 				// conver to JSON string
 				tags, err := json.Marshal(dbAgent.Tags)
 				Expect(err).NotTo(HaveOccurred())

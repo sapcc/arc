@@ -109,12 +109,7 @@ func (agent *Agent) Get(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.DisplayName, &agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.DisplayName, &agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
 }
 
 func (agent *Agent) GetAuthorizedAndShowFacts(db Db, authorization *auth.Authorization, showFacts []string) error {
@@ -396,9 +391,11 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 
 	// check for aphanumeric keys or empty values
 	tagsErrorMessages := make(map[string][]string)
+
+	r, _ := regexp.Compile(`^\w+$`)
 	for k, v := range tags {
 		// check for aphanumeric
-		match, _ := regexp.MatchString("^\\w+$", k)
+		match := r.MatchString(k)
 		if !match {
 			tagsErrorMessages[k] = append(tagsErrorMessages[k], fmt.Sprintf("Tag key %s is not alphanumeric [a-z0-9A-Z].", k))
 			continue
@@ -527,7 +524,7 @@ func buildAgentsQuery(baseQuery string, authProjectId, filterParam string, pag *
 	if authQuery != "" {
 		resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery), paginationQuery)
 		if filterQuery != "" {
-			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE %s AND (%s)`, authQuery, filterQuery), paginationQuery)
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery, " AND (", filterQuery, ")"), paginationQuery)
 		}
 	} else {
 		if filterQuery != "" {

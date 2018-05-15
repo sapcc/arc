@@ -51,7 +51,7 @@ func (config *Config) Load(c *cli.Context) error {
 }
 
 func (c *Config) String() string {
-	return fmt.Sprintf("Endpoints: %s, CACerts: %s, ClientCert: %s, Transport: %s, Identity: %s, Project: %s, Organization: %s, LogLevel: %s", c.Endpoints, c.CACerts != nil, c.ClientCert != nil, c.Transport, c.Identity, c.Project, c.Organization, c.LogLevel)
+	return fmt.Sprintf("Endpoints: %s, CACerts: %t, ClientCert: %t, Transport: %s, Identity: %s, Project: %s, Organization: %s, LogLevel: %s", c.Endpoints, c.CACerts != nil, c.ClientCert != nil, c.Transport, c.Identity, c.Project, c.Organization, c.LogLevel)
 }
 
 func (c *Config) loadTLSConfig(client_cert, client_key, ca_certs string) error {

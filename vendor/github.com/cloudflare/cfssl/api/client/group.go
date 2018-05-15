@@ -4,7 +4,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
 
 	"github.com/cloudflare/cfssl/auth"
 	"github.com/cloudflare/cfssl/info"
@@ -49,7 +51,7 @@ func NewGroup(remotes []string, tlsConfig *tls.Config, strategy Strategy) (Remot
 		if err != nil {
 			return nil, err
 		}
-		servers[i], _ = newServer(u, tlsConfig)
+		servers[i] = newServer(u, tlsConfig)
 	}
 
 	switch strategy {
@@ -71,6 +73,18 @@ func (g *orderedListGroup) Hosts() []string {
 		hosts = append(hosts, srvHosts[0])
 	}
 	return hosts
+}
+
+func (g *orderedListGroup) SetRequestTimeout(timeout time.Duration) {
+	for _, srv := range g.remotes {
+		srv.SetRequestTimeout(timeout)
+	}
+}
+
+func (g *orderedListGroup) SetProxy(proxy func(*http.Request) (*url.URL, error)) {
+	for _, srv := range g.remotes {
+		srv.SetProxy(proxy)
+	}
 }
 
 func newOrdererdListGroup(remotes []*server) (Remote, error) {

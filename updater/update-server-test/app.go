@@ -11,6 +11,8 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
+//lint:file-ignore U1000 Ignore all unused code, it is just for testing
+
 const appName = "arc-update-server"
 
 var (
@@ -58,7 +60,10 @@ func main() {
 		return nil
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 }
 
 func runServer(c *cli.Context) {

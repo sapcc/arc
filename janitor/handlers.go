@@ -7,8 +7,8 @@ import (
 	"path"
 	"runtime"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/bamzi/jobrunner"
-	"github.com/cloudflare/cfssl/log"
 )
 
 func serveVersion(w http.ResponseWriter, r *http.Request) {

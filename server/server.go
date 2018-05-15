@@ -96,7 +96,9 @@ func (s *server) Run() {
 			j, err := json.Marshal(update)
 			if err == nil {
 				if req, err := arc.CreateRegistration(s.config.Organization, s.config.Project, s.config.Identity, string(j)); err == nil {
-					s.transport.Registration(req)
+					if err = s.transport.Registration(req); err != nil {
+						log.Error("Failed to register a registration request. ", err)
+					}
 				} else {
 					log.Warn("Failed to create registration message", err)
 				}
@@ -140,7 +142,10 @@ func (s *server) handleJob(msg *arc.Request) {
 	go arc.ExecuteAction(jobContext, job)
 
 	for m := range outChan {
-		s.transport.Reply(m)
+		err := s.transport.Reply(m)
+		if err != nil {
+			log.Error("Failed to reply message: ", err)
+		}
 	}
 	log.Infof("Job %s completed", msg.RequestID)
 }

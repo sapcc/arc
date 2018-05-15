@@ -91,7 +91,7 @@ func (reply *Reply) ExecuteScriptExample(id string, final bool, payload string, 
 	reply.RequestID = id
 	reply.Agent = "execute"
 	reply.Action = "script"
-	if final == true {
+	if final {
 		reply.State = arc.Complete
 	} else {
 		reply.State = arc.Executing

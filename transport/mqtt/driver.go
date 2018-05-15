@@ -132,7 +132,9 @@ func (c *MQTTClient) Disconnect() {
 	if c.isServer {
 		if reg, err := offlineMessage(c.organization, c.project, c.identity); err == nil {
 			logrus.Info("Sending offline message")
-			c.Registration(reg)
+			if err = c.Registration(reg); err != nil {
+				logrus.Error("Failed to register 'offline' registration message: ", err)
+			}
 		} else {
 			logrus.Error("Failed to create 'offline' registration message: ", err)
 		}
@@ -331,7 +333,9 @@ func (c *MQTTClient) onConnect() {
 	}
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending online Message")
-		c.Registration(req)
+		if err = c.Registration(req); err != nil {
+			logrus.Error("Failed to register 'online' registration message: ", err)
+		}
 	} else {
 		logrus.Error("Failed to create 'online' registration message ", err)
 	}

@@ -128,16 +128,17 @@ jobs:
     plan:
       - get: pullrequest
         trigger: true
-      - get: arc.git
       - put: pullrequest
         params:
           path: pullrequest
           status: pending
       - aggregate:
         - task: metalint
-          file: arc.git/ci/metalint.yaml
+          input_mapping: {arc.git: pullrequest}
+          file: pullrequest/ci/metalint.yaml
         - task: unit
-          file: arc.git/ci/unit.yaml
+          input_mapping: {arc.git: pullrequest}
+          file: pullrequest/ci/unit.yaml
         on_failure:
           put: pullrequest
           params:

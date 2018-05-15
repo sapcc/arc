@@ -14,6 +14,12 @@ import (
 	"github.com/kardianos/osext"
 )
 
+var (
+	serviceName        = "arc"
+	serviceDisplayName = "Arc Agent" //mostly for windows
+	serviceDescription = "Monsoon remote control agent"
+)
+
 func (s service) Status() (State, string, error) {
 	out, err := s.nssmCmd("status").CombinedOutput()
 	message := strings.TrimSpace(string(filterNullBytes(out)))

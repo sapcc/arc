@@ -1,3 +1,5 @@
+/* In cases where Gas reports a failure that has been manually verified as being
+safe it is possible to annotate the code with a '#nosec' comment. */
 package service
 
 import (
@@ -37,12 +39,12 @@ fi
 `))
 
 var upstartScript = template.Must(template.New("upstart").Parse(`
-# arc supervisor 
+# arc supervisor
 start on runlevel [2345]
 stop on runlevel [^2345]
 normal exit 0 111
 respawn
-exec {{ .cmd }} 
+exec {{ .cmd }}
 `))
 
 var systemdScript = template.Must(template.New("systemd").Parse(`
@@ -161,7 +163,7 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 		"serviceDir": serviceDir,
 		"executable": executable,
 	}
-
+	/* #nosec */
 	runFile, err := os.OpenFile(path.Join(serviceDir, "run"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
@@ -171,6 +173,7 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 	if err != nil {
 		return err
 	}
+	/* #nosec */
 	finishFile, err := os.OpenFile(path.Join(serviceDir, "finish"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
@@ -184,22 +187,19 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 	if err != nil {
 		return err
 	}
+	/* #nosec */
 	logFile, err := os.OpenFile(path.Join(serviceDir, "log", "run"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
 	defer logFile.Close()
-	err = runitLogScript.Execute(logFile, templateVars)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return runitLogScript.Execute(logFile, templateVars)
 }
 
 func systemdService(cmd string) error {
 	log.Info("Creating systemd service")
 
+	/* #nosec */
 	unitFile, err := os.OpenFile(path.Join("/etc/systemd/system/arc.service"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -226,6 +226,7 @@ func systemdService(cmd string) error {
 
 func upstartService(cmd string) error {
 	log.Info("Creating upstart job")
+	/* #nosec */
 	upstartFile, err := os.OpenFile(path.Join("/etc/init/arc.conf"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -255,6 +256,7 @@ func sysvService(cmd string) error {
 		//nothing to do cmd is already in inittab
 		return nil
 	}
+	/* #nosec */
 	inittabFile, err := os.OpenFile(path.Join("/etc/inittab"), os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err

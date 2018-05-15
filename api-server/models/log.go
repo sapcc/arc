@@ -56,12 +56,7 @@ func (log *Log) Get(db *sql.DB) error {
 		return fmt.Errorf("Db connection is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)
 }
 
 func (log *Log) Save(db *sql.DB) error {
@@ -70,12 +65,7 @@ func (log *Log) Save(db *sql.DB) error {
 	}
 
 	var lastInsertId string
-	err := db.QueryRow(ownDb.InsertLogQuery, log.JobID, log.Content, log.CreatedAt, log.UpdatedAt).Scan(&lastInsertId)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.QueryRow(ownDb.InsertLogQuery, log.JobID, log.Content, log.CreatedAt, log.UpdatedAt).Scan(&lastInsertId)
 }
 
 func (log *Log) GetOrCollect(db *sql.DB) error {
@@ -141,8 +131,6 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 	} else {
 		return processLogReply(db, reply)
 	}
-
-	return nil
 }
 
 // aggregate log parts with final state which are older then 5 min or log parts older then 1 day
@@ -196,7 +184,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 	}
 
 	// save log part
-	if reply.Payload != "" || reply.Final == true {
+	if reply.Payload != "" || reply.Final {
 		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, truncate(reply.Payload, 100))
 		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
 
@@ -207,7 +195,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 	}
 
 	// increment metrics
-	if reply.Final == true {
+	if reply.Final {
 		if reply.State == arc.Complete {
 			metricJobSucceeded.Inc()
 		} else if reply.State == arc.Failed {

@@ -17,6 +17,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+//lint:file-ignore U1000 Ignore all unused code, it is just a helper test file
+
 var apiServer = flag.String("api-server", "http://localhost:3000", "integration-test")
 var updateServer = flag.String("update-server", "http://localhost:3001", "integration-test")
 var token = flag.String("token", "", "Valid auth token")
@@ -128,10 +130,8 @@ func (c *Client) Post(pathTo string, server ServerType, headers map[string]strin
 	if err != nil {
 		panic(err)
 	}
-	if headers != nil {
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 
 	if c.Token != "" {
@@ -178,7 +178,7 @@ func getToken() (string, error) {
         "user": {
           "name": {{ .username }},
           "domain": { "name": {{ .domain }} },
-          "password": {{ .password }} 
+          "password": {{ .password }}
         }
       }
     },

@@ -45,12 +45,19 @@ func (fs *Store) AddSource(plugin FactSource, interval time.Duration) {
 	fs.wg.Add(1)
 	go func() {
 		//collect facts initially
-		fs.update(plugin.Name())
+		if err := fs.update(plugin.Name()); err != nil {
+			log.Error(err)
+			return
+		}
 		fs.wg.Done()
 		if interval > 0 {
-			source.ticker = time.Tick(interval)
+			tickChan := time.NewTicker(interval)
+			source.ticker = tickChan.C
 			for range source.ticker {
-				fs.update(plugin.Name())
+				if err := fs.update(plugin.Name()); err != nil {
+					log.Error(err)
+					tickChan.Stop()
+				}
 			}
 		}
 	}()
@@ -100,6 +107,9 @@ func (fs *Store) Facts() map[string]interface{} {
 	return facts
 }
 
+/*
+* Return an error just when the fact is not known
+ */
 func (fs *Store) update(name string) error {
 	source, ok := fs.sources[name]
 	if !ok {
@@ -138,5 +148,4 @@ func (fs *Store) FullUpdate() {
 		fs.mu.Unlock()
 		fs.updateChan <- f
 	}
-	return
 }

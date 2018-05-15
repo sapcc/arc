@@ -27,6 +27,7 @@ func TestApiServerIsUp(t *testing.T) {
 	expected := "200 OK"
 	if statusCode != expected {
 		t.Errorf("Expected to get %#v code for the ApiServer. Got %#v", expected, statusCode)
+		return
 	}
 
 	bodystring := bytes.NewBuffer(*body).String()

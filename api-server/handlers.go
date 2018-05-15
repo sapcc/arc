@@ -364,7 +364,7 @@ func deleteAgent(w http.ResponseWriter, r *http.Request) {
 	err := agent.DeleteAuthorized(db, authorization)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got %q", agentId), http.StatusNotFound, r)
+			checkErrAndReturnStatus(w, err, fmt.Sprintf("Agent with id %q not found. Got: ", agentId), http.StatusNotFound, r)
 		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
 			logInfoAndReturnHttpErrStatus(w, err, "", http.StatusUnauthorized, r)
 		} else if _, ok := err.(auth.NotAuthorized); ok {
@@ -605,7 +605,7 @@ func logInfoAndReturnHttpErrStatus(w http.ResponseWriter, err error, msg string,
 		log.Infof("Error, returning status %v.\nDetails: %+v", apiError.Status, apiError)
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	http.Error(w, apiError.String(), status)
+	http.Error(w, apiError.toString(), status)
 }
 
 func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, status int, r *http.Request) {
@@ -613,6 +613,6 @@ func checkErrAndReturnStatus(w http.ResponseWriter, err error, msg string, statu
 		apiError := NewApiError(http.StatusText(status), status, msg, err, r)
 		log.Errorf("Error, returning status %v.\nDetails: %+v", apiError.Status, apiError)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		http.Error(w, apiError.String(), status)
+		http.Error(w, apiError.toString(), status)
 	}
 }

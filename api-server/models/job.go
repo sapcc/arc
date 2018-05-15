@@ -167,11 +167,7 @@ func (job *Job) Get(db *sql.DB) error {
 		return errors.New("Db is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
-	if err != nil {
-		return err
-	}
-	return nil
+	return db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
 }
 
 func (job *Job) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
@@ -210,12 +206,7 @@ func (job *Job) Save(db *sql.DB) error {
 	}
 
 	var lastInsertId string
-	err = db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt, job.Project, jobUser).Scan(&lastInsertId)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.QueryRow(ownDb.InsertJobQuery, job.RequestID, job.Version, job.Sender, job.To, job.Timeout, job.Agent, job.Action, job.Payload, job.Status, job.CreatedAt, job.UpdatedAt, job.Project, jobUser).Scan(&lastInsertId)
 }
 
 func (job *Job) Update(db *sql.DB) (err error) {
@@ -341,11 +332,11 @@ func buildJobsQuery(baseQuery string, authProjectId, agentId string, pag *pagina
 	if authQuery != "" {
 		resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery), paginationQuery)
 		if agentId != "" {
-			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE %s AND ( "to" = '%s')`, authQuery, agentId), paginationQuery)
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint("WHERE ", authQuery, ` AND ( "to" = '`, agentId, `')`), paginationQuery)
 		}
 	} else {
 		if agentId != "" {
-			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprintf(`WHERE "to" = '%s'`, agentId), paginationQuery)
+			resultQuery = fmt.Sprintf(baseQuery, fmt.Sprint(`WHERE "to" = '`, agentId, `'`), paginationQuery)
 		}
 	}
 

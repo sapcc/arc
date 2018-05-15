@@ -220,10 +220,6 @@ func ValidateReply(reply *Reply) error {
 		return fmt.Errorf(field_error, "State")
 	}
 
-	if reply.Number < 0 {
-		return fmt.Errorf(field_error, "Number")
-	}
-
 	return nil
 }
 

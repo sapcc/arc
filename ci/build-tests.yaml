@@ -3,7 +3,7 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: { repository: hub.***REMOVED***/monsoon/gobuild, tag: '1.8-alpine'}
+  source: { repository: hub.***REMOVED***/monsoon/gobuild, tag: '1.10-alpine'}
 
 inputs:
 - name: tests.git
