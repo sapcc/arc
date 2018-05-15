@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"gitHub.***REMOVED***/monsoon/arc/janitor"
@@ -51,7 +52,10 @@ func main() {
 		},
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 }
 
 func runJanitor(c *cli.Context) {

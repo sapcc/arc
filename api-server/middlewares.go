@@ -27,7 +27,7 @@ func combineLogHandler(next http.Handler) http.Handler {
 func servedByHandler(next http.Handler) http.Handler {
 	server_name := os.Getenv("HOSTNAME")
 	if server_name == "" {
-		server_name, _ = os.Hostname()
+		server_name, _ = os.Hostname() //#nosec
 	}
 	if server_name == "" {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { next.ServeHTTP(w, r) })

@@ -88,9 +88,5 @@ func arcSubscribeReplies(tp transport.Transport) error {
 func arcSendRequest(req *arc.Request) error {
 	// send request
 	log.Infof("Sending request %s", req.RequestID)
-	err := tp.Request(req)
-	if err != nil {
-		return err
-	}
-	return nil
+	return tp.Request(req)
 }

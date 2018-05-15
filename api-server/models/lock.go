@@ -20,12 +20,7 @@ func (l *Lock) Get(db Db) error {
 		return errors.New("Db connection is nil")
 	}
 
-	err := db.QueryRow(ownDb.GetLockQuery, l.LockID).Scan(&l.LockID, &l.AgentID, &l.CreatedAt)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.QueryRow(ownDb.GetLockQuery, l.LockID).Scan(&l.LockID, &l.AgentID, &l.CreatedAt)
 }
 
 func (l *Lock) Save(db Db) error {
@@ -62,19 +57,11 @@ func PruneLocks(db Db) (int64, error) {
 		return 0, errors.New("Db connection is nil")
 	}
 
-	var affectedLocks int64
-	affectedLocks = 0
-
 	// get log parts to aggregate
 	res, err := db.Exec(ownDb.DeleteLocksQuery, 300) // 5 min
 	if err != nil {
-		return affectedLocks, err
+		return 0, err
 	}
 
-	affectedLocks, err = res.RowsAffected()
-	if err != nil {
-		return affectedLocks, err
-	}
-
-	return affectedLocks, nil
+	return res.RowsAffected()
 }

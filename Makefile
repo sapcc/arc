@@ -6,7 +6,7 @@ US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
 LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
-BUILD_IMAGE:=hub.***REMOVED***/monsoon/gobuild:1.8
+BUILD_IMAGE:=hub.***REMOVED***/monsoon/gobuild:1.10
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
 ifneq ($(BUILD_VERSION),)
@@ -14,9 +14,7 @@ LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
 ARC_BIN_TPL:=arc_$(BUILD_VERSION)_{{.OS}}_{{.Arch}}
 endif
 
-packages = $(PKG_NAME) $(shell go list -f '{{ join .Deps "\n" }}' | grep -v vendor | grep $(PKG_NAME))
-
-.PHONY: help 
+.PHONY: help
 help:
 	@echo
 	@echo "Available targets:"
@@ -25,13 +23,13 @@ help:
 	@echo "  * unit              - run unit tests"
 	@echo "  * integration test  - run integration tests"
 	@echo "  * test-win          - run tests on windows (requires running vagrant vm)"
-	@echo "  * gopath            - print custom GOPATH external use" 
-	@echo "  * install-deps      - build and cache dependencies (speeds up make build)" 
-	@echo "  * cross             - cross compile for darwin, windows, linux (requires docker)" 
-	@echo "  * run-ubuntu        - run bin/arc_linux in a docker container" 
-	@echo "  * run-rhel          - run bin/arc_linux in a docker container" 
-	@echo "  * run-sles          - run bin/arc_linux in a docker container" 
-	@echo "  * up                - run dev stack in iTerm tabs" 
+	@echo "  * gopath            - print custom GOPATH external use"
+	@echo "  * install-deps      - build and cache dependencies (speeds up make build)"
+	@echo "  * cross             - cross compile for darwin, windows, linux (requires docker)"
+	@echo "  * run-ubuntu        - run bin/arc_linux in a docker container"
+	@echo "  * run-rhel          - run bin/arc_linux in a docker container"
+	@echo "  * run-sles          - run bin/arc_linux in a docker container"
+	@echo "  * up                - run dev stack in iTerm tabs"
 
 .PHONY: build
 build:
@@ -43,33 +41,33 @@ test: metalint unit
 
 .PHONY: unit
 unit:
-	go test -v -timeout=4s $(packages)
+	go test -v -timeout=4s ./...
 
 .PHONY: metalint
 metalint:
-	gometalinter -E goimports -D goconst -D unconvert -D gotype -D aligncheck -D structcheck -D deadcode -D gocyclo -D interfacer -D errcheck -D dupl -D vetshadow -D golint -D vet -D varcheck -D gosimple -D staticcheck --deadline=60s $(shell echo $(packages) | sed -e 's!$(PKG_NAME)!.!g')
+	gometalinter --vendor --disable-all -E goimports -E megacheck -E ineffassign -E gas --deadline=60s ./...
 
 .PHONY: test-win
-test-win: 
+test-win:
 	vagrant provision --provision-with shell
 
-.PHONY: run-ubuntu 
-run-ubuntu: 
+.PHONY: run-ubuntu
+run-ubuntu:
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \
 		ubuntu-arc \
 		/arc $(ARGS)
 
-.PHONY: run-rhel 
-run-rhel: 
+.PHONY: run-rhel
+run-rhel:
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \
 		rhel7-arc \
 		/arc $(ARGS)
 .PHONY: run-sles
-run-sles: 
+run-sles:
 	docker run \
 		--rm \
 		-v $(CURDIR)/bin/arc_linux:/arc \

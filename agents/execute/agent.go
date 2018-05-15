@@ -69,13 +69,16 @@ func (a *executeAgent) ScriptAction(ctx context.Context, job *arc.Job) (string, 
 
 	file, err := ioutil.TempFile(os.TempDir(), "execute")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create temporary file: ", err)
+		return "", fmt.Errorf("Failed to create temporary file: %s", err)
 	}
 	if _, err := file.WriteString(job.Payload); err != nil {
-		os.Remove(file.Name())
-		return "", fmt.Errorf("Failed to write script to temporary file: ", err)
+		return "", fmt.Errorf("Failed to write script to temporary file: %s", err)
 	}
-	file.Close()
+
+	if err := file.Close(); err != nil {
+		return "", fmt.Errorf("Failed to close script file: %s", err)
+	}
+
 	script_name := file.Name() + scriptSuffix
 	if err := os.Rename(file.Name(), script_name); err != nil {
 		os.Remove(file.Name())

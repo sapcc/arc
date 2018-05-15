@@ -44,7 +44,7 @@ func TestKillSubprocess(t *testing.T) {
 
 	_, err := sub.Start()
 	if err != nil {
-		t.Errorf("Error starting process", err)
+		t.Errorf("Error starting process: %s", err)
 	}
 
 	//give the process some time to start

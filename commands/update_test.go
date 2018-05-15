@@ -219,7 +219,7 @@ func mockConfirmStdInput(input string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = in.Seek(0, os.SEEK_SET)
+	_, err = in.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
 	}

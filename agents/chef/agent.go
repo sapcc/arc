@@ -277,7 +277,7 @@ func downloadInstaller(omnitruckUrl, platform, platform_version, chef_version st
 		body, err := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			return "", fmt.Errorf("Failed to read response body", err)
+			return "", fmt.Errorf("Failed to read response body: %s", err)
 		}
 		var omnitruck omnitruckResponse
 		if err := json.Unmarshal(body, &omnitruck); err == nil {
@@ -299,7 +299,7 @@ func downloadInstaller(omnitruckUrl, platform, platform_version, chef_version st
 				return "", fmt.Errorf("Failed to download installer: %s", err)
 			}
 		} else {
-			return "", fmt.Errorf("Failed to unmarshal omnitruck response", err)
+			return "", fmt.Errorf("Failed to unmarshal omnitruck response: %s", err)
 		}
 
 	}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"gitHub.***REMOVED***/monsoon/arc/agents/chef/sap-ca"
 )
 
 var (
@@ -21,7 +22,7 @@ func install(installer string) error {
 		return err
 	}
 
-	if err := addSAPCAsToChefBundle("C:/opscode/chef/embedded/ssl/certs/cacert.pem"); err != nil {
+	if err := sapCa.AddSAPCAsToChefBundle("C:/opscode/chef/embedded/ssl/certs/cacert.pem"); err != nil {
 		return err
 	}
 

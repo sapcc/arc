@@ -50,6 +50,7 @@ var _ = Describe("Token Create", func() {
 		err := json.Unmarshal([]byte(`{}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
 		token, err := CreateToken(db, &authorization, tr)
+		Expect(err).NotTo(HaveOccurred())
 
 		var profile string
 		var subjectData []byte
@@ -70,6 +71,7 @@ var _ = Describe("Token Create", func() {
 		err := json.Unmarshal([]byte(csrNames), &tr)
 		Expect(err).NotTo(HaveOccurred())
 		token, err := CreateToken(db, &authorization, tr)
+		Expect(err).NotTo(HaveOccurred())
 
 		var subjectData []byte
 		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", token).Scan(&subjectData)
@@ -90,6 +92,7 @@ var _ = Describe("Token Create", func() {
 		err := json.Unmarshal([]byte(`{"CN": "agent-test-name"}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
 		token, err := CreateToken(db, &authorization, tr)
+		Expect(err).NotTo(HaveOccurred())
 
 		var subjectData []byte
 		err = db.QueryRow("SELECT subject FROM tokens WHERE id=$1", token).Scan(&subjectData)
@@ -133,6 +136,7 @@ var _ = Describe("Token Create", func() {
 		err := json.Unmarshal([]byte(csrNames), &tr)
 		Expect(err).NotTo(HaveOccurred())
 		token, err := CreateToken(db, &authorization, tr)
+		Expect(err).NotTo(HaveOccurred())
 
 		var tokenId string
 		err = db.QueryRow("SELECT id FROM tokens WHERE id=$1", token).Scan(&tokenId)

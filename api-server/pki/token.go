@@ -84,10 +84,5 @@ func PruneTokens(db *sql.DB) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	affectedRows, err := res.RowsAffected()
-	if err != nil {
-		return affectedRows, err
-	}
-
-	return affectedRows, nil
+	return res.RowsAffected()
 }

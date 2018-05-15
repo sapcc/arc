@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pborman/uuid"
 	"net/http"
+
+	"github.com/pborman/uuid"
 )
 
 type ErrorSource struct {
@@ -43,7 +44,7 @@ func NewApiError(status string, code int, title string, err error, r *http.Reque
 	return apiError
 }
 
-func (a *ApiError) String() string {
+func (a *ApiError) toString() string {
 	bin, err := json.Marshal(a)
 	if err != nil {
 		return fmt.Sprintf("%+v", a)

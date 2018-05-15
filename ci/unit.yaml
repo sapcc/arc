@@ -3,10 +3,10 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: { repository: hub.***REMOVED***/monsoon/gobuild, tag: '1.8'}
+  source: { repository: hub.***REMOVED***/monsoon/gobuild, tag: '1.10'}
 
 inputs:
-- name: arc.git 
+- name: arc.git
   path: gopath/src/gitHub.***REMOVED***/monsoon/arc
 
 run:

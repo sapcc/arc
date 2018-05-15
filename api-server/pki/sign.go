@@ -77,9 +77,9 @@ func SignToken(db *sql.DB, token string, csr []byte) (*[]byte, string, error) {
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback() //#nosec
 		} else {
-			tx.Commit()
+			tx.Commit() //#nosec
 		}
 	}()
 
@@ -170,10 +170,5 @@ func PruneCertificates(db *sql.DB) (int64, error) {
 		return 0, err
 	}
 
-	affectedRows, err := res.RowsAffected()
-	if err != nil {
-		return affectedRows, err
-	}
-
-	return affectedRows, nil
+	return res.RowsAffected()
 }

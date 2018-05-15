@@ -38,7 +38,11 @@ func configFile() string {
 	fs.SetOutput(ioutil.Discard)
 	fs.StringVar(&filename, "config-file", env, "")
 	fs.StringVar(&filename, "c", env, "")
-	fs.Parse(os.Args[1:])
+	err := fs.Parse(os.Args[1:])
+	if err != nil {
+		return defaultConfigFile
+	}
+
 	//No file specified by the user
 	if filename == "" {
 		if _, err := os.Stat(defaultConfigFile); err == nil {
@@ -62,7 +66,10 @@ func loadConfigFile(file string) error {
 			name = envPrefix + name
 		}
 		if os.Getenv(name) == "" {
-			os.Setenv(name, value)
+			err = os.Setenv(name, value)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

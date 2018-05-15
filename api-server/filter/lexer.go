@@ -28,6 +28,7 @@ type Lexer struct {
 	// The 'l' and 'c' fields were added for
 	// https://github.com/wagerlabs/docker/blob/65694e801a7b80930961d70c69cba9f2465459be/buildfile.nex
 	// Since then, I introduced the built-in Line() and Column() functions.
+	//lint:file-ignore U1000 since i don't really now if these vars are being used
 	l, c int
 
 	parseResult interface{}
