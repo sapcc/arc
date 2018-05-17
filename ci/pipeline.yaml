@@ -322,8 +322,8 @@ jobs:
             KEYSTONE_ENDPOINT: https://identity.***REMOVED***/v3
             DOMAIN: monsoon3
             PROJECT: Arc Test
-            USERNAME: T4B96B3205DB2E42F
-            PASSWORD: {{staging-tests-password}}
+            USERNAME: TM3_D063222_01
+            PASSWORD: {{qa-tests-password}}
     on_failure:
       <<: *post_failure_to_slack
   - name: promote
