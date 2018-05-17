@@ -4,10 +4,13 @@ package integrationTests
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"testing"
 )
+
+var agentIdentityFlag = flag.String("agent-identity", "", "integration-test")
 
 type Facts struct {
 	Version          string `json:"arc_version"`
