@@ -66,7 +66,7 @@ groups:
       - api-build
       - mosquitto-build
       - staging
-      - staging-tests
+      - qa-tests
       - promote
       - release-stable
       - ap-ae-1
@@ -289,7 +289,7 @@ jobs:
           GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
-  - name: staging-tests
+  - name: qa-tests
     serial: true
     plan:
       - aggregate:
@@ -329,12 +329,12 @@ jobs:
   - name: promote
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging-tests] }
-        - { get: mosquitto.git, passed: [staging-tests] }
-        - { get: api.version, passed: [staging-tests] }
-        - { get: arc.git, passed: [staging-tests] }
-        - { get: charts.git, passed: [staging-tests] }
-        - { get: arc.version, passed: [staging-tests] }
+        - { get: mosquitto.version, passed: [qa-tests] }
+        - { get: mosquitto.git, passed: [qa-tests] }
+        - { get: api.version, passed: [qa-tests] }
+        - { get: arc.git, passed: [qa-tests] }
+        - { get: charts.git, passed: [qa-tests] }
+        - { get: arc.version, passed: [qa-tests] }
   - name: release-stable
     serial: true
     plan:
