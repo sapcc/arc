@@ -32,7 +32,7 @@ while [ $# -gt 0 ]; do
 		-w) TIMEOUT="$2"; shift ;;
 		-d) TD="$2"; shift ;;
 		-t) LISTENTO="127.0.0.1"; PGPORT="$(getsocket)" ;;
-		-p) PGPORT="$2" shift ;;
+		-p) PGPORT="$2"; shift ;;
 		-o) USER_OPTS="$2"; shift ;;
 		 *) CMD=$1 ;;
 	esac
