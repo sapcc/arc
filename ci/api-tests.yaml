@@ -18,7 +18,8 @@ run:
       cd gopath/src/gitHub.***REMOVED***/monsoon/arc/api-server
       go test -v ./...
       apk add --no-cache postgresql bash
-      su postgres -c '../ci/scripts/pg_tmp.sh -p 5432 -l 127.0.0.1 -w 300 -d /tmp/pg start'
+      export LISTENTO=127.0.0.1
+      su postgres -c '../ci/scripts/pg_tmp.sh -p 5432 -w 300 -d /tmp/pg start'
       goose --env=test up
       go test -v -p=1 -timeout=60s -tags=integration ./...
       su postgres -c '../ci/scripts/pg_tmp.sh -d /tmp/pg stop'
