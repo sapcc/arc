@@ -66,6 +66,7 @@ groups:
       - api-build
       - mosquitto-build
       - staging
+      - qa-de-1
       - qa-tests
       - promote
       - release-stable
@@ -83,7 +84,6 @@ groups:
       - na-ca-1
       - na-us-1
       - na-us-3
-      - qa-de-1
       - arc-website
   - name: pullrequests
     jobs:
@@ -270,6 +270,24 @@ jobs:
     on_failure:
       <<: *post_failure_to_slack
 
+  - name: qa-de-1
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [mosquitto-build], trigger: true }
+        - { get: mosquitto.git, passed: [mosquitto-build] }
+        - { get: api.version, passed: [api-build], trigger: true }
+        - { get: arc.git, passed: [api-build] }
+        - { get: charts.git }
+        - { get: secrets.git }
+      - task: deployment
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: qa-de-1
+          GITHUB_TOKEN: {{github-access-token}}
+    on_failure:
+      <<: *post_failure_to_slack
 
   - name: staging
     serial: true
@@ -289,17 +307,18 @@ jobs:
           GITHUB_TOKEN: {{github-access-token}}
     on_failure:
       <<: *post_failure_to_slack
+
   - name: qa-tests
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [staging], trigger: true }
-        - { get: mosquitto.git, passed: [staging] }
-        - { get: api.version, passed: [staging], trigger: true }
+        - { get: mosquitto.version, passed: [qa-de-1], trigger: true }
+        - { get: mosquitto.git, passed: [qa-de-1] }
+        - { get: api.version, passed: [qa-de-1], trigger: true }
         - { get: tests.image, passed: [tests-build], trigger: true }
         - { get: arc.version, passed: [arc-build], trigger: true }
         - { get: arc.git, passed: [arc-build] }
-        - { get: charts.git, passed: [staging] }
+        - { get: charts.git, passed: [qa-de-1] }
       - task: tests
         image: tests.image
         config:
@@ -414,26 +433,6 @@ jobs:
     on_failure:
       <<: *post_failure_to_slack
 
-  - name: qa-de-1
-    serial: true
-    plan:
-      - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
-        - { get: secrets.git }
-      - <<: *post_deployment_start_to_slack
-      - task: deployment
-        input_mapping: { version: api.version }
-        file: arc.git/ci/helm-upgrade.yaml
-        params:
-          REGION: qa-de-1
-          GITHUB_TOKEN: {{github-access-token}}
-      - <<: *post_deployment_end_to_slack
-    on_failure:
-      <<: *post_failure_to_slack
   - name: ap-ae-1
     serial: true
     plan:
