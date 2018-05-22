@@ -20,7 +20,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Signs a CSR", func() {
 		token := CreateTestToken(db, `{}`)
-		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
 		pemCert, _, err := SignToken(db, token, csr)
@@ -31,7 +31,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Requires a valid token", func() {
 		token := uuid.New()
-		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
 		pemCert, ca, err := SignToken(db, token, csr)
@@ -45,7 +45,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Invalidates a token", func() {
 		token := CreateTestToken(db, `{"CN":"blafasel"}`)
-		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
 		_, _, err = SignToken(db, token, csr)
@@ -58,7 +58,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Allows CN from CSR if not set in the tokens subject", func() {
 		token := CreateTestToken(db, `{"names":[{"OU":"testou"}]}`)
-		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
 		pemCert, _, err := SignToken(db, token, csr)
@@ -73,7 +73,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Refuses to Sign CSRs that contain a CN with funny characters", func() {
 		token := CreateTestToken(db, `{"names":[{"OU":"testou"}]}`)
-		csr, _, err := CreateCSR("testCsrCN; DROP TABLE", "test O", "test OU")
+		csr, _, err := CreateSignReqCertAndPrivKey("testCsrCN; DROP TABLE", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
 		_, _, err = SignToken(db, token, csr)
@@ -82,7 +82,7 @@ var _ = Describe("Sign csr", func() {
 
 	It("Enforces CN, O and OU if set in the tokens subject", func() {
 		token := CreateTestToken(db, `{"CN":"enforced_CN", "names":[{"O": "enforced_O", "OU":"enforced_OU"}]}`)
-		csr, _, err := CreateCSR("testCsrCN", "test O", "test OU")
+		csr, _, err := CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 		Expect(err).NotTo(HaveOccurred())
 
 		pemCert, _, err := SignToken(db, token, csr)

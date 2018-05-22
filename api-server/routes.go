@@ -141,7 +141,7 @@ func newRouter(env string) *mux.Router {
 			Handler(middlewareChain.Then(prometheus.InstrumentHandler(r.Name, r.HandlerFunc)))
 	}
 
-	// add metrics
+	// add metrics outside the loop to not be instrumented by prometheus (loop standardRoutesDefinition) and not have keystone validation (loop v1RoutesDefinition)
 	router.
 		Methods("GET").
 		Path("/metrics").
@@ -150,6 +150,13 @@ func newRouter(env string) *mux.Router {
 
 		// add api/v1 std routes
 	v1SubRouter := router.PathPrefix("/api/v1").Subrouter()
+	// add agents/renew without authentication
+	v1SubRouter.
+		Methods("POST").
+		Path("/agents/renew").
+		Name("Renew certificate").
+		Handler(middlewareChain.Then(prometheus.InstrumentHandler("Renew certificate", http.HandlerFunc(renewPkiCert))))
+	// add the rest of api/v1 routes
 	for _, r := range v1RoutesDefinition {
 		v1SubRouter.
 			Methods(r.Method).

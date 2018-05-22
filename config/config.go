@@ -1,8 +1,10 @@
 package config
 
 import (
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"runtime"
@@ -11,14 +13,16 @@ import (
 )
 
 type Config struct {
-	Endpoints    []string
-	CACerts      *x509.CertPool
-	ClientCert   *tls.Certificate
-	Transport    string
-	Identity     string
-	Project      string
-	Organization string
-	LogLevel     string
+	Endpoints      []string
+	CACerts        *x509.CertPool
+	ClientCert     *tls.Certificate
+	ClientKey      *rsa.PrivateKey
+	ClientCertPath string
+	Transport      string
+	Identity       string
+	Project        string
+	Organization   string
+	LogLevel       string
 }
 
 func New() Config {
@@ -64,6 +68,24 @@ func (c *Config) loadTLSConfig(client_cert, client_key, ca_certs string) error {
 		return fmt.Errorf("Failed to parse client certificate: %s", err)
 	}
 	c.ClientCert = &cert
+
+	// save client cert path
+	c.ClientCertPath = client_cert
+
+	// Extract key
+	keyPEMBlock, err := ioutil.ReadFile(client_key)
+	if err != nil {
+		return fmt.Errorf("Failed to load client key: %s", err)
+	}
+	keyPemDecoded, _ := pem.Decode(keyPEMBlock)
+	if keyPemDecoded == nil {
+		return fmt.Errorf("No pem block found")
+	}
+	c.ClientKey, err = x509.ParsePKCS1PrivateKey(keyPemDecoded.Bytes)
+	if err != nil {
+		return fmt.Errorf("Failed to parse rsa key: %s", err)
+	}
+
 	//Extract org, project and identity from the client cert
 	if len(cert.Leaf.Subject.Organization) > 0 {
 		c.Organization = cert.Leaf.Subject.Organization[0]
