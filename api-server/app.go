@@ -5,8 +5,9 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"io/ioutil"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -82,6 +83,16 @@ func main() {
 			EnvVar: envPrefix + "LISTEN",
 		},
 		cli.StringFlag{
+			Name:   "tls-server-cert",
+			Usage:  "Server cert to use for TLS",
+			EnvVar: envPrefix + "TLS_SERVER_CERT",
+		},
+		cli.StringFlag{
+			Name:   "tls-server-key",
+			Usage:  "Private key used in server TLS",
+			EnvVar: envPrefix + "TLS_SERVER_KEY",
+		},
+		cli.StringFlag{
 			Name:   "env",
 			Usage:  "Environment to use (development, test, production)",
 			Value:  "development",
@@ -95,17 +106,17 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "tls-ca-cert",
-			Usage:  "CA to verify transport endpoints",
+			Usage:  "CA to verify transport endpoints in the messaging middleware",
 			EnvVar: envPrefix + "TLS_CA_CERT",
 		},
 		cli.StringFlag{
 			Name:   "tls-client-cert",
-			Usage:  "Client cert to use for TLS",
+			Usage:  "Client cert to use for TLS in the messaging middleware",
 			EnvVar: envPrefix + "TLS_CLIENT_CERT",
 		},
 		cli.StringFlag{
 			Name:   "tls-client-key",
-			Usage:  "Private key used in client TLS auth",
+			Usage:  "Private key used in client TLS auth in the messaging middleware",
 			EnvVar: envPrefix + "TLS_CLIENT_KEY",
 		},
 		cli.StringFlag{
@@ -206,7 +217,7 @@ func runServer(c *cli.Context) {
 				}
 			}
 			log.Infof("Generating ephemeral client certificate for identity %#v", cn)
-			csrBytes, clientKey, err := pki.CreateCSR(cn, "arc-api", "arc-api")
+			csrBytes, clientKey, err := pki.CreateSignReqCertAndPrivKey(cn, "arc-api", "arc-api")
 			FatalfOnError(err, "Failed to create CSR: %s", err)
 			clientCert, err := pki.Sign(csrBytes, signer.Subject{CN: cn, Names: []csr.Name{csr.Name{O: "arc-api", OU: "arc-api"}}}, "default")
 			FatalfOnError(err, "Failed to sign ephemeral certificate: %s", err)
@@ -244,9 +255,24 @@ func runServer(c *cli.Context) {
 	router := newRouter(env)
 
 	// run server
-	log.Infof("Listening on %q...", c.GlobalString("bind-address"))
-	err = http.ListenAndServe(c.GlobalString("bind-address"), router)
-	FatalfOnError(err, "Failed to bind on %s: ", c.GlobalString("bind-address"))
+	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("bind-address"), router)
+	go server.run()
+
+	// catch gracefull shutdown and shutdown to close the connetions
+	gracefulChan := make(chan os.Signal, 1)
+	shutdownChan := make(chan os.Signal, 1)
+	signal.Notify(gracefulChan, syscall.SIGTERM)
+	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGQUIT)
+	for {
+		select {
+		case s := <-shutdownChan:
+			log.Infof("Captured %v", s)
+			server.Close()
+		case s := <-gracefulChan:
+			log.Infof("Captured %v", s)
+			server.Shutdown()
+		}
+	}
 }
 
 func FatalfOnError(err error, msg string, args ...interface{}) {

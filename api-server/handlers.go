@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/x509"
 	"database/sql"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -89,6 +92,77 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func renewPkiCert(w http.ResponseWriter, r *http.Request) {
+	// Extract CN, OU and O from the certificate used on the tls communication
+	sub, err := pki.TLSRequestSubject(r)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	// create a TokenRequest with the CN
+	var tr pki.TokenRequest
+	tr.CN = sub.CommonName
+
+	// add OU and O over the authorization because it will override the tokenRequest
+	auth := auth.Authorization{}
+	auth.ProjectId = sub.OrganizationalUnit
+	auth.ProjectDomainId = sub.Organization
+
+	// read request body
+	csr, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	// check we have a valid certificate request
+	pemBlock, _ := pem.Decode(csr)
+	if pemBlock == nil {
+		logAndReturnHttpPkiError(w, http.StatusUnauthorized, errors.New(fmt.Sprint(pki.TLS_CRT_REQUEST_INVALID, err)))
+		return
+	}
+	_, err = x509.ParseCertificateRequest(pemBlock.Bytes)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusUnauthorized, errors.New(fmt.Sprint(pki.TLS_CRT_REQUEST_INVALID, err)))
+		return
+	}
+
+	// create a token
+	token, err := pki.CreateToken(db, &auth, tr)
+	if err != nil {
+		logAndReturnHttpPkiError(w, http.StatusInternalServerError, errors.New(fmt.Sprint("Error creating token. ", err)))
+		return
+	}
+
+	// sign tocken with csr
+	pemCert, ca, err := pki.SignToken(db, token, csr)
+	if err != nil {
+		if _, ok := err.(pki.SignForbidden); ok {
+			logAndReturnHttpPkiError(w, http.StatusForbidden, err)
+		} else {
+			logAndReturnHttpPkiError(w, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	acceptHeader := r.Header.Get("Accept")
+
+	if acceptHeader == "application/json" {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]string{
+			"certificate": string(*pemCert),
+			"ca":          ca,
+		}
+		err = json.NewEncoder(w).Encode(response)
+		checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
+	} else {
+		w.Header().Set("Content-Type", "application/pkix-cert")
+		w.Write(*pemCert)
+	}
+
+}
+
 func signPkiToken(w http.ResponseWriter, r *http.Request) {
 	// get token from the request
 	vars := mux.Vars(r)
@@ -118,9 +192,8 @@ func signPkiToken(w http.ResponseWriter, r *http.Request) {
 			"ca":          ca,
 		}
 		err = json.NewEncoder(w).Encode(response)
-		checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+		checkErrAndReturnStatus(w, err, "Error encoding response to JSON", http.StatusInternalServerError, r)
 	} else {
-		log.Error("plain")
 		w.Header().Set("Content-Type", "application/pkix-cert")
 		w.Write(*pemCert)
 	}
@@ -160,7 +233,7 @@ func serveJobs(w http.ResponseWriter, r *http.Request) {
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(jobs)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 func serveJob(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +260,7 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(job)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 func executeJob(w http.ResponseWriter, r *http.Request) {
@@ -244,7 +317,7 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(response)
-	checkErrAndReturnStatus(w, err, "Error encoding Jobs to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 /*
@@ -318,7 +391,7 @@ func serveAgents(w http.ResponseWriter, r *http.Request) {
 	// set the header and body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agents)
-	checkErrAndReturnStatus(w, err, "Error encoding Agents to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 func serveAgent(w http.ResponseWriter, r *http.Request) {
@@ -349,7 +422,7 @@ func serveAgent(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agent)
-	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 func deleteAgent(w http.ResponseWriter, r *http.Request) {
@@ -409,7 +482,7 @@ func serveFacts(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agent.Facts)
-	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 /*
@@ -442,7 +515,7 @@ func serveAgentTags(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	err = json.NewEncoder(w).Encode(agent.Tags)
-	checkErrAndReturnStatus(w, err, "Error encoding Agent to JSON", http.StatusInternalServerError, r)
+	checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 }
 
 func saveAgentTags(w http.ResponseWriter, r *http.Request) {

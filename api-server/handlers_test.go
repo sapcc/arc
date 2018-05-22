@@ -4,16 +4,24 @@ package main
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"reflect"
 
+	log "github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -21,6 +29,7 @@ import (
 	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/test"
 	"gitHub.***REMOVED***/monsoon/arc/arc"
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
@@ -138,11 +147,181 @@ var _ = Describe("Pki handlers", func() {
 
 	})
 
+	Describe("servePkiCert", func() {
+
+		It("should through a 401 if client tries to authenticate with no tls certificate", func() {
+			// create root crt
+			rootCert, rootCertPEM, rootKey, err := test.RootTLSCRT(nil)
+			Expect(err).NotTo(HaveOccurred())
+			// pool of trusted certs
+			certPool := x509.NewCertPool()
+			certPool.AppendCertsFromPEM(rootCertPEM)
+			// create server crt
+			servCertTmpl, err := test.CertTemplate(x509.ECDSAWithSHA256)
+			Expect(err).NotTo(HaveOccurred())
+			servCertTmpl.Subject = pkix.Name{Organization: []string{"test_server_o"}, OrganizationalUnit: []string{"test_server_ou"}, CommonName: "Test_server_cn"}
+			servTLSCert, _, _, err := test.ServerTLSCRT(rootCert, rootKey, servCertTmpl)
+			Expect(err).NotTo(HaveOccurred())
+			// create server
+			ts := test.NewUnstartedTestTLSServer(certPool, servTLSCert, http.HandlerFunc(renewPkiCert))
+			ts.StartTLS()
+			defer ts.Close()
+			// create client WITHOUT tls certificate
+			client := test.NewTestTLSClient(certPool, &tls.Certificate{})
+
+			// create a client key
+			clientKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+			Expect(err).NotTo(HaveOccurred())
+
+			// create sign request csr from client private key
+			csrData, err := pki.CreateSignReqCert("Test_diff_CN", "Test_diff_O", "Test_diff_OU", clientKey)
+			Expect(err).NotTo(HaveOccurred())
+
+			// send post with a sign request
+			res, err := client.Post(ts.URL, "application/pkix-cert", bytes.NewReader(csrData))
+			Expect(err).NotTo(HaveOccurred())
+			defer res.Body.Close()
+			responseBody, err := ioutil.ReadAll(res.Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(responseBody)).To(ContainSubstring(pki.TLS_CERTIFICATE_MISSING))
+			Expect(res.StatusCode).To(Equal(401))
+		})
+
+		It("should through a 401 if client tries to authenticate with empty CommonName or OrganizationalUnit or Organization certificate", func() {
+			// create root crt
+			rootCert, rootCertPEM, rootKey, err := test.RootTLSCRT(nil)
+			Expect(err).NotTo(HaveOccurred())
+			// pool of trusted certs
+			certPool := x509.NewCertPool()
+			certPool.AppendCertsFromPEM(rootCertPEM)
+			// create server crt
+			servCertTmpl, err := test.CertTemplate(x509.ECDSAWithSHA256)
+			Expect(err).NotTo(HaveOccurred())
+			servCertTmpl.Subject = pkix.Name{Organization: []string{"test_server_o"}, OrganizationalUnit: []string{"test_server_ou"}, CommonName: "Test_server_cn"}
+			servTLSCert, _, _, err := test.ServerTLSCRT(rootCert, rootKey, servCertTmpl)
+			Expect(err).NotTo(HaveOccurred())
+			// create server
+			ts := test.NewUnstartedTestTLSServer(certPool, servTLSCert, http.HandlerFunc(renewPkiCert))
+			ts.StartTLS()
+			defer ts.Close()
+			// create server certs
+			clientCertTmpl, err := test.CertTemplate(x509.ECDSAWithSHA256)
+			Expect(err).NotTo(HaveOccurred())
+			clientCertTmpl.Subject = pkix.Name{Organization: []string{}, OrganizationalUnit: []string{}, CommonName: "Test_client_cn"}
+			clientTLSCert, _, clientPrivKey, err := test.ClientTLSCRT(rootCert, rootKey, clientCertTmpl)
+			Expect(err).NotTo(HaveOccurred())
+			// create client without tls certificate
+			client := test.NewTestTLSClient(certPool, clientTLSCert)
+
+			// create sign request csr from client private key
+			csrData, err := pki.CreateSignReqCert("Test_diff_CN", "Test_diff_O", "Test_diff_OU", clientPrivKey)
+			Expect(err).NotTo(HaveOccurred())
+
+			// send post with a sign request
+			res, err := client.Post(ts.URL, "application/pkix-cert", bytes.NewReader(csrData))
+			Expect(err).NotTo(HaveOccurred())
+			defer res.Body.Close()
+			responseBody, err := ioutil.ReadAll(res.Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(responseBody)).To(ContainSubstring(pki.TLS_CRT_SUBJECT_MISSING))
+			Expect(res.StatusCode).To(Equal(401))
+		})
+
+		It("schould through a 401 Status if certificate is missing", func() {
+			// create root crt
+			ts, tc, err := test.NewTLSCommunication(http.HandlerFunc(renewPkiCert))
+			ts.Server.StartTLS()
+			defer ts.Server.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			// send post request
+			res, err := tc.Client.Post(ts.Server.URL, "application/pkix-cert", nil)
+			Expect(err).NotTo(HaveOccurred())
+			defer res.Body.Close()
+			responseBody, err := ioutil.ReadAll(res.Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(responseBody)).To(ContainSubstring(pki.TLS_CRT_REQUEST_INVALID))
+			Expect(res.StatusCode).To(Equal(401))
+		})
+
+		It("schould through a 401 Status if certificate is invalid", func() {
+			// create root crt
+			ts, tc, err := test.NewTLSCommunication(http.HandlerFunc(renewPkiCert))
+			ts.Server.StartTLS()
+			defer ts.Server.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			// send post request
+			res, err := tc.Client.Post(ts.Server.URL, "application/pkix-cert", bytes.NewReader([]byte("Here is invalid cert")))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer res.Body.Close()
+			responseBody, err := ioutil.ReadAll(res.Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(responseBody)).To(ContainSubstring(pki.TLS_CRT_REQUEST_INVALID))
+			Expect(res.StatusCode).To(Equal(401))
+		})
+
+		It("returns a valid certificate with the tls CN,OU and O", func() {
+			// create root crt
+			ts, tc, err := test.NewTLSCommunication(http.HandlerFunc(renewPkiCert))
+			ts.Server.StartTLS()
+			defer ts.Server.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			// create sign request csr from client private key
+			csrData, err := pki.CreateSignReqCert("Test_diff_CN", "Test_diff_O", "Test_diff_OU", tc.PrivKey)
+			Expect(err).NotTo(HaveOccurred())
+
+			// send post request
+			res, err := tc.Client.Post(ts.Server.URL, "application/pkix-cert", bytes.NewReader(csrData))
+			Expect(err).NotTo(HaveOccurred())
+			defer res.Body.Close()
+			Expect(res.StatusCode).To(Equal(200))
+
+			responseBody, err := ioutil.ReadAll(res.Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			// key to PEM encoded data.
+			keyDer, err := x509.MarshalECPrivateKey(tc.PrivKey.(*ecdsa.PrivateKey))
+			Expect(err).NotTo(HaveOccurred())
+
+			key := pem.EncodeToMemory(&pem.Block{
+				Type:  "EC PRIVATE KEY",
+				Bytes: keyDer,
+			})
+
+			// validate cert with private key
+			_, err = tls.X509KeyPair(responseBody, key)
+			Expect(err).NotTo(HaveOccurred())
+
+			//validate cn, ou and o from tls and not from cert request
+			cert, _ := pem.Decode(responseBody)
+			if cert == nil {
+
+			}
+			x509Cert, err := x509.ParseCertificate(cert.Bytes)
+			Expect(err).NotTo(HaveOccurred())
+			s := x509Cert.Subject
+
+			// Expect(s.CommonName).To(Equal(tc.Subject.Names.CommonName))
+			Expect(s.CommonName).To(Equal(tc.Subject.CommonName))
+			Expect(s.Organization[0]).To(Equal(tc.Subject.Organization[0]))
+			Expect(s.OrganizationalUnit[0]).To(Equal(tc.Subject.OrganizationalUnit[0]))
+		})
+
+	})
+
 	Describe("signPkiToken", func() {
 
 		It("signs a token", func() {
 			token := pki.CreateTestToken(db, `{}`)
-			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
+			csr, _, err := pki.CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
 			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/agents/init/", token), url.Values{}), bytes.NewReader(csr))
@@ -158,7 +337,7 @@ var _ = Describe("Pki handlers", func() {
 
 		It("returns json optionally", func() {
 			token := pki.CreateTestToken(db, `{}`)
-			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
+			csr, _, err := pki.CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
 			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/agents/init/", token), url.Values{}), bytes.NewReader(csr))
@@ -179,7 +358,7 @@ var _ = Describe("Pki handlers", func() {
 		})
 
 		It("returns a 403 forbidden when token not valid", func() {
-			csr, _, err := pki.CreateCSR("testCsrCN", "test O", "test OU")
+			csr, _, err := pki.CreateSignReqCertAndPrivKey("testCsrCN", "test O", "test OU")
 			Expect(err).NotTo(HaveOccurred())
 
 			req, err := http.NewRequest("POST", getUrl(fmt.Sprint("/agents/init/", "123456789"), url.Values{}), bytes.NewReader(csr)) // fake token
