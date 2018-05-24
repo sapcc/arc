@@ -26,4 +26,4 @@ For your convience you can define an alias for the mosquitto_pub command:
 
 Using this alias you can publish messages just be executing
 
-    mosquitto_pub -t [TOPIC] -s < payload.json    
+    mosquitto_pub -t [TOPIC] -s < payload.json 
