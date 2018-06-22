@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -11,14 +12,17 @@ import (
 )
 
 type Server struct {
-	tlsServerCert string
-	tlsServerKey  string
-	tlsConfig     *tls.Config
-	bindAdress    string
-	server        *http.Server
+	tlsServerCert   string
+	tlsServerKey    string
+	tlsConfig       *tls.Config
+	httpBindAdress  string
+	httpsBindAdress string
+	httpServer      *http.Server
+	httpsServer     *http.Server
 }
 
-func NewSever(tlsServerCert string, tlsServerKey string, bindAdress string, router *mux.Router) *Server {
+// NewSever creates a server struct
+func NewSever(tlsServerCert, tlsServerKey, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
 	var tlsConfig *tls.Config
 	cer, err := tls.LoadX509KeyPair(tlsServerCert, tlsServerKey)
 	if err == nil {
@@ -30,50 +34,65 @@ func NewSever(tlsServerCert string, tlsServerKey string, bindAdress string, rout
 
 	// create server
 	svr := &Server{
-		tlsServerCert: tlsServerCert,
-		tlsServerKey:  tlsServerKey,
-		bindAdress:    bindAdress,
-		tlsConfig:     tlsConfig,
-		server: &http.Server{
-			Addr:    bindAdress,
+		tlsServerCert:   tlsServerCert,
+		tlsServerKey:    tlsServerKey,
+		httpBindAdress:  httpBindAdress,
+		httpsBindAdress: httpsBindAdress,
+		tlsConfig:       tlsConfig,
+		httpServer: &http.Server{
 			Handler: router,
 		},
-	}
-
-	// check tls configuration and add to the server
-	if tlsConfig != nil {
-		svr.server.TLSConfig = tlsConfig
+		httpsServer: &http.Server{
+			Handler: router,
+		},
 	}
 
 	return svr
 }
 
+// don't return error. Runing in a go rutine
 func (s *Server) run() {
-	ln, err := net.Listen("tcp", s.bindAdress)
+	// http
+	httpLn, err := net.Listen("tcp", s.httpBindAdress)
 	if err != nil {
-		log.Fatalf("Failed to create listener: %s", err)
+		log.Fatalf("Failed to create http listener: %s", err)
 	}
-	defer ln.Close()
+	defer httpLn.Close()
+	log.Infof("Listening on %q... for incoming connections", s.httpBindAdress)
+	err = s.httpServer.Serve(httpLn)
+	if err != nil {
+		log.Fatalf("Error starting http server: %q", err)
+	}
 
-	if s.tlsConfig == nil {
-		log.Infof("Listening on %q... for incoming connections", s.bindAdress)
-		err = s.server.Serve(ln)
+	// https
+	if s.tlsConfig != nil {
+		s.httpsServer.TLSConfig = s.tlsConfig
+		httspLn, err := net.Listen("tcp", s.httpsBindAdress)
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("Failed to create https listener: %s", err)
 		}
-	} else {
-		log.Infof("Listening on %q for incoming TLS connections...", s.bindAdress)
-		err = s.server.ServeTLS(ln, "", "")
+		log.Infof("Listening on %q for incoming TLS connections...", s.httpsBindAdress)
+		err = s.httpsServer.ServeTLS(httspLn, "", "")
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("Error starting https server: %q", err)
 		}
 	}
 }
 
-func (s *Server) Close() error {
-	return s.server.Close()
+func (s *Server) close() error {
+	err := s.httpServer.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing http server: %s", err)
+	}
+	err = s.httpsServer.Close()
+	return fmt.Errorf("Error closing https server: %s", err)
 }
 
-func (s *Server) Shutdown() error {
-	return s.server.Shutdown(context.Background())
+func (s *Server) shutdown() error {
+	err := s.httpServer.Shutdown(context.Background())
+	if err != nil {
+		return fmt.Errorf("Error shuting down http server: %s", err)
+	}
+	err = s.httpsServer.Shutdown(context.Background())
+	return fmt.Errorf("Error shuting down https server: %s", err)
 }

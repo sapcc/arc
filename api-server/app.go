@@ -77,10 +77,16 @@ func main() {
 			Value:  new(cli.StringSlice),
 		},
 		cli.StringFlag{
-			Name:   "bind-address,b",
-			Usage:  "Listen address for api server",
+			Name:   "bind-address",
+			Usage:  "Listen address for http api server",
 			Value:  "0.0.0.0:3000",
 			EnvVar: envPrefix + "LISTEN",
+		},
+		cli.StringFlag{
+			Name:   "bind-address-tls",
+			Usage:  "Listen address for https api server",
+			Value:  "0.0.0.0:443",
+			EnvVar: envPrefix + "LISTEN_TLS",
 		},
 		cli.StringFlag{
 			Name:   "tls-server-cert",
@@ -255,7 +261,7 @@ func runServer(c *cli.Context) {
 	router := newRouter(env)
 
 	// run server
-	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("bind-address"), router)
+	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("bind-address"), c.GlobalString("bind-address-tls"), router)
 	go server.run()
 
 	// catch gracefull shutdown and shutdown to close the connetions
@@ -267,14 +273,15 @@ func runServer(c *cli.Context) {
 		select {
 		case s := <-shutdownChan:
 			log.Infof("Captured %v", s)
-			server.Close()
+			server.close()
 		case s := <-gracefulChan:
 			log.Infof("Captured %v", s)
-			server.Shutdown()
+			server.shutdown()
 		}
 	}
 }
 
+// FatalfOnError fatal on error
 func FatalfOnError(err error, msg string, args ...interface{}) {
 	if err != nil {
 		log.Fatalf(msg, args...)
