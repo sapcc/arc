@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/oklog/run"
 )
 
 type Server struct {
@@ -19,6 +21,7 @@ type Server struct {
 	httpsBindAdress string
 	httpServer      *http.Server
 	httpsServer     *http.Server
+	close           func()
 }
 
 // NewSever creates a server struct
@@ -57,43 +60,54 @@ func NewSever(tlsServerCert, tlsServerKey, httpBindAdress, httpsBindAdress strin
 }
 
 // don't return error. Runing in a go rutine
-func (s *Server) run() {
+func (s *Server) run() error {
+
+	var runner run.Group
 	// http
 	httpLn, err := net.Listen("tcp", s.httpBindAdress)
 	if err != nil {
 		log.Fatalf("Failed to create http listener: %s", err)
 	}
-	defer httpLn.Close()
-	log.Infof("Listening on %q... for incoming connections", s.httpBindAdress)
-	err = s.httpServer.Serve(httpLn)
-	if err != nil {
-		log.Fatalf("Error starting http server: %q", err)
+
+	closeCh := make(chan struct{})
+	var once sync.Once
+	s.close = func() {
+		once.Do(func() { close(closeCh) })
 	}
+
+	//add stop handler
+	runner.Add(func() error {
+		<-closeCh
+		return nil
+	}, func(_ error) {
+		s.close()
+	})
+
+	//add http listener
+	runner.Add(func() error {
+		log.Infof("Listening on %q... for incoming connections", s.httpBindAdress)
+		return s.httpServer.Serve(httpLn)
+	}, func(_ error) {
+		httpLn.Close()
+	})
 
 	// https
 	if s.tlsConfig != nil {
 		s.httpsServer.TLSConfig = s.tlsConfig
-		httspLn, err := net.Listen("tcp", s.httpsBindAdress)
+		httpsLn, err := net.Listen("tcp", s.httpsBindAdress)
 		if err != nil {
 			log.Fatalf("Failed to create https listener: %s", err)
 		}
-		log.Infof("Listening on %q for incoming TLS connections...", s.httpsBindAdress)
-		err = s.httpsServer.ServeTLS(httspLn, "", "")
-		if err != nil {
-			log.Fatalf("Error starting https server: %q", err)
-		}
-	} else {
-		log.Infof("TLS configuration nil. No TLS server will be started.")
+		// add https listener
+		runner.Add(func() error {
+			log.Infof("Listening on %q for incoming TLS connections...", s.httpsBindAdress)
+			return s.httpsServer.ServeTLS(httpsLn, "", "")
+		}, func(_ error) {
+			httpsLn.Close()
+		})
 	}
-}
 
-func (s *Server) close() error {
-	err := s.httpServer.Close()
-	if err != nil {
-		return fmt.Errorf("Error closing http server: %s", err)
-	}
-	err = s.httpsServer.Close()
-	return fmt.Errorf("Error closing https server: %s", err)
+	return runner.Run()
 }
 
 func (s *Server) shutdown() error {
