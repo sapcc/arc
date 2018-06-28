@@ -183,6 +183,12 @@
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
 
 [[projects]]
+  name = "github.com/oklog/run"
+  packages = ["."]
+  revision = "4dadeb3030eda0273a12382bb2348ffc7c9d1a39"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -300,6 +306,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3ab2394bc74b7592ede2843e73593d655ef53b12dee299470cc312af887af1ae"
+  inputs-digest = "d22e88792872b3a553608062f0b70c860de9fcfc5b2dc72f9186f2ba3ab4e890"
   solver-name = "gps-cdcl"
   solver-version = 1
