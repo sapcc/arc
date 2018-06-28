@@ -25,7 +25,7 @@ type Server struct {
 func NewSever(tlsServerCert, tlsServerKey, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
 	var tlsConfig *tls.Config
 
-	if tlsServerCert != "" || tlsServerKey != "" {
+	if tlsServerCert != "" && tlsServerKey != "" {
 		cer, err := tls.LoadX509KeyPair(tlsServerCert, tlsServerKey)
 		if err != nil {
 			log.Fatalf("Failed to load tls cert/key: %s", err)
@@ -34,6 +34,8 @@ func NewSever(tlsServerCert, tlsServerKey, httpBindAdress, httpsBindAdress strin
 			Certificates: []tls.Certificate{cer},
 			ClientAuth:   tls.VerifyClientCertIfGiven,
 		}
+	} else {
+		log.Infof("No TLS Cert or key given, no TLS configuration will be created.")
 	}
 
 	// create server
@@ -80,6 +82,8 @@ func (s *Server) run() {
 		if err != nil {
 			log.Fatalf("Error starting https server: %q", err)
 		}
+	} else {
+		log.Infof("TLS configuration nil. No TLS server will be started.")
 	}
 }
 
