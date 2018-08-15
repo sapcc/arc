@@ -110,6 +110,7 @@ var cliCommands = []cli.Command{
 			optTlsClientKey,
 			optTlsCaCert,
 			optUpdateUri,
+			optCertRenewUri,
 			optUpdateInterval,
 			optRegistrationUrl,
 			optInstallDir,
@@ -151,6 +152,21 @@ var cliCommands = []cli.Command{
 		Flags: []cli.Flag{
 			optInstallDir,
 		},
+	},
+	{
+		Name:        "renewcert",
+		Usage:       cmdUsage["docs-commands-renewcert"],
+		Description: cmdDescription["docs-commands-renewcert"],
+		Flags: []cli.Flag{
+			optTlsClientCert,
+			optTlsClientKey,
+			optTlsCaCert,
+			optCertRenewUri,
+		},
+		Before: func(c *cli.Context) error {
+			return config.Load(c)
+		},
+		Action: cmdRenewCert,
 	},
 }
 
@@ -357,5 +373,10 @@ func cmdStop(c *cli.Context) {
 
 func cmdRestart(c *cli.Context) {
 	code, _ := commands.Restart(c)
+	os.Exit(code)
+}
+
+func cmdRenewCert(c *cli.Context) {
+	code, _ := commands.RenewCert(c, &config)
 	os.Exit(code)
 }
