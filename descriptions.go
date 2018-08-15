@@ -1,18 +1,19 @@
 package main
 
 var cmdUsage = map[string]string{
-	"docs-commands-facts":   `Discover and list facts on this system.`,
-	"docs-commands-help":    `The "help" shows a list of commands or help for one command.`,
-	"docs-commands":         `Arc is controlled via a very easy to use command-line interface (CLI).`,
-	"docs-commands-init":    `The "init" command initializes server configuration.`,
-	"docs-commands-list":    `The "list" command shows all available agents and their actions.`,
-	"docs-commands-restart": `The "restart" command restart agent services.`,
-	"docs-commands-run":     `The "arc run" execute an agent action [REFERENCE ACTIONS DOC PAGE FROM HERE] on a remote Arc server.`,
-	"docs-commands-server":  `Run the Arc daemon.`,
-	"docs-commands-start":   `The "start" command start agent service.`,
-	"docs-commands-status":  `The "status" command gives the service status.`,
-	"docs-commands-stop":    `The "stop" command stop agent services.`,
-	"docs-commands-update":  `The "update" command check for new updates and update to the last version.`,
+	"docs-commands-facts":     `Discover and list facts on this system.`,
+	"docs-commands-help":      `The "help" shows a list of commands or help for one command.`,
+	"docs-commands":           `Arc is controlled via a very easy to use command-line interface (CLI).`,
+	"docs-commands-init":      `The "init" command initializes server configuration.`,
+	"docs-commands-list":      `The "list" command shows all available agents and their actions.`,
+	"docs-commands-restart":   `The "restart" command restart agent services.`,
+	"docs-commands-run":       `The "arc run" execute an agent action [REFERENCE ACTIONS DOC PAGE FROM HERE] on a remote Arc server.`,
+	"docs-commands-server":    `Run the Arc daemon.`,
+	"docs-commands-start":     `The "start" command start agent service.`,
+	"docs-commands-status":    `The "status" command gives the service status.`,
+	"docs-commands-stop":      `The "stop" command stop agent services.`,
+	"docs-commands-update":    `The "update" command check for new updates and update to the last version.`,
+	"docs-commands-renewcert": `The "renewcert" command downloads a new cert.`,
 }
 
 var cmdDescription = map[string]string{

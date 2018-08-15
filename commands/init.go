@@ -27,7 +27,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{{.Eol}}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}`))
+var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{{.Eol}}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .RenewCertUri}}renew-cert-uri: {{ .RenewCertUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}`))
 
 // Init install an arc agent/node
 func Init(c *cli.Context, appName string) (int, error) {
@@ -144,6 +144,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 			"Ca":             path.Join(dir, "ca.pem"),
 			"Endpoint":       strings.Join(c.StringSlice("endpoint"), ","),
 			"UpdateUri":      c.String("update-uri"),
+			"RenewCertUri":   c.String("renew-cert-uri"),
 			"UpdateInterval": updateInterval,
 			"Transport":      c.String("transport"),
 			"Eol":            eol,
