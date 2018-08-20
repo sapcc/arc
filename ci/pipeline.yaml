@@ -705,6 +705,8 @@ jobs:
 resources:
   - name: website.git
     type: git
+    check_every: 1h
+    webhook_token: aldkhalkdhlafhlh
     source:
       uri: git@gitHub.***REMOVED***:monsoon/arc.git
       branch: master
@@ -712,6 +714,8 @@ resources:
       paths: [ website/, ci/ ]
   - name: arc.git
     type: git
+    check_every: 1h
+    webhook_token: aldkhalkdhlafhlh
     source:
       uri: git://gitHub.***REMOVED***/monsoon/arc.git
       branch: master
@@ -723,12 +727,16 @@ resources:
       branch: master
   - name: secrets.git
     type: git
+    check_every: 1h
+    webhook_token: aldkhalkdhlafhlh
     source:
       uri: git@gitHub.***REMOVED***:cc/secrets.git
       private_key: {{secrets-ssh-key}}
       branch: master
   - name: tests.git
     type: git
+    check_every: 1h
+    webhook_token: aldkhalkdhlafhlh
     source:
       uri: git://gitHub.***REMOVED***/monsoon/arc.git
       branch: master
