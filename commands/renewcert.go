@@ -21,13 +21,31 @@ func RenewCert(c *cli.Context, cfg *arc_config.Config) (int, error) {
 	}
 	fmt.Printf("Using URI %s \n", renewCertURI)
 
-	// get the new cert
-	// threshold set to 10 years so certs with expiration date under 10 years will be renewed.
-	success, hoursLeft, err := pki.RenewCert(cfg, c.String("cert-renew-uri"), int64(87600)) // 10 years in hours
+	hoursLeft, err := pki.CertExpirationDate(cfg)
 	if err != nil {
 		return 1, err
 	}
 	fmt.Printf("Current cert expires in %d hours. \n", hoursLeft)
+
+	// ask the user to continue
+	var s string
+	fmt.Print("Do you want to renew the cert? (y|n): ")
+	_, err = fmt.Scan(&s)
+	if err != nil {
+		return 1, err
+	}
+	s = strings.TrimSpace(s)
+	s = strings.ToLower(s)
+	if s != "y" && s != "yes" {
+		return 0, nil
+	}
+
+	// get the new cert
+	// threshold set to 10 years so certs with expiration date under 10 years will be renewed.
+	success, _, err := pki.RenewCert(cfg, c.String("cert-renew-uri"), int64(87600)) // 10 years in hours
+	if err != nil {
+		return 1, err
+	}
 
 	if success {
 		fmt.Println("Cert successfully downloaded")
