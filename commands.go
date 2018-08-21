@@ -377,6 +377,9 @@ func cmdRestart(c *cli.Context) {
 }
 
 func cmdRenewCert(c *cli.Context) {
-	code, _ := commands.RenewCert(c, &config)
+	code, err := commands.RenewCert(c, &config)
+	if err != nil {
+		log.Error(err)
+	}
 	os.Exit(code)
 }
