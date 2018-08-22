@@ -56,7 +56,7 @@ var _ = Describe("RenewCert", func() {
 		defer ts.Close()
 		Expect(err).NotTo(HaveOccurred())
 
-		succeed, _, err := RenewCert(conf, ts.URL, 744)
+		succeed, _, err := RenewCert(conf, ts.URL, 744, true)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(succeed).To(Equal(true))
 

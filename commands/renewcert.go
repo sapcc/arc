@@ -42,7 +42,7 @@ func RenewCert(c *cli.Context, cfg *arc_config.Config) (int, error) {
 
 	// get the new cert
 	// threshold set to 10 years so certs with expiration date under 10 years will be renewed.
-	success, _, err := pki.RenewCert(cfg, renewCertURI, int64(87600)) // 10 years in hours
+	success, _, err := pki.RenewCert(cfg, renewCertURI, int64(87600), false) // 10 years in hours
 	if err != nil {
 		return 1, err
 	}
