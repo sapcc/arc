@@ -21,7 +21,7 @@ var (
 )
 
 // renewThreshold in hours
-func RenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64) (bool, int64, error) {
+func RenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64, httpClientInsecureSkipVerify bool) (bool, int64, error) {
 	// first check expiration date
 	hoursLeft, err := CertExpirationDate(cfg)
 	if err != nil {
@@ -32,12 +32,13 @@ func RenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64) (b
 		return false, hoursLeft, nil
 	}
 
+	// #nosec: TLS InsecureSkipVerify set true
 	// client creation
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				Certificates: []tls.Certificate{*cfg.ClientCert},
-				RootCAs:      cfg.CACerts,
+				Certificates:       []tls.Certificate{*cfg.ClientCert},
+				InsecureSkipVerify: httpClientInsecureSkipVerify,
 			},
 		},
 	}
