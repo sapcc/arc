@@ -261,7 +261,7 @@ func runServer(c *cli.Context) {
 	router := newRouter(env)
 
 	// run server
-	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("bind-address"), c.GlobalString("bind-address-tls"), router)
+	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("pki-ca-cert"), c.GlobalString("bind-address"), c.GlobalString("bind-address-tls"), router)
 	go server.run()
 
 	// catch gracefull shutdown and shutdown to close the connetions
