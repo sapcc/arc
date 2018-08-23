@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -25,7 +27,7 @@ type Server struct {
 }
 
 // NewSever creates a server struct
-func NewSever(tlsServerCert, tlsServerKey, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
+func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
 	var tlsConfig *tls.Config
 
 	if tlsServerCert != "" && tlsServerKey != "" {
@@ -33,9 +35,18 @@ func NewSever(tlsServerCert, tlsServerKey, httpBindAdress, httpsBindAdress strin
 		if err != nil {
 			log.Fatalf("Failed to load tls cert/key: %s", err)
 		}
+		pemCerts, err := ioutil.ReadFile(tlsServerCA)
+		if err != nil {
+			log.Fatalf("Failed to load CA certificate: %s", err)
+		}
+		certpool := x509.NewCertPool()
+		if !certpool.AppendCertsFromPEM(pemCerts) {
+			log.Fatalf("Given CA file does not contain a PEM encoded x509 certificate")
+		}
 		tlsConfig = &tls.Config{
 			Certificates: []tls.Certificate{cer},
 			ClientAuth:   tls.VerifyClientCertIfGiven,
+			ClientCAs:    certpool,
 		}
 	} else {
 		log.Infof("No TLS Cert or key given, no TLS configuration will be created.")
