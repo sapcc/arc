@@ -61,12 +61,7 @@ func RenewCert(cfg *arc_config.Config, renewURI string, httpClientInsecureSkipVe
 		return err
 	}
 
-	err = SaveCertificate(certPEMBlock, cfg)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return SaveCertificate(certPEMBlock, cfg)
 }
 
 // CertExpirationDate returns expiration time in hours (int64)
