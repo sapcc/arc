@@ -24,7 +24,7 @@ import (
 	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 )
 
-var _ = Describe("RenewCert", func() {
+var _ = Describe("CheckAndRenewCert", func() {
 
 	It("should update the cert", func() {
 		notAfter := time.Now().Add(600 * time.Hour)
@@ -42,7 +42,7 @@ var _ = Describe("RenewCert", func() {
 		cert, err := x509.ParseCertificate(clientCertPair.Certificate[0])
 		Expect(err).NotTo(HaveOccurred())
 		clientCertNotAfter := cert.NotAfter
-		Expect(int64(clientCertNotAfter.Sub(time.Now()).Hours())).To(BeNumerically("==", 599))
+		Expect(int64(clientCertNotAfter.Sub(time.Now()).Hours())).To(BeNumerically("==", 599)) // expire the certificate
 
 		conf, err := testConfig(rootCertFile, clientCertFile, clientKeyFile)
 		Expect(err).NotTo(HaveOccurred())
@@ -56,9 +56,9 @@ var _ = Describe("RenewCert", func() {
 		defer ts.Close()
 		Expect(err).NotTo(HaveOccurred())
 
-		succeed, _, err := RenewCert(conf, ts.URL, 744, true)
+		hoursLeft, err := CheckAndRenewCert(conf, ts.URL, 744, true)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(succeed).To(Equal(true))
+		Expect(hoursLeft).To(BeNumerically("==", int64(0)))
 
 		// test cert NotAfter
 		clientCertPair, err = tls.LoadX509KeyPair(clientCertFile.Name(), clientKeyFile.Name())
@@ -72,12 +72,48 @@ var _ = Describe("RenewCert", func() {
 		Expect(int64(diff.Hours())).To(BeNumerically("==", 17519))
 	})
 
+	It("should NOT update the cert", func() {
+		notAfter := time.Now().Add(600 * time.Hour)
+		rootCertFile, servCertFile, servKeyFile, clientCertFile, clientKeyFile, err := createCfgTmpCerts(&notAfter)
+		Expect(err).NotTo(HaveOccurred())
+		defer os.Remove(rootCertFile.Name())
+		defer os.Remove(servCertFile.Name())
+		defer os.Remove(servKeyFile.Name())
+		defer os.Remove(clientCertFile.Name())
+		defer os.Remove(clientKeyFile.Name())
+
+		// save cert notAfter from creation
+		clientCertPair, err := tls.LoadX509KeyPair(clientCertFile.Name(), clientKeyFile.Name())
+		Expect(err).NotTo(HaveOccurred())
+		cert, err := x509.ParseCertificate(clientCertPair.Certificate[0])
+		Expect(err).NotTo(HaveOccurred())
+		clientCertNotAfter := cert.NotAfter
+		// test cert not after
+		Expect(int64(clientCertNotAfter.Sub(time.Now()).Hours())).To(BeNumerically("==", 599)) // NOT expire the certificate
+
+		conf, err := testConfig(rootCertFile, clientCertFile, clientKeyFile)
+		Expect(err).NotTo(HaveOccurred())
+
+		// read manuelly server cert
+		servCert, err := tls.LoadX509KeyPair(servCertFile.Name(), servKeyFile.Name())
+		Expect(err).NotTo(HaveOccurred())
+
+		ts := test.NewUnstartedTestTLSServer(conf.CACerts, &servCert, http.HandlerFunc(renewPkiCertTest))
+		ts.StartTLS()
+		defer ts.Close()
+		Expect(err).NotTo(HaveOccurred())
+
+		hoursLeft, err := CheckAndRenewCert(conf, ts.URL, 500, true)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(hoursLeft).To(BeNumerically("==", int64(599)))
+	})
+
 })
 
 var _ = Describe("CertExpirationDate", func() {
 
 	It("should return left hours to the expiration date", func() {
-		notAfter := time.Now().Add(5 * time.Hour)
+		notAfter := time.Now().Add(5 * time.Hour) // expiration in 5 hours
 		rootCertFile, servCertFile, servKeyFile, clientCertFile, clientKeyFile, err := createCfgTmpCerts(&notAfter)
 		Expect(err).NotTo(HaveOccurred())
 		defer os.Remove(rootCertFile.Name())
