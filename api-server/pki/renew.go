@@ -20,18 +20,30 @@ var (
 	RENEW_CFG_CERT_PATH_MISSING   = "Configuration is nil or client cert path is missing."
 )
 
-// renewThreshold in hours
-func RenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64, httpClientInsecureSkipVerify bool) (bool, int64, error) {
+// CheckAndRenewCert check with the threshold and renew the cert
+// int64 --> hours left to the expiration date. If int64 > 0 means that hoursLeft > threshold and there is no need to renew the cert
+// error --> something wrong happend
+func CheckAndRenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64, httpClientInsecureSkipVerify bool) (int64, error) {
 	// first check expiration date
+	// hours negative (ex: -5) the certificate is already 5 hours expired
 	hoursLeft, err := CertExpirationDate(cfg)
 	if err != nil {
-		return false, 0, err
+		return 0, err
 	}
 	// renew cert if experition time is less than the given hours
 	if hoursLeft > renewThreshold {
-		return false, hoursLeft, nil
+		return hoursLeft, nil
 	}
+	// renew Cert
+	err = RenewCert(cfg, renewURI, httpClientInsecureSkipVerify)
+	if err != nil {
+		return 0, err
+	}
+	return 0, nil
+}
 
+// RenewCert renew the cert
+func RenewCert(cfg *arc_config.Config, renewURI string, httpClientInsecureSkipVerify bool) error {
 	// #nosec: TLS InsecureSkipVerify set true
 	// client creation
 	client := &http.Client{
@@ -46,18 +58,18 @@ func RenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64, ht
 	// lets get the new cert
 	certPEMBlock, err := SendCertificateRequest(client, renewURI, cfg)
 	if err != nil {
-		return false, hoursLeft, err
+		return err
 	}
 
 	err = SaveCertificate(certPEMBlock, cfg)
 	if err != nil {
-		return false, hoursLeft, err
+		return err
 	}
 
-	return true, hoursLeft, nil
+	return nil
 }
 
-// returns expiration time in hours (int64)
+// CertExpirationDate returns expiration time in hours (int64)
 func CertExpirationDate(cfg *arc_config.Config) (int64, error) {
 	if cfg.ClientCert == nil || len(cfg.ClientCert.Certificate) == 0 {
 		return 0, errors.New(RENEW_TLS_CERTIFICATE_MISSING)
