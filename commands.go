@@ -173,9 +173,9 @@ var cliCommands = []cli.Command{
 func cmdServer(c *cli.Context) {
 	log.Infof("Starting server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
 
-	// update object and ticker
+	// updater object and ticker
 	var up *updater.Updater
-	tickChan := time.NewTicker(time.Second * time.Duration(c.Int("update-interval")))
+	updaterTickChan := time.NewTicker(time.Second * time.Duration(c.Int("update-interval")))
 	if c.String("update-uri") != "" {
 		// create update object
 		up = updater.New(map[string]string{
@@ -186,7 +186,7 @@ func cmdServer(c *cli.Context) {
 		log.Infof("Updater setup with interval %v, version %q, app name %q and update uri %q", c.Int("update-interval"), version.Version, appName, c.String("update-uri"))
 	} else {
 		// ticker will be stoped if no update uri is given
-		tickChan.Stop()
+		updaterTickChan.Stop()
 	}
 
 	tp, err := transport.New(config, true)
@@ -215,7 +215,7 @@ func cmdServer(c *cli.Context) {
 			server.GracefulShutdown()
 		case <-server.Done():
 			os.Exit(0)
-		case <-tickChan.C:
+		case <-updaterTickChan.C:
 			go func() {
 				success, err := up.CheckAndUpdate()
 				if err != nil {
@@ -223,7 +223,7 @@ func cmdServer(c *cli.Context) {
 				}
 				if success {
 					server.GracefulShutdown()
-					tickChan.Stop()
+					updaterTickChan.Stop()
 				}
 			}()
 		}
