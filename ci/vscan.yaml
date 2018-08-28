@@ -21,7 +21,7 @@ run:
         export DOCKER_PASSWORD="$DOCKER_LOGIN_PASSWORD"
       fi
 
-      IMAGE_TAG=$(cat image.version/version)
+      IMAGE_TAG=$(cat image.version/current)
       [ -z "$IMAGE_TAG" ] && IMAGE_TAG=latest
       IMAGE=$IMAGE_NAME:$IMAGE_TAG
 
