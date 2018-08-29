@@ -235,6 +235,12 @@ jobs:
             http_proxy: http://proxy.***REMOVED***:8080
             https_proxy: http://proxy.***REMOVED***:8080
             no_proxy: ***REMOVED***,127.0.0.1,localhost
+      - task: scan-arc-api-image
+        file: arc.git/ci/vscan.yaml
+        input_mapping:
+          image.version: api.version
+        params:
+          IMAGE_NAME: hub.***REMOVED***/monsoon/arc-api
       - put: api.version
         params: { filename: api.version/current}
     on_failure:
@@ -243,6 +249,7 @@ jobs:
   - name: mosquitto-build
     plan:
       - aggregate:
+        - get: arc.git
         - get: mosquitto.git
           trigger: true
         - get: mosquitto.version
@@ -264,6 +271,12 @@ jobs:
             no_proxy: ***REMOVED***,127.0.0.1,localhost
           cache_tag: latest
           cache: true
+      - task: scan-mosquitto-image
+        file: arc.git/ci/vscan.yaml
+        input_mapping:
+          image.version: mosquitto.version
+        params:
+          IMAGE_NAME: hub.***REMOVED***/monsoon/mosquitto
       - put: mosquitto.version
         params:
           filename: mosquitto.version/current
