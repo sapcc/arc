@@ -10,6 +10,7 @@ import (
 
 	"github.com/StackExchange/wmi"
 	gopsutil "github.com/shirou/gopsutil/common"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 )
 
 type Win32_OperatingSystem struct {
@@ -31,6 +32,10 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	facts["platform"] = "windows"
 	facts["platform_family"] = "windows"
 	facts["platform_version"] = nil
+
+	if leftHours, err := pki.CertExpirationDate(h.Config); err == nil {
+		facts["cert_expiration"] = leftHours
+	}
 
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = strings.ToLower(hostname)

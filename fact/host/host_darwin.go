@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {
@@ -17,9 +19,15 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	facts["hostname"] = nil
 	facts["fqdn"] = nil
 	facts["domain"] = nil
+
+	if leftHours, err := pki.CertExpirationDate(h.Config); err == nil {
+		facts["cert_expiration"] = leftHours
+	}
+
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = hostname
 	}
+
 	if out, err := exec.Command("/usr/bin/sw_vers").Output(); /* #nosec */ err == nil {
 		re := regexp.MustCompile(`ProductVersion:\s+(.+)`)
 		for _, line := range strings.Split(string(out), "\n") {

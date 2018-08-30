@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/shirou/gopsutil/host"
+	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {
@@ -23,6 +24,10 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	facts["fqdn"] = nil
 	facts["domain"] = nil
 	facts["hostname"] = info.Hostname
+
+	if leftHours, err := pki.CertExpirationDate(h.Config); err == nil {
+		facts["cert_expiration"] = leftHours
+	}
 
 	if fqdn, domain := fqdn_and_domain(); fqdn != "" {
 		facts["fqdn"] = fqdn

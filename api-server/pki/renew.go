@@ -66,7 +66,7 @@ func RenewCert(cfg *arc_config.Config, renewURI string, httpClientInsecureSkipVe
 
 // CertExpirationDate returns expiration time in hours (int64)
 func CertExpirationDate(cfg *arc_config.Config) (int64, error) {
-	if cfg.ClientCert == nil || len(cfg.ClientCert.Certificate) == 0 {
+	if cfg == nil || cfg.ClientCert == nil || len(cfg.ClientCert.Certificate) == 0 {
 		return 0, errors.New(RENEW_TLS_CERTIFICATE_MISSING)
 	}
 

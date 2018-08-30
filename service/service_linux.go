@@ -128,7 +128,7 @@ func (s service) svCmd(args ...string) *exec.Cmd {
 func detectInitSystem() (string, error) {
 	var hostFacts map[string]interface{}
 	var err error
-	if hostFacts, err = host.New().Facts(); err != nil {
+	if hostFacts, err = host.New(nil).Facts(); err != nil {
 		return "", errors.New("Can't detect init system")
 	}
 	init, ok := hostFacts["init_package"].(string)

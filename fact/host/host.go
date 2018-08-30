@@ -4,12 +4,18 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+
+	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
 )
 
-type Source struct{}
+type Source struct {
+	Config *arc_config.Config
+}
 
-func New() Source {
-	return Source{}
+func New(cfg *arc_config.Config) Source {
+	return Source{
+		Config: cfg,
+	}
 }
 
 func (h Source) Name() string {
