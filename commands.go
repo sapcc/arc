@@ -325,7 +325,7 @@ func cmdList(c *cli.Context) {
 
 func cmdFacts(c *cli.Context) {
 	store := fact.NewStore()
-	store.AddSource(host.New(), 0)
+	store.AddSource(host.New(&config), 0)
 	store.AddSource(memory.New(), 0)
 	store.AddSource(network.New(), 0)
 	store.AddSource(arc_facts.New(config), 0)

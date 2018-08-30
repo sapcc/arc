@@ -83,7 +83,7 @@ func (s *server) Run() {
 	s.rootContext, s.cancel = context.WithCancel(context.Background())
 	done := s.rootContext.Done()
 
-	s.factStore = s.setupFactStore()
+	s.factStore = s.setupFactStore(s.config)
 	factUpdates := s.factStore.Updates()
 
 	for {
@@ -150,9 +150,9 @@ func (s *server) handleJob(msg *arc.Request) {
 	log.Infof("Job %s completed", msg.RequestID)
 }
 
-func (s *server) setupFactStore() *fact.Store {
+func (s *server) setupFactStore(config arc_config.Config) *fact.Store {
 	store := fact.NewStore()
-	store.AddSource(host.New(), 1*time.Minute)
+	store.AddSource(host.New(&config), 1*time.Minute)
 	store.AddSource(memory.New(), 1*time.Minute)
 	store.AddSource(network.New(), 1*time.Minute)
 	store.AddSource(arc_facts.New(s.config), 0)
