@@ -60,15 +60,17 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("%s://%s/api/v1/agents/init/%s", requestutil.Scheme(r), requestutil.HostWithPort(r), token)
 
 	info := struct {
-		Token       string `json:"token"`
-		SignURL     string `json:"url"`
-		EndpointURL string `json:"endpoint_url"`
-		UpdateURL   string `json:"update_url"`
+		Token        string `json:"token"`
+		SignURL      string `json:"url"`
+		EndpointURL  string `json:"endpoint_url"`
+		UpdateURL    string `json:"update_url"`
+		RenewCertURL string `json:"renew_cert_url"`
 	}{
-		Token:       token,
-		SignURL:     url,
-		EndpointURL: agentEndpointURL,
-		UpdateURL:   agentUpdateURL,
+		Token:        token,
+		SignURL:      url,
+		EndpointURL:  agentEndpointURL,
+		UpdateURL:    agentUpdateURL,
+		RenewCertURL: agentRenewCertURL,
 	}
 
 	switch r.Header.Get("Accept") {
