@@ -38,7 +38,7 @@ var (
 	pkiEnabled        = false
 	agentUpdateURL    = "UPDATE_URL_NOT_CONFIGURED"
 	agentEndpointURL  = "ENDPOINT_URL_NOT_CONFIGURED"
-	agentRenewCertURL = "RENEW_CERT_URL_NOT_CONFIGURED"
+	agentRenewCertURL = "" // Should not be initialized because not all regions have from the begining TLS termination directly on the server
 )
 
 func main() {
