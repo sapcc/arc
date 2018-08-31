@@ -7,13 +7,13 @@ import "text/template"
 var powershellScriptInstaller = template.Must(template.New("name").Parse(`#ps1_sysnative
 mkdir C:\\monsoon\\arc
 (New-Object System.Net.WebClient).DownloadFile('{{ .UpdateURL }}/arc/windows/amd64/latest','C:\\monsoon\\arc\\arc.exe')
-C:\\monsoon\\arc\\arc.exe init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }}
+C:\\monsoon\\arc\\arc.exe init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }} --renew-cert-uri {{ .RenewCertURL }}
 `))
 
 var shellScriptInstaller = template.Must(template.New("name").Parse(`#!/bin/sh
 curl -f --create-dirs -o /opt/arc/arc {{ .UpdateURL }}/arc/linux/amd64/latest
 chmod +x /opt/arc/arc
-/opt/arc/arc init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }}
+/opt/arc/arc init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }} --renew-cert-uri {{ .RenewCertURL }}
 `))
 
 var cloudConfigInstaller = template.Must(template.New("name").Parse(`#cloud-config
@@ -23,5 +23,5 @@ runcmd:
     - |
       curl -f --create-dirs -o /opt/arc/arc {{ .UpdateURL }}/arc/linux/amd64/latest
       chmod +x /opt/arc/arc
-      /opt/arc/arc init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }}
+      /opt/arc/arc init --endpoint {{ .EndpointURL }} --update-uri {{ .UpdateURL }} --registration-url {{ .SignURL }} --renew-cert-uri {{ .RenewCertURL }}
 `))

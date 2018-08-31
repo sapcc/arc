@@ -30,14 +30,15 @@ const (
 )
 
 var (
-	config           = arc_config.New()
-	db               *sql.DB
-	tp               transport.Transport
-	ks               = keystone.Auth{}
-	env              string
-	pkiEnabled       = false
-	agentUpdateURL   = "UPDATE_URL_NOT_CONFIGURED"
-	agentEndpointURL = "ENDPOINT_URL_NOT_CONFIGURED"
+	config            = arc_config.New()
+	db                *sql.DB
+	tp                transport.Transport
+	ks                = keystone.Auth{}
+	env               string
+	pkiEnabled        = false
+	agentUpdateURL    = "UPDATE_URL_NOT_CONFIGURED"
+	agentEndpointURL  = "ENDPOINT_URL_NOT_CONFIGURED"
+	agentRenewCertURL = "RENEW_CERT_URL_NOT_CONFIGURED"
 )
 
 func main() {
@@ -148,13 +149,18 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "agent-update-url",
-			Usage:  "The default update url for agents. Only used for token generation.",
+			Usage:  "The default update URL for agents. Only used for agent install script.",
 			EnvVar: envPrefix + "AGENT_UPDATE_URL",
 		},
 		cli.StringFlag{
 			Name:   "agent-endpoint-url",
-			Usage:  "The default endpoint url for agents. Only used for token generation",
+			Usage:  "The default endpoint URL for agents. Only used for agent install script.",
 			EnvVar: envPrefix + "AGENT_ENDPOINT_URL",
+		},
+		cli.StringFlag{
+			Name:   "renew-cert-url",
+			Usage:  "The default URL for requesting new certs. Only used for agent install script.",
+			EnvVar: envPrefix + "RENEW_CERT_URL",
 		},
 	}
 
@@ -202,6 +208,10 @@ func runServer(c *cli.Context) {
 		agentEndpointURL = c.GlobalString("agent-endpoint-url")
 	} else if len(config.Endpoints) > 0 {
 		agentEndpointURL = config.Endpoints[0]
+	}
+
+	if c.GlobalString("renew-cert-url") != "" {
+		agentRenewCertURL = c.GlobalString("renew-cert-url")
 	}
 
 	// create db connection
