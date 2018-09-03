@@ -158,9 +158,9 @@ func main() {
 			EnvVar: envPrefix + "AGENT_ENDPOINT_URL",
 		},
 		cli.StringFlag{
-			Name:   "renew-cert-url",
+			Name:   "agent-renew-cert-url",
 			Usage:  "The default URL for requesting new certs. Only used for agent install script.",
-			EnvVar: envPrefix + "RENEW_CERT_URL",
+			EnvVar: envPrefix + "AGENT_RENEW_CERT_URL",
 		},
 	}
 
@@ -210,8 +210,8 @@ func runServer(c *cli.Context) {
 		agentEndpointURL = config.Endpoints[0]
 	}
 
-	if c.GlobalString("renew-cert-url") != "" {
-		agentRenewCertURL = c.GlobalString("renew-cert-url")
+	if c.GlobalString("agent-renew-cert-url") != "" {
+		agentRenewCertURL = c.GlobalString("agent-renew-cert-url")
 	}
 
 	// create db connection
