@@ -204,7 +204,7 @@ func cmdServer(c *cli.Context) {
 	gracefulChan := make(chan os.Signal, 1)
 	shutdownChan := make(chan os.Signal, 1)
 	signal.Notify(gracefulChan, syscall.SIGTERM)
-	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGQUIT)
+	signal.Notify(shutdownChan, syscall.SIGINT)
 	for {
 		select {
 		case s := <-shutdownChan:
