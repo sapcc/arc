@@ -158,9 +158,9 @@ func main() {
 			EnvVar: envPrefix + "AGENT_ENDPOINT_URL",
 		},
 		cli.StringFlag{
-			Name:   "agent-renew-cert-url",
+			Name:   "agent-api-url",
 			Usage:  "The default URL for requesting new certs. Only used for agent install script.",
-			EnvVar: envPrefix + "AGENT_RENEW_CERT_URL",
+			EnvVar: envPrefix + "AGENT_API_URL",
 		},
 	}
 
