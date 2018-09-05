@@ -6,19 +6,19 @@ import (
 	"testing"
 )
 
-func TestCloudConfigInstallerlNoRenewCertURL(t *testing.T) {
+func TestCloudConfigInstallerlNoApiURL(t *testing.T) {
 	info := struct {
-		Token        string
-		SignURL      string
-		EndpointURL  string
-		UpdateURL    string
-		RenewCertURL string
+		Token       string
+		SignURL     string
+		EndpointURL string
+		UpdateURL   string
+		ApiURL      string
 	}{
-		Token:        "some_token",
-		SignURL:      "some_url",
-		EndpointURL:  "some_EndPoint",
-		UpdateURL:    "some_Url",
-		RenewCertURL: "",
+		Token:       "some_token",
+		SignURL:     "some_url",
+		EndpointURL: "some_EndPoint",
+		UpdateURL:   "some_Url",
+		ApiURL:      "",
 	}
 	//var w io.Writer
 	var w bytes.Buffer
@@ -26,24 +26,24 @@ func TestCloudConfigInstallerlNoRenewCertURL(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if strings.Contains(w.String(), "--renew-cert-uri") {
-		t.Error("Cloud config install script should not contain flag --renew-cert-uri")
+	if strings.Contains(w.String(), "--api-uri") {
+		t.Error("Cloud config install script should not contain flag --api-uri")
 	}
 }
 
-func TestCloudConfigInstallerlRenewCertURL(t *testing.T) {
+func TestCloudConfigInstallerlApiURL(t *testing.T) {
 	info := struct {
-		Token        string
-		SignURL      string
-		EndpointURL  string
-		UpdateURL    string
-		RenewCertURL string
+		Token       string
+		SignURL     string
+		EndpointURL string
+		UpdateURL   string
+		ApiURL      string
 	}{
-		Token:        "some_token",
-		SignURL:      "some_url",
-		EndpointURL:  "some_EndPoint",
-		UpdateURL:    "some_Url",
-		RenewCertURL: "some_Cert_url",
+		Token:       "some_token",
+		SignURL:     "some_url",
+		EndpointURL: "some_EndPoint",
+		UpdateURL:   "some_Url",
+		ApiURL:      "some_Cert_url",
 	}
 	//var w io.Writer
 	var w bytes.Buffer
@@ -51,27 +51,27 @@ func TestCloudConfigInstallerlRenewCertURL(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if !strings.Contains(w.String(), "--renew-cert-uri") {
-		t.Error("Cloud config install script should contain flag --renew-cert-uri")
+	if !strings.Contains(w.String(), "--api-uri") {
+		t.Error("Cloud config install script should contain flag --api-uri")
 	}
 	if !strings.Contains(w.String(), "some_Cert_url") {
 		t.Error("Cloud config install script should contain flag value some_Cert_url")
 	}
 }
 
-func TestShellScriptInstallerNoRenewCertURL(t *testing.T) {
+func TestShellScriptInstallerNoApiURL(t *testing.T) {
 	info := struct {
-		Token        string
-		SignURL      string
-		EndpointURL  string
-		UpdateURL    string
-		RenewCertURL string
+		Token       string
+		SignURL     string
+		EndpointURL string
+		UpdateURL   string
+		ApiURL      string
 	}{
-		Token:        "some_token",
-		SignURL:      "some_url",
-		EndpointURL:  "some_EndPoint",
-		UpdateURL:    "some_Url",
-		RenewCertURL: "",
+		Token:       "some_token",
+		SignURL:     "some_url",
+		EndpointURL: "some_EndPoint",
+		UpdateURL:   "some_Url",
+		ApiURL:      "",
 	}
 	//var w io.Writer
 	var w bytes.Buffer
@@ -79,24 +79,24 @@ func TestShellScriptInstallerNoRenewCertURL(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if strings.Contains(w.String(), "--renew-cert-uri") {
-		t.Error("Shell config install script should not contain flag --renew-cert-uri")
+	if strings.Contains(w.String(), "--api-uri") {
+		t.Error("Shell config install script should not contain flag --api-uri")
 	}
 }
 
-func TestShellScriptInstallerRenewCertURL(t *testing.T) {
+func TestShellScriptInstallerApiURL(t *testing.T) {
 	info := struct {
-		Token        string
-		SignURL      string
-		EndpointURL  string
-		UpdateURL    string
-		RenewCertURL string
+		Token       string
+		SignURL     string
+		EndpointURL string
+		UpdateURL   string
+		ApiURL      string
 	}{
-		Token:        "some_token",
-		SignURL:      "some_url",
-		EndpointURL:  "some_EndPoint",
-		UpdateURL:    "some_Url",
-		RenewCertURL: "some_Cert_url",
+		Token:       "some_token",
+		SignURL:     "some_url",
+		EndpointURL: "some_EndPoint",
+		UpdateURL:   "some_Url",
+		ApiURL:      "some_Cert_url",
 	}
 	//var w io.Writer
 	var w bytes.Buffer
@@ -104,27 +104,27 @@ func TestShellScriptInstallerRenewCertURL(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if !strings.Contains(w.String(), "--renew-cert-uri") {
-		t.Error("Shell config install script should contain flag --renew-cert-uri")
+	if !strings.Contains(w.String(), "--api-uri") {
+		t.Error("Shell config install script should contain flag --api-uri")
 	}
 	if !strings.Contains(w.String(), "some_Cert_url") {
 		t.Error("Shell config install script should contain flag value some_Cert_url")
 	}
 }
 
-func TestPowerShellScriptInstallerNoRenewCertURL(t *testing.T) {
+func TestPowerShellScriptInstallerNoApiURL(t *testing.T) {
 	info := struct {
-		Token        string
-		SignURL      string
-		EndpointURL  string
-		UpdateURL    string
-		RenewCertURL string
+		Token       string
+		SignURL     string
+		EndpointURL string
+		UpdateURL   string
+		ApiURL      string
 	}{
-		Token:        "some_token",
-		SignURL:      "some_url",
-		EndpointURL:  "some_EndPoint",
-		UpdateURL:    "some_Url",
-		RenewCertURL: "",
+		Token:       "some_token",
+		SignURL:     "some_url",
+		EndpointURL: "some_EndPoint",
+		UpdateURL:   "some_Url",
+		ApiURL:      "",
 	}
 	//var w io.Writer
 	var w bytes.Buffer
@@ -132,24 +132,24 @@ func TestPowerShellScriptInstallerNoRenewCertURL(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if strings.Contains(w.String(), "--renew-cert-uri") {
-		t.Error("PowerShell config install script should not contain flag --renew-cert-uri")
+	if strings.Contains(w.String(), "--api-uri") {
+		t.Error("PowerShell config install script should not contain flag --api-uri")
 	}
 }
 
-func TestPowerShellScriptInstallerRenewCertURL(t *testing.T) {
+func TestPowerShellScriptInstallerApiURL(t *testing.T) {
 	info := struct {
-		Token        string
-		SignURL      string
-		EndpointURL  string
-		UpdateURL    string
-		RenewCertURL string
+		Token       string
+		SignURL     string
+		EndpointURL string
+		UpdateURL   string
+		ApiURL      string
 	}{
-		Token:        "some_token",
-		SignURL:      "some_url",
-		EndpointURL:  "some_EndPoint",
-		UpdateURL:    "some_Url",
-		RenewCertURL: "some_Cert_url",
+		Token:       "some_token",
+		SignURL:     "some_url",
+		EndpointURL: "some_EndPoint",
+		UpdateURL:   "some_Url",
+		ApiURL:      "some_Cert_url",
 	}
 	//var w io.Writer
 	var w bytes.Buffer
@@ -157,8 +157,8 @@ func TestPowerShellScriptInstallerRenewCertURL(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
-	if !strings.Contains(w.String(), "--renew-cert-uri") {
-		t.Error("PowerShell config install script should contain flag --renew-cert-uri")
+	if !strings.Contains(w.String(), "--api-uri") {
+		t.Error("PowerShell config install script should contain flag --api-uri")
 	}
 	if !strings.Contains(w.String(), "some_Cert_url") {
 		t.Error("PowerShell config install script should contain flag value some_Cert_url")

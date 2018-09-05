@@ -110,7 +110,7 @@ var cliCommands = []cli.Command{
 			optTlsClientKey,
 			optTlsCaCert,
 			optUpdateUri,
-			optCertRenewUri,
+			optApiUri,
 			optUpdateInterval,
 			optRegistrationUrl,
 			optInstallDir,
@@ -161,7 +161,7 @@ var cliCommands = []cli.Command{
 			optTlsClientCert,
 			optTlsClientKey,
 			optTlsCaCert,
-			optCertRenewUri,
+			optApiUri,
 		},
 		Before: func(c *cli.Context) error {
 			return config.Load(c)

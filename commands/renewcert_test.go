@@ -11,7 +11,7 @@ import (
 func TestCmdRenewCertUriFromFlag(t *testing.T) {
 	// prepare context flags
 	flagSet := flag.NewFlagSet("local", 0)
-	flagSet.String("renew-cert-uri", "https://arc.***REMOVED***", "global")
+	flagSet.String("api-uri", "https://arc.***REMOVED***", "global")
 	ctx := cli.NewContext(nil, flagSet, getParentCtx())
 
 	uri, err := renewCertURI(ctx)
@@ -45,7 +45,7 @@ func TestCmdRenewCertUriFromEnv(t *testing.T) {
 func TestCmdRenewCertUriFromFlagIgnoreEnv(t *testing.T) {
 	// prepare context flags
 	flagSet := flag.NewFlagSet("local", 0)
-	flagSet.String("renew-cert-uri", "https://arc.***REMOVED***", "global")
+	flagSet.String("api-uri", "https://arc.***REMOVED***", "global")
 	ctx := cli.NewContext(nil, flagSet, getParentCtx())
 	// set env var
 	os.Setenv("ARC_UPDATE_URI", "https://beta.arc.***REMOVED***")
