@@ -127,7 +127,7 @@ var _ = Describe("CertExpirationDate", func() {
 
 		expiration, err := CertExpirationDate(conf)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(expiration).To(Equal(int64(4)))
+		Expect(expiration).To(Equal(notAfter))
 	})
 
 	It("should return expired hours", func() {
@@ -145,7 +145,7 @@ var _ = Describe("CertExpirationDate", func() {
 
 		expiration, err := CertExpirationDate(conf)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(expiration).To(Equal(int64(-5)))
+		Expect(expiration).To(Equal(notAfter))
 	})
 
 })
