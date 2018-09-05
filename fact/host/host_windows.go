@@ -33,8 +33,9 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	facts["platform_family"] = "windows"
 	facts["platform_version"] = nil
 
-	if leftHours, err := pki.CertExpirationDate(h.Config); err == nil {
-		facts["cert_expiration"] = leftHours
+	if notAfter, err := pki.CertExpirationDate(h.Config); err == nil {
+		hoursLeft := pki.CertExpiresIn(notAfter)
+		facts["cert_expiration"] = hoursLeft
 	}
 
 	if hostname, err := os.Hostname(); err == nil {

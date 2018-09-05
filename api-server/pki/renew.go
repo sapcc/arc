@@ -25,11 +25,14 @@ var (
 // error --> something wrong happend
 func CheckAndRenewCert(cfg *arc_config.Config, renewURI string, renewThreshold int64, httpClientInsecureSkipVerify bool) (int64, error) {
 	// first check expiration date
-	// hours negative (ex: -5) the certificate is already 5 hours expired
-	hoursLeft, err := CertExpirationDate(cfg)
+	notAfter, err := CertExpirationDate(cfg)
 	if err != nil {
 		return 0, err
 	}
+
+	// hours negative (ex: -5) the certificate is already 5 hours expired
+	hoursLeft := CertExpiresIn(notAfter)
+
 	// renew cert if experition time is less than the given hours
 	if hoursLeft > renewThreshold {
 		return hoursLeft, nil
@@ -64,20 +67,23 @@ func RenewCert(cfg *arc_config.Config, renewURI string, httpClientInsecureSkipVe
 	return SaveCertificate(certPEMBlock, cfg)
 }
 
-// CertExpirationDate returns expiration time in hours (int64)
-func CertExpirationDate(cfg *arc_config.Config) (int64, error) {
+// CertExpiresIn returns expiration time in hours (int64)
+func CertExpiresIn(notAfter *time.Time) int64 {
+	return int64(time.Until(*notAfter).Hours())
+}
+
+// CertExpirationDate return the notAfter attribute of the cert
+func CertExpirationDate(cfg *arc_config.Config) (*time.Time, error) {
 	if cfg == nil || cfg.ClientCert == nil || len(cfg.ClientCert.Certificate) == 0 {
-		return 0, errors.New(RENEW_TLS_CERTIFICATE_MISSING)
+		return nil, errors.New(RENEW_TLS_CERTIFICATE_MISSING)
 	}
 
 	cert, err := x509.ParseCertificate(cfg.ClientCert.Certificate[0])
 	if err != nil {
-		return 0, fmt.Errorf("Failed to parse client certificate: %s", err)
+		return nil, fmt.Errorf("Failed to parse client certificate: %s", err)
 	}
 
-	expiresIn := int64(time.Until(cert.NotAfter).Hours())
-
-	return expiresIn, nil
+	return &cert.NotAfter, nil
 }
 
 func SaveCertificate(certPEMBlock []byte, cfg *arc_config.Config) error {
