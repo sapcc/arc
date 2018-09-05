@@ -27,7 +27,8 @@ func RenewCert(c *cli.Context, cfg *arc_config.Config) (int, error) {
 	}
 
 	hoursLeft := pki.CertExpiresIn(notAfter)
-	fmt.Printf("Current cert expires on %s (%d hours). \n", notAfter.String(), hoursLeft)
+	daysLeft := hoursLeft / 24
+	fmt.Printf("Current cert expires on %s (%d days). \n", notAfter.Format("2006-01-02 15:04:05"), int(daysLeft))
 
 	// ask the user to continue
 	var s string
