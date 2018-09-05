@@ -53,7 +53,7 @@ func RenewCert(c *cli.Context, cfg *arc_config.Config) (int, error) {
 
 func renewCertURI(c *cli.Context) (string, error) {
 	// check api renew cert uri
-	uri := c.String("renew-cert-uri")
+	uri := c.String("api-uri")
 	uriType := 0
 	if uri == "" {
 		uri = os.Getenv("ARC_UPDATE_URI")
@@ -77,11 +77,11 @@ func renewCertURI(c *cli.Context) (string, error) {
 	}
 
 	// add path to the renew cert URI
-	renewCertURL := &url.URL{
+	apiURL := &url.URL{
 		Scheme: "https",
 		Host:   host,
 		Path:   "/api/v1/agents/renew",
 	}
 
-	return renewCertURL.String(), nil
+	return apiURL.String(), nil
 }

@@ -30,15 +30,15 @@ const (
 )
 
 var (
-	config            = arc_config.New()
-	db                *sql.DB
-	tp                transport.Transport
-	ks                = keystone.Auth{}
-	env               string
-	pkiEnabled        = false
-	agentUpdateURL    = "UPDATE_URL_NOT_CONFIGURED"
-	agentEndpointURL  = "ENDPOINT_URL_NOT_CONFIGURED"
-	agentRenewCertURL = "" // Should not be initialized because not all regions have from the begining TLS termination directly on the server
+	config           = arc_config.New()
+	db               *sql.DB
+	tp               transport.Transport
+	ks               = keystone.Auth{}
+	env              string
+	pkiEnabled       = false
+	agentUpdateURL   = "UPDATE_URL_NOT_CONFIGURED"
+	agentEndpointURL = "ENDPOINT_URL_NOT_CONFIGURED"
+	agentApiURL      = "" // Should not be initialized because not all regions have from the begining TLS termination directly on the server
 )
 
 func main() {
@@ -210,8 +210,8 @@ func runServer(c *cli.Context) {
 		agentEndpointURL = config.Endpoints[0]
 	}
 
-	if c.GlobalString("agent-renew-cert-url") != "" {
-		agentRenewCertURL = c.GlobalString("agent-renew-cert-url")
+	if c.GlobalString("agent-api-url") != "" {
+		agentApiURL = c.GlobalString("agent-api-url")
 	}
 
 	// create db connection

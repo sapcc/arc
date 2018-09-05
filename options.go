@@ -63,10 +63,10 @@ var optUpdateUri = cli.StringFlag{
 	EnvVar: envPrefix + "UPDATE_URI",
 }
 
-var optCertRenewUri = cli.StringFlag{
-	Name:   "renew-cert-uri",
-	Usage:  "Renew cert uri",
-	EnvVar: envPrefix + "RENEW_CERT_URI",
+var optApiUri = cli.StringFlag{
+	Name:   "api-uri",
+	Usage:  "Api uri",
+	EnvVar: envPrefix + "API_URI",
 }
 
 var optTimeout = cli.IntFlag{
