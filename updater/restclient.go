@@ -71,7 +71,7 @@ func (c *Client) CheckForUpdate(params CheckParams) (*CheckResult, error) {
 	return &res, nil
 }
 
-func (c *Client) GetUpdate(r *CheckResult) (*io.ReadCloser, error) {
+func (c *Client) GetUpdate(r *CheckResult) (io.ReadCloser, error) {
 	isUrlAbsolute, err := isAbsouteUrl(r.Url)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,14 @@ func (c *Client) GetUpdate(r *CheckResult) (*io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Body, nil
+	if resp.Body == nil {
+		return nil, fmt.Errorf("Got empty response body")
+	}
+	if resp.StatusCode >= 400 {
+		resp.Body.Close()
+		return nil, fmt.Errorf("Got unexpected status code: %s", resp.Status)
+	}
+	return resp.Body, nil
 }
 
 // private
