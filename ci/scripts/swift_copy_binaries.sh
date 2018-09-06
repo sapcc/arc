@@ -29,25 +29,25 @@ set -x
 curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/windows/amd64/arc_${VERSION}_windows_amd64.exe \
   -H "Destination: $CONTAINER/arc/windows/amd64/arc_${VERSION}_windows_amd64.exe" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
-curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/windows/amd64/latest \
+curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/windows/amd64/arc_${VERSION}_windows_amd64.exe  \
   -H "Destination: $CONTAINER/arc/windows/amd64/latest" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
 curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/windows/amd64/${VERSION}.json \
   -H "Destination: $CONTAINER/arc/windows/amd64/${VERSION}.json" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
-curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/windows/amd64/latest.json \
+curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/windows/amd64/${VERSION}.json \
   -H "Destination: $CONTAINER/arc/windows/amd64/latest.json" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
 
 curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/linux/amd64/arc_${VERSION}_linux_amd64 \
   -H "Destination: $CONTAINER/arc/linux/amd64/arc_${VERSION}_linux_amd64" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
-curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/linux/amd64/latest \
+curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/linux/amd64/arc_${VERSION}_linux_amd64 \
   -H "Destination: $CONTAINER/arc/linux/amd64/latest" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
 curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/linux/amd64/${VERSION}.json \
   -H "Destination: $CONTAINER/arc/linux/amd64/${VERSION}.json" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
-curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/linux/amd64/latest.json \
+curl -f -X COPY $OS_STORAGE_URL/$SOURCE_CONTAINER/arc/linux/amd64/${VERSION}.json \
   -H "Destination: $CONTAINER/arc/linux/amd64/latest.json" \
   -H "X-Auth-Token: $OS_AUTH_TOKEN"
