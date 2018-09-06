@@ -123,7 +123,7 @@ func apply_update(u *Updater, r *CheckResult) error {
 	if err != nil {
 		return err
 	}
-	defer (*reader).Close()
+	defer reader.Close()
 
 	//decode checksum
 	checksum, err := hex.DecodeString(r.Checksum)
@@ -131,6 +131,6 @@ func apply_update(u *Updater, r *CheckResult) error {
 		return err
 	}
 
-	err = update.Apply(*reader, update.Options{Checksum: checksum})
+	err = update.Apply(reader, update.Options{Checksum: checksum})
 	return err
 }
