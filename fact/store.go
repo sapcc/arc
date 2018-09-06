@@ -22,7 +22,7 @@ type factSource struct {
 }
 
 type Store struct {
-	sources     map[string]factSource
+	sources     sync.Map
 	wg          sync.WaitGroup
 	updateChan  chan (map[string]interface{})
 	initialized bool
@@ -32,7 +32,6 @@ type Store struct {
 
 func NewStore() *Store {
 	return &Store{
-		sources:     make(map[string]factSource),
 		initialized: false,
 		interval:    30 * time.Minute,
 	}
@@ -41,7 +40,7 @@ func NewStore() *Store {
 func (fs *Store) AddSource(plugin FactSource, interval time.Duration) {
 	source := factSource{plugin: plugin, facts: make(map[string]interface{})}
 
-	fs.sources[plugin.Name()] = source
+	fs.sources.Store(plugin.Name(), &source)
 	fs.wg.Add(1)
 	go func() {
 		//collect facts initially
@@ -97,13 +96,15 @@ func (fs *Store) Facts() map[string]interface{} {
 
 	//create a copy of the internal map
 	facts := make(map[string]interface{})
-	for _, src := range fs.sources {
+	fs.sources.Range(func(_, s interface{}) bool {
+		src := s.(*factSource)
 		src.mutex.RLock()
 		for fact, val := range src.facts {
 			facts[fact] = val
 		}
 		src.mutex.RUnlock()
-	}
+		return true
+	})
 	return facts
 }
 
@@ -111,10 +112,11 @@ func (fs *Store) Facts() map[string]interface{} {
 * Return an error just when the fact is not known
  */
 func (fs *Store) update(name string) error {
-	source, ok := fs.sources[name]
+	s, ok := fs.sources.Load(name)
 	if !ok {
 		return fmt.Errorf("Unknown fact source %s", name)
 	}
+	source := s.(*factSource)
 
 	start := time.Now()
 	facts, err := source.plugin.Facts()
