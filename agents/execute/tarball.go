@@ -55,7 +55,7 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 	// powershell scripts cannot run directy on the win instancen.
 	var process *arc.Subprocess
 	if runtime.GOOS == "windows" {
-		process = arc.NewSubprocess("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned", "-Command", "$ErrorActionPreference = 'Stop'; & "+path.Join(tmpDir, data.Path))
+		process = arc.NewSubprocess("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned", "-Command", "$ErrorActionPreference = 'Stop'; & "+path.Join(tmpDir, data.Path)+" "+strings.Join(data.Arguments, " "))
 	} else {
 		process = arc.NewSubprocess(path.Join(tmpDir, data.Path), data.Arguments...)
 	}
