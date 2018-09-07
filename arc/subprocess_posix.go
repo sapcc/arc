@@ -3,6 +3,7 @@
 package arc
 
 import (
+	"fmt"
 	"os/exec"
 	"syscall"
 	"time"
@@ -33,5 +34,6 @@ func (s *Subprocess) prepareCmd() *exec.Cmd {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
+	fmt.Printf("%+v\n", cmd)
 	return cmd
 }
