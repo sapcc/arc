@@ -68,8 +68,12 @@ groups:
       - staging
       - qa-de-1
       - qa-tests
-      - promote
-      - release-stable
+      - promote-emea
+      - promote-asia
+      - promote-americas
+      - release-binary-emea
+      - release-binary-asia
+      - release-binary-americas
       - ap-ae-1
       - ap-au-1
       - ap-cn-1
@@ -160,15 +164,34 @@ jobs:
           params: { bump: true }
       - task: compile
         file: arc.git/ci/build-arc.yaml
-      - task: upload
-        file: arc.git/ci/swift-upload.yaml
-        params:
-          CONTAINER: {{swift-container-beta}}
-          OS_AUTH_URL: {{swift-auth_url}}
-          OS_USERNAME: {{swift-username}}
-          OS_PASSWORD: {{swift-api-key}}
-          OS_USER_DOMAIN_NAME: {{swift-domain}}
-          OS_PROJECT_ID: {{swift-project-id}}
+      - aggregate:
+        - task: upload-emea
+          file: arc.git/ci/swift-upload.yaml
+          params:
+            CONTAINER: {{swift-container-beta}}
+            OS_AUTH_URL: {{swift-auth-url-emea}}
+            OS_USERNAME: {{swift-username}}
+            OS_PASSWORD: {{swift-api-key-emea}}
+            OS_USER_DOMAIN_NAME: {{swift-domain}}
+            OS_PROJECT_ID: {{swift-project-id-emea}}
+        - task: upload-amercias
+          file: arc.git/ci/swift-upload.yaml
+          params:
+            CONTAINER: {{swift-container-beta}}
+            OS_AUTH_URL: {{swift-auth-url-americas}}
+            OS_USERNAME: {{swift-username}}
+            OS_PASSWORD: {{swift-api-key-americas}}
+            OS_USER_DOMAIN_NAME: {{swift-domain}}
+            OS_PROJECT_ID: {{swift-project-id-americas}}
+        - task: upload-asia
+          file: arc.git/ci/swift-upload.yaml
+          params:
+            CONTAINER: {{swift-container-beta}}
+            OS_AUTH_URL: {{swift-auth-url-asia}}
+            OS_USERNAME: {{swift-username}}
+            OS_PASSWORD: {{swift-api-key-asia}}
+            OS_USER_DOMAIN_NAME: {{swift-domain}}
+            OS_PROJECT_ID: {{swift-project-id-asia}}
       - put: arc.version
         params: { filename: arc.version/current}
     on_failure:
@@ -358,7 +381,7 @@ jobs:
             PASSWORD: {{qa-tests-password}}
     on_failure:
       <<: *post_failure_to_slack
-  - name: promote
+  - name: promote-emea
     plan:
       - aggregate:
         - { get: mosquitto.version, passed: [qa-tests] }
@@ -367,33 +390,89 @@ jobs:
         - { get: arc.git, passed: [qa-tests] }
         - { get: charts.git, passed: [qa-tests] }
         - { get: arc.version, passed: [qa-tests] }
-  - name: release-stable
+  - name: promote-asia
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [qa-tests] }
+        - { get: mosquitto.git, passed: [qa-tests] }
+        - { get: api.version, passed: [qa-tests] }
+        - { get: arc.git, passed: [qa-tests] }
+        - { get: charts.git, passed: [qa-tests] }
+        - { get: arc.version, passed: [qa-tests] }
+
+  - name: promote-americas
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [qa-tests] }
+        - { get: mosquitto.git, passed: [qa-tests] }
+        - { get: api.version, passed: [qa-tests] }
+        - { get: arc.git, passed: [qa-tests] }
+        - { get: charts.git, passed: [qa-tests] }
+        - { get: arc.version, passed: [qa-tests] }
+
+  - name: release-binary-emea
     serial: true
     plan:
       - aggregate:
-        - { get: arc.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
+        - { get: arc.version, passed: [promote-emea], trigger: true }
+        - { get: arc.git, passed: [promote-emea] }
       - task: swift-copy
         file: arc.git/ci/swift-copy.yaml
         params:
           CONTAINER: {{swift-container-stable}}
           SOURCE_CONTAINER: {{swift-container-beta}}
-          OS_AUTH_URL: {{swift-auth_url}}
+          OS_AUTH_URL: {{swift-auth-url-emea}}
           OS_USERNAME: {{swift-username}}
-          OS_PASSWORD: {{swift-api-key}}
+          OS_PASSWORD: {{swift-api-key-emea}}
           OS_USER_DOMAIN_NAME: {{swift-domain}}
-          OS_PROJECT_ID: {{swift-project-id}}
+          OS_PROJECT_ID: {{swift-project-id-emea}}
+    on_failure:
+      <<: *post_failure_to_slack
+  - name: release-binary-asia
+    serial: true
+    plan:
+      - aggregate:
+        - { get: arc.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+      - task: swift-copy
+        file: arc.git/ci/swift-copy.yaml
+        params:
+          CONTAINER: {{swift-container-stable}}
+          SOURCE_CONTAINER: {{swift-container-beta}}
+          OS_AUTH_URL: {{swift-auth-url-asia}}
+          OS_USERNAME: {{swift-username}}
+          OS_PASSWORD: {{swift-api-key-asia}}
+          OS_USER_DOMAIN_NAME: {{swift-domain}}
+          OS_PROJECT_ID: {{swift-project-id-asia}}
+    on_failure:
+      <<: *post_failure_to_slack
+  - name: release-binary-americas
+    serial: true
+    plan:
+      - aggregate:
+        - { get: arc.version, passed: [promote-americas], trigger: true }
+        - { get: arc.git, passed: [promote-americas] }
+      - task: swift-copy
+        file: arc.git/ci/swift-copy.yaml
+        params:
+          CONTAINER: {{swift-container-stable}}
+          SOURCE_CONTAINER: {{swift-container-beta}}
+          OS_AUTH_URL: {{swift-auth-url-americas}}
+          OS_USERNAME: {{swift-username}}
+          OS_PASSWORD: {{swift-api-key-americas}}
+          OS_USER_DOMAIN_NAME: {{swift-domain}}
+          OS_PROJECT_ID: {{swift-project-id-americas}}
     on_failure:
       <<: *post_failure_to_slack
   - name: eu-de-1
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-emea], trigger: true }
+        - { get: mosquitto.git, passed: [promote-emea] }
+        - { get: api.version, passed: [promote-emea], trigger: true }
+        - { get: arc.git, passed: [promote-emea] }
+        - { get: charts.git, passed: [promote-emea] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -409,11 +488,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-emea], trigger: true }
+        - { get: mosquitto.git, passed: [promote-emea] }
+        - { get: api.version, passed: [promote-emea], trigger: true }
+        - { get: arc.git, passed: [promote-emea] }
+        - { get: charts.git, passed: [promote-emea] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -429,11 +508,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-emea], trigger: true }
+        - { get: mosquitto.git, passed: [promote-emea] }
+        - { get: api.version, passed: [promote-emea], trigger: true }
+        - { get: arc.git, passed: [promote-emea] }
+        - { get: charts.git, passed: [promote-emea] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -450,11 +529,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-asia], trigger: true }
+        - { get: mosquitto.git, passed: [promote-asia] }
+        - { get: api.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+        - { get: charts.git, passed: [promote-asia] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -471,11 +550,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-asia], trigger: true }
+        - { get: mosquitto.git, passed: [promote-asia] }
+        - { get: api.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+        - { get: charts.git, passed: [promote-asia] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -492,11 +571,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-emea], trigger: true }
+        - { get: mosquitto.git, passed: [promote-emea] }
+        - { get: api.version, passed: [promote-emea], trigger: true }
+        - { get: arc.git, passed: [promote-emea] }
+        - { get: charts.git, passed: [promote-emea] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -513,11 +592,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-asia], trigger: true }
+        - { get: mosquitto.git, passed: [promote-asia] }
+        - { get: api.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+        - { get: charts.git, passed: [promote-asia] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -534,11 +613,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-asia], trigger: true }
+        - { get: mosquitto.git, passed: [promote-asia] }
+        - { get: api.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+        - { get: charts.git, passed: [promote-asia] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -555,11 +634,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-asia], trigger: true }
+        - { get: mosquitto.git, passed: [promote-asia] }
+        - { get: api.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+        - { get: charts.git, passed: [promote-asia] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -576,11 +655,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-asia], trigger: true }
+        - { get: mosquitto.git, passed: [promote-asia] }
+        - { get: api.version, passed: [promote-asia], trigger: true }
+        - { get: arc.git, passed: [promote-asia] }
+        - { get: charts.git, passed: [promote-asia] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -597,11 +676,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-americas], trigger: true }
+        - { get: mosquitto.git, passed: [promote-americas] }
+        - { get: api.version, passed: [promote-americas], trigger: true }
+        - { get: arc.git, passed: [promote-americas] }
+        - { get: charts.git, passed: [promote-americas] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -618,11 +697,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-americas], trigger: true }
+        - { get: mosquitto.git, passed: [promote-americas] }
+        - { get: api.version, passed: [promote-americas], trigger: true }
+        - { get: arc.git, passed: [promote-americas] }
+        - { get: charts.git, passed: [promote-americas] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -638,11 +717,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-americas], trigger: true }
+        - { get: mosquitto.git, passed: [promote-americas] }
+        - { get: api.version, passed: [promote-americas], trigger: true }
+        - { get: arc.git, passed: [promote-americas] }
+        - { get: charts.git, passed: [promote-americas] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -659,11 +738,11 @@ jobs:
     serial: true
     plan:
       - aggregate:
-        - { get: mosquitto.version, passed: [promote], trigger: true }
-        - { get: mosquitto.git, passed: [promote] }
-        - { get: api.version, passed: [promote], trigger: true }
-        - { get: arc.git, passed: [promote] }
-        - { get: charts.git, passed: [promote] }
+        - { get: mosquitto.version, passed: [promote-americas], trigger: true }
+        - { get: mosquitto.git, passed: [promote-americas] }
+        - { get: api.version, passed: [promote-americas], trigger: true }
+        - { get: arc.git, passed: [promote-americas] }
+        - { get: charts.git, passed: [promote-americas] }
         - { get: secrets.git }
       - <<: *post_deployment_start_to_slack
       - task: deployment
@@ -760,10 +839,10 @@ resources:
       key:  arc
       initial:   "00010101"
       username:  {{swift-username}}
-      api_key:    {{swift-api-key}}
-      auth_url:  {{swift-auth_url}}
+      api_key:   {{swift-api-key-emea}}
+      auth_url:  {{swift-auth-url-emea}}
       domain:    {{swift-domain}}
-      tenant_id: {{swift-project-id}}
+      tenant_id: {{swift-project-id-emea}}
       container: {{swift-container-version}}
   - name: api.image
     type: docker-image
@@ -777,10 +856,10 @@ resources:
       key:  arc-api
       initial:   "00010101"
       username:  {{swift-username}}
-      api_key:    {{swift-api-key}}
-      auth_url:  {{swift-auth_url}}
+      api_key:   {{swift-api-key-emea}}
+      auth_url:  {{swift-auth-url-emea}}
       domain:    {{swift-domain}}
-      tenant_id: {{swift-project-id}}
+      tenant_id: {{swift-project-id-emea}}
       container: {{swift-container-version}}
   - name: mosquitto.git
     type: git
@@ -799,10 +878,10 @@ resources:
       key:  arc-mosquitto
       initial:   "00010101"
       username:  {{swift-username}}
-      api_key:    {{swift-api-key}}
-      auth_url:  {{swift-auth_url}}
+      api_key:   {{swift-api-key-emea}}
+      auth_url:  {{swift-auth-url-emea}}
       domain:    {{swift-domain}}
-      tenant_id: {{swift-project-id}}
+      tenant_id: {{swift-project-id-emea}}
       container: {{swift-container-version}}
   - name: tests.image
     type: docker-image
@@ -816,10 +895,10 @@ resources:
       key:  arc-tests
       initial:   "00010101"
       username:  {{swift-username}}
-      api_key:    {{swift-api-key}}
-      auth_url:  {{swift-auth_url}}
+      api_key:   {{swift-api-key-emea}}
+      auth_url:  {{swift-auth-url-emea}}
       domain:    {{swift-domain}}
-      tenant_id: {{swift-project-id}}
+      tenant_id: {{swift-project-id-emea}}
       container: {{swift-container-version}}
   - name: pullrequest
     type: pullrequest
