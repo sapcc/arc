@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -51,7 +52,14 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 		return "", err
 	}
 
-	process := arc.NewSubprocess(path.Join(tmpDir, data.Path), data.Arguments...)
+	// powershell scripts cannot run directy on the win instancen.
+	var process *arc.Subprocess
+	if runtime.GOOS == "windows" {
+		process = arc.NewSubprocess("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned", "-Command", "$ErrorActionPreference = 'Stop'; & "+path.Join(tmpDir, data.Path))
+	} else {
+		process = arc.NewSubprocess(path.Join(tmpDir, data.Path), data.Arguments...)
+	}
+
 	log.Info("Running ", strings.Join(process.Command, " "))
 	process.Dir = tmpDir
 	if data.Environment != nil && len(data.Environment) > 0 {
