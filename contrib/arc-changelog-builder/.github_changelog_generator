@@ -1,0 +1,8 @@
+project=arc
+user=monsoon
+since_tag=2018.4
+output=/host/CHANGELOG.md
+issue_line_with_body=true
+pr-wo-labels=false
+issues-wo-labels=false
+author=false

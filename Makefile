@@ -30,6 +30,7 @@ help:
 	@echo "  * run-rhel          - run bin/arc_linux in a docker container"
 	@echo "  * run-sles          - run bin/arc_linux in a docker container"
 	@echo "  * up                - run dev stack in iTerm tabs"
+	@echo "  * CHANGELOG.md      - creates a changelog file"
 
 .PHONY: build
 build:
@@ -128,3 +129,19 @@ service/assets_windows/nssm.exe:
 clean:
 	make -C api-server clean
 	make -C update-server clean
+
+#
+# Creates a changelog file
+# Set the environment variable CHANGELOG_GITHUB_TOKEN=<your github token> or
+# Run following command make CHANGELOG.md GITHUB_TOKEN=<your github token>
+#
+VERSION  ?= $(shell git rev-parse --verify HEAD)
+BUILD_ARGS = --build-arg VERSION=$(VERSION)
+CHANGELOG.md:
+ifndef CHANGELOG_GITHUB_TOKEN
+	$(error set CHANGELOG_GITHUB_TOKEN to a personal access token that has repo:read permission)
+else
+	docker build $(BUILD_ARGS) -t sapcc/arc-changelog-builder:$(VERSION) --cache-from=sapcc/arc-changelog-builder:latest ./contrib/arc-changelog-builder
+	docker tag sapcc/arc-changelog-builder:$(VERSION)  sapcc/arc-changelog-builder:latest
+	docker run --rm -v $(PWD):/host -e GITHUB_TOKEN=$(CHANGELOG_GITHUB_TOKEN) sapcc/arc-changelog-builder:latest
+endif
