@@ -4,6 +4,11 @@
 
 [Full Changelog](https://github.com/monsoon/arc/compare/2018.7/8...HEAD)
 
+**Implemented enhancements:**
+
+- **Create changelog [\#122](https://gitHub.***REMOVED***/monsoon/arc/issues/122)**   
+Implement an autogeneratable changelog that is easier readable and more condensed than the commit history for others to track what we have been working on.
+
 **Fixed bugs:**
 
 - **Automation powershell script fails [\#145](https://gitHub.***REMOVED***/monsoon/arc/issues/145)**   
