@@ -8,7 +8,8 @@ RUN curl -fLo /usr/bin/goose https://gitHub.***REMOVED***/userID/goose/releases/
 
 ENV ARC_ENV=development \
     DBHOST=postgres \
-    DBUSER=postgres
+    DBUSER=postgres \
+    SSLMODE=disable
 
 WORKDIR /opt/api
 COPY entrypoint.sh /entrypoint.sh
