@@ -12,4 +12,4 @@ test-local:
 
 production:
   driver: postgres
-  open: dbname=arc_production sslmode=disable host=$DBHOST user=$DBUSER password=$DBPASSWORD
+  open: dbname=arc_production sslmode=$SSLMODE host=$DBHOST user=$DBUSER password=$DBPASSWORD
