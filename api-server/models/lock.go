@@ -33,7 +33,7 @@ func (l *Lock) Save(db Db) error {
 		return err
 	}
 
-	log.Infof("New lock with id %q was saved.", l.LockID)
+	log.Debugf("New lock with id %q was saved.", l.LockID)
 
 	return nil
 }

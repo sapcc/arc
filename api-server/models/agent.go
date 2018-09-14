@@ -233,13 +233,13 @@ func (agent *Agent) Update(db Db) error {
 		return err
 	}
 
-	log.Infof("Agent with id %q and registration id %q was updated", agent.AgentID, agent.UpdatedWith)
+	log.Debugf("Agent with id %q and registration id %q was updated", agent.AgentID, agent.UpdatedWith)
 
 	affect, err := res.RowsAffected()
 	if err != nil {
 		return err
 	}
-	log.Infof("%v row(s) where updated for agent id %q and registratrion reply id %q", affect, agent.AgentID, agent.UpdatedWith)
+	log.Debugf("%v row(s) where updated for agent id %q and registratrion reply id %q", affect, agent.AgentID, agent.UpdatedWith)
 
 	return nil
 }
