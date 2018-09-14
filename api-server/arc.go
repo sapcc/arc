@@ -46,12 +46,12 @@ func arcSubscribeReplies(tp transport.Transport) error {
 	for {
 		select {
 		case registry := <-regChan:
-			log.Infof("Got registration from %q with id %q and data %q", registry.Sender, registry.RegistrationID, registry.Payload)
+			log.Debugf("Got registration from %q with id %q and data %q", registry.Sender, registry.RegistrationID, registry.Payload)
 
 			err := models.ProcessRegistration(db, registry, tp.IdentityInformation().Identity, concurrencySafe)
 			if err != nil {
 				if _, ok := err.(models.RegistrationExistsError); ok {
-					log.Info(err.Error(), " Registration id ", registry.RegistrationID)
+					log.Debug(err.Error(), " Registration id ", registry.RegistrationID)
 				} else {
 					log.Errorf("Error updating registration %q. Got %q", registry.RegistrationID, err.Error())
 				}
@@ -69,7 +69,7 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			err := models.ProcessLogReply(db, reply, tp.IdentityInformation().Identity, concurrencySafe)
 			if err != nil {
 				if _, ok := err.(models.ReplyExistsError); ok {
-					log.Info(err.Error(), " Reply id ", reply.RequestID)
+					log.Debug(err.Error(), " Reply id ", reply.RequestID)
 				} else {
 					log.Error(err)
 					continue
