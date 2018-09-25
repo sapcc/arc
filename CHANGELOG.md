@@ -33,7 +33,7 @@ To be able to auto renew the certificates by the nodes we need first to run the 
 - **Run integration tests against QA [\#125](https://gitHub.***REMOVED***/monsoon/arc/issues/125)**   
 Decided to run the integration Tests against QA. Staging is not anymore reliable.
 - **Upgrade go to v10 and change dependencies manager to dep [\#123](https://gitHub.***REMOVED***/monsoon/arc/issues/123)**   
-- Upgrade to go v10 and compile the project to check everything works fine.
+First upgrade to go v10 and compile the project to check everything works fine. Afterwards change GoDep dependencies manager to Dep since GoDep ist outdated and not anymore manteined.
 - **Initial Trust: One-Time Token & Launch-Index [\#49](https://gitHub.***REMOVED***/monsoon/arc/issues/49)**   
 As far as I understand, the motivation for extending the openstack metadata server is, that you want to pass the same user-data into the batch-creation call and passing a \*\*one\*\*-time token in user-data for multiple machines does obviously not work.
 
