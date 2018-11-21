@@ -15,7 +15,7 @@ import (
 // RenewCert download a new cert
 func RenewCert(c *cli.Context, cfg *arc_config.Config) (int, error) {
 	// check api renew cert uri
-	renewCertURI, err := renewCertURI(c)
+	renewCertURI, err := RenewCertURI(c)
 	if err != nil {
 		return 1, err
 	}
@@ -54,7 +54,9 @@ func RenewCert(c *cli.Context, cfg *arc_config.Config) (int, error) {
 	return 0, nil
 }
 
-func renewCertURI(c *cli.Context) (string, error) {
+// RenewCertURI checks for the renew-cert-uri flag is set. If not
+// checks the env variable ARC_UPDATE_URI and modify this to get the arc api URL.
+func RenewCertURI(c *cli.Context) (string, error) {
 	// check api renew cert uri
 	uri := c.String("api-uri")
 	uriType := 0

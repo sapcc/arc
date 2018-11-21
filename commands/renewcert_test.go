@@ -14,7 +14,7 @@ func TestCmdRenewCertUriFromFlag(t *testing.T) {
 	flagSet.String("api-uri", "https://arc.***REMOVED***", "global")
 	ctx := cli.NewContext(nil, flagSet, getParentCtx())
 
-	uri, err := renewCertURI(ctx)
+	uri, err := RenewCertURI(ctx)
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
@@ -33,7 +33,7 @@ func TestCmdRenewCertUriFromEnv(t *testing.T) {
 		os.Unsetenv("ARC_UPDATE_URI")
 	}()
 
-	uri, err := renewCertURI(ctx)
+	uri, err := RenewCertURI(ctx)
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}
@@ -53,7 +53,7 @@ func TestCmdRenewCertUriFromFlagIgnoreEnv(t *testing.T) {
 		os.Unsetenv("ARC_UPDATE_URI")
 	}()
 
-	uri, err := renewCertURI(ctx)
+	uri, err := RenewCertURI(ctx)
 	if err != nil {
 		t.Error("Expected to not have an error")
 	}

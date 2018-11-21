@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -22,7 +23,7 @@ import (
 )
 
 type Server interface {
-	Run()
+	Run() error
 	Stop()
 	GracefulShutdown()
 	Done() <-chan struct{}
@@ -65,7 +66,7 @@ func (s *server) GracefulShutdown() {
 	}()
 }
 
-func (s *server) Run() {
+func (s *server) Run() error {
 	log.Infof("Starting server. Pid %d", os.Getpid())
 	defer log.Info("Server stopped")
 	defer close(s.doneChan)
@@ -89,21 +90,20 @@ func (s *server) Run() {
 	for {
 		select {
 		case <-done:
-			log.Debug("Exiting sever run loop")
-			return
+			return fmt.Errorf("Exiting sever run loop")
 		case update := <-factUpdates:
 			log.Debug("Processing fact update")
-			j, err := json.Marshal(update)
-			if err == nil {
-				if req, err := arc.CreateRegistration(s.config.Organization, s.config.Project, s.config.Identity, string(j)); err == nil {
-					if err = s.transport.Registration(req); err != nil {
-						log.Error("Failed to register a registration request. ", err)
+			j, marshalErr := json.Marshal(update)
+			if marshalErr == nil {
+				if req, regisErr := arc.CreateRegistration(s.config.Organization, s.config.Project, s.config.Identity, string(j)); regisErr == nil {
+					if transpErr := s.transport.Registration(req); transpErr != nil {
+						log.Error("Failed to register a registration request. ", transpErr)
 					}
 				} else {
-					log.Warn("Failed to create registration message", err)
+					log.Warn("Failed to create registration message", regisErr)
 				}
 			} else {
-				log.Warn("Failed to serialize fact update: ", err)
+				log.Warn("Failed to serialize fact update: ", marshalErr)
 			}
 		case msg := <-incomingChan:
 			go s.handleJob(msg)
