@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -22,10 +20,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
 	"gitHub.***REMOVED***/monsoon/arc/fact/metadata"
 	"gitHub.***REMOVED***/monsoon/arc/fact/network"
-	"gitHub.***REMOVED***/monsoon/arc/server"
 	"gitHub.***REMOVED***/monsoon/arc/transport"
-	"gitHub.***REMOVED***/monsoon/arc/updater"
-	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
 var cliCommands = []cli.Command{
@@ -41,6 +36,7 @@ var cliCommands = []cli.Command{
 			optTlsCaCert,
 			optUpdateUri,
 			optUpdateInterval,
+			optApiUri,
 		},
 		Before: func(c *cli.Context) error {
 			return config.Load(c)
@@ -171,64 +167,11 @@ var cliCommands = []cli.Command{
 }
 
 func cmdServer(c *cli.Context) {
-	log.Infof("Starting server version %s. identity: %s, project: %s, organization: %s", version.Version, config.Identity, config.Project, config.Organization)
-
-	// updater object and ticker
-	var up *updater.Updater
-	updaterTickChan := time.NewTicker(time.Second * time.Duration(c.Int("update-interval")))
-	if c.String("update-uri") != "" {
-		// create update object
-		up = updater.New(map[string]string{
-			"version":   version.Version,
-			"appName":   appName,
-			"updateUri": c.String("update-uri"),
-		})
-		log.Infof("Updater setup with interval %v, version %q, app name %q and update uri %q", c.Int("update-interval"), version.Version, appName, c.String("update-uri"))
-	} else {
-		// ticker will be stoped if no update uri is given
-		updaterTickChan.Stop()
-	}
-
-	tp, err := transport.New(config, true)
+	code, err := commands.CmdServer(c, config, appName)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
-
-	if err := tp.Connect(); err != nil {
-		log.Fatalf("Failed to connect to broker: %s", err)
-	}
-	server := server.New(config, tp)
-
-	go server.Run()
-
-	gracefulChan := make(chan os.Signal, 1)
-	shutdownChan := make(chan os.Signal, 1)
-	signal.Notify(gracefulChan, syscall.SIGTERM)
-	signal.Notify(shutdownChan, syscall.SIGINT)
-	for {
-		select {
-		case s := <-shutdownChan:
-			log.Infof("Captured %v", s)
-			server.Stop()
-		case s := <-gracefulChan:
-			log.Infof("Captured %v", s)
-			server.GracefulShutdown()
-		case <-server.Done():
-			os.Exit(0)
-		case <-updaterTickChan.C:
-			go func() {
-				success, err := up.CheckAndUpdate()
-				if err != nil {
-					log.Error(err)
-				}
-				if success {
-					server.GracefulShutdown()
-					updaterTickChan.Stop()
-				}
-			}()
-		}
-	}
-
+	os.Exit(code)
 }
 
 func cmdExecute(c *cli.Context) {
