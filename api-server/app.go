@@ -38,7 +38,7 @@ var (
 	pkiEnabled       = false
 	agentUpdateURL   = "UPDATE_URL_NOT_CONFIGURED"
 	agentEndpointURL = "ENDPOINT_URL_NOT_CONFIGURED"
-	agentApiURL      = "" // Should not be initialized because not all regions have from the begining TLS termination directly on the server
+	agentApiURL      = "" // Should not be initialized because not all regions have TLS termination directly on the api server
 )
 
 func main() {
@@ -159,7 +159,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "agent-api-url",
-			Usage:  "The default URL for requesting new certs. Only used for agent install script.",
+			Usage:  "API URL. Only used for renew cert.",
 			EnvVar: envPrefix + "AGENT_API_URL",
 		},
 	}
