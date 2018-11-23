@@ -70,6 +70,13 @@ var optCertUpdateInterval = cli.IntFlag{
 	Value:  1440,
 }
 
+var optCertUpdateThreshold = cli.IntFlag{
+	Name:   "cert-update-threshold",
+	Usage:  "Hours threshold before updating cert",
+	EnvVar: envPrefix + "CERT_UPDATE_THRESHOLD",
+	Value:  744,
+}
+
 var optApiUri = cli.StringFlag{
 	Name:   "api-uri",
 	Usage:  "Api uri",
