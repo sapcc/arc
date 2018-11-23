@@ -66,7 +66,7 @@ func (c *FakeClient) Request(msg *arc.Request) error {
 
 func (c *FakeClient) Reply(msg *arc.Reply) error {
 	go func() {
-		log.Infof("Writing Reply into the FAKE transport. %q", msg)
+		log.Infof("Writing Reply into the FAKE transport. %v", msg)
 		c.ReplyChan <- msg
 	}()
 	return nil
