@@ -113,6 +113,7 @@ func runCertUpdater(renewCertURI string, renewCertInterval int, renewCertThresho
 			} else {
 				// when hours left is 0 the new cert is downlaoded
 				if hoursLeft == 0 {
+					log.Infof("cert updater downloaded new cert, gracefulShutdown")
 					return errGracefulShutdown
 				}
 				log.Infof("cert updater skipped, %v hours to expiration", hoursLeft)
