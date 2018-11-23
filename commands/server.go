@@ -48,7 +48,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 			log.Infof("running arc server with version %s. identity: %s, project: %s and organization: %s", version.Version, cfg.Identity, cfg.Project, cfg.Organization)
 			return server.Run()
 		}, func(err error) {
-			log.Infof("Server actor was interrupted with: %v\n", err)
+			log.Infof("Server actor was interrupted with: %v", err)
 			if err == errGracefulShutdown {
 				server.GracefulShutdown()
 			} else {
@@ -63,7 +63,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 			defer logend(logstart("signal handler"))
 			return signalHandler(cancelSignalHandler)
 		}, func(err error) {
-			log.Infof("Signal actor was interrupted with: %v\n", err)
+			log.Infof("Signal actor was interrupted with: %v", err)
 			close(cancelSignalHandler)
 		})
 	}
@@ -76,7 +76,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 			log.Infof("runing version updater with interval %v, version %q, app name %q and update uri %q", c.Int("update-interval"), version.Version, appName, c.String("update-uri"))
 			return runVersionUpdater(c.Int("update-interval"), appName, c.String("update-uri"), cancelVersionUpdaterChan)
 		}, func(err error) {
-			log.Infof("update binary was interrupted with: %v\n", err)
+			log.Infof("update binary was interrupted with: %v", err)
 			close(cancelVersionUpdaterChan)
 		})
 	}
@@ -87,12 +87,12 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		log.Errorf("Failed to get renew cert URI: %s \n", err)
 	} else {
 		defer logend(logstart("cert updater"))
-		log.Infof("running cert updater with URI %s and interval %v minutes", renewCertURI, c.Int("cert-update-interval"))
+		log.Infof("running cert updater with URI %s, interval %v minutes and threshold %v hours", renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"))
 		cancelCertHandler := make(chan struct{})
 		runner.Add(func() error {
-			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), cfg, cancelCertHandler)
+			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"), cfg, cancelCertHandler)
 		}, func(err error) {
-			log.Infof("Cert actor was interrupted with: %v\n", err)
+			log.Infof("Cert actor was interrupted with: %v", err)
 			close(cancelCertHandler)
 		})
 	}
@@ -100,15 +100,14 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 	return 1, runner.Run()
 }
 
-func runCertUpdater(renewCertURI string, renewCertInterval int, cfg arc_config.Config, cancel <-chan struct{}) error {
-	renewThreshold := int64(744) // renew threshold is 1 month in hours
+func runCertUpdater(renewCertURI string, renewCertInterval int, renewCertThreshold int, cfg arc_config.Config, cancel <-chan struct{}) error {
 	updaterTickChan := time.NewTicker(time.Minute * time.Duration(renewCertInterval))
 	defer updaterTickChan.Stop()
 
 	for {
 		select {
 		case <-updaterTickChan.C:
-			hoursLeft, err := pki.CheckAndRenewCert(&cfg, renewCertURI, renewThreshold, false)
+			hoursLeft, err := pki.CheckAndRenewCert(&cfg, renewCertURI, int64(renewCertThreshold), false)
 			if err != nil {
 				log.Error(err)
 			} else {
