@@ -211,10 +211,10 @@ func (c *MQTTClient) Reply(msg *arc.Reply) error {
 	topic := replyTopic(msg.RequestID)
 	j, err := msg.ToJSON()
 	if err != nil {
-		logrus.Errorf("Error serializing Reply to JSON: %s", err)
+		logrus.Errorf("Error serializing Reply to JSON: %v", err)
 		return err
 	} else {
-		logrus.Debugf("Publishing reply %s\n to %s", msg, topic)
+		logrus.Debugf("Publishing reply %v\n to %v", msg, topic)
 		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
 	return nil
@@ -262,10 +262,10 @@ func (c *MQTTClient) Registration(msg *arc.Registration) error {
 	topic := registrationTopic(c.organization, c.project, c.identity)
 	j, err := msg.ToJSON()
 	if err != nil {
-		logrus.Errorf("Error serializing Registration to JSON: %s", err)
+		logrus.Errorf("Error serializing Registration to JSON: %v", err)
 		return err
 	} else {
-		logrus.Debugf("Publishing registration %s\n to %s", msg, topic)
+		logrus.Debugf("Publishing registration %v\n to %v", msg, topic)
 		c.client.Publish(topic, 0, false, j).WaitTimeout(500 * time.Millisecond)
 	}
 	return nil

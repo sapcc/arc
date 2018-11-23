@@ -443,7 +443,7 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) err
 		agent := Agent{}
 		err = rows.Scan(&agent.DisplayName, &agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
 		if err != nil {
-			log.Errorf("Error scaning agent results. Got ", err.Error())
+			log.Errorf("Error scaning agent results. Got %v", err)
 			continue
 		}
 
