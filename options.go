@@ -63,6 +63,13 @@ var optUpdateUri = cli.StringFlag{
 	EnvVar: envPrefix + "UPDATE_URI",
 }
 
+var optCertUpdateInterval = cli.IntFlag{
+	Name:   "cert-update-interval",
+	Usage:  "Time cert update interval in minutes",
+	EnvVar: envPrefix + "CERT_UPDATE_INTERVAL",
+	Value:  1440,
+}
+
 var optApiUri = cli.StringFlag{
 	Name:   "api-uri",
 	Usage:  "Api uri",

@@ -27,7 +27,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{{.Eol}}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .ApiUri}}api-uri: {{ .ApiUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}`))
+var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{{.Eol}}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .ApiUri}}api-uri: {{ .ApiUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}{{if .CertUpdateInterval}}cert-update-interval: {{ .CertUpdateInterval }}{{.Eol}}{{end}}`))
 
 // Init install an arc agent/node
 func Init(c *cli.Context, appName string) (int, error) {
@@ -133,21 +133,27 @@ func Init(c *cli.Context, appName string) (int, error) {
 			updateInterval = fmt.Sprintf("%d", c.Int("update-interval"))
 		}
 
+		certUpdateInterval := ""
+		if c.IsSet("cert-update-interval") {
+			certUpdateInterval = fmt.Sprintf("%d", c.Int("cert-update-interval"))
+		}
+
 		eol := "\n"
 		if runtime.GOOS == "windows" {
 			eol = "\r\n"
 		}
 
 		templateVars := map[string]string{
-			"Cert":           path.Join(dir, "cert.pem"),
-			"Key":            path.Join(dir, "cert.key"),
-			"Ca":             path.Join(dir, "ca.pem"),
-			"Endpoint":       strings.Join(c.StringSlice("endpoint"), ","),
-			"UpdateUri":      c.String("update-uri"),
-			"ApiUri":         c.String("api-uri"),
-			"UpdateInterval": updateInterval,
-			"Transport":      c.String("transport"),
-			"Eol":            eol,
+			"Cert":               path.Join(dir, "cert.pem"),
+			"Key":                path.Join(dir, "cert.key"),
+			"Ca":                 path.Join(dir, "ca.pem"),
+			"Endpoint":           strings.Join(c.StringSlice("endpoint"), ","),
+			"UpdateUri":          c.String("update-uri"),
+			"ApiUri":             c.String("api-uri"),
+			"UpdateInterval":     updateInterval,
+			"CertUpdateInterval": certUpdateInterval,
+			"Transport":          c.String("transport"),
+			"Eol":                eol,
 		}
 		err = configTemplate.Execute(cfgFile, templateVars)
 		if err != nil {

@@ -37,6 +37,7 @@ var cliCommands = []cli.Command{
 			optUpdateUri,
 			optUpdateInterval,
 			optApiUri,
+			optCertUpdateInterval,
 		},
 		Before: func(c *cli.Context) error {
 			return config.Load(c)
@@ -108,6 +109,7 @@ var cliCommands = []cli.Command{
 			optUpdateUri,
 			optApiUri,
 			optUpdateInterval,
+			optCertUpdateInterval,
 			optRegistrationUrl,
 			optInstallDir,
 			optCommonName,
