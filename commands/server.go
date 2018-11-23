@@ -87,7 +87,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		log.Errorf("Failed to get renew cert URI: %s \n", err)
 	} else {
 		defer logend(logstart("cert updater"))
-		log.Infof("running cert updater with URI %s", renewCertURI)
+		log.Infof("running cert updater with URI %s and interval %v minutes", renewCertURI, c.Int("cert-update-interval"))
 		cancelCertHandler := make(chan struct{})
 		runner.Add(func() error {
 			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), cfg, cancelCertHandler)
