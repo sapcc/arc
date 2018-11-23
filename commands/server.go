@@ -47,7 +47,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 			defer logend(logstart("arc server"))
 			log.Infof("running arc server with version %s. identity: %s, project: %s and organization: %s", version.Version, cfg.Identity, cfg.Project, cfg.Organization)
 			return server.Run()
-		}, func(error) {
+		}, func(err error) {
 			log.Infof("Server actor was interrupted with: %v\n", err)
 			if err == errGracefulShutdown {
 				server.GracefulShutdown()
@@ -62,7 +62,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		runner.Add(func() error {
 			defer logend(logstart("signal handler"))
 			return signalHandler(cancelSignalHandler)
-		}, func(error) {
+		}, func(err error) {
 			log.Infof("Signal actor was interrupted with: %v\n", err)
 			close(cancelSignalHandler)
 		})
@@ -75,7 +75,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 			defer logend(logstart("version updater"))
 			log.Infof("runing version updater with interval %v, version %q, app name %q and update uri %q", c.Int("update-interval"), version.Version, appName, c.String("update-uri"))
 			return runVersionUpdater(c.Int("update-interval"), appName, c.String("update-uri"), cancelVersionUpdaterChan)
-		}, func(_ error) {
+		}, func(err error) {
 			log.Infof("update binary was interrupted with: %v\n", err)
 			close(cancelVersionUpdaterChan)
 		})
@@ -91,7 +91,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		cancelCertHandler := make(chan struct{})
 		runner.Add(func() error {
 			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), cfg, cancelCertHandler)
-		}, func(_ error) {
+		}, func(err error) {
 			log.Infof("Cert actor was interrupted with: %v\n", err)
 			close(cancelCertHandler)
 		})
