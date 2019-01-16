@@ -185,9 +185,10 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 
 	// save log part
 	if reply.Payload != "" || reply.Final {
-		log.Infof("Saving payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, truncate(reply.Payload, 100))
-		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
+		// payload should be logged just in debug mode because of sensitive data
+		log.Debugf("Saving log part payload for reply with id %q, number %v, payload %q", reply.RequestID, reply.Number, truncate(reply.Payload, 100))
 
+		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
 		err := logPart.Save(db)
 		if err != nil {
 			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
