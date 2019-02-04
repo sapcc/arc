@@ -46,7 +46,7 @@ unit:
 
 .PHONY: metalint
 metalint:
-	gometalinter --vendor --disable-all -E goimports -E megacheck -E ineffassign -E gas --deadline=60s ./...
+	gometalinter --vendor --disable-all -E goimports -E staticcheck -E ineffassign -E gosec --deadline=60s ./...
 
 .PHONY: test-win
 test-win:
