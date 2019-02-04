@@ -37,12 +37,11 @@ func (h Source) Facts() (map[string]interface{}, error) {
 		}
 	}
 
-	timeout := time.Duration(1 * time.Second)
-	client := http.Client{
-		Timeout: timeout,
+	client := &http.Client{
+		Timeout: time.Second * 2,
 	}
 
-	data := metaDataInfo(client)
+	data := metaDataInfo(*client)
 	if data != nil {
 		if data.UUID != "" {
 			facts["metadata_uuid"] = data.UUID
@@ -63,7 +62,7 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	return facts, nil
 }
 
-func floatingIP(client http.Client) string {
+func floatingIP(client *http.Client) string {
 	r, err := client.Get(ipv4Url)
 	if err != nil {
 		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
