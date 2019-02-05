@@ -91,7 +91,7 @@ func (s service) Restart() error {
 func (s service) Install() error {
 	executable, err := osext.Executable()
 	if err != nil {
-		return errors.New("Can't locate running executable")
+		return errors.New("can't locate running executable")
 	}
 	if err := os.MkdirAll(path.Join(s.dir, "log"), 0700); err != nil {
 		return err
@@ -116,7 +116,7 @@ func (s service) Install() error {
 	case "sysv":
 		return sysvService(serviceCmd)
 	}
-	return fmt.Errorf("Unknown init system: %s", init)
+	return fmt.Errorf("unknown init system: %s", init)
 }
 
 func (s service) svCmd(args ...string) *exec.Cmd {
@@ -129,11 +129,11 @@ func detectInitSystem() (string, error) {
 	var hostFacts map[string]interface{}
 	var err error
 	if hostFacts, err = host.New(nil).Facts(); err != nil {
-		return "", errors.New("Can't detect init system")
+		return "", errors.New("can't detect init system")
 	}
 	init, ok := hostFacts["init_package"].(string)
 	if !ok {
-		return "", errors.New("Can't detect init system")
+		return "", errors.New("can't detect init system")
 	}
 	return init, nil
 }
@@ -213,11 +213,11 @@ func systemdService(cmd string) error {
 	unitFile.Close()
 
 	if out, err := exec.Command("/bin/systemctl", "enable", "arc").CombinedOutput(); /* #nosec */ err != nil {
-		return fmt.Errorf("Failed to enable systemd service: %s", string(out))
+		return fmt.Errorf("failed to enable systemd service: %s", string(out))
 	}
 
 	if out, err := exec.Command("/bin/systemctl", "start", "arc").CombinedOutput(); /* #nosec */ err != nil {
-		return fmt.Errorf("Failed to start systemd service: %s", string(out))
+		return fmt.Errorf("failed to start systemd service: %s", string(out))
 	}
 
 	return nil
@@ -240,7 +240,7 @@ func upstartService(cmd string) error {
 	upstartFile.Close()
 
 	if out, err := exec.Command("start", "arc").CombinedOutput(); /* #nosec */ err != nil {
-		return fmt.Errorf("Failed to job: %s", string(out))
+		return fmt.Errorf("failed to job: %s", string(out))
 	}
 
 	return nil
@@ -267,7 +267,7 @@ func sysvService(cmd string) error {
 	}
 	inittabFile.Close()
 	if out, err := exec.Command("telinit", "q").CombinedOutput(); /* #nosec */ err != nil {
-		return fmt.Errorf("Failed to reload inittab: %s", string(out))
+		return fmt.Errorf("failed to reload inittab: %s", string(out))
 	}
 	return nil
 }

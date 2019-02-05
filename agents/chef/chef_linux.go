@@ -25,7 +25,7 @@ func install(installer string) error {
 	case "deb":
 		cmd = exec.Command("/usr/bin/dpkg", "-i", installer)
 	default:
-		return fmt.Errorf("Unknown package format: %s", installerType)
+		return fmt.Errorf("unknown package format: %s", installerType)
 	} // #nosec
 
 	log.Infof("Running %s", strings.Join(cmd.Args, " "))
