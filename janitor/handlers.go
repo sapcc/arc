@@ -13,7 +13,9 @@ import (
 
 func serveVersion(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(landingPage)
+	if _, err := w.Write(landingPage); err != nil {
+		logAndReturnHttpError(w, http.StatusInternalServerError, err)
+	}
 }
 
 func serveJobrunner(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +33,9 @@ func serveJobrunner(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logAndReturnHttpError(w, http.StatusInternalServerError, err)
 		}
-		t.ExecuteTemplate(w, "status_page", jobrunner.StatusPage())
+		if err = t.ExecuteTemplate(w, "status_page", jobrunner.StatusPage()); err != nil {
+			logAndReturnHttpError(w, http.StatusInternalServerError, err)
+		}
 	}
 }
 

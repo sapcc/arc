@@ -17,7 +17,7 @@ type Lock struct {
 
 func (l *Lock) Get(db Db) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	return db.QueryRow(ownDb.GetLockQuery, l.LockID).Scan(&l.LockID, &l.AgentID, &l.CreatedAt)
@@ -25,7 +25,7 @@ func (l *Lock) Get(db Db) error {
 
 func (l *Lock) Save(db Db) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	var lastInsertId string
@@ -54,7 +54,7 @@ func IsConcurrencySafe(db Db, messageId string, agentId string) (bool, error) {
 
 func PruneLocks(db Db) (int64, error) {
 	if db == nil {
-		return 0, errors.New("Db connection is nil")
+		return 0, errors.New("db connection is nil")
 	}
 
 	// get log parts to aggregate

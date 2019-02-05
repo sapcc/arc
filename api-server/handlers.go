@@ -160,7 +160,9 @@ func renewPkiCert(w http.ResponseWriter, r *http.Request) {
 		checkErrAndReturnStatus(w, err, "Error generating JSON reponse", http.StatusInternalServerError, r)
 	} else {
 		w.Header().Set("Content-Type", "application/pkix-cert")
-		w.Write(*pemCert)
+		if _, err := w.Write(*pemCert); err != nil {
+			checkErrAndReturnStatus(w, err, "Error writing reponse", http.StatusInternalServerError, r)
+		}
 	}
 
 }
@@ -197,7 +199,9 @@ func signPkiToken(w http.ResponseWriter, r *http.Request) {
 		checkErrAndReturnStatus(w, err, "Error encoding response to JSON", http.StatusInternalServerError, r)
 	} else {
 		w.Header().Set("Content-Type", "application/pkix-cert")
-		w.Write(*pemCert)
+		if _, err = w.Write(*pemCert); err != nil {
+			checkErrAndReturnStatus(w, err, "Error writing response: ", http.StatusInternalServerError, r)
+		}
 	}
 }
 
@@ -281,20 +285,20 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 
 	// create job
 	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)
-	if err != nil {
-		if _, ok := err.(models.JobBadRequestError); ok {
-			checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest, r)
-			return
-		} else if _, ok := err.(models.JobTargetAgentNotFoundError); ok {
-			checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound, r)
-			return
-		} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
-			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized, r)
-			return
-		} else if _, ok := err.(auth.NotAuthorized); ok {
-			logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized, r)
-			return
-		} else {
+	if _, ok := err.(models.JobBadRequestError); ok {
+		checkErrAndReturnStatus(w, err, errorText, http.StatusBadRequest, r)
+		return
+	} else if _, ok := err.(models.JobTargetAgentNotFoundError); ok {
+		checkErrAndReturnStatus(w, err, errorText, http.StatusNotFound, r)
+		return
+	} else if _, ok := err.(auth.IdentityStatusInvalid); ok {
+		logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized, r)
+		return
+	} else if _, ok := err.(auth.NotAuthorized); ok {
+		logInfoAndReturnHttpErrStatus(w, err, errorText, http.StatusUnauthorized, r)
+		return
+	} else {
+		if err != nil {
 			checkErrAndReturnStatus(w, err, errorText, http.StatusInternalServerError, r)
 			return
 		}
@@ -351,7 +355,9 @@ func serveJobLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(logEntry.Content))
+	if _, err := w.Write([]byte(logEntry.Content)); err != nil {
+		checkErrAndReturnStatus(w, err, "Error writing response: ", http.StatusInternalServerError, r)
+	}
 }
 
 /*
@@ -601,7 +607,9 @@ func deleteAgentTag(w http.ResponseWriter, r *http.Request) {
 
 func serveVersion(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte("Arc api-server " + version.String()))
+	if _, err := w.Write([]byte("Arc api-server " + version.String())); err != nil {
+		checkErrAndReturnStatus(w, err, "Error writing response: ", http.StatusInternalServerError, r)
+	}
 }
 
 /*
@@ -655,7 +663,9 @@ func serveReadiness(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte("Ready!!!"))
+	if _, err = w.Write([]byte("Ready!!!")); err != nil {
+		checkErrAndReturnStatus(w, err, "Error writing response: ", http.StatusInternalServerError, r)
+	}
 }
 
 // private
@@ -668,7 +678,14 @@ func logAndReturnHttpPkiError(w http.ResponseWriter, status int, err error) {
 	}
 	w.WriteHeader(status)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		// json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		if errJSONEncode := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); errJSONEncode != nil {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			http.Error(w, err.Error(), status)
+		} else {
+			w.WriteHeader(status)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		}
 	}
 }
 

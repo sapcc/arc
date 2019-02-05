@@ -90,20 +90,20 @@ func (s *server) Run() error {
 	for {
 		select {
 		case <-done:
-			return fmt.Errorf("Exiting sever run loop")
+			return fmt.Errorf("exiting sever run loop")
 		case update := <-factUpdates:
 			log.Debug("Processing fact update")
 			j, marshalErr := json.Marshal(update)
 			if marshalErr == nil {
 				if req, regisErr := arc.CreateRegistration(s.config.Organization, s.config.Project, s.config.Identity, string(j)); regisErr == nil {
 					if transpErr := s.transport.Registration(req); transpErr != nil {
-						log.Error("Failed to register a registration request. ", transpErr)
+						log.Error("failed to register a registration request. ", transpErr)
 					}
 				} else {
-					log.Warn("Failed to create registration message", regisErr)
+					log.Warn("failed to create registration message", regisErr)
 				}
 			} else {
-				log.Warn("Failed to serialize fact update: ", marshalErr)
+				log.Warn("failed to serialize fact update: ", marshalErr)
 			}
 		case msg := <-incomingChan:
 			go s.handleJob(msg)

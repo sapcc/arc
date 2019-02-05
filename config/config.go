@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"runtime"
 
 	"github.com/codegangsta/cli"
@@ -61,11 +62,11 @@ func (c *Config) String() string {
 func (c *Config) loadTLSConfig(client_cert, client_key, ca_certs string) error {
 	cert, err := tls.LoadX509KeyPair(client_cert, client_key)
 	if err != nil {
-		return fmt.Errorf("Failed to load client certificate/key: %s", err)
+		return fmt.Errorf("failed to load client certificate/key: %s", err)
 	}
 	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse client certificate: %s", err)
+		return fmt.Errorf("failed to parse client certificate: %s", err)
 	}
 	c.ClientCert = &cert
 
@@ -73,17 +74,17 @@ func (c *Config) loadTLSConfig(client_cert, client_key, ca_certs string) error {
 	c.ClientCertPath = client_cert
 
 	// Extract key
-	keyPEMBlock, err := ioutil.ReadFile(client_key)
+	keyPEMBlock, err := ioutil.ReadFile(filepath.Clean(client_key))
 	if err != nil {
-		return fmt.Errorf("Failed to load client key: %s", err)
+		return fmt.Errorf("failed to load client key: %s", err)
 	}
 	keyPemDecoded, _ := pem.Decode(keyPEMBlock)
 	if keyPemDecoded == nil {
-		return fmt.Errorf("No pem block found")
+		return fmt.Errorf("no pem block found")
 	}
 	c.ClientKey, err = x509.ParsePKCS1PrivateKey(keyPemDecoded.Bytes)
 	if err != nil {
-		return fmt.Errorf("Failed to parse rsa key: %s", err)
+		return fmt.Errorf("failed to parse rsa key: %s", err)
 	}
 
 	//Extract org, project and identity from the client cert
@@ -94,13 +95,13 @@ func (c *Config) loadTLSConfig(client_cert, client_key, ca_certs string) error {
 		c.Project = cert.Leaf.Subject.OrganizationalUnit[0]
 	}
 	c.Identity = cert.Leaf.Subject.CommonName
-	pemCerts, err := ioutil.ReadFile(ca_certs)
+	pemCerts, err := ioutil.ReadFile(filepath.Clean(ca_certs))
 	if err != nil {
-		return fmt.Errorf("Failed to load CA certificate: %s", err)
+		return fmt.Errorf("failed to load CA certificate: %s", err)
 	}
 	certpool := x509.NewCertPool()
 	if !certpool.AppendCertsFromPEM(pemCerts) {
-		return fmt.Errorf("Given CA file does not contain a PEM encoded x509 certificate")
+		return fmt.Errorf("given CA file does not contain a PEM encoded x509 certificate")
 	}
 	c.CACerts = certpool
 

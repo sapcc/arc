@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -18,7 +19,7 @@ import (
 
 const (
 	header = `package main
-	
+
 import (
 )
 
@@ -96,7 +97,7 @@ func generateDescription(w io.Writer) {
 
 func mapGenerator(w io.Writer, callback func(data string) string) {
 	// check if dir exits
-	d, err := os.Open(cmdDir)
+	d, err := os.Open(filepath.Clean(cmdDir))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,10 +112,8 @@ func mapGenerator(w io.Writer, callback func(data string) string) {
 	// loop over the docs
 	for _, fi := range fi {
 		if fi.Mode().IsRegular() {
-			markdownFile := path.Join(cmdDir, fi.Name())
-
 			// data from file
-			data, err := ioutil.ReadFile(markdownFile)
+			data, err := ioutil.ReadFile(filepath.Clean(path.Join(cmdDir, fi.Name())))
 			if err != nil {
 				log.Fatal(err)
 			}

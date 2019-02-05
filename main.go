@@ -20,7 +20,9 @@ func main() {
 
 	//If we have a config file load it
 	if configFile := configFile(); configFile != "" {
-		loadConfigFile(configFile)
+		if err := loadConfigFile(configFile); err != nil {
+			log.Fatalf("invalid config file: %s\n", err)
+		}
 	}
 
 	// override cli template

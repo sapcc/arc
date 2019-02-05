@@ -31,5 +31,5 @@ func New(config arc_config.Config, server bool) (Transport, error) {
 	case helpers.Fake:
 		return fake.New(config, server)
 	}
-	return nil, errors.New("Invalid transport")
+	return nil, errors.New("invalid transport")
 }

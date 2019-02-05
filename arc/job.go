@@ -99,13 +99,13 @@ func (j *JobState) UnmarshalJSON(data []byte) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Invalid job state: %q", str)
+	return fmt.Errorf("invalid job state: %q", str)
 }
 
 func (j JobState) MarshalJSON() ([]byte, error) {
 	got, ok := jobStateStringMap[j]
 	if !ok {
-		return nil, fmt.Errorf("Invalid job state: %q", j)
+		return nil, fmt.Errorf("invalid job state: %q", j)
 	}
 	return json.Marshal(got)
 }

@@ -38,7 +38,7 @@ type TagError struct {
 }
 
 func (e *TagError) Error() string {
-	return fmt.Sprintf("Tag key is not alphanumeric ([a-z0-9A-Z]) or key value is empty.")
+	return fmt.Sprintf("tag key is not alphanumeric ([a-z0-9A-Z]) or key value is empty")
 }
 
 func (e *TagError) MessagesToJson() (string, error) {
@@ -106,7 +106,7 @@ func (agents *Agents) GetAuthorizedAndShowFacts(db *sql.DB, filterQuery string, 
 
 func (agent *Agent) Get(db Db) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	return db.QueryRow(ownDb.GetAgentQuery, agent.AgentID).Scan(&agent.DisplayName, &agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
@@ -114,7 +114,7 @@ func (agent *Agent) Get(db Db) error {
 
 func (agent *Agent) GetAuthorizedAndShowFacts(db Db, authorization *auth.Authorization, showFacts []string) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	// check the identity status
@@ -146,7 +146,7 @@ func (agent *Agent) GetAuthorizedAndShowFacts(db Db, authorization *auth.Authori
 
 func (agent *Agent) DeleteAuthorized(db Db, authorization *auth.Authorization) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	// check the identity status
@@ -182,7 +182,7 @@ func (agent *Agent) DeleteAuthorized(db Db, authorization *auth.Authorization) e
 
 func (agent *Agent) Save(db Db) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	//When creating an agent we assume it is online by default
@@ -219,7 +219,7 @@ func (agent *Agent) Save(db Db) error {
 
 func (agent *Agent) Update(db Db) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	// transform agents JSONB to JSON string
@@ -246,7 +246,7 @@ func (agent *Agent) Update(db Db) error {
 
 func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) error {
 	if reg == nil {
-		return errors.New("Registration is nil")
+		return errors.New("registration is nil")
 	}
 	agent.AgentID = reg.Sender
 	agent.Project = reg.Project
@@ -264,7 +264,7 @@ func (agent *Agent) FromRegistration(reg *arc.Registration, agentId string) erro
 
 func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, concurrencySafe bool) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	var err error
@@ -300,7 +300,7 @@ func ProcessRegistration(db *sql.DB, reg *arc.Registration, agentId string, conc
 
 func (agent *Agent) AddTagAuthorized(db Db, authorization *auth.Authorization, tagKey string, tagValue string) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	// check the identity status
@@ -339,7 +339,7 @@ func (agent *Agent) AddTagAuthorized(db Db, authorization *auth.Authorization, t
 
 func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization, tagKey string) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	// check the identity status
@@ -379,7 +379,7 @@ func (agent *Agent) DeleteTagAuthorized(db Db, authorization *auth.Authorization
 
 func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, tags map[string]string) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	// get agent
@@ -392,7 +392,11 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 	// check for aphanumeric keys or empty values
 	tagsErrorMessages := make(map[string][]string)
 
-	r, _ := regexp.Compile(`^\w+$`)
+	r, err := regexp.Compile(`^\w+$`)
+	if err != nil {
+		return err
+	}
+
 	for k, v := range tags {
 		// check for aphanumeric
 		match := r.MatchString(k)
@@ -429,7 +433,7 @@ func ProcessTags(db *sql.DB, authorization *auth.Authorization, agentId string, 
 
 func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) error {
 	if db == nil {
-		return errors.New("Db connection is nil")
+		return errors.New("db connection is nil")
 	}
 
 	*agents = make(Agents, 0)
@@ -443,7 +447,7 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) err
 		agent := Agent{}
 		err = rows.Scan(&agent.DisplayName, &agent.AgentID, &agent.Project, &agent.Organization, &agent.Facts, &agent.CreatedAt, &agent.UpdatedAt, &agent.UpdatedWith, &agent.UpdatedBy, &agent.Tags)
 		if err != nil {
-			log.Errorf("Error scaning agent results. Got %v", err)
+			log.Errorf("error scaning agent results. Got %v", err)
 			continue
 		}
 
@@ -457,8 +461,7 @@ func (agents *Agents) getAllAgents(db *sql.DB, query string, facts []string) err
 		*agents = append(*agents, agent)
 	}
 
-	rows.Close()
-	return nil
+	return rows.Close()
 }
 
 //
@@ -537,7 +540,7 @@ func buildAgentsQuery(baseQuery string, authProjectId, filterParam string, pag *
 
 func countAgents(db *sql.DB, query string) (int, error) {
 	if db == nil {
-		return 0, errors.New("Db is nil")
+		return 0, errors.New("db is nil")
 	}
 
 	var countAgents int
@@ -558,7 +561,7 @@ func processRegistration(db *sql.DB, agent *Agent) (err error) {
 
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 			return
 		}
 		err = tx.Commit()

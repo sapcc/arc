@@ -14,13 +14,17 @@ var subprocessShutdownTimeout = 2 * time.Second
 
 func (s *Subprocess) Kill() {
 	doneChan := s.Done()
-	s.cmd.Process.Signal(syscall.SIGTERM)
+	if err := s.cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		log.Errorf("Error killing process: %s\n", err)
+	}
 	select {
 	case <-doneChan:
 	case <-time.After(subprocessShutdownTimeout):
 		log.Warnf("Process didn't terminate gracefully within %v. Killing it.", subprocessShutdownTimeout)
 		//We kill the entire process group here to make sure child processes of the process die as well
-		syscall.Kill(-s.cmd.Process.Pid, syscall.SIGKILL)
+		if err := syscall.Kill(-s.cmd.Process.Pid, syscall.SIGKILL); err != nil {
+			log.Errorf("Error killing the entire process: %s\n", err)
+		}
 	}
 }
 

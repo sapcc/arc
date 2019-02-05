@@ -14,7 +14,7 @@ import (
 	"gitHub.***REMOVED***/monsoon/arc/version"
 )
 
-var NoUpdateAvailable error = fmt.Errorf("No update available")
+var ErrorNoUpdateAvailable error = fmt.Errorf("no update available")
 
 type Client struct {
 	Endpoint string
@@ -86,16 +86,18 @@ func (c *Client) GetUpdate(r *CheckResult) (io.ReadCloser, error) {
 		}
 	}
 
-	resp, err := http.Get(download_url)
+	resp, err := http.Get(download_url) // #nosec url is given by flag update-uri
 	if err != nil {
 		return nil, err
 	}
 	if resp.Body == nil {
-		return nil, fmt.Errorf("Got empty response body")
+		return nil, fmt.Errorf("got empty response body")
 	}
 	if resp.StatusCode >= 400 {
-		resp.Body.Close()
-		return nil, fmt.Errorf("Got unexpected status code: %s", resp.Status)
+		if err = resp.Body.Close(); err != nil {
+			return nil, fmt.Errorf("got unexpected status code: %s. Can't close response body: %s", resp.Status, err)
+		}
+		return nil, fmt.Errorf("got unexpected status code: %s", resp.Status)
 	}
 	return resp.Body, nil
 }

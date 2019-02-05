@@ -108,7 +108,7 @@ var _ = Describe("Token Create", func() {
 		err := json.Unmarshal([]byte(`{"CN": "agent-test-name; DROP TABLE users;"}`), &tr)
 		Expect(err).NotTo(HaveOccurred())
 		_, err = CreateToken(db, &authorization, tr)
-		Expect(err).To(Equal(InvalidCommonNameError))
+		Expect(err).To(Equal(ErrorInvalidCommonName))
 	})
 
 	It("Returns a token even if empty json is send in the body request", func() {

@@ -49,11 +49,11 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			log.Debugf("Got registration from %q with id %q and data %q", registry.Sender, registry.RegistrationID, registry.Payload)
 
 			err := models.ProcessRegistration(db, registry, tp.IdentityInformation().Identity, concurrencySafe)
-			if err != nil {
-				if _, ok := err.(models.RegistrationExistsError); ok {
-					log.Debug(err.Error(), " Registration id ", registry.RegistrationID)
-				} else {
-					log.Errorf("Error updating registration %q. Got %q", registry.RegistrationID, err.Error())
+			if _, ok := err.(models.RegistrationExistsError); ok {
+				log.Debug(err.Error(), " Registration id ", registry.RegistrationID)
+			} else {
+				if err != nil {
+					log.Errorf("error updating registration %q. Got %q", registry.RegistrationID, err.Error())
 				}
 			}
 
@@ -67,10 +67,10 @@ func arcSubscribeReplies(tp transport.Transport) error {
 
 			// add log
 			err := models.ProcessLogReply(db, reply, tp.IdentityInformation().Identity, concurrencySafe)
-			if err != nil {
-				if _, ok := err.(models.ReplyExistsError); ok {
-					log.Debug(err.Error(), " Reply id ", reply.RequestID)
-				} else {
+			if _, ok := err.(models.ReplyExistsError); ok {
+				log.Debug(err.Error(), " Reply id ", reply.RequestID)
+			} else {
+				if err != nil {
 					log.Error(err)
 					continue
 				}

@@ -33,7 +33,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		return 1, err
 	}
 	if err = tp.Connect(); err != nil {
-		return 1, fmt.Errorf("Failed to connect to broker: %s", err)
+		return 1, fmt.Errorf("failed to connect to broker: %s", err)
 	}
 
 	// init server
@@ -48,7 +48,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 			log.Infof("running arc server with version %s. identity: %s, project: %s and organization: %s", version.Version, cfg.Identity, cfg.Project, cfg.Organization)
 			return server.Run()
 		}, func(err error) {
-			log.Infof("Server actor was interrupted with: %v", err)
+			log.Infof("server actor was interrupted with: %v", err)
 			if err == errGracefulShutdown {
 				server.GracefulShutdown()
 			} else {
@@ -84,7 +84,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 	// update cert Actor
 	renewCertURI, err := RenewCertURI(c)
 	if err != nil {
-		log.Errorf("Failed to get renew cert URI: %s \n", err)
+		log.Errorf("failed to get renew cert URI: %s \n", err)
 	} else {
 		defer logend(logstart("cert updater"))
 		log.Infof("running cert updater with URI %s, interval %v minutes and threshold %v hours", renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"))
@@ -92,7 +92,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		runner.Add(func() error {
 			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"), cfg, cancelCertHandler)
 		}, func(err error) {
-			log.Infof("Cert actor was interrupted with: %v", err)
+			log.Infof("cert actor was interrupted with: %v", err)
 			close(cancelCertHandler)
 		})
 	}
