@@ -66,13 +66,13 @@ func RenewCertURI(c *cli.Context) (string, error) {
 	}
 
 	if uri == "" {
-		return "", fmt.Errorf("No renew cert URI found")
+		return "", fmt.Errorf("no renew cert URI found")
 	}
 
 	// Parse the URL and ensure there are no errors.
 	u, err := url.Parse(uri)
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse uri: %v", err)
+		return "", fmt.Errorf("failed to parse uri: %v", err)
 	}
 	host := u.Host
 	// in case of update uri split the url to get the last part

@@ -17,13 +17,13 @@ type TokenRequest struct {
 	Profile string
 }
 
-var InvalidCommonNameError = errors.New("Invalid Common Name provided")
+var ErrorInvalidCommonName = errors.New("invalid Common Name provided")
 
 // CreateToken return a new sign token
 func CreateToken(db *sql.DB, authorization *auth.Authorization, payload TokenRequest) (string, error) {
 	// check db
 	if db == nil {
-		return "", errors.New("Db connection is nil")
+		return "", errors.New("db connection is nil")
 	}
 
 	profile := "default"
@@ -41,7 +41,7 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, payload TokenReq
 			return "", err
 		}
 		if s.NameWhitelist != nil && s.NameWhitelist.Find([]byte(payload.Subject.CN)) == nil {
-			return "", InvalidCommonNameError
+			return "", ErrorInvalidCommonName
 		}
 	}
 
@@ -77,7 +77,7 @@ func CreateToken(db *sql.DB, authorization *auth.Authorization, payload TokenReq
 
 func PruneTokens(db *sql.DB) (int64, error) {
 	if db == nil {
-		return 0, errors.New("Clean PKI tokens: Db connection is nil")
+		return 0, errors.New("clean PKI tokens: Db connection is nil")
 	}
 
 	res, err := db.Exec(ownDb.DeletePkiTokensQuery, 3600)

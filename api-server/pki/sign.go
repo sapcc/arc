@@ -34,13 +34,13 @@ func (e SignForbidden) Error() string {
 func SetupSigner(caCertFile, caKeyFile, configFile string) (err error) {
 
 	if _, err := os.Stat(caCertFile); err != nil {
-		return fmt.Errorf("CA certificate not found at path %#v", caCertFile)
+		return fmt.Errorf("the CA certificate not found at path %#v", caCertFile)
 	}
 	if _, err := os.Stat(caKeyFile); err != nil {
-		return fmt.Errorf("CA private key not found at path %#v", caKeyFile)
+		return fmt.Errorf("the CA private key not found at path %#v", caKeyFile)
 	}
 	if _, err := os.Stat(configFile); err != nil {
-		return fmt.Errorf("CA config file not found at path %#v", configFile)
+		return fmt.Errorf("the CA config file not found at path %#v", configFile)
 	}
 	cfg := &cli.Config{
 		CAFile:    caCertFile,
@@ -67,7 +67,7 @@ func Sign(csr []byte, subject signer.Subject, profile string) ([]byte, error) {
 func SignToken(db *sql.DB, token string, csr []byte) (*[]byte, string, error) {
 	// check db
 	if db == nil {
-		return nil, "", errors.New("Db connection is nil")
+		return nil, "", errors.New("db connection is nil")
 	}
 
 	// create db transaction
@@ -111,13 +111,13 @@ func SignToken(db *sql.DB, token string, csr []byte) (*[]byte, string, error) {
 	certData, _ := pem.Decode(pemCert)
 	if certData == nil {
 		//httpError(w, 500, errors.New("Failed to parse PEM encoded certificate."))
-		return nil, "", errors.New("Failed to parse PEM encoded certificate.")
+		return nil, "", errors.New("failed to parse PEM encoded certificate")
 	}
 
 	x509Cert, err := x509.ParseCertificate(certData.Bytes)
 	if err != nil {
 		//httpError(w, 500, errors.New("Failed to parse signed certificate."))
-		return nil, "", errors.New("Failed to parse signed certificate.")
+		return nil, "", errors.New("failed to parse signed certificate")
 	}
 	certSubject := x509Cert.Subject
 
@@ -140,7 +140,7 @@ func SignToken(db *sql.DB, token string, csr []byte) (*[]byte, string, error) {
 	_, err = tx.Exec("DELETE FROM tokens where id=$1", token)
 	if err != nil {
 		//httpError(w, 500, errors.New("Failed to delete token."))
-		return nil, "", errors.New("Failed to delete token.")
+		return nil, "", errors.New("failed to delete token")
 	}
 
 	//get the signing CA
@@ -162,7 +162,7 @@ func firstOrNull(s []string) sql.NullString {
 
 func PruneCertificates(db *sql.DB) (int64, error) {
 	if db == nil {
-		return 0, errors.New("Clean PKI tokens: Db connection is nil")
+		return 0, errors.New("clean PKI tokens: db connection is nil")
 	}
 
 	res, err := db.Exec(ownDb.CleanPkiCertificatesQuery)

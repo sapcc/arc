@@ -53,7 +53,7 @@ func init() {
 
 func (log *Log) Get(db *sql.DB) error {
 	if db == nil {
-		return fmt.Errorf("Db connection is nil")
+		return fmt.Errorf("db connection is nil")
 	}
 
 	return db.QueryRow(ownDb.GetLogQuery, log.JobID).Scan(&log.JobID, &log.Content, &log.CreatedAt, &log.UpdatedAt)
@@ -61,7 +61,7 @@ func (log *Log) Get(db *sql.DB) error {
 
 func (log *Log) Save(db *sql.DB) error {
 	if db == nil {
-		return fmt.Errorf("Db connection is nil")
+		return fmt.Errorf("db connection is nil")
 	}
 
 	var lastInsertId string
@@ -70,7 +70,7 @@ func (log *Log) Save(db *sql.DB) error {
 
 func (log *Log) GetOrCollect(db *sql.DB) error {
 	if db == nil {
-		return fmt.Errorf("Db is nil")
+		return fmt.Errorf("db is nil")
 	}
 
 	err := log.Get(db)
@@ -91,7 +91,7 @@ func (log *Log) GetOrCollect(db *sql.DB) error {
 
 func (log *Log) GetOrCollectAuthorized(db *sql.DB, authorization *auth.Authorization) error {
 	if db == nil {
-		return fmt.Errorf("Db is nil")
+		return fmt.Errorf("db is nil")
 	}
 
 	// get the log
@@ -115,7 +115,7 @@ func (log *Log) GetOrCollectAuthorized(db *sql.DB, authorization *auth.Authoriza
 
 func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySafe bool) error {
 	if db == nil {
-		return fmt.Errorf("Db connection is nil")
+		return fmt.Errorf("db connection is nil")
 	}
 
 	if concurrencySafe {
@@ -136,7 +136,7 @@ func ProcessLogReply(db *sql.DB, reply *arc.Reply, agentId string, concurrencySa
 // aggregate log parts with final state which are older then 5 min or log parts older then 1 day
 func AggregateLogs(db *sql.DB) (int, error) {
 	if db == nil {
-		return 0, errors.New("Db connection is nil")
+		return 0, errors.New("db connection is nil")
 	}
 
 	// get log parts to aggregate
@@ -169,7 +169,10 @@ func AggregateLogs(db *sql.DB) (int, error) {
 		return 0, err
 	}
 
-	rows.Close()
+	if err = rows.Close(); err != nil {
+		return 0, err
+	}
+
 	return rowsCount, nil
 }
 
@@ -180,7 +183,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 	job := Job{Request: arc.Request{RequestID: reply.RequestID}, Status: reply.State, UpdatedAt: time.Now()}
 	err := job.Update(db)
 	if err != nil {
-		return fmt.Errorf("Error updating job %q. Got %q", reply.RequestID, err.Error())
+		return fmt.Errorf("error updating job %q. Got %q", reply.RequestID, err.Error())
 	}
 
 	// save log part
@@ -191,7 +194,7 @@ func processLogReply(db *sql.DB, reply *arc.Reply) error {
 		logPart := LogPart{reply.RequestID, reply.Number, reply.Payload, reply.Final, time.Now()}
 		err := logPart.Save(db)
 		if err != nil {
-			return fmt.Errorf("Error saving log for request id %q. Got %q", reply.RequestID, err.Error())
+			return fmt.Errorf("error saving log for request id %q. Got %q", reply.RequestID, err.Error())
 		}
 	}
 
@@ -215,7 +218,7 @@ func aggregateLogParts(db *sql.DB, id string) (err error) {
 
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 			return
 		}
 		err = tx.Commit()
@@ -223,15 +226,15 @@ func aggregateLogParts(db *sql.DB, id string) (err error) {
 
 	var content string
 	if err = tx.QueryRow(ownDb.CollectLogPartsQuery, id).Scan(&content); err != nil {
-		log.Errorf("Error collecting log parts with id %q", id)
+		log.Errorf("error collecting log parts with id %q", id)
 		return
 	}
 	if _, err = tx.Exec(ownDb.InsertLogQuery, id, content, time.Now(), time.Now()); err != nil {
-		log.Errorf("Error inserting log parts with id %q", id)
+		log.Errorf("error inserting log parts with id %q", id)
 		return
 	}
 	if _, err = tx.Exec(ownDb.DeleteLogPartsQuery, id); err != nil {
-		log.Errorf("Error deleting log parts with id %q", id)
+		log.Errorf("error deleting log parts with id %q", id)
 		return
 	}
 

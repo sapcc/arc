@@ -12,7 +12,7 @@ import (
 
 func Update(c *cli.Context, options map[string]interface{}) (int, error) {
 	if c.String("update-uri") == "" {
-		return 1, errors.New("Not enough arguments in call update command. Option update-uri is missing.")
+		return 1, errors.New("not enough arguments in call update command. Option update-uri is missing")
 	}
 
 	up := updater.New(map[string]string{
@@ -22,7 +22,7 @@ func Update(c *cli.Context, options map[string]interface{}) (int, error) {
 	})
 
 	r, err := up.Check()
-	if err == updater.NoUpdateAvailable {
+	if err == updater.ErrorNoUpdateAvailable {
 		fmt.Println("No update available")
 		return 0, nil
 	} else if err != nil {

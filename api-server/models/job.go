@@ -67,11 +67,11 @@ func init() {
 
 func CreateJob(db *sql.DB, data *[]byte, identity string, user *auth.User) (*Job, error) {
 	if db == nil {
-		return nil, errors.New("Db is nil")
+		return nil, errors.New("db is nil")
 	}
 
 	if user.Id == "" {
-		return nil, errors.New("User id is blank")
+		return nil, errors.New("user id is blank")
 	}
 
 	// unmarshal data
@@ -164,7 +164,7 @@ func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, a
 
 func (job *Job) Get(db *sql.DB) error {
 	if db == nil {
-		return errors.New("Db is nil")
+		return errors.New("db is nil")
 	}
 
 	return db.QueryRow(ownDb.GetJobQuery, job.RequestID).Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
@@ -172,7 +172,7 @@ func (job *Job) Get(db *sql.DB) error {
 
 func (job *Job) GetAuthorized(db *sql.DB, authorization *auth.Authorization) error {
 	if db == nil {
-		return errors.New("Db is nil")
+		return errors.New("db is nil")
 	}
 
 	// check the identity status
@@ -197,7 +197,7 @@ func (job *Job) GetAuthorized(db *sql.DB, authorization *auth.Authorization) err
 
 func (job *Job) Save(db *sql.DB) error {
 	if db == nil {
-		return errors.New("Db is nil")
+		return errors.New("db is nil")
 	}
 
 	jobUser, err := job.User.Value()
@@ -211,7 +211,7 @@ func (job *Job) Save(db *sql.DB) error {
 
 func (job *Job) Update(db *sql.DB) (err error) {
 	if db == nil {
-		return errors.New("Db is nil")
+		return errors.New("db is nil")
 	}
 
 	// start transaction
@@ -222,7 +222,7 @@ func (job *Job) Update(db *sql.DB) (err error) {
 
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 			return
 		}
 		err = tx.Commit()
@@ -292,7 +292,7 @@ func scheduleJob(db *sql.DB, query string, time int) (affectedJobs int64, err er
 
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 			return
 		}
 		err = tx.Commit()
@@ -345,7 +345,7 @@ func buildJobsQuery(baseQuery string, authProjectId, agentId string, pag *pagina
 
 func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
 	if db == nil {
-		return errors.New("Db is nil")
+		return errors.New("db is nil")
 	}
 
 	*jobs = make(Jobs, 0)
@@ -359,19 +359,18 @@ func (jobs *Jobs) getAllJobs(db *sql.DB, query string) error {
 	for rows.Next() {
 		err = rows.Scan(&job.RequestID, &job.Version, &job.Sender, &job.To, &job.Timeout, &job.Agent, &job.Action, &job.Payload, &job.Status, &job.CreatedAt, &job.UpdatedAt, &job.Project, &job.User)
 		if err != nil {
-			log.Errorf("Error scaning job results. Got %v", err)
+			log.Errorf("error scaning job results. Got %v", err)
 			continue
 		}
 		*jobs = append(*jobs, job)
 	}
 
-	rows.Close()
-	return nil
+	return rows.Close()
 }
 
 func countJobs(db *sql.DB, query string) (int, error) {
 	if db == nil {
-		return 0, errors.New("Db is nil")
+		return 0, errors.New("db is nil")
 	}
 
 	var countJob int

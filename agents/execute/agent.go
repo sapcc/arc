@@ -28,7 +28,7 @@ func (a *executeAgent) CommandAction(ctx context.Context, job *arc.Job) (string,
 
 	command := splitArgs(job.Payload)
 	if len(command) == 0 {
-		return "", fmt.Errorf("Invalid payload. Command should by a string or array.")
+		return "", fmt.Errorf("invalid payload. Command should by a string or array")
 	}
 
 	process := arc.NewSubprocess(command[0], command[1:]...)
@@ -64,24 +64,26 @@ func (a *executeAgent) CommandAction(ctx context.Context, job *arc.Job) (string,
 
 func (a *executeAgent) ScriptAction(ctx context.Context, job *arc.Job) (string, error) {
 	if job.Payload == "" {
-		return "", errors.New("Empty payload")
+		return "", errors.New("empty payload")
 	}
 
 	file, err := ioutil.TempFile(os.TempDir(), "execute")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create temporary file: %s", err)
+		return "", fmt.Errorf("failed to create temporary file: %s", err)
 	}
 	if _, err := file.WriteString(job.Payload); err != nil {
-		return "", fmt.Errorf("Failed to write script to temporary file: %s", err)
+		return "", fmt.Errorf("failed to write script to temporary file: %s", err)
 	}
 
 	if err := file.Close(); err != nil {
-		return "", fmt.Errorf("Failed to close script file: %s", err)
+		return "", fmt.Errorf("failed to close script file: %s", err)
 	}
 
 	script_name := file.Name() + scriptSuffix
 	if err := os.Rename(file.Name(), script_name); err != nil {
-		os.Remove(file.Name())
+		if removeErr := os.Remove(file.Name()); removeErr != nil {
+			return "", fmt.Errorf("error removing file: %s. After getting error renaming file: %s", removeErr, err)
+		}
 		return "", err
 	}
 	defer os.Remove(script_name)

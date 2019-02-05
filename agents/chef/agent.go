@@ -112,7 +112,7 @@ func (a *chefAgent) Enable(ctx context.Context, job *arc.Job) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("Enabling chef agent failed")
+	return "", fmt.Errorf("enabling chef agent failed")
 }
 
 func (a *chefAgent) Disable(ctx context.Context, job *arc.Job) (string, error) { return "", nil }
@@ -120,7 +120,7 @@ func (a *chefAgent) Disable(ctx context.Context, job *arc.Job) (string, error) {
 func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error) {
 	var data chefZeroPayload
 	if err := json.Unmarshal([]byte(job.Payload), &data); err != nil {
-		return "", fmt.Errorf("Invalid json payload for zero action of chef agent: %s", err)
+		return "", fmt.Errorf("invalid json payload for zero action of chef agent: %s", err)
 	}
 	if data.RecipeURL == "" {
 		return "", fmt.Errorf("recipe_url not given or invalid")
@@ -138,11 +138,11 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	data.Attributes["run_list"] = data.RunList
 	dna, err := json.MarshalIndent(data.Attributes, " ", "  ")
 	if err != nil {
-		return "", fmt.Errorf("Failed to serialize dna.json: %s", err)
+		return "", fmt.Errorf("failed to serialize dna.json: %s", err)
 	}
 	tmpDir, err := ioutil.TempDir("", "chef-zero")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create temporary directory: %s", tmpDir)
+		return "", fmt.Errorf("failed to create temporary directory: %s", tmpDir)
 	}
 	//on windows ioutil.TempDir returns backslashes
 	tmpDir = strings.Replace(tmpDir, `\`, "/", -1)
@@ -158,19 +158,20 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 
 	dnaFile, err := os.Create(path.Join(tmpDir, "dna.json"))
 	if err != nil {
-		return "", fmt.Errorf("Failed to create dna.json: %s", err)
+		return "", fmt.Errorf("failed to create dna.json: %s", err)
 	}
+	defer dnaFile.Close()
+
 	log.Infof("Writing dna.json to %s", dnaFile.Name())
 	if _, err := dnaFile.Write(dna); err != nil {
-		dnaFile.Close()
-		return "", fmt.Errorf("Failed to write dna.json to disk: %s", err)
+		return "", fmt.Errorf("failed to write dna.json to disk: %s", err)
 	}
-	dnaFile.Close()
 
 	configFile, err := os.Create(path.Join(tmpDir, "client.rb"))
 	if err != nil {
-		return "", fmt.Errorf("Failed to create client.rb: %s", err)
+		return "", fmt.Errorf("failed to create client.rb: %s", err)
 	}
+	defer configFile.Close()
 
 	configVars := map[string]string{
 		"nodeName":     data.NodeName,
@@ -180,10 +181,8 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	}
 
 	if err = clientRbTemplate.Execute(configFile, configVars); err != nil {
-		configFile.Close()
-		return "", fmt.Errorf("Failed to write client.rb to disk: %s", err)
+		return "", fmt.Errorf("failed to write client.rb to disk: %s", err)
 	}
-	configFile.Close()
 
 	installedVersion, err := version.NewVersion(chefVersion())
 	if err != nil {
@@ -197,12 +196,12 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 	if data.Nodes != nil {
 		var nodesDir = path.Join(tmpDir, "nodes")
 		if err = os.Mkdir(nodesDir, 0755); /* #nosec */ err != nil {
-			return "", fmt.Errorf("Failed to create %s: %s", nodesDir, err)
+			return "", fmt.Errorf("failed to create %s: %s", nodesDir, err)
 		}
 		for i, node := range data.Nodes {
 			nodeJson, err := json.MarshalIndent(node, "", "  ")
 			if err != nil {
-				return "", fmt.Errorf("Failed to marshal node %d: %s", i, err)
+				return "", fmt.Errorf("failed to marshal node %d: %s", i, err)
 			}
 			nodeName := strconv.Itoa(i)
 			if name, ok := node["name"]; ok {
@@ -212,7 +211,7 @@ func (a *chefAgent) ZeroAction(ctx context.Context, job *arc.Job) (string, error
 			}
 			nodeFile := path.Join(nodesDir, fmt.Sprintf("%s.json", nodeName))
 			if err = ioutil.WriteFile(nodeFile, nodeJson, 0644); err != nil {
-				return "", fmt.Errorf("Failed to write %s: %s", nodeFile, err)
+				return "", fmt.Errorf("failed to write %s: %s", nodeFile, err)
 			}
 		}
 	}
@@ -265,43 +264,49 @@ func downloadInstaller(omnitruckUrl, platform, platform_version, chef_version st
 	metadata_url := fmt.Sprintf("%s?v=%s&p=%s&pv=%s&m=x86_64", omnitruckUrl, chef_version, platform, platform_version)
 	log.Infof("Fetching Omnitruck metadata from %s", metadata_url)
 	var client http.Client
+
+	// request metadata
 	req, err := http.NewRequest("GET", metadata_url, nil)
 	if err != nil {
-		return "", fmt.Errorf("Failed to create http request: %s", err)
+		return "", fmt.Errorf("failed to create http request: %s", err)
 	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Requesting omnitruck metdata failed: %s", err)
-	} else {
-		body, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			return "", fmt.Errorf("Failed to read response body: %s", err)
-		}
-		var omnitruck omnitruckResponse
-		if err := json.Unmarshal(body, &omnitruck); err == nil {
-			extension := regexp.MustCompile(`(rpm|deb|msi|dmg)$`).FindString(omnitruck.Url)
-			if extension == "" {
-				return "", fmt.Errorf("Unknown package type: %s", omnitruck.Url)
-			}
-			if resp, err := http.Get(omnitruck.Url); err == nil {
-				defer resp.Body.Close()
-				file, _ := arc.TempFile("", "chef-installer", "."+extension)
-				log.Infof("Downloading omnibus installer from %s to %s", omnitruck.Url, file.Name())
-				if _, err := io.Copy(file, resp.Body); err != nil {
-					return "", fmt.Errorf("Failed to save download to file: %s", err)
-				}
-				file.Close()
-				log.Info("Download succeeded")
-				return file.Name(), nil
-			} else {
-				return "", fmt.Errorf("Failed to download installer: %s", err)
-			}
-		} else {
-			return "", fmt.Errorf("Failed to unmarshal omnitruck response: %s", err)
-		}
-
+		return "", fmt.Errorf("requesting omnitruck metdata failed: %s", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %s", err)
 	}
 
+	// omnitruck response
+	var omnitruck omnitruckResponse
+	err = json.Unmarshal(body, &omnitruck)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal omnitruck response: %s", err)
+	}
+	extension := regexp.MustCompile(`(rpm|deb|msi|dmg)$`).FindString(omnitruck.Url)
+	if extension == "" {
+		return "", fmt.Errorf("unknown package type: %s", omnitruck.Url)
+	}
+
+	// Download installer
+	installerResp, err := http.Get(omnitruck.Url)
+	if err != nil {
+		return "", fmt.Errorf("failed to download installer: %s", err)
+	}
+	defer installerResp.Body.Close()
+	file, err := arc.TempFile("", "chef-installer", "."+extension)
+	if err != nil {
+		return "", fmt.Errorf("failed to create tmpfile: %s", err)
+	}
+	defer file.Close()
+	log.Infof("Downloading omnibus installer from %s to %s", omnitruck.Url, file.Name())
+	if _, err := io.Copy(file, installerResp.Body); err != nil {
+		return "", fmt.Errorf("failed to save download to file: %s", err)
+	}
+	log.Info("Download succeeded")
+	return file.Name(), nil
 }

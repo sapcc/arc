@@ -136,7 +136,7 @@ func ServerTLSCRT(rootCert *x509.Certificate, rootKey interface{}, servCertTmpl 
 		key := servKey.(*ecdsa.PrivateKey)
 		serverKeyDer, err := x509.MarshalECPrivateKey(key)
 		if err != nil {
-			return nil, make([]byte, 0), nil, fmt.Errorf("Failed to serialize ECDSA key: %s\n", err)
+			return nil, make([]byte, 0), nil, fmt.Errorf("failed to serialize ECDSA key: %s", err)
 		}
 		servKeyPEM = pem.EncodeToMemory(&pem.Block{
 			Type: "EC PRIVATE KEY", Bytes: serverKeyDer,
@@ -185,7 +185,7 @@ func ClientTLSCRT(rootCert *x509.Certificate, rootKey interface{}, clientCertTmp
 		key := clientKey.(*ecdsa.PrivateKey)
 		clientKeyDer, err := x509.MarshalECPrivateKey(key)
 		if err != nil {
-			return nil, make([]byte, 0), nil, fmt.Errorf("Failed to serialize ECDSA key: %s\n", err)
+			return nil, make([]byte, 0), nil, fmt.Errorf("failed to serialize ECDSA key: %s", err)
 		}
 		clientKeyPEM = pem.EncodeToMemory(&pem.Block{
 			Type: "EC PRIVATE KEY", Bytes: clientKeyDer,
@@ -245,7 +245,7 @@ func NewTLSCommunication(handler http.Handler) (TestTLSServer, TestTLSClient, er
 	// pool of trusted certs
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(rootCertPEM) {
-		return TestTLSServer{}, TestTLSClient{}, fmt.Errorf("Given CA file does not contain a PEM encoded x509 certificate")
+		return TestTLSServer{}, TestTLSClient{}, fmt.Errorf("given CA file does not contain a PEM encoded x509 certificate")
 	}
 	// create server crt
 	servCertTmpl, err := CertTemplate(x509.ECDSAWithSHA256)

@@ -14,16 +14,16 @@ import (
 func NewConnection(dbConfigFile, env string) (*sql.DB, error) {
 	// check and load config file
 	if _, err := os.Stat(dbConfigFile); err != nil {
-		return nil, fmt.Errorf("Can't load database configuration file %s: %s", dbConfigFile, err)
+		return nil, fmt.Errorf("can't load database configuration file %s: %s", dbConfigFile, err)
 	}
 	f, err := yaml.ReadFile(dbConfigFile)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse database configuration file %s: %s", dbConfigFile, err)
+		return nil, fmt.Errorf("failed to parse database configuration file %s: %s", dbConfigFile, err)
 	}
 	// read the environment
 	open, err := f.Get(fmt.Sprintf("%s.open", env))
 	if err != nil {
-		return nil, fmt.Errorf("Can't find 'open' key for %s environment ", env)
+		return nil, fmt.Errorf("can't find 'open' key for %s environment ", env)
 	}
 	dbDSN := os.ExpandEnv(open)
 

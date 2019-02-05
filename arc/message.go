@@ -164,79 +164,79 @@ func ParseReply(data *[]byte) (*Reply, error) {
 }
 
 func ValidateRequest(request *Request) error {
-	field_error := "Attribute '%s' is missing or invalid"
+	field_error := "attribute '%s' is missing or invalid"
 
 	if request.Version < 1 {
-		return fmt.Errorf(field_error, "Version")
+		return fmt.Errorf(field_error, "version")
 	}
 
 	if request.Sender == "" {
-		return fmt.Errorf(field_error, "Sender")
+		return fmt.Errorf(field_error, "sender")
 	}
 
 	if request.To == "" {
-		return fmt.Errorf(field_error, "To")
+		return fmt.Errorf(field_error, "to")
 	}
 
 	if request.RequestID == "" {
-		return fmt.Errorf(field_error, "RequestID")
+		return fmt.Errorf(field_error, "requestID")
 	}
 
 	if request.Timeout < 1 || request.Timeout > MAXIMUM_JOB_TIMEOUT {
-		return fmt.Errorf(field_error, "Timeout")
+		return fmt.Errorf(field_error, "timeout")
 	}
 
 	if request.Agent == "" {
-		return fmt.Errorf(field_error, "Agent")
+		return fmt.Errorf(field_error, "agent")
 	}
 
 	if request.Action == "" {
-		return fmt.Errorf(field_error, "Action")
+		return fmt.Errorf(field_error, "action")
 	}
 
 	return nil
 }
 
 func ValidateReply(reply *Reply) error {
-	field_error := "Attribute '%s' is missing or invalid"
+	field_error := "attribute '%s' is missing or invalid"
 
 	if reply.Version < 1 {
-		return fmt.Errorf(field_error, "Version")
+		return fmt.Errorf(field_error, "version")
 	}
 
 	if reply.RequestID == "" {
-		return fmt.Errorf(field_error, "RequestID")
+		return fmt.Errorf(field_error, "requestID")
 	}
 
 	if reply.Agent == "" {
-		return fmt.Errorf(field_error, "Agent")
+		return fmt.Errorf(field_error, "agent")
 	}
 
 	if reply.Action == "" {
-		return fmt.Errorf(field_error, "Action")
+		return fmt.Errorf(field_error, "action")
 	}
 
 	if reply.State == 0 {
-		return fmt.Errorf(field_error, "State")
+		return fmt.Errorf(field_error, "state")
 	}
 
 	return nil
 }
 
 func ValidateRegistration(reg *Registration) error {
-	field_error := "Attribute '%s' is missing or invalid"
+	field_error := "attribute '%s' is missing or invalid"
 
 	if reg.Version < 1 {
-		return fmt.Errorf(field_error, "Version")
+		return fmt.Errorf(field_error, "version")
 	}
 	if reg.Organization == "" {
-		return fmt.Errorf(field_error, "Organization")
+		return fmt.Errorf(field_error, "organization")
 	}
 	if reg.Project == "" {
-		return fmt.Errorf(field_error, "Project")
+		return fmt.Errorf(field_error, "project")
 	}
 	if reg.Sender == "" {
-		return fmt.Errorf(field_error, "Sender")
+		return fmt.Errorf(field_error, "sender")
 	}
 
 	return nil

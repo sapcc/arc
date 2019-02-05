@@ -98,7 +98,7 @@ func (a *agentInfo) executeAction(ctx context.Context, job *Job) (string, error)
 func (r *registry) Agents() []string {
 
 	agents := make([]string, 0, len(r.agents))
-	for i, _ := range r.agents {
+	for i := range r.agents {
 		agents = append(agents, i)
 	}
 	return agents
@@ -108,7 +108,7 @@ func (r *registry) Agents() []string {
 func (r *registry) Actions(agent string) []string {
 	if agt, found := r.agents[agent]; found {
 		actions := make([]string, 0, len(agt.actions))
-		for i, _ := range agt.actions {
+		for i := range agt.actions {
 			actions = append(actions, i)
 		}
 		return actions

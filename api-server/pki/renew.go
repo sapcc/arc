@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	RENEW_CFG_PRIVKEY_MISSING     = "Configuration is nil or TLS client private key not found."
-	RENEW_TLS_CERTIFICATE_MISSING = "No TLS Certificate found to check expiration date."
-	RENEW_CFG_CERT_PATH_MISSING   = "Configuration is nil or client cert path is missing."
+	RENEW_CFG_PRIVKEY_MISSING     = "configuration is nil or TLS client private key not found."
+	RENEW_TLS_CERTIFICATE_MISSING = "no TLS Certificate found to check expiration date."
+	RENEW_CFG_CERT_PATH_MISSING   = "configuration is nil or client cert path is missing."
 )
 
 // CheckAndRenewCert check with the threshold and renew the cert
@@ -80,7 +80,7 @@ func CertExpirationDate(cfg *arc_config.Config) (*time.Time, error) {
 
 	cert, err := x509.ParseCertificate(cfg.ClientCert.Certificate[0])
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse client certificate: %s", err)
+		return nil, fmt.Errorf("failed to parse client certificate: %s", err)
 	}
 
 	return &cert.NotAfter, nil
@@ -128,7 +128,7 @@ func SendCertificateRequest(client *http.Client, endpoint string, cfg *arc_confi
 	// decode cert
 	pBlockCert, _ := pem.Decode(responseBody)
 	if pBlockCert == nil {
-		return nil, fmt.Errorf("No pem block found.")
+		return nil, fmt.Errorf("no pem block found")
 	}
 
 	return pem.EncodeToMemory(pBlockCert), nil

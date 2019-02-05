@@ -48,17 +48,17 @@ func (u *Updater) CheckAndUpdate() (bool, error) {
 	defer atomic.SwapInt32(&checkAndUpdateRunning, 0)
 
 	r, err := u.Check()
-	if err == NoUpdateAvailable {
+	if err == ErrorNoUpdateAvailable {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("Error while checking for update: %q", err.Error())
+		return false, fmt.Errorf("error while checking for update: %q", err.Error())
 	}
 	log.Infof("Updated version %s for app %s available ", r.Version, u.Params.AppId)
 
 	// replace binary
 	err = u.Update(r)
 	if err != nil {
-		return false, fmt.Errorf("Failed to update: %q", err.Error())
+		return false, fmt.Errorf("failed to update: %q", err.Error())
 	}
 	log.Infof("Updated to version %q", r.Version)
 
@@ -97,7 +97,7 @@ func (u *Updater) Check() (*CheckResult, error) {
 		return result, nil
 	}
 
-	return nil, NoUpdateAvailable
+	return nil, ErrorNoUpdateAvailable
 }
 
 // private

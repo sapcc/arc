@@ -26,7 +26,7 @@ type tarballPayload struct {
 func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string, error) {
 	var data tarballPayload
 	if err := json.Unmarshal([]byte(job.Payload), &data); err != nil {
-		return "", fmt.Errorf("Invalid json payload for tarball action: %s", err)
+		return "", fmt.Errorf("invalid json payload for tarball action: %s", err)
 	}
 
 	//send empty heartbeat so that the caller knows the command is executing
@@ -34,7 +34,7 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 
 	tmpDir, err := ioutil.TempDir("", "execute-tarball")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create temporary directory: %s", tmpDir)
+		return "", fmt.Errorf("failed to create temporary directory: %s", tmpDir)
 	}
 	defer os.Remove(tmpDir)
 
@@ -44,7 +44,7 @@ func (a *executeAgent) TarballAction(ctx context.Context, job *arc.Job) (string,
 		return "", err
 	}
 	if res.StatusCode >= 400 {
-		return "", fmt.Errorf("Failed to retrieve %s: %s", data.URL, res.Status)
+		return "", fmt.Errorf("failed to retrieve %s: %s", data.URL, res.Status)
 	}
 	defer res.Body.Close()
 	_, err = unzipit.UnpackStream(res.Body, tmpDir)

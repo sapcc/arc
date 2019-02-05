@@ -35,7 +35,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 	dir := c.String("install-dir")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, 0755); /* #nosec */ err != nil {
-			return 1, fmt.Errorf("Failed to create %s", dir)
+			return 1, fmt.Errorf("failed to create %s", dir)
 		}
 	}
 
@@ -43,18 +43,18 @@ func Init(c *cli.Context, appName string) (int, error) {
 		log.Infof("Generating %d bit private key", keySize)
 		key, err := rsa.GenerateKey(rand.Reader, keySize)
 		if err != nil {
-			return 1, fmt.Errorf("Can't generate a private key")
+			return 1, fmt.Errorf("can't generate a private key")
 		}
 
 		keyfile, err := os.OpenFile(path.Join(dir, "cert.key"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to create %s: %v", path.Join(dir, "cert.key"), err)
+			return 1, fmt.Errorf("failed to create %s: %v", path.Join(dir, "cert.key"), err)
 		}
 		if err = pem.Encode(keyfile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
-			return 1, fmt.Errorf("Failed to write private key to file: %v", err)
+			return 1, fmt.Errorf("failed to write private key to file: %v", err)
 		}
 		if err := keyfile.Close(); err != nil {
-			return 1, fmt.Errorf("Failed to close handle to private key file: %s", err)
+			return 1, fmt.Errorf("failed to close handle to private key file: %s", err)
 		}
 
 		cn := discoverIdentity(c)
@@ -68,11 +68,11 @@ func Init(c *cli.Context, appName string) (int, error) {
 		log.Infof("Creating signing request for identity %#v", cn)
 		csrData, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to generate csr: %v", err)
+			return 1, fmt.Errorf("failed to generate csr: %v", err)
 		}
 		var csr bytes.Buffer
 		if err = pem.Encode(&csr, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrData}); err != nil {
-			return 1, fmt.Errorf("Failed to PEM encode certificate request")
+			return 1, fmt.Errorf("failed to PEM encode certificate request")
 		}
 
 		log.Info("Requesting certificate from registration endpoint")
@@ -88,7 +88,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 		req, err := http.NewRequest("POST", c.String("registration-url"), &csr)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to create registration http request: %s", err)
+			return 1, fmt.Errorf("failed to create registration http request: %s", err)
 		}
 		req.Header["Accept"] = []string{"application/json"}
 		req.Header["User-Agent"] = []string{appName + " " + version.String()}
@@ -99,9 +99,9 @@ func Init(c *cli.Context, appName string) (int, error) {
 		defer resp.Body.Close()
 		switch {
 		case resp.StatusCode == 403:
-			return 1, fmt.Errorf("Invalid registration token given.")
+			return 1, fmt.Errorf("invalid registration token given")
 		case resp.StatusCode != 200:
-			return 1, fmt.Errorf("Unknown error while fetching certificate: %s", resp.Status)
+			return 1, fmt.Errorf("unknown error while fetching certificate: %s", resp.Status)
 		}
 		var certs struct {
 			Ca          string
@@ -109,23 +109,23 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 		err = json.NewDecoder(resp.Body).Decode(&certs)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to parse json reponse: %v", err)
+			return 1, fmt.Errorf("failed to parse json reponse: %v", err)
 		}
 
 		err = ioutil.WriteFile(path.Join(dir, "cert.pem"), []byte(certs.Certificate), 0644)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to write certificate to disk: %v", err)
+			return 1, fmt.Errorf("failed to write certificate to disk: %v", err)
 		}
 		err = ioutil.WriteFile(path.Join(dir, "ca.pem"), []byte(certs.Ca), 0644)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to write CA certificate to disk: %v", err)
+			return 1, fmt.Errorf("failed to write CA certificate to disk: %v", err)
 		}
 
 		log.Info("Retrieved and stored certificate")
 
 		cfgFile, err := os.OpenFile(path.Join(dir, "arc.cfg"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644) // #nosec
 		if err != nil {
-			return 1, fmt.Errorf("Failed to create %s: %v", path.Join(dir, "arc.cfg"), err)
+			return 1, fmt.Errorf("failed to create %s: %v", path.Join(dir, "arc.cfg"), err)
 		}
 
 		updateInterval := ""
@@ -163,13 +163,13 @@ func Init(c *cli.Context, appName string) (int, error) {
 		}
 		err = configTemplate.Execute(cfgFile, templateVars)
 		if err != nil {
-			return 1, fmt.Errorf("Failed to write config file: %v", err)
+			return 1, fmt.Errorf("failed to write config file: %v", err)
 		}
 
 	}
 
 	if err := service.New(dir).Install(); err != nil {
-		return 1, fmt.Errorf("Failed to install service: %s", err)
+		return 1, fmt.Errorf("failed to install service: %s", err)
 	}
 	return 0, nil
 }
@@ -199,7 +199,7 @@ func instanceID() string {
 	}
 	r, err := client.Get(metadataURL)
 	if err != nil {
-		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
+		log.Warnf(fmt.Sprint("error requesting metadata. ", err.Error()))
 		return ""
 	}
 	defer r.Body.Close()
@@ -207,7 +207,7 @@ func instanceID() string {
 	var metadata = new(metaDataID)
 	err = json.NewDecoder(r.Body).Decode(metadata)
 	if err != nil {
-		log.Warnf(fmt.Sprint("Error parsing metadata. ", err.Error()))
+		log.Warnf(fmt.Sprint("error parsing metadata. ", err.Error()))
 		return ""
 	}
 

@@ -57,17 +57,17 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	// set option
 	opts := MQTT.NewClientOptions()
 	if len(config.Endpoints) == 0 {
-		return nil, fmt.Errorf("No transport endpoints given")
+		return nil, fmt.Errorf("no transport endpoints given")
 	}
 	//check the first endpoint if we need to setup a TlsConfig
 	if url, err := url.Parse(config.Endpoints[0]); err == nil {
 		switch url.Scheme {
 		case "tls", "ssl", "tcps", "wss":
 			if config.CACerts == nil {
-				return nil, fmt.Errorf("CA certificate not given")
+				return nil, fmt.Errorf("the CA certificate not given")
 			}
 			if config.ClientCert == nil {
-				return nil, fmt.Errorf("Client certificate not given")
+				return nil, fmt.Errorf("client certificate not given")
 			}
 
 			tlsc := tls.Config{
@@ -79,7 +79,7 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 		}
 
 	} else {
-		return nil, fmt.Errorf("Invalid url as transport endpoint given")
+		return nil, fmt.Errorf("invalid url as transport endpoint given")
 	}
 	for _, endpoint := range config.Endpoints {
 		logrus.Info("Using MQTT broker ", endpoint)
@@ -123,7 +123,7 @@ func (c *MQTTClient) Connect() error {
 	logrus.Info("Connecting to MQTT broker")
 	token := c.client.Connect()
 	if !token.WaitTimeout(10 * time.Second) {
-		return errors.New("Timeout connecting to broker")
+		return errors.New("timeout connecting to broker")
 	}
 	return token.Error()
 }
@@ -133,10 +133,10 @@ func (c *MQTTClient) Disconnect() {
 		if reg, err := offlineMessage(c.organization, c.project, c.identity); err == nil {
 			logrus.Info("Sending offline message")
 			if err = c.Registration(reg); err != nil {
-				logrus.Error("Failed to register 'offline' registration message: ", err)
+				logrus.Error("failed to register 'offline' registration message: ", err)
 			}
 		} else {
-			logrus.Error("Failed to create 'offline' registration message: ", err)
+			logrus.Error("failed to create 'offline' registration message: ", err)
 		}
 	}
 	c.client.Disconnect(1000)
@@ -171,7 +171,7 @@ func (c *MQTTClient) Subscribe(identity string) (<-chan *arc.Request, func()) {
 		payload := mMessage.Payload()
 		msg, err := arc.ParseRequest(&payload)
 		if err != nil {
-			logrus.Warnf("Discarding invalid message on topic %s:%s", mMessage.Topic(), err)
+			logrus.Warnf("discarding invalid message on topic %s:%s", mMessage.Topic(), err)
 			return
 		}
 		mutex.Lock()
@@ -198,7 +198,7 @@ func (c *MQTTClient) Request(msg *arc.Request) error {
 	topic := identityTopic(msg.To)
 	j, err := msg.ToJSON()
 	if err != nil {
-		logrus.Errorf("Error serializing Request to JSON: %s", err)
+		logrus.Errorf("error serializing Request to JSON: %s", err)
 		return err
 	} else {
 		logrus.Debugf("Publishing request for %s/%s to %s", msg.Agent, msg.Action, topic)
@@ -211,7 +211,7 @@ func (c *MQTTClient) Reply(msg *arc.Reply) error {
 	topic := replyTopic(msg.RequestID)
 	j, err := msg.ToJSON()
 	if err != nil {
-		logrus.Errorf("Error serializing Reply to JSON: %v", err)
+		logrus.Errorf("error serializing Reply to JSON: %v", err)
 		return err
 	} else {
 		logrus.Debugf("Publishing reply %v\n to %v", msg, topic)
@@ -262,7 +262,7 @@ func (c *MQTTClient) Registration(msg *arc.Registration) error {
 	topic := registrationTopic(c.organization, c.project, c.identity)
 	j, err := msg.ToJSON()
 	if err != nil {
-		logrus.Errorf("Error serializing Registration to JSON: %v", err)
+		logrus.Errorf("error serializing Registration to JSON: %v", err)
 		return err
 	} else {
 		logrus.Debugf("Publishing registration %v\n to %v", msg, topic)
@@ -334,10 +334,10 @@ func (c *MQTTClient) onConnect() {
 	if req, err := onlineMessage(c.organization, c.project, c.identity); err == nil {
 		logrus.Info("Sending online Message")
 		if err = c.Registration(req); err != nil {
-			logrus.Error("Failed to register 'online' registration message: ", err)
+			logrus.Error("failed to register 'online' registration message: ", err)
 		}
 	} else {
-		logrus.Error("Failed to create 'online' registration message ", err)
+		logrus.Error("failed to create 'online' registration message ", err)
 	}
 }
 

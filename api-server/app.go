@@ -286,7 +286,9 @@ func runServer(c *cli.Context) {
 			server.close()
 		case s := <-gracefulChan:
 			log.Infof("Captured %v", s)
-			server.shutdown()
+			if err = server.shutdown(); err != nil {
+				log.Errorf("error shsuting down server %s\n", err)
+			}
 		}
 	}
 }

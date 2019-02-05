@@ -114,7 +114,7 @@ func (fs *Store) Facts() map[string]interface{} {
 func (fs *Store) update(name string) error {
 	s, ok := fs.sources.Load(name)
 	if !ok {
-		return fmt.Errorf("Unknown fact source %s", name)
+		return fmt.Errorf("unknown fact source %s", name)
 	}
 	source := s.(*factSource)
 

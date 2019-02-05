@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path/filepath"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -35,7 +36,7 @@ func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, httpBindAdress, httpsBin
 		if err != nil {
 			log.Fatalf("Failed to load tls cert/key: %s", err)
 		}
-		pemCerts, err := ioutil.ReadFile(tlsServerCA)
+		pemCerts, err := ioutil.ReadFile(filepath.Clean(tlsServerCA))
 		if err != nil {
 			log.Fatalf("Failed to load CA certificate: %s", err)
 		}
@@ -99,7 +100,9 @@ func (s *Server) run() error {
 		log.Infof("Listening on %q... for incoming connections", s.httpBindAdress)
 		return s.httpServer.Serve(httpLn)
 	}, func(_ error) {
-		httpLn.Close()
+		if err = httpLn.Close(); err != nil {
+			log.Errorf("error closing http listener: %s", err)
+		}
 	})
 
 	// https
@@ -114,7 +117,9 @@ func (s *Server) run() error {
 			log.Infof("Listening on %q for incoming TLS connections...", s.httpsBindAdress)
 			return s.httpsServer.ServeTLS(httpsLn, "", "")
 		}, func(_ error) {
-			httpsLn.Close()
+			if err = httpLn.Close(); err != nil {
+				log.Errorf("error closing http listener: %s", err)
+			}
 		})
 	}
 
@@ -124,8 +129,8 @@ func (s *Server) run() error {
 func (s *Server) shutdown() error {
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {
-		return fmt.Errorf("Error shuting down http server: %s", err)
+		return fmt.Errorf("error shuting down http server: %s", err)
 	}
 	err = s.httpsServer.Shutdown(context.Background())
-	return fmt.Errorf("Error shuting down https server: %s", err)
+	return fmt.Errorf("error shuting down https server: %s", err)
 }

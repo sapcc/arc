@@ -51,36 +51,48 @@ func (j *Janitor) InitServer() {
 
 	log.Printf("Listening on %s...", j.Conf.BindAddress)
 	err := http.ListenAndServe(j.Conf.BindAddress, nil)
-	fatalfOnError(err, "Failed to bind on %s: ", j.Conf.BindAddress)
+	fatalfOnError(err, "failed to bind on %s: ", j.Conf.BindAddress)
 }
 
 func (j *Janitor) InitScheduler() {
 	log.Printf("Starting arc janitor scheduler %s", VersionString())
 	db, err := dbConnection(j.Conf.DbConfigFile, j.Conf.Environment)
-	fatalfOnError(err, "Failed to bind to database ")
+	fatalfOnError(err, "failed to bind to database ")
 
 	// start clean jobs
-	jobrunner.Schedule(SCHEDULE_TIME, FailQueuedJobs{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, FailExpiredJobs{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, PruneJobs{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, AggregateLogs{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, PruneLocks{db: db})
-	jobrunner.Schedule(SCHEDULE_TIME, PruneCertificates{db: db})
+	if err = jobrunner.Schedule(SCHEDULE_TIME, FailQueuedJobs{db: db}); err != nil {
+		log.Errorf(fmt.Sprintf("janitor job 'FailQueuedJobs' scheduler failed: %s", err))
+	}
+	if err = jobrunner.Schedule(SCHEDULE_TIME, FailExpiredJobs{db: db}); err != nil {
+		log.Errorf(fmt.Sprintf("janitor job 'FailExpiredJobs' scheduler failed: %s", err))
+	}
+	if err = jobrunner.Schedule(SCHEDULE_TIME, PruneJobs{db: db}); err != nil {
+		log.Errorf(fmt.Sprintf("janitor job 'PruneJobs' scheduler failed: %s", err))
+	}
+	if err = jobrunner.Schedule(SCHEDULE_TIME, AggregateLogs{db: db}); err != nil {
+		log.Errorf(fmt.Sprintf("janitor job 'AggregateLogs' scheduler failed: %s", err))
+	}
+	if err = jobrunner.Schedule(SCHEDULE_TIME, PruneLocks{db: db}); err != nil {
+		log.Errorf(fmt.Sprintf("janitor job 'PruneLocks' scheduler failed: %s", err))
+	}
+	if err = jobrunner.Schedule(SCHEDULE_TIME, PruneCertificates{db: db}); err != nil {
+		log.Errorf(fmt.Sprintf("janitor job 'PruneCertificates' scheduler failed: %s", err))
+	}
 }
 
 func dbConnection(dbConfigFile, env string) (*sql.DB, error) {
 	// check and load config file
 	if _, err := os.Stat(dbConfigFile); err != nil {
-		return nil, fmt.Errorf("Can't load database configuration file %s: %s", dbConfigFile, err)
+		return nil, fmt.Errorf("can't load database configuration file %s: %s", dbConfigFile, err)
 	}
 	f, err := yaml.ReadFile(dbConfigFile)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse database configuration file %s: %s", dbConfigFile, err)
+		return nil, fmt.Errorf("failed to parse database configuration file %s: %s", dbConfigFile, err)
 	}
 	// read the environment
 	open, err := f.Get(fmt.Sprintf("%s.open", env))
 	if err != nil {
-		return nil, fmt.Errorf("Can't find 'open' key for %s environment ", env)
+		return nil, fmt.Errorf("can't find 'open' key for %s environment ", env)
 	}
 	dbDSN := os.ExpandEnv(open)
 

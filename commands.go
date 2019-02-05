@@ -206,7 +206,10 @@ func cmdExecute(c *cli.Context) {
 		if c.String("payload") != "" {
 			log.Fatal("--stdin and --payload are mutually exclusive")
 		}
-		bytes, _ := ioutil.ReadAll(os.Stdin)
+		bytes, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalf("Error reading from stdin: %s", err)
+		}
 		payload = string(bytes)
 	}
 
@@ -218,13 +221,14 @@ func cmdExecute(c *cli.Context) {
 	request, err := arc.CreateRequest(agent, action, config.Identity, c.String("identity"), c.Int("timeout"), payload)
 	if err != nil {
 		log.Fatal(err.Error())
-		return
 	}
 
 	msgChan, cancelSubscription := tp.SubscribeJob(request.RequestID)
 	defer cancelSubscription()
 	log.Infof("Sending request %s", request.RequestID)
-	tp.Request(request)
+	if err = tp.Request(request); err != nil {
+		log.Fatal(err.Error())
+	}
 	state := arc.Queued
 
 	for {
@@ -304,22 +308,34 @@ func cmdInit(c *cli.Context) {
 }
 
 func cmdStatus(c *cli.Context) {
-	code, _ := commands.Status(c)
+	code, err := commands.Status(c)
+	if err != nil {
+		log.Error(err)
+	}
 	os.Exit(code)
 }
 
 func cmdStart(c *cli.Context) {
-	code, _ := commands.Start(c)
+	code, err := commands.Start(c)
+	if err != nil {
+		log.Error(err)
+	}
 	os.Exit(code)
 }
 
 func cmdStop(c *cli.Context) {
-	code, _ := commands.Stop(c)
+	code, err := commands.Stop(c)
+	if err != nil {
+		log.Error(err)
+	}
 	os.Exit(code)
 }
 
 func cmdRestart(c *cli.Context) {
-	code, _ := commands.Restart(c)
+	code, err := commands.Restart(c)
+	if err != nil {
+		log.Error(err)
+	}
 	os.Exit(code)
 }
 

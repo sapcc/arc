@@ -1,13 +1,13 @@
 package filter
 
 import (
-	"fmt"
-	"strconv"
-)
-import (
 	"bufio"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
+
+	"github.com/cloudflare/cfssl/log"
 )
 
 type frame struct {
@@ -814,7 +814,11 @@ OUTER0:
 			}
 		case 13:
 			{
-				lval.num, _ = strconv.Atoi(yylex.Text())
+				var err error
+				lval.num, err = strconv.Atoi(yylex.Text())
+				if err != nil {
+					log.Errorf("converted to type int error: %s\n", err)
+				}
 				return NUMBER
 			}
 		case 14:

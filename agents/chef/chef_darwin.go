@@ -9,5 +9,5 @@ var (
 )
 
 func install(installer string) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
