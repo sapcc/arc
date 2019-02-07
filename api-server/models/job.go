@@ -119,12 +119,6 @@ func CreateJob(db *sql.DB, data *[]byte, identity string, user *auth.User) (*Job
 }
 
 func CreateJobAuthorized(db *sql.DB, data *[]byte, identity string, authorization *auth.Authorization) (*Job, error) {
-	// check the identity status
-	err := authorization.CheckIdentity()
-	if err != nil {
-		return nil, err
-	}
-
 	job, err := CreateJob(db, data, identity, &authorization.User)
 	if err != nil {
 		return nil, err
@@ -143,12 +137,6 @@ func (jobs *Jobs) Get(db *sql.DB) error {
 }
 
 func (jobs *Jobs) GetAuthorized(db *sql.DB, authorization *auth.Authorization, agentId string, pag *pagination.Pagination) error {
-	// check the identity status
-	err := authorization.CheckIdentity()
-	if err != nil {
-		return err
-	}
-
 	// count jobs and set total pages
 	countJobs, err := countJobs(db, buildJobsQuery(ownDb.CountAllJobsQuery, authorization.ProjectId, agentId, nil))
 	if err != nil {
@@ -175,14 +163,8 @@ func (job *Job) GetAuthorized(db *sql.DB, authorization *auth.Authorization) err
 		return errors.New("db is nil")
 	}
 
-	// check the identity status
-	err := authorization.CheckIdentity()
-	if err != nil {
-		return err
-	}
-
 	// get the job
-	err = job.Get(db)
+	err := job.Get(db)
 	if err != nil {
 		return err
 	}

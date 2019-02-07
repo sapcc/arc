@@ -31,13 +31,6 @@ import (
  */
 
 func servePkiToken(w http.ResponseWriter, r *http.Request) {
-	// get authentication
-	authorization := auth.GetIdentity(r)
-	if err := authorization.CheckIdentity(); err != nil {
-		logInfoAndReturnHttpErrStatus(w, err, "Error getting a pki token. ", http.StatusUnauthorized, r)
-		return
-	}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		logAndReturnHttpPkiError(w, http.StatusBadRequest, err)
@@ -50,6 +43,8 @@ func servePkiToken(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// get authentication
+	authorization := auth.GetIdentity(r)
 	// create token
 	token, err := pki.CreateToken(db, authorization, tokenRequest)
 	if err != nil {
@@ -272,9 +267,6 @@ func serveJob(w http.ResponseWriter, r *http.Request) {
 func executeJob(w http.ResponseWriter, r *http.Request) {
 	errorText := "Error creating a job. "
 
-	// get authentication parameters
-	authorization := auth.GetIdentity(r)
-
 	// read request body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -282,6 +274,9 @@ func executeJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	// get authentication parameters
+	authorization := auth.GetIdentity(r)
 
 	// create job
 	job, err := models.CreateJobAuthorized(db, &data, config.Identity, authorization)

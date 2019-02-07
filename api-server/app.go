@@ -16,6 +16,8 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/databus23/keystone"
 	"github.com/databus23/keystone/cache/postgres"
+	"github.com/ory/ladon"
+	ladon_mem "github.com/ory/ladon/manager/memory"
 
 	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
@@ -38,7 +40,8 @@ var (
 	pkiEnabled       = false
 	agentUpdateURL   = "UPDATE_URL_NOT_CONFIGURED"
 	agentEndpointURL = "ENDPOINT_URL_NOT_CONFIGURED"
-	agentApiURL      = "" // Should not be initialized because not all regions have TLS termination directly on the api server
+	agentApiURL      = "" // Should not be initialized because not all regions have from the begining TLS termination directly on the server
+	warden           = &ladon.Ladon{Manager: ladon_mem.NewMemoryManager()}
 )
 
 func main() {
@@ -159,7 +162,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "agent-api-url",
-			Usage:  "API URL. Only used for renew cert.",
+			Usage:  "The default URL for requesting new certs. Only used for agent install script.",
 			EnvVar: envPrefix + "AGENT_API_URL",
 		},
 	}
@@ -266,6 +269,13 @@ func runServer(c *cli.Context) {
 
 	// subscribe to all replies
 	go arcSubscribeReplies(tp)
+
+	// Add the policies defined to the memory manager.
+	for _, pol := range policies {
+		if polErr := warden.Manager.Create(pol); err != nil {
+			log.Fatal(polErr)
+		}
+	}
 
 	// init the router
 	router := newRouter(env)

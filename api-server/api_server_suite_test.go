@@ -3,6 +3,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/gorilla/mux"
@@ -35,6 +36,13 @@ var _ = BeforeSuite(func() {
 	err = pki.SetupSigner("test/ca.pem", "test/ca-key.pem", "etc/pki.json")
 	pkiEnabled = true
 	Expect(err).NotTo(HaveOccurred())
+
+	// adding policies before createing router
+	for _, pol := range policies {
+		if polErr := warden.Manager.Create(pol); err != nil {
+			log.Fatal(polErr)
+		}
+	}
 
 	router = newRouter(env)
 })

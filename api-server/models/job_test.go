@@ -82,16 +82,6 @@ var _ = Describe("Jobs", func() {
 			Expect(len(dbJobs)).To(Equal(1))
 		})
 
-		It("should return an identity authorization error", func() {
-			authorization.IdentityStatus = "Something different from Confirmed"
-
-			dbJobs := Jobs{}
-			err := dbJobs.GetAuthorized(db, &authorization, "", &pagination)
-			Expect(err).To(HaveOccurred())
-			_, ok := err.(auth.IdentityStatusInvalid)
-			Expect(ok).To(Equal(true))
-		})
-
 		It("should return a project authorization error", func() {
 			authorization.ProjectId = "Some other project"
 
@@ -268,20 +258,6 @@ var _ = Describe("Job", func() {
 			eq, err := CompareUserWithJobUser(user, job.User)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(eq).To(Equal(true))
-		})
-
-		It("should return an identity authorization error", func() {
-			authorization.IdentityStatus = "Something different from Confirmed"
-
-			// create job
-			data := fmt.Sprintf(`{"to":%q,"timeout":60,"agent":"execute","action":"script","payload":"echo \"Scritp start\"\n\nfor i in {1..10}\ndo\n\techo $i\n  sleep 1s\ndone\n\necho \"Scritp done\""}`, agent.AgentID)
-			strSlice := []byte(data)
-			job, err := CreateJobAuthorized(db, &strSlice, uuid.New(), &authorization)
-			Expect(err).To(HaveOccurred())
-			_, ok := err.(auth.IdentityStatusInvalid)
-			Expect(ok).To(Equal(true))
-			var newJob *Job
-			Expect(job).To(Equal(newJob))
 		})
 
 		It("should return a project authorization error", func() {
