@@ -40,6 +40,7 @@ var _ = Describe("Pki handlers", func() {
 
 		It("returns a HTTP 401 if not authorized", func() {
 			checkIdentityInvalidRequest("POST", getUrl("/agents/init", url.Values{}), "{}")
+			checkPolicyRoleNotAllowed("POST", getUrl("/agents/init", url.Values{}), "{}")
 		})
 
 		It("returns a HTTP 400 on body malformated", func() {
@@ -147,7 +148,7 @@ var _ = Describe("Pki handlers", func() {
 
 	})
 
-	Describe("servePkiCert", func() {
+	Describe("renewPkiCert", func() {
 
 		It("should through a 401 if client tries to authenticate with no tls certificate", func() {
 			// create root crt
@@ -404,11 +405,19 @@ var _ = Describe("Job Handlers", func() {
 
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("GET", getUrl("/jobs", url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl("/jobs", url.Values{}), "")
+		})
+
+		It("returns an empty array if project does not match", func() {
+			// fill db
+			jobs := models.Jobs{}
+			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 
 			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
 			req, err := http.NewRequest("GET", getUrl("/jobs", url.Values{}), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			req.Header.Add("X-Identity-Status", `Confirmed`)
+			req.Header.Add("X-Roles", `automation_admin`)
 			req.Header.Add("X-Project-Id", `some_different_project`)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -618,6 +627,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID), url.Values{}), "")
 		})
 
 		It("should return the job", func() {
@@ -705,6 +715,7 @@ var _ = Describe("Job Handlers", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("POST", getUrl("/jobs", url.Values{}), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 			checkNonAuthorizeProjectRequest("POST", getUrl("/jobs", url.Values{}), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
+			checkPolicyRoleNotAllowed("POST", getUrl("/jobs", url.Values{}), `{"to":"darwin","timeout":60,"agent":"rpc","action":"version"}`)
 		})
 
 		It("should save the job and return the unique id as JSON", func() {
@@ -774,6 +785,12 @@ var _ = Describe("Agent Handlers", func() {
 
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("GET", getUrl("/agents", url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl("/agents", url.Values{}), "")
+		})
+
+		It("returns an empty array if project does not match", func() {
+			agents := models.Agents{}
+			agents.CreateAndSaveAgentExamples(db, 3)
 
 			// make a request with X-Identity-Status to Confirmed but not X-Project-Id
 			agents = models.Agents{}
@@ -781,6 +798,7 @@ var _ = Describe("Agent Handlers", func() {
 			req, err := http.NewRequest("GET", getUrl("/agents", url.Values{}), bytes.NewBufferString(""))
 			Expect(err).NotTo(HaveOccurred())
 			req.Header.Add("X-Identity-Status", `Confirmed`)
+			req.Header.Add("X-Roles", `automation_admin`)
 			req.Header.Add("X-Project-Id", `some_different_project`)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
@@ -1035,6 +1053,7 @@ var _ = Describe("Agent Handlers", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
 		})
 
 		It("return an angent", func() {
@@ -1134,6 +1153,7 @@ var _ = Describe("Agent Handlers", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
+			checkPolicyRoleNotAllowed("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID), url.Values{}), "")
 		})
 
 		It("Delete an angent", func() {
@@ -1196,6 +1216,7 @@ var _ = Describe("Agent Handlers", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/facts"), url.Values{}), "")
 		})
 
 		It("returns the facts from an agent", func() {
@@ -1287,6 +1308,7 @@ var _ = Describe("Tags", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), "")
 		})
 
 		It("returns the tags from an agent", func() {
@@ -1361,6 +1383,7 @@ var _ = Describe("Tags", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), `{"tag1":"tag2"}`)
 			checkNonAuthorizeProjectRequest("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), `{"tag1":"tag2"}`)
+			checkPolicyRoleNotAllowed("POST", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags"), url.Values{}), `{"tag1":"tag2"}`)
 		})
 
 		It("returns 400 if one of the tags is not alphanumeric", func() {
@@ -1499,6 +1522,7 @@ var _ = Describe("Tags", func() {
 		It("returns a 401 error if not authorized", func() {
 			checkIdentityInvalidRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau"), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau"), url.Values{}), "")
+			checkPolicyRoleNotAllowed("DELETE", getUrl(fmt.Sprint("/agents/", agent.AgentID, "/tags", "/tag_miau"), url.Values{}), "")
 		})
 
 		It("removes the agent tag", func() {
@@ -1588,6 +1612,7 @@ var _ = Describe("Log Handlers", func() {
 
 			checkIdentityInvalidRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), "")
 			checkNonAuthorizeProjectRequest("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), "")
+			checkPolicyRoleNotAllowed("GET", getUrl(fmt.Sprint("/jobs/", job.RequestID, "/log"), url.Values{}), "")
 		})
 
 		It("returns the log from the log table", func() {
@@ -1787,6 +1812,32 @@ func checkIdentityInvalidRequest(method, urlStr string, body string) {
 	Expect(w.Code).To(Equal(401))
 }
 
+func checkPolicyRoleNotAllowed(method, urlStr string, body string) {
+	// make a request without roles
+	req, err := http.NewRequest(method, urlStr, bytes.NewBufferString(body))
+	Expect(err).NotTo(HaveOccurred())
+	req.Header.Add("X-Identity-Status", `Confirmed`)
+	req.Header.Add("X-Project-Id", `test-project`)
+	req.Header.Add("X-User-Id", `arc_test`)
+	req.Header.Add("X-Roles", ``)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+	Expect(w.Code).To(Equal(401))
+
+	// make a request with wrong role
+	req, err = http.NewRequest(method, urlStr, bytes.NewBufferString(body))
+	Expect(err).NotTo(HaveOccurred())
+	req.Header.Add("X-Identity-Status", `Confirmed`)
+	req.Header.Add("X-Project-Id", `test-project`)
+	req.Header.Add("X-User-Id", `arc_test`)
+	req.Header.Add("X-Roles", `compute_admin,automation_chef`)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
+	Expect(w.Code).To(Equal(401))
+}
+
 func checkNonAuthorizeProjectRequest(method, urlStr string, body string) {
 	// make a request with X-Identity-Status to Confirmed and X-Project-Id with a different project
 	req, err := http.NewRequest(method, urlStr, bytes.NewBufferString(body))
@@ -1805,9 +1856,13 @@ func newAuthorizedRequest(method, urlStr string, body io.Reader, headerOptions m
 	if err != nil {
 		return nil, err
 	}
+	// add ks handler information
 	req.Header.Add("X-Identity-Status", `Confirmed`)
 	req.Header.Add("X-Project-Id", `test-project`)
 	req.Header.Add("X-User-Id", `arc_test`)
+
+	// add policy information
+	req.Header.Add("X-Roles", `automation_admin`)
 
 	// add extra headers
 	for k, v := range headerOptions {

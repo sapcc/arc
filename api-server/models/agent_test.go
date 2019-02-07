@@ -346,16 +346,6 @@ var _ = Describe("Agents", func() {
 				Expect(dbAgents[0].Project).To(Equal(authorization.ProjectId))
 			})
 
-			It("should return an identity authorization error", func() {
-				authorization.IdentityStatus = "Something different from Confirmed"
-
-				dbAgents := Agents{}
-				err := dbAgents.GetAuthorizedAndShowFacts(db, "", &authorization, []string{}, &pagination)
-				Expect(err).To(HaveOccurred())
-				_, ok := err.(auth.IdentityStatusInvalid)
-				Expect(ok).To(Equal(true))
-			})
-
 			It("should return a project authorization error", func() {
 				authorization.ProjectId = "Some other project"
 
@@ -492,16 +482,6 @@ var _ = Describe("Agent", func() {
 				Expect(dbAgent.Project).To(Equal(authorization.ProjectId))
 			})
 
-			It("should return an identity authorization error", func() {
-				authorization.IdentityStatus = "Something different from Confirmed"
-
-				dbAgent := Agent{AgentID: agent.AgentID}
-				err := dbAgent.GetAuthorizedAndShowFacts(db, &authorization, []string{})
-				Expect(err).To(HaveOccurred())
-				_, ok := err.(auth.IdentityStatusInvalid)
-				Expect(ok).To(Equal(true))
-			})
-
 			It("should return a project authorization error", func() {
 				authorization.ProjectId = "Some other project"
 
@@ -544,16 +524,6 @@ var _ = Describe("Agent", func() {
 		})
 
 		Describe("authorization", func() {
-
-			It("should return an identity authorization error", func() {
-				authorization.IdentityStatus = "Something different from Confirmed"
-
-				// delete agent
-				err := agent.DeleteAuthorized(db, &authorization)
-				Expect(err).To(HaveOccurred())
-				_, ok := err.(auth.IdentityStatusInvalid)
-				Expect(ok).To(Equal(true))
-			})
 
 			It("should return a project authorization error", func() {
 				authorization.ProjectId = "Some other project"
@@ -832,16 +802,6 @@ var _ = Describe("Agent", func() {
 
 			Describe("authorization", func() {
 
-				It("should return an identity authorization error", func() {
-					authorization.IdentityStatus = "Something different from Confirmed"
-
-					// add tag
-					err := agent.AddTagAuthorized(db, &authorization, "test", "miau")
-					Expect(err).To(HaveOccurred())
-					_, ok := err.(auth.IdentityStatusInvalid)
-					Expect(ok).To(Equal(true))
-				})
-
 				It("should return a project authorization error", func() {
 					authorization.ProjectId = "Some other project"
 
@@ -896,16 +856,6 @@ var _ = Describe("Agent", func() {
 			})
 
 			Describe("authorization", func() {
-
-				It("should return an identity authorization error", func() {
-					authorization.IdentityStatus = "Something different from Confirmed"
-
-					// add tag
-					err := ProcessTags(db, &authorization, agent.AgentID, map[string]string{})
-					Expect(err).To(HaveOccurred())
-					_, ok := err.(auth.IdentityStatusInvalid)
-					Expect(ok).To(Equal(true))
-				})
 
 				It("should return a project authorization error", func() {
 					authorization.ProjectId = "Some other project"
@@ -970,16 +920,6 @@ var _ = Describe("Agent", func() {
 			})
 
 			Describe("authorization", func() {
-
-				It("should return an identity authorization error", func() {
-					authorization.IdentityStatus = "Something different from Confirmed"
-
-					// add tag
-					err := agent.DeleteTagAuthorized(db, &authorization, "dog")
-					Expect(err).To(HaveOccurred())
-					_, ok := err.(auth.IdentityStatusInvalid)
-					Expect(ok).To(Equal(true))
-				})
 
 				It("should return a project authorization error", func() {
 					authorization.ProjectId = "Some other project"
