@@ -63,9 +63,15 @@ func (h Source) Facts() (map[string]interface{}, error) {
 }
 
 func floatingIP(client *http.Client) string {
-	r, err := client.Get(ipv4Url)
+	req, err := http.NewRequest("GET", ipv4Url, nil)
 	if err != nil {
-		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
+		log.Warnf(fmt.Sprint("Error requesting metadata floatingIP. ", err.Error()))
+		return ""
+	}
+	req.Header.Set("User-Agent", "go-http-client")
+	r, err := client.Do(req)
+	if err != nil {
+		log.Warnf(fmt.Sprint("Error requesting metadata floatingIP. ", err.Error()))
 		return ""
 	}
 	defer r.Body.Close()
@@ -95,7 +101,13 @@ type metaData struct {
 
 // InstanceID returns the instance id from the metadata
 func metaDataInfo(client http.Client) *metaData {
-	r, err := client.Get(metadataURL)
+	req, err := http.NewRequest("GET", metadataURL, nil)
+	if err != nil {
+		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
+		return nil
+	}
+	req.Header.Set("User-Agent", "go-http-client")
+	r, err := client.Do(req)
 	if err != nil {
 		log.Warnf(fmt.Sprint("Error requesting metadata. ", err.Error()))
 		return nil
