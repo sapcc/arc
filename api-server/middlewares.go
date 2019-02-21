@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 	"time"
@@ -32,23 +31,21 @@ func indentityAndPolicyHandler(next http.Handler) http.Handler {
 
 		// check authentication
 		if err := authorization.CheckIdentity(); err != nil {
+			status := http.StatusUnauthorized
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.WriteHeader(http.StatusUnauthorized)
-			if errJSONEncode := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); errJSONEncode != nil {
-				log.Errorf("error encoding JSON: %v", errJSONEncode)
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
+			w.WriteHeader(status)
+			apiError := NewApiError(http.StatusText(status), status, "", err, r)
+			http.Error(w, apiError.toString(), status)
 			return
 		}
 
 		// check policy
 		if err := authorization.CheckPolicy(*warden); err != nil {
+			status := http.StatusUnauthorized
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.WriteHeader(http.StatusUnauthorized)
-			if errJSONEncode := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); errJSONEncode != nil {
-				log.Errorf("error encoding JSON: %v", errJSONEncode)
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
+			w.WriteHeader(status)
+			apiError := NewApiError(http.StatusText(status), status, "", err, r)
+			http.Error(w, apiError.toString(), status)
 			return
 		}
 
