@@ -3,102 +3,65 @@
 package mem
 
 import (
-	"os/exec"
-	"strconv"
-	"strings"
+	"context"
+	"encoding/binary"
+	"fmt"
+	"unsafe"
 
-	common "github.com/shirou/gopsutil/common"
+	"golang.org/x/sys/unix"
 )
 
-func getPageSize() (uint64, error) {
-	out, err := exec.Command("pagesize").Output()
-	if err != nil {
-		return 0, err
-	}
-	o := strings.TrimSpace(string(out))
-	p, err := strconv.ParseUint(o, 10, 64)
+func getHwMemsize() (uint64, error) {
+	totalString, err := unix.Sysctl("hw.memsize")
 	if err != nil {
 		return 0, err
 	}
 
-	return p, nil
+	// unix.sysctl() helpfully assumes the result is a null-terminated string and
+	// removes the last byte of the result if it's 0 :/
+	totalString += "\x00"
+
+	total := uint64(binary.LittleEndian.Uint64([]byte(totalString)))
+
+	return total, nil
 }
 
-// VirtualMemory returns VirtualmemoryStat.
-func VirtualMemory() (*VirtualMemoryStat, error) {
-	p, err := getPageSize()
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := common.DoSysctrl("hw.memsize")
-	if err != nil {
-		return nil, err
-	}
-	free, err := common.DoSysctrl("vm.page_free_count")
-	if err != nil {
-		return nil, err
-	}
-	parsed := make([]uint64, 0, 7)
-	vv := []string{
-		total[0],
-		free[0],
-	}
-	for _, target := range vv {
-		t, err := strconv.ParseUint(target, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		parsed = append(parsed, t)
-	}
-
-	ret := &VirtualMemoryStat{
-		Total: parsed[0] * p,
-		Free:  parsed[1] * p,
-	}
-
-	// TODO: platform independent (worked freebsd?)
-	ret.Available = ret.Free + ret.Buffers + ret.Cached
-
-	ret.Used = ret.Total - ret.Free
-	ret.UsedPercent = float64(ret.Total-ret.Available) / float64(ret.Total) * 100.0
-
-	return ret, nil
+// xsw_usage in sys/sysctl.h
+type swapUsage struct {
+	Total     uint64
+	Avail     uint64
+	Used      uint64
+	Pagesize  int32
+	Encrypted bool
 }
 
 // SwapMemory returns swapinfo.
 func SwapMemory() (*SwapMemoryStat, error) {
+	return SwapMemoryWithContext(context.Background())
+}
+
+func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
+	// https://github.com/yanllearnn/go-osstat/blob/ae8a279d26f52ec946a03698c7f50a26cfb427e3/memory/memory_darwin.go
 	var ret *SwapMemoryStat
 
-	swapUsage, err := common.DoSysctrl("vm.swapusage")
+	value, err := unix.SysctlRaw("vm.swapusage")
 	if err != nil {
 		return ret, err
 	}
-
-	total := strings.Replace(swapUsage[2], "M", "", 1)
-	used := strings.Replace(swapUsage[5], "M", "", 1)
-	free := strings.Replace(swapUsage[8], "M", "", 1)
-
-	total_v, err := strconv.ParseFloat(total, 64)
-	if err != nil {
-		return nil, err
+	if len(value) != 32 {
+		return ret, fmt.Errorf("unexpected output of sysctl vm.swapusage: %v (len: %d)", value, len(value))
 	}
-	used_v, err := strconv.ParseFloat(used, 64)
-	if err != nil {
-		return nil, err
-	}
-	free_v, err := strconv.ParseFloat(free, 64)
-	if err != nil {
-		return nil, err
+	swap := (*swapUsage)(unsafe.Pointer(&value[0]))
+
+	u := float64(0)
+	if swap.Total != 0 {
+		u = ((float64(swap.Total) - float64(swap.Avail)) / float64(swap.Total)) * 100.0
 	}
 
-	u := ((total_v - free_v) / total_v) * 100.0
-
-	// vm.swapusage shows "M", multiply 1000
 	ret = &SwapMemoryStat{
-		Total:       uint64(total_v * 1000),
-		Used:        uint64(used_v * 1000),
-		Free:        uint64(free_v * 1000),
+		Total:       swap.Total,
+		Used:        swap.Used,
+		Free:        swap.Avail,
 		UsedPercent: u,
 	}
 

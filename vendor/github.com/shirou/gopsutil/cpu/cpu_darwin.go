@@ -3,12 +3,11 @@
 package cpu
 
 import (
-	"fmt"
-	"os/exec"
+	"context"
 	"strconv"
 	"strings"
 
-	common "github.com/shirou/gopsutil/common"
+	"golang.org/x/sys/unix"
 )
 
 // sys/resource.h
@@ -21,129 +20,84 @@ const (
 	CPUStates = 5
 )
 
-// time.h
-const (
-	ClocksPerSec = 128
-)
+// default value. from time.h
+var ClocksPerSec = float64(128)
 
-func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
-	var ret []CPUTimesStat
+func Times(percpu bool) ([]TimesStat, error) {
+	return TimesWithContext(context.Background(), percpu)
+}
 
-	var sysctlCall string
-	var ncpu int
+func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	if percpu {
-		sysctlCall = "kern.cp_times"
-		ncpu, _ = CPUCounts(true)
-	} else {
-		sysctlCall = "kern.cp_time"
-		ncpu = 1
+		return perCPUTimes()
 	}
 
-	cpuTimes, err := common.DoSysctrl(sysctlCall)
-	if err != nil {
-		return ret, err
-	}
-
-	for i := 0; i < ncpu; i++ {
-		offset := CPUStates * i
-		user, err := strconv.ParseFloat(cpuTimes[CPUser+offset], 32)
-		if err != nil {
-			return ret, err
-		}
-		nice, err := strconv.ParseFloat(cpuTimes[CPNice+offset], 32)
-		if err != nil {
-			return ret, err
-		}
-		sys, err := strconv.ParseFloat(cpuTimes[CPSys+offset], 32)
-		if err != nil {
-			return ret, err
-		}
-		idle, err := strconv.ParseFloat(cpuTimes[CPIdle+offset], 32)
-		if err != nil {
-			return ret, err
-		}
-		intr, err := strconv.ParseFloat(cpuTimes[CPIntr+offset], 32)
-		if err != nil {
-			return ret, err
-		}
-
-		c := CPUTimesStat{
-			User:   float32(user / ClocksPerSec),
-			Nice:   float32(nice / ClocksPerSec),
-			System: float32(sys / ClocksPerSec),
-			Idle:   float32(idle / ClocksPerSec),
-			Irq:    float32(intr / ClocksPerSec),
-		}
-		if !percpu {
-			c.CPU = "cpu-total"
-		} else {
-			c.CPU = fmt.Sprintf("cpu%d", i)
-		}
-
-		ret = append(ret, c)
-	}
-
-	return ret, nil
+	return allCPUTimes()
 }
 
 // Returns only one CPUInfoStat on FreeBSD
-func CPUInfo() ([]CPUInfoStat, error) {
-	var ret []CPUInfoStat
+func Info() ([]InfoStat, error) {
+	return InfoWithContext(context.Background())
+}
 
-	out, err := exec.Command("/usr/sbin/sysctl", "machdep.cpu").Output()
+func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
+	var ret []InfoStat
+
+	c := InfoStat{}
+	c.ModelName, _ = unix.Sysctl("machdep.cpu.brand_string")
+	family, _ := unix.SysctlUint32("machdep.cpu.family")
+	c.Family = strconv.FormatUint(uint64(family), 10)
+	model, _ := unix.SysctlUint32("machdep.cpu.model")
+	c.Model = strconv.FormatUint(uint64(model), 10)
+	stepping, _ := unix.SysctlUint32("machdep.cpu.stepping")
+	c.Stepping = int32(stepping)
+	features, err := unix.Sysctl("machdep.cpu.features")
+	if err == nil {
+		for _, v := range strings.Fields(features) {
+			c.Flags = append(c.Flags, strings.ToLower(v))
+		}
+	}
+	leaf7Features, err := unix.Sysctl("machdep.cpu.leaf7_features")
+	if err == nil {
+		for _, v := range strings.Fields(leaf7Features) {
+			c.Flags = append(c.Flags, strings.ToLower(v))
+		}
+	}
+	extfeatures, err := unix.Sysctl("machdep.cpu.extfeatures")
+	if err == nil {
+		for _, v := range strings.Fields(extfeatures) {
+			c.Flags = append(c.Flags, strings.ToLower(v))
+		}
+	}
+	cores, _ := unix.SysctlUint32("machdep.cpu.core_count")
+	c.Cores = int32(cores)
+	cacheSize, _ := unix.SysctlUint32("machdep.cpu.cache.size")
+	c.CacheSize = int32(cacheSize)
+	c.VendorID, _ = unix.Sysctl("machdep.cpu.vendor")
+
+	// Use the rated frequency of the CPU. This is a static value and does not
+	// account for low power or Turbo Boost modes.
+	cpuFrequency, err := unix.SysctlUint64("hw.cpufrequency")
 	if err != nil {
 		return ret, err
 	}
-
-	c := CPUInfoStat{}
-	for _, line := range strings.Split(string(out), "\n") {
-		values := strings.Fields(line)
-		if len(values) < 1 {
-			continue
-		}
-
-		t, err := strconv.ParseInt(values[1], 10, 64)
-		// err is not checked here because some value is string.
-		if strings.HasPrefix(line, "machdep.cpu.brand_string") {
-			c.ModelName = strings.Join(values[1:], " ")
-		} else if strings.HasPrefix(line, "machdep.cpu.family") {
-			c.Family = values[1]
-		} else if strings.HasPrefix(line, "machdep.cpu.model") {
-			c.Model = values[1]
-		} else if strings.HasPrefix(line, "machdep.cpu.stepping") {
-			if err != nil {
-				return ret, err
-			}
-			c.Stepping = int32(t)
-		} else if strings.HasPrefix(line, "machdep.cpu.features") {
-			for _, v := range values[1:] {
-				c.Flags = append(c.Flags, strings.ToLower(v))
-			}
-		} else if strings.HasPrefix(line, "machdep.cpu.leaf7_features") {
-			for _, v := range values[1:] {
-				c.Flags = append(c.Flags, strings.ToLower(v))
-			}
-		} else if strings.HasPrefix(line, "machdep.cpu.extfeatures") {
-			for _, v := range values[1:] {
-				c.Flags = append(c.Flags, strings.ToLower(v))
-			}
-		} else if strings.HasPrefix(line, "machdep.cpu.core_count") {
-			if err != nil {
-				return ret, err
-			}
-			c.Cores = int32(t)
-		} else if strings.HasPrefix(line, "machdep.cpu.cache.size") {
-			if err != nil {
-				return ret, err
-			}
-			c.CacheSize = int32(t)
-		} else if strings.HasPrefix(line, "machdep.cpu.vendor") {
-			c.VendorID = values[1]
-		}
-
-		// TODO:
-		// c.Mhz = mustParseFloat64(values[1])
-	}
+	c.Mhz = float64(cpuFrequency) / 1000000.0
 
 	return append(ret, c), nil
+}
+
+func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+	var cpuArgument string
+	if logical {
+		cpuArgument = "hw.logicalcpu"
+	} else {
+		cpuArgument = "hw.physicalcpu"
+	}
+
+	count, err := unix.SysctlUint32(cpuArgument)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
 }
