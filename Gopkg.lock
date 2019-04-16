@@ -377,19 +377,19 @@
   revision = "abf152e5f3e97f2fafac028d2cc06c1feb87ffa5"
 
 [[projects]]
-  digest = "1:ffe4b596961b2609e47d0fcc8e72b1dbab0b19a2ed39c30e85bfc4f834f9baef"
+  digest = "1:2ac9271e469441ccbb11ad54775f6e627ff61028888f51fcb4687a5c4999cda8"
   name = "github.com/shirou/gopsutil"
   packages = [
-    "common",
     "cpu",
     "host",
+    "internal/common",
     "mem",
     "net",
     "process",
   ]
   pruneopts = "UT"
-  revision = "ce433bf86e4d05eeae4276aefc462ec825c2a4f5"
-  version = "1.0.0"
+  revision = "2cbc9195c892b304060269ef280375236d2fcac9"
+  version = "v2.19.03"
 
 [[projects]]
   branch = "master"
