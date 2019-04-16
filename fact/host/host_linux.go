@@ -11,7 +11,7 @@ import (
 
 func (h Source) Facts() (map[string]interface{}, error) {
 
-	info, err := host.HostInfo()
+	info, err := host.Info()
 	if err != nil {
 		return nil, err
 	}
