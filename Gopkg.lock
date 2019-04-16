@@ -377,26 +377,17 @@
   revision = "abf152e5f3e97f2fafac028d2cc06c1feb87ffa5"
 
 [[projects]]
-  digest = "1:c2d6c2436a55431afdc1a0e907afd5d5cd0ee6f446352dafc7d9ee270dcc1895"
+  digest = "1:b077b177b7e9b2ed7f1ed2f5ea7312d0adce774169dc3a2a994ae3fd43965dbf"
   name = "github.com/shirou/gopsutil"
   packages = [
     "common",
-    "cpu",
     "host",
     "mem",
-    "net",
     "process",
   ]
   pruneopts = "UT"
-  revision = "c71f9ee5be4592abdb847630035725d9e9506477"
-
-[[projects]]
-  branch = "master"
-  digest = "1:99c6a6dab47067c9b898e8c8b13d130c6ab4ffbcc4b7cc6236c2cd0b1e344f5b"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
+  revision = "ce433bf86e4d05eeae4276aefc462ec825c2a4f5"
+  version = "1.0.0"
 
 [[projects]]
   digest = "1:5da8ce674952566deae4dbc23d07c85caafc6cfa815b0b3e03e41979cedb8750"
