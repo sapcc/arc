@@ -9,7 +9,7 @@ import (
 	_ "net" //we need this to ensure the winsock subsystem is initialized
 
 	"github.com/StackExchange/wmi"
-	gopsutil "github.com/shirou/gopsutil/common"
+	gopsutil "github.com/shirou/gopsutil/internal/common"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
 )
 
