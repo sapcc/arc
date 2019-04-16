@@ -4,9 +4,7 @@ package process
 
 import (
 	"bytes"
-	"os/exec"
-	"strconv"
-	"strings"
+	"encoding/binary"
 	"syscall"
 	"unsafe"
 
@@ -25,14 +23,6 @@ const (
 	KernProcPathname = 12 // path to executable
 )
 
-const (
-	ClockTicks = 100 // C.sysconf(C._SC_CLK_TCK)
-)
-
-type _Ctype_struct___0 struct {
-	Pad uint64
-}
-
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
 }
@@ -42,31 +32,27 @@ type MemoryMapsStat struct {
 
 func Pids() ([]int32, error) {
 	var ret []int32
-
-	pids, err := callPs("pid", 0, false)
+	procs, err := processes()
 	if err != nil {
-		return ret, err
+		return ret, nil
 	}
 
-	for _, pid := range pids {
-		v, err := strconv.Atoi(pid[0])
-		if err != nil {
-			return ret, err
-		}
-		ret = append(ret, int32(v))
+	for _, p := range procs {
+		ret = append(ret, p.Pid)
 	}
 
 	return ret, nil
 }
 
 func (p *Process) Ppid() (int32, error) {
-	r, err := callPs("ppid", p.Pid, false)
-	v, err := strconv.Atoi(r[0][0])
+	return 0, common.NotImplementedError
+
+	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
 	}
 
-	return int32(v), err
+	return k.Proc.P_pid, nil
 }
 func (p *Process) Name() (string, error) {
 	k, err := p.getKProc()
@@ -80,11 +66,7 @@ func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Cmdline() (string, error) {
-	r, err := callPs("command", p.Pid, false)
-	if err != nil {
-		return "", err
-	}
-	return strings.Join(r[0], " "), err
+	return "", common.NotImplementedError
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
@@ -96,12 +78,12 @@ func (p *Process) Parent() (*Process, error) {
 	return p, common.NotImplementedError
 }
 func (p *Process) Status() (string, error) {
-	r, err := callPs("state", p.Pid, false)
+	k, err := p.getKProc()
 	if err != nil {
 		return "", err
 	}
 
-	return r[0][0], err
+	return string(k.Proc.P_stat), nil // TODO
 }
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -127,28 +109,22 @@ func (p *Process) Gids() ([]int32, error) {
 	return gids, nil
 }
 func (p *Process) Terminal() (string, error) {
-	return "", common.NotImplementedError
-	/*
-		k, err := p.getKProc()
-		if err != nil {
-			return "", err
-		}
-
-		ttyNr := uint64(k.Eproc.Tdev)
-		termmap, err := getTerminalMap()
-		if err != nil {
-			return "", err
-		}
-
-		return termmap[ttyNr], nil
-	*/
-}
-func (p *Process) Nice() (int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	return int32(k.Proc.P_nice), nil
+
+	ttyNr := uint64(k.Eproc.Tdev)
+
+	termmap, err := getTerminalMap()
+	if err != nil {
+		return "", err
+	}
+
+	return termmap[ttyNr], nil
+}
+func (p *Process) Nice() (int32, error) {
+	return 0, common.NotImplementedError
 }
 func (p *Process) IOnice() (int32, error) {
 	return 0, common.NotImplementedError
@@ -167,6 +143,8 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
+	return 0, common.NotImplementedError
+
 	/*
 		k, err := p.getKProc()
 		if err != nil {
@@ -175,87 +153,29 @@ func (p *Process) NumThreads() (int32, error) {
 
 			return k.KiNumthreads, nil
 	*/
-
-	r, err := callPs("utime,stime", p.Pid, true)
-	if err != nil {
-		return 0, err
-	}
-	return int32(len(r)), nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, common.NotImplementedError
 }
-
-func convertCpuTimes(s string) (ret float64, err error) {
-	var t int
-	var _tmp string
-	if strings.Contains(s, ":") {
-		_t := strings.Split(s, ":")
-		hour, err := strconv.Atoi(_t[0])
-		if err != nil {
-			return ret, err
-		}
-		t += hour * 60 * 100
-		_tmp = _t[1]
-	} else {
-		_tmp = s
-	}
-
-	_t := strings.Split(_tmp, ".")
-	if err != nil {
-		return ret, err
-	}
-	h, err := strconv.Atoi(_t[0])
-	t += h * 100
-	h, err = strconv.Atoi(_t[1])
-	t += h
-	return float64(t) / ClockTicks, nil
-}
 func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
-	r, err := callPs("utime,stime", p.Pid, false)
-
-	utime, err := convertCpuTimes(r[0][0])
-	if err != nil {
-		return nil, err
-	}
-	stime, err := convertCpuTimes(r[0][1])
-	if err != nil {
-		return nil, err
-	}
-
-	ret := &cpu.CPUTimesStat{
-		CPU:    "cpu",
-		User:   utime,
-		System: stime,
-	}
-	return ret, nil
+	return nil, common.NotImplementedError
+}
+func (p *Process) CPUPercent() (int32, error) {
+	return 0, common.NotImplementedError
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	r, err := callPs("rss,vsize,pagein", p.Pid, false)
-	if err != nil {
-		return nil, err
-	}
-	rss, err := strconv.Atoi(r[0][0])
-	if err != nil {
-		return nil, err
-	}
-	vms, err := strconv.Atoi(r[0][1])
-	if err != nil {
-		return nil, err
-	}
-	pagein, err := strconv.Atoi(r[0][2])
+	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
 	ret := &MemoryInfoStat{
-		RSS:  uint64(rss),
-		VMS:  uint64(vms),
-		Swap: uint64(pagein),
+		RSS: uint64(k.Eproc.Xrssize),
+		VMS: uint64(k.Eproc.Xsize),
 	}
 
 	return ret, nil
@@ -295,8 +215,8 @@ func copyParams(k *KinfoProc, p *Process) error {
 func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
-	mib := []int32{CTLKern, KernProc, KernProcAll, 0}
-	buf, length, err := common.CallSyscall(mib)
+	mib := []int32{CTLKern, KernProc, KernProcAll}
+	buf, length, err := callSyscall(mib)
 	if err != nil {
 		return results, err
 	}
@@ -305,15 +225,9 @@ func processes() ([]Process, error) {
 	k := KinfoProc{}
 	procinfoLen := int(unsafe.Sizeof(k))
 	count := int(length / uint64(procinfoLen))
-	/*
-		fmt.Println(length, procinfoLen, count)
-		b := buf[0*procinfoLen : 0*procinfoLen+procinfoLen]
-		fmt.Println(b)
-		kk, err := parseKinfoProc(b)
-		fmt.Printf("%#v", kk)
-	*/
 
 	// parse buf to procs
+
 	for i := 0; i < count; i++ {
 		b := buf[i*procinfoLen : i*procinfoLen+procinfoLen]
 		k, err := parseKinfoProc(b)
@@ -336,7 +250,7 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
 
-	err := Read(br, LittleEndian, &k)
+	err := binary.Read(br, binary.LittleEndian, &k)
 	if err != nil {
 		return k, err
 	}
@@ -344,22 +258,56 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	return k, nil
 }
 
-func (p *Process) getKProc() (*KinfoProc, error) {
-	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
-	procK := KinfoProc{}
-	length := uint64(unsafe.Sizeof(procK))
-	buf := make([]byte, length)
-	_, _, syserr := syscall.Syscall6(
+func callSyscall(mib []int32) ([]byte, uint64, error) {
+	miblen := uint64(len(mib))
+
+	// get required buffer size
+	length := uint64(0)
+	_, _, err := syscall.Syscall6(
 		syscall.SYS___SYSCTL,
 		uintptr(unsafe.Pointer(&mib[0])),
-		uintptr(len(mib)),
+		uintptr(miblen),
+		0,
+		uintptr(unsafe.Pointer(&length)),
+		0,
+		0)
+	if err != 0 {
+		var b []byte
+		return b, length, err
+	}
+	if length == 0 {
+		var b []byte
+		return b, length, err
+	}
+	// get proc info itself
+	buf := make([]byte, length)
+	_, _, err = syscall.Syscall6(
+		syscall.SYS___SYSCTL,
+		uintptr(unsafe.Pointer(&mib[0])),
+		uintptr(miblen),
 		uintptr(unsafe.Pointer(&buf[0])),
 		uintptr(unsafe.Pointer(&length)),
 		0,
 		0)
-	if syserr != 0 {
-		return nil, syserr
+	if err != 0 {
+		return buf, length, err
 	}
+
+	return buf, length, nil
+}
+
+func (p *Process) getKProc() (*KinfoProc, error) {
+	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
+
+	buf, length, err := callSyscall(mib)
+	if err != nil {
+		return nil, err
+	}
+	procK := KinfoProc{}
+	if length != uint64(unsafe.Sizeof(procK)) {
+		return nil, err
+	}
+
 	k, err := parseKinfoProc(buf)
 	if err != nil {
 		return nil, err
@@ -372,40 +320,4 @@ func NewProcess(pid int32) (*Process, error) {
 	p := &Process{Pid: pid}
 
 	return p, nil
-}
-
-// call ps command.
-// Return value deletes Header line(you must not input wrong arg).
-// And splited by Space. Caller have responsibility to manage.
-// If passed arg pid is 0, get information from all process.
-func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
-	var cmd []string
-	if pid == 0 { // will get from all processes.
-		cmd = []string{"-x", "-o", arg}
-	} else if threadOption {
-		cmd = []string{"-x", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
-	} else {
-		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
-	}
-	out, err := exec.Command("/bin/ps", cmd...).Output()
-	if err != nil {
-		return [][]string{}, err
-	}
-	lines := strings.Split(string(out), "\n")
-
-	var ret [][]string
-	for _, l := range lines[1:] {
-		var lr []string
-		for _, r := range strings.Split(l, " ") {
-			if r == "" {
-				continue
-			}
-			lr = append(lr, strings.TrimSpace(r))
-		}
-		if len(lr) != 0 {
-			ret = append(ret, lr)
-		}
-	}
-
-	return ret, nil
 }

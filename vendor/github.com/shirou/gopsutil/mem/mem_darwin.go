@@ -53,7 +53,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 	}
 
 	ret := &VirtualMemoryStat{
-		Total: parsed[0],
+		Total: parsed[0] * p,
 		Free:  parsed[1] * p,
 	}
 
@@ -92,10 +92,7 @@ func SwapMemory() (*SwapMemoryStat, error) {
 		return nil, err
 	}
 
-	u := float64(0)
-	if total_v != 0 {
-		u = ((total_v - free_v) / total_v) * 100.0
-	}
+	u := ((total_v - free_v) / total_v) * 100.0
 
 	// vm.swapusage shows "M", multiply 1000
 	ret = &SwapMemoryStat{
