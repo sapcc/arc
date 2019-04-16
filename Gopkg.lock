@@ -9,11 +9,12 @@
   revision = "a26f43589d737684363ff856c5a0f9f24b946510"
 
 [[projects]]
-  digest = "1:dadea00beecccdecdefc6c749ecd8ba1a24db5705af7a2f77502acee142b3df6"
+  digest = "1:e92f5581902c345eb4ceffdcd4a854fb8f73cf436d47d837d1ec98ef1fe0a214"
   name = "github.com/StackExchange/wmi"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f3e2bae1e0cb5aef83e319133eabfee30013a4a5"
+  revision = "5d049714c4a64225c3c79a7cf7d02f7fb5b96338"
+  version = "1.0.0"
 
 [[projects]]
   branch = "master"
@@ -377,27 +378,17 @@
   revision = "abf152e5f3e97f2fafac028d2cc06c1feb87ffa5"
 
 [[projects]]
-  digest = "1:2ac9271e469441ccbb11ad54775f6e627ff61028888f51fcb4687a5c4999cda8"
+  digest = "1:a021f314a82500a998895290e41a3a0b6c6ca1437b6b36705bda840e4af2ce1f"
   name = "github.com/shirou/gopsutil"
   packages = [
-    "cpu",
     "host",
     "internal/common",
     "mem",
-    "net",
     "process",
   ]
   pruneopts = "UT"
   revision = "2cbc9195c892b304060269ef280375236d2fcac9"
   version = "v2.19.03"
-
-[[projects]]
-  branch = "master"
-  digest = "1:99c6a6dab47067c9b898e8c8b13d130c6ab4ffbcc4b7cc6236c2cd0b1e344f5b"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   digest = "1:5da8ce674952566deae4dbc23d07c85caafc6cfa815b0b3e03e41979cedb8750"
@@ -437,11 +428,15 @@
   revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
-  digest = "1:c33ee522cb34e7ffa67ad64a72083a1d49d0a5cb9531e71b48f2d1a95ecdfdbd"
+  branch = "master"
+  digest = "1:788df6ab16e3b77c72cc916185de590254d2498027337005e0ed3e2c1f10ff7b"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "UT"
-  revision = "3826714b1e47586d04a2d62ccf2e8d13eca82790"
+  revision = "ebb4019f01c946537c3ea6b99f0eca5283552a8f"
 
 [[projects]]
   branch = "v2"
@@ -494,8 +489,8 @@
     "github.com/ory/ladon/manager/memory",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus",
-    "github.com/shirou/gopsutil/common",
     "github.com/shirou/gopsutil/host",
+    "github.com/shirou/gopsutil/internal/common",
     "github.com/shirou/gopsutil/mem",
     "golang.org/x/net/context",
     "gopkg.in/yaml.v2",
