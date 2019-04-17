@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// DISPPARAMS are the arguments that passed to methods or property.
 type DISPPARAMS struct {
 	rgvarg            uintptr
 	rgdispidNamedArgs uintptr
@@ -23,6 +24,16 @@ type EXCEPINFO struct {
 	pvReserved        uintptr
 	pfnDeferredFillIn uintptr
 	scode             uint32
+}
+
+// WCode return wCode in EXCEPINFO.
+func (e EXCEPINFO) WCode() uint16 {
+	return e.wCode
+}
+
+// SCODE return scode in EXCEPINFO.
+func (e EXCEPINFO) SCODE() uint32 {
+	return e.scode
 }
 
 // String convert EXCEPINFO to string.
