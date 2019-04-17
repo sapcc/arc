@@ -109,14 +109,15 @@
   revision = "c76e0160c5b829e2da3b73db11e9715423f8a0f5"
 
 [[projects]]
-  digest = "1:962b701cd49d687e3ad4db3e5ad1b58b06b8ea6c7deeac447a20be2e60cf1b2f"
+  digest = "1:440028f55cb322d8cb5b9d5ebec298a00b7d74690a658fe6b1c0c0b44341bfae"
   name = "github.com/go-ole/go-ole"
   packages = [
     ".",
     "oleutil",
   ]
   pruneopts = "UT"
-  revision = "487c37e10823c9d5e647262f01f51a12331525f2"
+  revision = "97b6244175ae18ea6eef668034fd6565847501c9"
+  version = "v1.2.4"
 
 [[projects]]
   digest = "1:9a688317f3231e0175b3429033f44411906c0ce119361b7b5019d01375f8cff7"
@@ -490,7 +491,6 @@
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/shirou/gopsutil/host",
-    "github.com/shirou/gopsutil/internal/common",
     "github.com/shirou/gopsutil/mem",
     "golang.org/x/net/context",
     "gopkg.in/yaml.v2",

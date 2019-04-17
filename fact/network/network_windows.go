@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"gitHub.***REMOVED***/monsoon/arc/fact/helper"
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {
@@ -14,11 +14,11 @@ func (h Source) Facts() (map[string]interface{}, error) {
 
 	adapters, _ := getAdapterList()
 	for ; adapters != nil; adapters = adapters.Next {
-		//name := common.BytePtrToString(&adapters.Description[0])
-		gw := common.BytePtrToString(&adapters.GatewayList.IpAddress.String[0])
+		//name := helper.BytePtrToString(&adapters.Description[0])
+		gw := helper.BytePtrToString(&adapters.GatewayList.IpAddress.String[0])
 		if gw != "0.0.0.0" {
 			facts["default_gateway"] = gw
-			facts["ipaddress"] = common.BytePtrToString(&adapters.IpAddressList.IpAddress.String[0])
+			facts["ipaddress"] = helper.BytePtrToString(&adapters.IpAddressList.IpAddress.String[0])
 			facts["default_interface"] = fmt.Sprintf("%d", adapters.Index)
 		}
 

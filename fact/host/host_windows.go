@@ -9,8 +9,8 @@ import (
 	_ "net" //we need this to ensure the winsock subsystem is initialized
 
 	"github.com/StackExchange/wmi"
-	gopsutil "github.com/shirou/gopsutil/internal/common"
 	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	"gitHub.***REMOVED***/monsoon/arc/fact/helper"
 )
 
 type Win32_OperatingSystem struct {
@@ -41,7 +41,7 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	if hostname, err := os.Hostname(); err == nil {
 		facts["hostname"] = strings.ToLower(hostname)
 		if hostent, err := syscall.GetHostByName(hostname); err == nil {
-			fqdn := strings.ToLower(gopsutil.BytePtrToString(hostent.Name))
+			fqdn := strings.ToLower(helper.BytePtrToString(hostent.Name))
 			facts["fqdn"] = fqdn
 			domain_regexp := regexp.MustCompile(`.*?\.(.+)$`)
 			if m := domain_regexp.FindStringSubmatch(fqdn); m != nil {
