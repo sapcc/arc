@@ -18,9 +18,9 @@ func (h Source) Facts() (map[string]interface{}, error) {
 
 	facts := make(map[string]interface{})
 	facts["os"] = info.OS
-	facts["platform"] = info.Platform
-	facts["platform_family"] = info.PlatformFamily
-	facts["platform_version"] = info.PlatformVersion
+	facts["platform"] = trimQuotes(info.Platform)
+	facts["platform_family"] = trimQuotes(info.PlatformFamily)
+	facts["platform_version"] = trimQuotes(info.PlatformVersion)
 	facts["fqdn"] = nil
 	facts["domain"] = nil
 	facts["hostname"] = info.Hostname
@@ -63,4 +63,13 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	}
 
 	return facts, nil
+}
+
+func trimQuotes(s string) string {
+	if len(s) >= 2 {
+		if s[0] == '"' && s[len(s)-1] == '"' {
+			return s[1 : len(s)-1]
+		}
+	}
+	return s
 }
