@@ -87,6 +87,7 @@ groups:
       - la-br-1
       - na-ca-1
       - na-us-1
+      - na-us-2
       - na-us-3
       - arc-website
   - name: pullrequests
@@ -729,6 +730,27 @@ jobs:
         file: arc.git/ci/helm-upgrade.yaml
         params:
           REGION: na-us-1
+          GITHUB_TOKEN: {{github-access-token}}
+      - <<: *post_deployment_end_to_slack
+    on_failure:
+      <<: *post_failure_to_slack
+
+  - name: na-us-2
+    serial: true
+    plan:
+      - aggregate:
+        - { get: mosquitto.version, passed: [promote-americas], trigger: true }
+        - { get: mosquitto.git, passed: [promote-americas] }
+        - { get: api.version, passed: [promote-americas], trigger: true }
+        - { get: arc.git, passed: [promote-americas] }
+        - { get: charts.git, passed: [promote-americas] }
+        - { get: secrets.git }
+      - <<: *post_deployment_start_to_slack
+      - task: deployment
+        input_mapping: { version: api.version }
+        file: arc.git/ci/helm-upgrade.yaml
+        params:
+          REGION: na-us-2
           GITHUB_TOKEN: {{github-access-token}}
       - <<: *post_deployment_end_to_slack
     on_failure:
