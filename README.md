@@ -1,5 +1,5 @@
  Arc automation agent
-===========================
+==========================
 The repository contains the agent running on VMs using the new Monsoon automation service.
 
 Visit our [website](https://gitHub.***REMOVED***/pages/monsoon/arc/) for more information.
