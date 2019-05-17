@@ -98,9 +98,9 @@ func (a *chefAgent) Enable(ctx context.Context, job *arc.Job) (string, error) {
 		if opts.ChefVersion == "" {
 			opts.ChefVersion = "latest"
 		}
-		job.Heartbeat("Downloading chef installer via " + omnitruckUrl + "\n")
 		platform := facts["platform"].(string)
 		platform_version := facts["platform_version"].(string)
+		job.Heartbeat("Downloading chef installer via " + omnitruckUrl + " for platform " + platform + " and platform version " + platform_version + "\n")
 		if installer, err := downloadInstaller(opts.OmnitruckUrl, platform, platform_version, opts.ChefVersion); err == nil {
 			job.Heartbeat("Installing " + installer + "\n")
 			if err := install(installer); err != nil {
