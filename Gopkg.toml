@@ -41,6 +41,6 @@
   go-tests = true
   unused-packages = true
 
-  [[constraint]]
-    name = "github.com/shirou/gopsutil"
-    version = ">=v2.19.03"
+[[constraint]]
+  branch = "master"
+  name = "github.com/shirou/gopsutil"
