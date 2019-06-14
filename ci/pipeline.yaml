@@ -826,7 +826,7 @@ resources:
     check_every: 1h
     webhook_token: aldkhalkdhlafhlh
     source:
-      uri: https://gitHub.***REMOVED***/cc/secrets.git
+      uri: git@gitHub.***REMOVED***:cc/secrets.git
       private_key: {{secrets-ssh-key}}
       branch: master
   - name: tests.git
