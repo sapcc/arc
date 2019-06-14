@@ -112,6 +112,8 @@ jobs:
           run:
             path: /deploy.sh
             args: [ source/website/ ]
+          params:
+            SSH_KEY: {{arc-deploy-key}}
     on_failure:
       <<: *post_failure_to_slack
   - name: arc-unit
