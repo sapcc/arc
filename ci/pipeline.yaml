@@ -804,7 +804,7 @@ resources:
     check_every: 1h
     webhook_token: aldkhalkdhlafhlh
     source:
-      uri: https://gitHub.***REMOVED***/monsoon/arc.git
+      uri: git@gitHub.***REMOVED***:monsoon/arc.git
       branch: master
       private_key: {{arc-deploy-key}}
       paths: [ website/, ci/ ]
