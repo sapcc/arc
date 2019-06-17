@@ -1,5 +1,0 @@
-# encoding: UTF-8
-source 'http://moo-repo.***REMOVED***:8080/rubygemsorg/'
-
-gem "middleman-hashicorp", :git => 'https://github.com/hashicorp/middleman-hashicorp.git', :tag => 'v0.2.0'
-gem 'middleman-deploy', '~> 1.0'
