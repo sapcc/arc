@@ -111,9 +111,9 @@ jobs:
               path: source
           run:
             path: /deploy.sh
-            args: [ source/website/ ]
+            args: [ source/ ]
           params:
-            SSH_KEY: {{arc-deploy-key}}
+            SSH_KEY: {{arc-doc-deploy-key}}
     on_failure:
       <<: *post_failure_to_slack
   - name: arc-unit
@@ -804,10 +804,9 @@ resources:
     check_every: 1h
     webhook_token: aldkhalkdhlafhlh
     source:
-      uri: git@gitHub.***REMOVED***:monsoon/arc.git
+      uri: git@gitHub.***REMOVED***:cc/arc-documentation-ui.git
       branch: master
       private_key: {{arc-deploy-key}}
-      paths: [ website/, ci/ ]
   - name: arc.git
     type: git
     check_every: 1h
