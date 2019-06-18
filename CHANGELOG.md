@@ -1,8 +1,30 @@
 # Changelog
 
-## [Unreleased](https://github.com/monsoon/arc/tree/HEAD)
+## [2019.3/4](https://github.com/monsoon/arc/tree/2019.3/4) (2019-04-17)
 
-[Full Changelog](https://github.com/monsoon/arc/compare/2018.7/8...HEAD)
+[Full Changelog](https://github.com/monsoon/arc/compare/2019.1/2...2019.3/4)
+
+## [2019.1/2](https://github.com/monsoon/arc/tree/2019.1/2) (2019-02-21)
+
+[Full Changelog](https://github.com/monsoon/arc/compare/2018.11/12...2019.1/2)
+
+**Implemented enhancements:**
+
+- **automation\_admin & automation\_viewer [\#148](https://gitHub.***REMOVED***/monsoon/arc/issues/148)**   
+Arc API should implement a policy and repect the roles automation\_admin & automation\_viewer. Currently the user requires keystone admin and or members to setup and run automations.
+
+## [2018.11/12](https://github.com/monsoon/arc/tree/2018.11/12) (2018-11-23)
+
+[Full Changelog](https://github.com/monsoon/arc/compare/2018.9/10...2018.11/12)
+
+**Implemented enhancements:**
+
+- **Nodes auto renew cert [\#134](https://gitHub.***REMOVED***/monsoon/arc/issues/134)**   
+Task that checks every specific period of time the expire date of the node cert and in case that the expiration time is less than 1 month renew it.
+
+## [2018.9/10](https://github.com/monsoon/arc/tree/2018.9/10) (2018-10-22)
+
+[Full Changelog](https://github.com/monsoon/arc/compare/2018.7/8...2018.9/10)
 
 **Implemented enhancements:**
 
