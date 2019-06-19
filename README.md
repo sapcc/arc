@@ -2,13 +2,11 @@
 ========================
 The repository contains the agent running on VMs using the new Monsoon automation service.
 
-Visit our [website](https://gitHub.***REMOVED***/pages/monsoon/arc/) for more information.
-
 Development setup
 -----------------
 To run a local mosquitto broker run the following docker container
 
-    docker run -it --rm -p 1883:1883 --name mosquitto docker.***REMOVED***/monsoon/mosquitto
+    docker run -it --rm -p 1883:1883 --name mosquitto sapcc/mosquitto
 
 to build and start the agent run:
 
