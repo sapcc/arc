@@ -1,10 +1,10 @@
 PKG_NAME    := gitHub.***REMOVED***/monsoon/arc
 GITVERSION  := -X command-line-arguments.GITCOMMIT=`git rev-parse --short HEAD`
 LDFLAGS     := -w -s $(GITVERSION)
-REPOSITORY  := hub.***REMOVED***/monsoon/arc-tests
+REPOSITORY  := sapcc/arc-tests
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
-BUILD_IMAGE := hub.***REMOVED***/monsoon/gobuild:1.7-alpine
+BUILD_IMAGE := sapcc/gobuild:1.10-alpine
 BIN_DIR     := bin
 
 ifneq ($(http_proxy),)
@@ -53,4 +53,3 @@ image:
 .PHONY: clean
 clean:
 	rm -f bin/*
-

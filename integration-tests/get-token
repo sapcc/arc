@@ -3,7 +3,7 @@
 DOMAIN=${DOMAIN:-monsoon2}
 PROJECT=${PROJECT:-Arc_Test}
 USERNAME=${USERNAME:-$USER}
-KEYSTONE_ENDPOINT=${KEYSTONE_ENDPOINT:-https://identity.***REMOVED***:5000/v3}
+KEYSTONE_ENDPOINT=${KEYSTONE_ENDPOINT:-https://identity.app/v3}
 
 HELP () {
   echo usage $0 [-d DOMAIN] [-p PROJECT] [-u USER] [-e KEYSTONE_ENDPOINT]
