@@ -1,4 +1,0 @@
-FROM docker.***REMOVED***/rhel
-
-ENV no_proxy $no_proxy,10.0.2.2
-RUN yum install -y tar && yum clean all
