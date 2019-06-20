@@ -3,7 +3,7 @@ LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git 
 REPOSITORY  := hub.***REMOVED***/monsoon/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
-BUILD_IMAGE := hub.***REMOVED***/monsoon/gobuild:1.7-alpine
+BUILD_IMAGE := sapcc/gobuild:1.10-alpine
 
 ifneq ($(BUILD_VERSION),)
 LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)

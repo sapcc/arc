@@ -11,7 +11,7 @@ import (
 )
 
 func TestCheckPolicyActionMatchSuccess(t *testing.T) {
-	req, _ := http.NewRequest("GET", "https://arc.***REMOVED***/api/v1/jobs", strings.NewReader(""))
+	req, _ := http.NewRequest("GET", "https://arc.app/api/v1/jobs", strings.NewReader(""))
 	req.Header.Set("X-Roles", "automation_viewer")
 
 	warden := &ladon.Ladon{Manager: ladon_mem.NewMemoryManager()}
@@ -32,7 +32,7 @@ func TestCheckPolicyActionMatchSuccess(t *testing.T) {
 }
 
 func TestCheckPolicyResourceMatchSuccess(t *testing.T) {
-	req, _ := http.NewRequest("GET", "https://arc.***REMOVED***/api/v1/jobs/1234566789/logs", strings.NewReader(""))
+	req, _ := http.NewRequest("GET", "https://arc.app/api/v1/jobs/1234566789/logs", strings.NewReader(""))
 	req.Header.Set("X-Roles", "automation_viewer")
 
 	warden := &ladon.Ladon{Manager: ladon_mem.NewMemoryManager()}
@@ -53,7 +53,7 @@ func TestCheckPolicyResourceMatchSuccess(t *testing.T) {
 }
 
 func TestCheckPolicyNoRolesGiven(t *testing.T) {
-	req, _ := http.NewRequest("GET", "https://arc.***REMOVED***/api/v1/jobs/1234566789/logs", strings.NewReader(""))
+	req, _ := http.NewRequest("GET", "https://arc.app/api/v1/jobs/1234566789/logs", strings.NewReader(""))
 	req.Header.Set("X-Roles", "")
 
 	warden := &ladon.Ladon{Manager: ladon_mem.NewMemoryManager()}
@@ -74,7 +74,7 @@ func TestCheckPolicyNoRolesGiven(t *testing.T) {
 }
 
 func TestCheckPolicyFailingRole(t *testing.T) {
-	req, _ := http.NewRequest("GET", "https://arc.***REMOVED***/api/v1/jobs/1234566789/logs", strings.NewReader(""))
+	req, _ := http.NewRequest("GET", "https://arc.app/api/v1/jobs/1234566789/logs", strings.NewReader(""))
 	req.Header.Set("X-Roles", "keystone_admin,compute_viewer")
 
 	warden := &ladon.Ladon{Manager: ladon_mem.NewMemoryManager()}

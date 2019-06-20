@@ -198,7 +198,7 @@ func newAuthorizedRequest(method, urlStr string, body io.Reader, headerOptions m
 func getUrl(path string, params url.Values) string {
 	//var newUrl *url.URL
 	newUrl, _ := url.Parse("")
-	newUrl.Host = "production.***REMOVED***"
+	newUrl.Host = "production.app"
 	newUrl.Path = fmt.Sprint("/api/v1", path)
 	newUrl.RawQuery = params.Encode()
 	return newUrl.String()
