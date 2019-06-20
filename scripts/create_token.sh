@@ -1,10 +1,10 @@
 #!/bin/bash
 
-DOMAIN=${DOMAIN:-monsoon3}
-PROJECT=${PROJECT:-fabus}
+DOMAIN=${DOMAIN:-test-domain}
+PROJECT=${PROJECT:-test-project}
 PROJECT_DOMAIN=${PROJECT_DOMAIN:-$DOMAIN}
 USERNAME=${USERNAME:-$USER}
-KEYSTONE_ENDPOINT=${KEYSTONE_ENDPOINT:-https://identity.***REMOVED***:5000/v3}
+KEYSTONE_ENDPOINT=${KEYSTONE_ENDPOINT:-https://identity.app/v3}
 
 function HELP {
   echo usage $0 [-d DOMAIN] [-p PROJECT] [-u USER] [-e KEYSTONE_ENDPOINT]
@@ -60,7 +60,7 @@ json=$(curl --silent -D /dev/stderr \
     "scope": {
       "project": {
         "name": "'$PROJECT'",
-        "domain": {"name":"'$PROJECT_DOMAIN'"} 
+        "domain": {"name":"'$PROJECT_DOMAIN'"}
       }
     }
   }
