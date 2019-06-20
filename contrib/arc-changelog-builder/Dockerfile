@@ -16,4 +16,4 @@ WORKDIR /
 
 COPY .github_changelog_generator /
 
-CMD github_changelog_generator --token $GITHUB_TOKEN --github-api https://gitHub.***REMOVED***/api/v3
+CMD github_changelog_generator --token $GITHUB_TOKEN --github-api $GITHUB_API
