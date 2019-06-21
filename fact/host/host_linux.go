@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/shirou/gopsutil/host"
 	"github.com/sapcc/arc/api-server/pki"
+	"github.com/shirou/gopsutil/host"
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {
