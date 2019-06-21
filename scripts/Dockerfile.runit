@@ -2,24 +2,20 @@ FROM ubuntu:15.04
 
 # This Dockerfile builds two statically linked verisons of runit
 # One version uses dietlibc (GPL v2) which produces smaller binaries
-# The other versions uses musl-libc (MIT) 
+# The other versions uses musl-libc (MIT)
 #
-# binary  dietlibc  musl 
+# binary  dietlibc  musl
 # ======================
 # runsv   18KB      26KB
 # svlogd  31KB      50KB
 # chpst   26KB      42KB
 
-ENV http_proxy=http://proxy.***REMOVED***:8080 \
-    https_proxy=http://proxy.***REMOVED***:8080 \
-    no_proxy=***REMOVED***,localhost,10.0.2.2
-
 RUN apt-get update
-RUN apt-get install -y wget make patch musl-tools dietlibc-dev # && rm -rf /var/lib/apt/lists/* 
+RUN apt-get install -y wget make patch musl-tools dietlibc-dev # && rm -rf /var/lib/apt/lists/*
 
 RUN wget http://smarden.org/runit/runit-2.1.2.tar.gz
 
-RUN mkdir musl && \ 
+RUN mkdir musl && \
     cd musl && \
     tar zxf /runit-2.1.2.tar.gz --strip-components=2
 
@@ -31,7 +27,7 @@ RUN cd musl/src && \
     echo "musl-gcc -static -s -Os -pipe" > conf-ld && \
     make
 
-#RUN mkdir dietlibc && \ 
+#RUN mkdir dietlibc && \
 #    cd dietlibc && \
 #    tar zxf /runit-2.1.2.tar.gz --strip-components=2
 
@@ -39,6 +35,3 @@ RUN cd musl/src && \
 #    echo "diet -Os gcc -O2 -Wall" > conf-cc && \
 #    echo "diet -Os gcc -s -Os -pipe" > conf-ld && \
 #    make
-
-
-    
