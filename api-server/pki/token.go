@@ -8,8 +8,8 @@ import (
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/pborman/uuid"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	"github.com/sapcc/arc/api-server/auth"
+	ownDb "github.com/sapcc/arc/api-server/db"
 )
 
 type TokenRequest struct {

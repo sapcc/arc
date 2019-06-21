@@ -9,8 +9,8 @@ import (
 	_ "net" //we need this to ensure the winsock subsystem is initialized
 
 	"github.com/StackExchange/wmi"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	"gitHub.***REMOVED***/monsoon/arc/fact/helper"
+	"github.com/sapcc/arc/api-server/pki"
+	"github.com/sapcc/arc/fact/helper"
 )
 
 type Win32_OperatingSystem struct {

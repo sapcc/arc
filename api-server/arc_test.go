@@ -5,9 +5,9 @@ package main
 import (
 	"time"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
+	"github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/arc"
+	"github.com/sapcc/arc/transport/fake"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

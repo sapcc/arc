@@ -14,7 +14,7 @@ import (
 	"strings"
 	"text/template"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/arc"
 
 	log "github.com/Sirupsen/logrus"
 	version "github.com/hashicorp/go-version"

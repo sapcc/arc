@@ -7,7 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	. "github.com/sapcc/arc/api-server/db"
 
 	"database/sql"
 	"testing"

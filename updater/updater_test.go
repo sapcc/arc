@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	arcVersion "gitHub.***REMOVED***/monsoon/arc/version"
+	arcVersion "github.com/sapcc/arc/version"
 )
 
 var validOptions = map[string]string{

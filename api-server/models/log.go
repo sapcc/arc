@@ -9,9 +9,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/api-server/auth"
+	ownDb "github.com/sapcc/arc/api-server/db"
+	"github.com/sapcc/arc/arc"
 )
 
 var (

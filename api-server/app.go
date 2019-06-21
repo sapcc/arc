@@ -19,11 +19,11 @@ import (
 	"github.com/ory/ladon"
 	ladon_mem "github.com/ory/ladon/manager/memory"
 
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
-	"gitHub.***REMOVED***/monsoon/arc/transport"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	ownDb "github.com/sapcc/arc/api-server/db"
+	"github.com/sapcc/arc/api-server/pki"
+	arc_config "github.com/sapcc/arc/config"
+	"github.com/sapcc/arc/transport"
+	"github.com/sapcc/arc/version"
 )
 
 const (

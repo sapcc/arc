@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	arc_config "github.com/sapcc/arc/config"
 )
 
 var (

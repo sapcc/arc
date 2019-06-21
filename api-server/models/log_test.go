@@ -11,8 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"
+	. "github.com/sapcc/arc/api-server/models"
+	arc "github.com/sapcc/arc/arc"
 )
 
 var _ = Describe("Log", func() {

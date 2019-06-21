@@ -17,13 +17,13 @@ import (
 	"github.com/databus23/requestutil"
 	"github.com/gorilla/mux"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/api-server/auth"
+	ownDb "github.com/sapcc/arc/api-server/db"
+	"github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/api-server/pagination"
+	"github.com/sapcc/arc/api-server/pki"
+	"github.com/sapcc/arc/arc"
+	"github.com/sapcc/arc/version"
 )
 
 /*

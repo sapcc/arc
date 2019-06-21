@@ -1,4 +1,4 @@
-PKG_NAME    := gitHub.***REMOVED***/monsoon/arc
+PKG_NAME    := github.com/sapcc/arc
 GITVERSION  := -X command-line-arguments.GITCOMMIT=`git rev-parse --short HEAD`
 LDFLAGS     := -w -s $(GITVERSION)
 REPOSITORY  := sapcc/arc-tests

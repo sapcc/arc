@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
+	"github.com/sapcc/arc/api-server/auth"
 )
 
 func loggingHandler(next http.Handler) http.Handler {

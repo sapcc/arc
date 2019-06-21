@@ -11,7 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/joho/godotenv"
 
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	arc_config "github.com/sapcc/arc/config"
 )
 
 func defaultConfigDir() string {

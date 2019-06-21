@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	arc_config "github.com/sapcc/arc/config"
 )
 
 type Source struct {

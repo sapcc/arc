@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	"github.com/sapcc/arc/api-server/pki"
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {

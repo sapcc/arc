@@ -3,10 +3,10 @@
 package models_test
 
 import (
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"
+	auth "github.com/sapcc/arc/api-server/auth"
+	. "github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/api-server/pagination"
+	arc "github.com/sapcc/arc/arc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

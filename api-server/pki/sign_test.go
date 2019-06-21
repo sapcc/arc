@@ -5,8 +5,8 @@ package pki_test
 import (
 	"time"
 
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	ownDb "github.com/sapcc/arc/api-server/db"
+	. "github.com/sapcc/arc/api-server/pki"
 
 	"crypto/x509"
 	"encoding/pem"

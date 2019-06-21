@@ -10,8 +10,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/api-server/auth"
+	"github.com/sapcc/arc/arc"
 )
 
 type Request struct {

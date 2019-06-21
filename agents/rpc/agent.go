@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/arc"
+	"github.com/sapcc/arc/version"
 )
 
 type rpcAgent struct{}

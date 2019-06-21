@@ -25,13 +25,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/test"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	auth "github.com/sapcc/arc/api-server/auth"
+	. "github.com/sapcc/arc/api-server/db"
+	"github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/api-server/pki"
+	"github.com/sapcc/arc/api-server/test"
+	"github.com/sapcc/arc/arc"
+	"github.com/sapcc/arc/version"
 )
 
 var _ = Describe("Pki handlers", func() {

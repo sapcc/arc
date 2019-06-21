@@ -12,12 +12,12 @@ import (
 	"github.com/codegangsta/cli"
 
 	"github.com/oklog/run"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
-	"gitHub.***REMOVED***/monsoon/arc/server"
-	"gitHub.***REMOVED***/monsoon/arc/transport"
-	"gitHub.***REMOVED***/monsoon/arc/updater"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/api-server/pki"
+	arc_config "github.com/sapcc/arc/config"
+	"github.com/sapcc/arc/server"
+	"github.com/sapcc/arc/transport"
+	"github.com/sapcc/arc/updater"
+	"github.com/sapcc/arc/version"
 )
 
 var (

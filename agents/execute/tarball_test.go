@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/arc"
 )
 
 func createTarball(files map[string]string) []byte {

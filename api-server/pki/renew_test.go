@@ -14,14 +14,14 @@ import (
 	"os"
 	"time"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/test"
+	"github.com/sapcc/arc/api-server/auth"
+	. "github.com/sapcc/arc/api-server/pki"
+	"github.com/sapcc/arc/api-server/test"
 
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	arc_config "github.com/sapcc/arc/config"
 )
 
 var _ = Describe("CheckAndRenewCert", func() {

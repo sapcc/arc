@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	ownDb "github.com/sapcc/arc/api-server/db"
 )
 
 type LogPart struct {

@@ -14,7 +14,7 @@ import (
 	"github.com/cloudflare/cfssl/info"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/universal"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	ownDb "github.com/sapcc/arc/api-server/db"
 )
 
 var (

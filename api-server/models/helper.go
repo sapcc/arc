@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
+	"github.com/sapcc/arc/api-server/auth"
 )
 
 type Db interface {

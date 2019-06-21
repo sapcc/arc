@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/updater"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/updater"
+	"github.com/sapcc/arc/version"
 )
 
 func Update(c *cli.Context, options map[string]interface{}) (int, error) {

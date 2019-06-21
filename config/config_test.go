@@ -1,7 +1,7 @@
 package config_test
 
 import (
-	. "gitHub.***REMOVED***/monsoon/arc/config"
+	. "github.com/sapcc/arc/config"
 
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"

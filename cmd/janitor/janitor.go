@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"gitHub.***REMOVED***/monsoon/arc/janitor"
+	"github.com/sapcc/arc/janitor"
 
 	"github.com/codegangsta/cli"
 )

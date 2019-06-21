@@ -12,9 +12,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
-	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
+	"github.com/sapcc/arc/arc"
+	arc_config "github.com/sapcc/arc/config"
+	"github.com/sapcc/arc/transport/helpers"
 )
 
 type MQTTClient struct {

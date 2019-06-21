@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	"github.com/sapcc/arc/api-server/models"
 )
 
 var arcLatestVersion = flag.String("latest-version", "2015.01.01", "integration-test")

@@ -10,10 +10,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"
+	auth "github.com/sapcc/arc/api-server/auth"
+	. "github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/api-server/pagination"
+	arc "github.com/sapcc/arc/arc"
 )
 
 var _ = Describe("Jobs", func() {

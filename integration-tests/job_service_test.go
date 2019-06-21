@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/arc"
 )
 
 var agentIdentityFlag = flag.String("agent-identity", "", "integration-test")

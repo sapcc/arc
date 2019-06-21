@@ -1,8 +1,8 @@
 package arc
 
 import (
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	arc_config "github.com/sapcc/arc/config"
+	"github.com/sapcc/arc/version"
 )
 
 type Source struct {

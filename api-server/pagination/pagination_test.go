@@ -3,7 +3,7 @@
 package pagination_test
 
 import (
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
+	. "github.com/sapcc/arc/api-server/pagination"
 
 	"fmt"
 	"net/http"

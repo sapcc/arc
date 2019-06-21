@@ -1,9 +1,9 @@
 export GO15VENDOREXPERIMENT=1
-REPO_PATH   := gitHub.***REMOVED***/monsoon/arc
-LDFLAGS     := -s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
+REPO_PATH   := github.com/sapcc/arc
+LDFLAGS     := -s -w -X github.com/sapcc/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 
 ifneq ($(BUILD_VERSION),)
-LDFLAGS:=$(LDFLAGS) -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
+LDFLAGS:=$(LDFLAGS) -X github.com/sapcc/arc/version.Version=$(BUILD_VERSION)
 endif
 
 .PHONY: help 

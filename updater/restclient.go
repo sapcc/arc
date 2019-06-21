@@ -11,7 +11,7 @@ import (
 	"path"
 	"regexp"
 
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/version"
 )
 
 var ErrorNoUpdateAvailable error = fmt.Errorf("no update available")

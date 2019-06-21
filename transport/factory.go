@@ -3,11 +3,11 @@ package transport
 import (
 	"errors"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
-	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
-	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
-	"gitHub.***REMOVED***/monsoon/arc/transport/mqtt"
+	"github.com/sapcc/arc/arc"
+	arc_config "github.com/sapcc/arc/config"
+	"github.com/sapcc/arc/transport/fake"
+	"github.com/sapcc/arc/transport/helpers"
+	"github.com/sapcc/arc/transport/mqtt"
 )
 
 type Transport interface {

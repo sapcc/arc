@@ -3,7 +3,7 @@
 package models_test
 
 import (
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	. "github.com/sapcc/arc/api-server/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

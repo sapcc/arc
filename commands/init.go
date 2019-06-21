@@ -23,8 +23,8 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pborman/uuid"
 
-	"gitHub.***REMOVED***/monsoon/arc/service"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/service"
+	"github.com/sapcc/arc/version"
 )
 
 var configTemplate = template.Must(template.New("config").Parse(`{{if .Transport }}transport: {{ .Transport }}{{.Eol}}{{end}}{{if .Endpoint }}endpoint: {{ .Endpoint }}{{.Eol}}{{end}}tls-client-cert: {{ .Cert }}{{.Eol}}tls-client-key: {{ .Key }}{{.Eol}}{{if .Ca }}tls-ca-cert: {{ .Ca }}{{.Eol}}{{end}}{{if .UpdateUri}}update-uri: {{ .UpdateUri }}{{.Eol}}{{end}}{{if .ApiUri}}api-uri: {{ .ApiUri }}{{.Eol}}{{end}}{{if .UpdateInterval}}update-interval: {{ .UpdateInterval }}{{.Eol}}{{end}}{{if .CertUpdateInterval}}cert-update-interval: {{ .CertUpdateInterval }}{{.Eol}}{{end}}{{if .CertUpdateThreshold}}cert-update-threshold: {{ .CertUpdateThreshold }}{{.Eol}}{{end}}`))

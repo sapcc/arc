@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/updater"
-	arcVersion "gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/updater"
+	arcVersion "github.com/sapcc/arc/version"
 )
 
 var CheckResult = ""

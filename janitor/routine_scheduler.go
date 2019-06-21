@@ -5,8 +5,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	"github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/api-server/pki"
 )
 
 // fail jobs which no heartbeat was send back after created_at + 60 sec

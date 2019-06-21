@@ -12,7 +12,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/c4milo/unzipit"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/arc"
 	"golang.org/x/net/context"
 )
 

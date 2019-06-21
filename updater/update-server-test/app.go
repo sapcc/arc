@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	"github.com/sapcc/arc/version"
 )
 
 //lint:file-ignore U1000 Ignore all unused code, it is just for testing

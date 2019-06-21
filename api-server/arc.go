@@ -3,12 +3,12 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/models"
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
-	"gitHub.***REMOVED***/monsoon/arc/transport"
-	"gitHub.***REMOVED***/monsoon/arc/transport/fake"
-	"gitHub.***REMOVED***/monsoon/arc/transport/helpers"
+	"github.com/sapcc/arc/api-server/models"
+	"github.com/sapcc/arc/arc"
+	arc_config "github.com/sapcc/arc/config"
+	"github.com/sapcc/arc/transport"
+	"github.com/sapcc/arc/transport/fake"
+	"github.com/sapcc/arc/transport/helpers"
 )
 
 /*

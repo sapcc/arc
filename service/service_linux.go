@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"text/template"
 
-	"gitHub.***REMOVED***/monsoon/arc/fact/host"
+	"github.com/sapcc/arc/fact/host"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/kardianos/osext"

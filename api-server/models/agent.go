@@ -10,11 +10,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/filter"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pagination"
-	arc "gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/api-server/auth"
+	ownDb "github.com/sapcc/arc/api-server/db"
+	"github.com/sapcc/arc/api-server/filter"
+	"github.com/sapcc/arc/api-server/pagination"
+	arc "github.com/sapcc/arc/arc"
 )
 
 type RegistrationExistsError struct {

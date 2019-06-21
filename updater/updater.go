@@ -9,7 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	version "github.com/hashicorp/go-version"
 	update "github.com/inconshreveable/go-update"
-	arcVersion "gitHub.***REMOVED***/monsoon/arc/version"
+	arcVersion "github.com/sapcc/arc/version"
 )
 
 type Updater struct {

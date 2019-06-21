@@ -5,7 +5,7 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"gitHub.***REMOVED***/monsoon/arc/service"
+	"github.com/sapcc/arc/service"
 )
 
 func Restart(c *cli.Context) (int, error) {

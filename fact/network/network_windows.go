@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"gitHub.***REMOVED***/monsoon/arc/fact/helper"
+	"github.com/sapcc/arc/fact/helper"
 )
 
 func (h Source) Facts() (map[string]interface{}, error) {

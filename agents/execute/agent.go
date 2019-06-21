@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/arc"
 	"golang.org/x/net/context"
 )
 

@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/models"
+	. "github.com/sapcc/arc/api-server/models"
 )
 
 var _ = Describe("LogParts", func() {

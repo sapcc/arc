@@ -2,7 +2,7 @@
 
 package execute
 
-import "gitHub.***REMOVED***/monsoon/arc/arc"
+import "github.com/sapcc/arc/arc"
 
 var scriptSuffix = ".ps1"
 

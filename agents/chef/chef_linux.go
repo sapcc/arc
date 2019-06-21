@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"gitHub.***REMOVED***/monsoon/arc/agents/chef/sap-ca"
+	"github.com/sapcc/arc/agents/chef/sap-ca"
 )
 
 var (

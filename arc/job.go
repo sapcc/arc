@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gitHub.***REMOVED***/monsoon/arc/fact"
+	"github.com/sapcc/arc/fact"
 
 	"golang.org/x/net/context"
 )

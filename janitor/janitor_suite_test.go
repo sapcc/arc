@@ -11,7 +11,7 @@ import (
 
 	"testing"
 
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	ownDb "github.com/sapcc/arc/api-server/db"
 )
 
 func TestJanitor(t *testing.T) {

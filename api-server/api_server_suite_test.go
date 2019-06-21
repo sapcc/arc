@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/db"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	. "github.com/sapcc/arc/api-server/db"
+	"github.com/sapcc/arc/api-server/pki"
 
 	"testing"
 )

@@ -7,11 +7,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
-	_ "gitHub.***REMOVED***/monsoon/arc/agents/chef"
-	_ "gitHub.***REMOVED***/monsoon/arc/agents/execute"
-	_ "gitHub.***REMOVED***/monsoon/arc/agents/rpc"
-	"gitHub.***REMOVED***/monsoon/arc/utils/cliDescriptionGenerator/templates"
-	"gitHub.***REMOVED***/monsoon/arc/version"
+	_ "github.com/sapcc/arc/agents/chef"
+	_ "github.com/sapcc/arc/agents/execute"
+	_ "github.com/sapcc/arc/agents/rpc"
+	"github.com/sapcc/arc/utils/cliDescriptionGenerator/templates"
+	"github.com/sapcc/arc/version"
 )
 
 var exitCode = 0

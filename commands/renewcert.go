@@ -8,8 +8,8 @@ import (
 	"net/url"
 
 	"github.com/codegangsta/cli"
-	"gitHub.***REMOVED***/monsoon/arc/api-server/pki"
-	arc_config "gitHub.***REMOVED***/monsoon/arc/config"
+	"github.com/sapcc/arc/api-server/pki"
+	arc_config "github.com/sapcc/arc/config"
 )
 
 // RenewCert download a new cert

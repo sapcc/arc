@@ -1,16 +1,16 @@
 export GO15VENDOREXPERIMENT=1
-PKG_NAME:=gitHub.***REMOVED***/monsoon/arc
+PKG_NAME:=github.com/sapcc/arc
 BUILD_DIR:=bin
 ARC_BINARY:=$(BUILD_DIR)/arc
 US_BINARY:=$(BUILD_DIR)/update-site
 API_BINARY:=$(BUILD_DIR)/api-server
-LDFLAGS:=-s -w -X gitHub.***REMOVED***/monsoon/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
+LDFLAGS:=-s -w -X github.com/sapcc/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
 TARGETS:=linux/amd64 windows/amd64
 BUILD_IMAGE:=hub.***REMOVED***/monsoon/gobuild:1.10
 
 ARC_BIN_TPL:=arc_{{.OS}}_{{.Arch}}
 ifneq ($(BUILD_VERSION),)
-LDFLAGS += -X gitHub.***REMOVED***/monsoon/arc/version.Version=$(BUILD_VERSION)
+LDFLAGS += -X github.com/sapcc/arc/version.Version=$(BUILD_VERSION)
 ARC_BIN_TPL:=arc_$(BUILD_VERSION)_{{.OS}}_{{.Arch}}
 endif
 

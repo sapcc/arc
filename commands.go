@@ -11,16 +11,16 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
-	"gitHub.***REMOVED***/monsoon/arc/arc"
-	"gitHub.***REMOVED***/monsoon/arc/commands"
-	"gitHub.***REMOVED***/monsoon/arc/fact"
-	"gitHub.***REMOVED***/monsoon/arc/fact/agents"
-	arc_facts "gitHub.***REMOVED***/monsoon/arc/fact/arc"
-	"gitHub.***REMOVED***/monsoon/arc/fact/host"
-	"gitHub.***REMOVED***/monsoon/arc/fact/memory"
-	"gitHub.***REMOVED***/monsoon/arc/fact/metadata"
-	"gitHub.***REMOVED***/monsoon/arc/fact/network"
-	"gitHub.***REMOVED***/monsoon/arc/transport"
+	"github.com/sapcc/arc/arc"
+	"github.com/sapcc/arc/commands"
+	"github.com/sapcc/arc/fact"
+	"github.com/sapcc/arc/fact/agents"
+	arc_facts "github.com/sapcc/arc/fact/arc"
+	"github.com/sapcc/arc/fact/host"
+	"github.com/sapcc/arc/fact/memory"
+	"github.com/sapcc/arc/fact/metadata"
+	"github.com/sapcc/arc/fact/network"
+	"github.com/sapcc/arc/transport"
 )
 
 var cliCommands = []cli.Command{

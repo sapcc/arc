@@ -5,14 +5,14 @@ package pki_test
 import (
 	"time"
 
-	auth "gitHub.***REMOVED***/monsoon/arc/api-server/auth"
-	. "gitHub.***REMOVED***/monsoon/arc/api-server/pki"
+	auth "github.com/sapcc/arc/api-server/auth"
+	. "github.com/sapcc/arc/api-server/pki"
 
 	"github.com/cloudflare/cfssl/signer"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
-	ownDb "gitHub.***REMOVED***/monsoon/arc/api-server/db"
+	ownDb "github.com/sapcc/arc/api-server/db"
 
 	"encoding/json"
 	"fmt"

@@ -1,7 +1,7 @@
 package agents
 
 import (
-	"gitHub.***REMOVED***/monsoon/arc/arc"
+	"github.com/sapcc/arc/arc"
 )
 
 type Source struct{}
