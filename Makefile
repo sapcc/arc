@@ -133,5 +133,5 @@ ifndef CHANGELOG_GITHUB_TOKEN
 else
 	docker build $(BUILD_ARGS) -t sapcc/arc-changelog-builder:$(VERSION) --cache-from=sapcc/arc-changelog-builder:latest ./contrib/arc-changelog-builder
 	docker tag sapcc/arc-changelog-builder:$(VERSION)  sapcc/arc-changelog-builder:latest
-	docker run --rm -v $(PWD):/host -e GITHUB_TOKEN=$(CHANGELOG_GITHUB_TOKEN) sapcc/arc-changelog-builder:latest
+	docker run --rm -v $(PWD):/host -e GITHUB_TOKEN=$(CHANGELOG_GITHUB_TOKEN) -e GITHUB_API=$(GITHUB_API) sapcc/arc-changelog-builder:latest
 endif
