@@ -1,6 +1,6 @@
 REPO_PATH   := github.com/sapcc/arc
 LDFLAGS     := -s -w -X github.com/sapcc/arc/version.GITCOMMIT=`git rev-parse --short HEAD`
-REPOSITORY  := hub.***REMOVED***/monsoon/arc-api
+REPOSITORY  := <docker-repo-path>/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
 BUILD_IMAGE := sapcc/gobuild:1.10-alpine
