@@ -93,7 +93,7 @@ var _ = Describe("Agents", func() {
 		JustBeforeEach(func() {
 			agents.CreateAndSaveAgentExamples(db, 3)
 			authorization.IdentityStatus = "Confirmed"
-			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			authorization.User = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = "test-project"
 			pagination.Offset = 0
 			pagination.Limit = 25
@@ -424,7 +424,7 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// reset authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			authorization.User = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = "test-project"
 		})
 
@@ -508,7 +508,7 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// reset authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			authorization.User = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = agent.Project
 		})
 
@@ -739,7 +739,7 @@ var _ = Describe("Agent", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// reset authorization
 			authorization.IdentityStatus = "Confirmed"
-			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			authorization.User = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = agent.Project
 		})
 

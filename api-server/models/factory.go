@@ -54,7 +54,7 @@ func (job *Job) RpcVersionExample() {
 	job.UpdatedAt = time.Now().Add(-1 * time.Minute)
 	job.Project = "test-project"
 	job.User = JSONB{}
-	userJSONB, err := JobUserToJSONB(auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"})
+	userJSONB, err := JobUserToJSONB(auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"})
 	if err != nil {
 		log.Error(err)
 	}
@@ -74,7 +74,7 @@ func (job *Job) CustomExecuteScriptExample(status arc.JobState, createdAt time.T
 	job.CreatedAt = createdAt
 	job.UpdatedAt = createdAt
 	job.Project = "test-project"
-	userJSONB, err := JobUserToJSONB(auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"})
+	userJSONB, err := JobUserToJSONB(auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"})
 	if err != nil {
 		log.Error(err)
 	}

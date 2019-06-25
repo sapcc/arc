@@ -30,7 +30,7 @@ var _ = Describe("Token Create", func() {
 	JustBeforeEach(func() {
 		// reset authorization
 		authorization.IdentityStatus = "Confirmed"
-		authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+		authorization.User = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 		authorization.ProjectId = "test-project"
 		authorization.ProjectDomainId = "test-project-domain"
 	})

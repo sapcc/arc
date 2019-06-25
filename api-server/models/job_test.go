@@ -53,7 +53,7 @@ var _ = Describe("Jobs", func() {
 			jobs := Jobs{}
 			jobs.CreateAndSaveRpcVersionExamples(db, 3)
 			authorization.IdentityStatus = "Confirmed"
-			authorization.User = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			authorization.User = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization.ProjectId = "test-project"
 			pagination.Offset = 0
 			pagination.Limit = 25
@@ -164,7 +164,7 @@ var _ = Describe("Job", func() {
 	Describe("CreateJob", func() {
 
 		var (
-			user  = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			user  = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			agent = Agent{}
 		)
 
@@ -231,7 +231,7 @@ var _ = Describe("Job", func() {
 	Describe("CreateJobAuthorized", func() {
 
 		var (
-			user          = auth.User{Id: "userID", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
+			user          = auth.User{Id: "123456789", Name: "Arturo", DomainId: "monsoon2_id", DomainName: "monsoon_name"}
 			authorization = auth.Authorization{}
 			agent         = Agent{}
 		)
