@@ -22,6 +22,7 @@ import (
 var runitRunScript = template.Must(template.New("run").Parse(`#!/bin/sh
 exec 2>&1
 [ -f /etc/profile.d/proxy_settings.sh ] && . /etc/profile.d/proxy_settings.sh
+export TMPDIR={{.tmpdir}}
 exec {{ .executable }} -c {{.arcDir}}/arc.cfg server
 `))
 
@@ -88,7 +89,7 @@ func (s service) Restart() error {
 	return s.svCmd("term", "service").Run()
 }
 
-func (s service) Install() error {
+func (s service) Install(tmpdir string) error {
 	executable, err := osext.Executable()
 	if err != nil {
 		return errors.New("can't locate running executable")
@@ -97,8 +98,12 @@ func (s service) Install() error {
 		return err
 	}
 
+	if tmpdir == "" {
+		tmpdir = os.TempDir()
+	}
+
 	serviceDir := path.Join(s.dir, "service")
-	if err = installRunitSupervisor(executable, s.dir, serviceDir); err != nil {
+	if err = installRunitSupervisor(executable, s.dir, serviceDir, tmpdir); err != nil {
 		return err
 	}
 	init, err := detectInitSystem()
@@ -138,7 +143,7 @@ func detectInitSystem() (string, error) {
 	return init, nil
 }
 
-func installRunitSupervisor(executable, arcDir, serviceDir string) error {
+func installRunitSupervisor(executable, arcDir, serviceDir, tmpDir string) error {
 	log.Info("Installing supervisor")
 
 	if err := os.MkdirAll(serviceDir, 0755); /* #nosec */ err != nil {
@@ -162,6 +167,7 @@ func installRunitSupervisor(executable, arcDir, serviceDir string) error {
 		"arcDir":     arcDir,
 		"serviceDir": serviceDir,
 		"executable": executable,
+		"tmpdir":     tmpDir,
 	}
 	/* #nosec */
 	runFile, err := os.OpenFile(path.Join(serviceDir, "run"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)

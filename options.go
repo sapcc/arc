@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/codegangsta/cli"
 )
 
@@ -125,6 +127,12 @@ var optInstallDir = cli.StringFlag{
 	Name:  "install-dir,i",
 	Usage: "Installation directory",
 	Value: defaultConfigDir(),
+}
+
+var optTempDir = cli.StringFlag{
+	Name:  "tmp-dir",
+	Usage: "Temporary directory for arc server",
+	Value: os.TempDir(),
 }
 
 var optCommonName = cli.StringFlag{

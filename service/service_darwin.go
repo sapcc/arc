@@ -1,6 +1,6 @@
 package service
 
-func (s service) Install() error {
+func (s service) Install(string) error {
 	panic("Not implemented on this platform")
 }
 

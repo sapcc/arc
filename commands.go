@@ -114,6 +114,7 @@ var cliCommands = []cli.Command{
 			optCertUpdateThreshold,
 			optRegistrationUrl,
 			optInstallDir,
+			optTempDir,
 			optCommonName,
 		},
 	},

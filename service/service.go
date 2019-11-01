@@ -9,7 +9,7 @@ const (
 )
 
 type Service interface {
-	Install() error
+	Install(tmpdir string) error
 	Status() (State, string, error)
 	Restart() error
 	Start() error

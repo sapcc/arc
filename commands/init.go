@@ -168,7 +168,7 @@ func Init(c *cli.Context, appName string) (int, error) {
 
 	}
 
-	if err := service.New(dir).Install(); err != nil {
+	if err := service.New(dir).Install(c.String("tmp-dir")); err != nil {
 		return 1, fmt.Errorf("failed to install service: %s", err)
 	}
 	return 0, nil

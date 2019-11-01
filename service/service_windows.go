@@ -51,7 +51,7 @@ func (s service) nssmCmd(cmd string, args ...string) *exec.Cmd {
 	return exec.Command(filepath.Join(s.dir, "nssm.exe"), args...) // #nosec
 }
 
-func (s service) Install() error {
+func (s service) Install(_ string) error {
 	executable, err := osext.Executable()
 	if err != nil {
 		return errors.New("Can't locate running executable")
