@@ -1,4 +1,5 @@
 FROM buildpack-deps:wheezy-scm
+LABEL source_repository="https://github.com/sapcc/arc"
 
 # gcc for cgo
 RUN apt-get update && apt-get install -y \

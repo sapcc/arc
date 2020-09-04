@@ -1,4 +1,5 @@
 FROM alpine:3.4
+LABEL source_repository="https://github.com/sapcc/arc"
 
 RUN apk add --no-cache curl
 RUN curl -fL http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt | tr -d '\r' > /usr/local/share/ca-certificates/SAP_Global_Root_CA.crt \
