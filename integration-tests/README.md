@@ -1,5 +1,5 @@
 Arc integration tests
-============================
+===========================
 
 - Environment variable ARC_API_SERVER overrides -api-server parameter
 - Environment variable ARC_UPDATE_SERVER -update-server parameter
