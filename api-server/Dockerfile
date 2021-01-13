@@ -1,4 +1,4 @@
-FROM alpine:3.4
+FROM keppel.eu-de-1.cloud.sap/ccloud-dockerhub-mirror/library/alpine:3.4
 LABEL source_repository="https://github.com/sapcc/arc"
 
 RUN apk add --no-cache curl
