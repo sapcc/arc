@@ -24,7 +24,7 @@ import (
 type chefAgent struct{}
 
 var (
-	defaultOmnitruckUrl = "https://www.chef.io/chef/metadata"
+	defaultOmnitruckUrl = "https://omnitruck.chef.io"
 	clientRbTemplate    = template.Must(template.New("client.rb").Parse(`chef_repo_path '{{ .chefRepoPath }}'{{.eol -}}
 recipe_url '{{.recipeURL}}'{{ .eol -}}
 {{ if .nodeName -}}
