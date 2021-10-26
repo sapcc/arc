@@ -13,25 +13,13 @@ import (
 )
 
 var (
-	metricMessageCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "arc_api_mqtt_messages_total",
-			Help: "Total number of received mqtt messages.",
-		},
-		[]string{"type"},
-	)
-	metricMessageDurationsHistogram = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "arc_api_mqtt_message_duration_seconds",
-			Help:    "Latency of processing MQTT message.",
-			Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
-		},
-		[]string{"message"},
-	)
+	metricMessageDurationsHistogram = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "arc_api_mqtt_message_duration_seconds",
+		Help: "Latency of processing MQTT message.",
+	},[]string{"message"})
 )
 
-func init() {
-	prometheus.MustRegister(metricMessageCounter)
+func init() {	
 	prometheus.MustRegister(metricMessageDurationsHistogram)
 }
 
@@ -79,8 +67,6 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			err := models.ProcessRegistration(db, registry, tp.IdentityInformation().Identity, concurrencySafe)
 			// save processing time
 			timer.ObserveDuration()
-			// count registration
-			metricMessageCounter.WithLabelValues("registration").Inc()
 			// check errors
 			if _, ok := err.(models.RegistrationExistsError); ok {
 				log.Debug(err.Error(), " Registration id ", registry.RegistrationID)
@@ -105,8 +91,6 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			err := models.ProcessLogReply(db, reply, tp.IdentityInformation().Identity, concurrencySafe)
 			// save processing time
 			timer.ObserveDuration()
-			// count reply
-			metricMessageCounter.WithLabelValues("reply").Inc()			
 			// check errors
 			if _, ok := err.(models.ReplyExistsError); ok {
 				log.Debug(err.Error(), " Reply id ", reply.RequestID)
