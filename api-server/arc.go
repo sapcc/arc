@@ -13,10 +13,16 @@ import (
 )
 
 var (
-	metricMessageDurationsHistogram = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "arc_api_mqtt_message_duration_seconds",
-		Help: "Latency of processing MQTT message.",
-	},[]string{"message"})
+	//8 buckets, starting from 0.01 and multiplying by 3 between each
+	// 0.01, 0.03, 0.09, 0.27, 0.81, 2.43, 7.29, 21.87
+	metricMessageDurationsHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "arc_api_mqtt_message_duration_seconds",
+			Help:    "Latency of processing MQTT message.",
+			Buckets: prometheus.ExponentialBuckets(0.01, 3, 8),
+		},
+		[]string{"message"},
+	)
 )
 
 func init() {	
