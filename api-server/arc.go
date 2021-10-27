@@ -3,7 +3,6 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/sapcc/arc/api-server/models"
 	"github.com/sapcc/arc/arc"
 	arc_config "github.com/sapcc/arc/config"
@@ -25,7 +24,7 @@ var (
 	)
 )
 
-func init() {	
+func init() {
 	prometheus.MustRegister(metricMessageDurationsHistogram)
 }
 
@@ -79,7 +78,7 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			} else {
 				if err != nil {
 					log.Errorf("error updating registration %q. Got %q", registry.RegistrationID, err.Error())
-				}				
+				}
 			}
 
 			// send done signal (for testing)
@@ -100,12 +99,12 @@ func arcSubscribeReplies(tp transport.Transport) error {
 			// check errors
 			if _, ok := err.(models.ReplyExistsError); ok {
 				log.Debug(err.Error(), " Reply id ", reply.RequestID)
-			} else {				
+			} else {
 				if err != nil {
 					log.Error(err)
 					continue
 				}
-			}			
+			}
 
 			// send done signal (for testing)
 			ftp, ok := tp.(*fake.FakeClient)
