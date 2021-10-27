@@ -1,4 +1,4 @@
-//lint:ignore SA1019
+//lint:ignore SA1019 need to be synchronize with the grafana dashboards.
 
 package main
 
