@@ -151,6 +151,11 @@ func main() {
 			EnvVar: envPrefix + "PKI_CA_KEY",
 		},
 		cli.StringFlag{
+			Name:   "pki-ca-crl",
+			Usage:  "PKI CA certificate revocation list",
+			EnvVar: envPrefix + "PKI_CA_CRL",
+		},
+		cli.StringFlag{
 			Name:   "agent-update-url",
 			Usage:  "The default update URL for agents. Only used for agent install script.",
 			EnvVar: envPrefix + "AGENT_UPDATE_URL",
@@ -281,7 +286,7 @@ func runServer(c *cli.Context) {
 	router := newRouter(env)
 
 	// run server
-	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("pki-ca-cert"), c.GlobalString("bind-address"), c.GlobalString("bind-address-tls"), router)
+	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("pki-ca-cert"), c.GlobalString("pki-ca-crl"), c.GlobalString("bind-address"), c.GlobalString("bind-address-tls"), router)
 	go server.run()
 
 	// catch gracefull shutdown and shutdown to close the connetions

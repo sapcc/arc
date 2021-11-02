@@ -4,12 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"path/filepath"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
@@ -28,7 +31,7 @@ type Server struct {
 }
 
 // NewSever creates a server struct
-func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
+func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, tlsServerCRL, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
 	var tlsConfig *tls.Config
 
 	if tlsServerCert != "" && tlsServerKey != "" {
@@ -44,10 +47,51 @@ func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, httpBindAdress, httpsBin
 		if !certpool.AppendCertsFromPEM(pemCerts) {
 			log.Fatalf("Given CA file does not contain a PEM encoded x509 certificate")
 		}
+		var verifyFunc func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+		if tlsServerCRL != "" {
+			crlData, err := ioutil.ReadFile(filepath.Clean(tlsServerCRL))
+			if err != nil {
+				log.Fatalf("Failed to read given crl file %s: %s", tlsServerCRL, err)
+			}
+			crlList, err := x509.ParseCRL(crlData)
+			if err != nil {
+				log.Fatalf("Failed to parse crl list: %s", err)
+			}
+			caCerts, err := loadCertsFromPEM(pemCerts)
+			if err != nil {
+				log.Fatalf("Failed to load CA certs", err)
+			}
+			crlVerified := false
+			for _, c := range caCerts {
+				if c.CheckCRLSignature(crlList) == nil {
+					crlVerified = true
+				}
+			}
+			if !crlVerified || crlList.HasExpired(time.Now()) {
+				log.Fatal("Crl list couldn't be verified by given CA")
+			}
+			revokedCerts := make(map[string]struct{}, len(crlList.TBSCertList.RevokedCertificates))
+			for _, r := range crlList.TBSCertList.RevokedCertificates {
+				revokedCerts[r.SerialNumber.String()] = struct{}{}
+			}
+			verifyFunc = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+				for _, c := range verifiedChains {
+					for _, b := range c {
+						if _, revoked := revokedCerts[b.SerialNumber.String()]; revoked {
+							return fmt.Errorf("Certificate %s is revoked", b.Subject.String())
+						}
+					}
+				}
+				return nil
+			}
+
+		}
+
 		tlsConfig = &tls.Config{
-			Certificates: []tls.Certificate{cer},
-			ClientAuth:   tls.VerifyClientCertIfGiven,
-			ClientCAs:    certpool,
+			Certificates:          []tls.Certificate{cer},
+			ClientAuth:            tls.VerifyClientCertIfGiven,
+			ClientCAs:             certpool,
+			VerifyPeerCertificate: verifyFunc,
 		}
 	} else {
 		log.Infof("No TLS Cert or key given, no TLS configuration will be created.")
@@ -69,6 +113,32 @@ func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, httpBindAdress, httpsBin
 	}
 
 	return svr
+}
+
+func loadCertsFromPEM(pemCerts []byte) ([]*x509.Certificate, error) {
+	certs := []*x509.Certificate{}
+	for len(pemCerts) > 0 {
+		var block *pem.Block
+		block, pemCerts = pem.Decode(pemCerts)
+		if block == nil {
+			break
+		}
+		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+			continue
+		}
+
+		certBytes := block.Bytes
+		cert, err := x509.ParseCertificate(certBytes)
+		if err != nil {
+			continue
+		}
+		certs = append(certs, cert)
+	}
+	if len(certs) < 1 {
+		return nil, errors.New("No certs found")
+	}
+	return certs, nil
+
 }
 
 // don't return error. Runing in a go rutine
