@@ -1,3 +1,14 @@
+//lint:file-ignore SA1019 need to be synchronize with the grafana dashboards.
+// TODO
+// warning: prometheus.InstrumentHandler is deprecated: InstrumentHandler has several issues. Use the tooling provided in package promhttp instead.
+// The issues are the following:
+// (1) It uses Summaries rather than Histograms. Summaries are not useful if aggregation across multiple instances is required.
+// (2) It uses microseconds as unit, which is deprecated and should be replaced by seconds.
+// (3) The size of the request is calculated in a separate goroutine. Since this calculator requires access to the request header,
+//     it creates a race with any writes to the header performed during request handling.  httputil.ReverseProxy is a prominent example for a handler performing such writes.
+// (4) It has additional issues with HTTP/2, cf. https://github.com/prometheus/client_golang/issues/272.  (SA1019) (staticcheck)
+// FIX proposal: https://gitlab.cncf.ci/prometheus/prometheus/commit/83325c8d822d022fec74d21e2efd15e3b6b6a0af
+
 package janitor
 
 import (

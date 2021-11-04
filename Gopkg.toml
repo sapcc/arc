@@ -34,6 +34,10 @@
   version = ">=1.2.0, <=163.0.0-g70e3fa5"
 
 [[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "<=0.9.0"
+
+[[constraint]]
   branch = "master"
   name = "github.com/inconshreveable/go-update"
 
