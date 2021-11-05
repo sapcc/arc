@@ -18,14 +18,15 @@ import (
 )
 
 type MQTTClient struct {
-	client        MQTT.Client
-	identity      string
-	project       string
-	organization  string
-	connected     bool
-	isServer      bool
-	subscriptions map[string]subscription
-	lastSeenError error
+	client            MQTT.Client
+	identity          string
+	project           string
+	organization      string
+	connected         bool
+	isServer          bool
+	subscriptions     map[string]subscription
+	lastSeenError     *helpers.DriverError
+	reconnectInterval time.Duration
 }
 
 type subscription struct {
@@ -33,6 +34,9 @@ type subscription struct {
 	callback MQTT.MessageHandler
 	qos      byte
 }
+
+const MaxReconnectInterval = 1 * time.Minute
+const ResetInterval = 1 * time.Second
 
 func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
@@ -98,13 +102,14 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 
 	// create own transport
 	transport := &MQTTClient{
-		identity:      config.Identity,
-		project:       config.Project,
-		organization:  config.Organization,
-		connected:     false,
-		isServer:      isServer,
-		subscriptions: make(map[string]subscription),
-		lastSeenError: nil,
+		identity:          config.Identity,
+		project:           config.Project,
+		organization:      config.Organization,
+		connected:         false,
+		isServer:          isServer,
+		subscriptions:     make(map[string]subscription),
+		lastSeenError:     nil,
+		reconnectInterval: ResetInterval,
 	}
 
 	// set callbacks
@@ -319,8 +324,18 @@ func (c *MQTTClient) IdentityInformation() helpers.TransportIdentity {
 	}
 }
 
-func (c *MQTTClient) ErrorInformation() error {
+func (c *MQTTClient) ErrorInformation() *helpers.DriverError {
 	return c.lastSeenError
+}
+
+func (c *MQTTClient) Reconnect() {
+	logrus.Infof("Reconnecting in %s", c.reconnectInterval)
+	time.Sleep(c.reconnectInterval)
+	// increment delay by 2 until MaxReconnectInterval
+	if c.reconnectInterval < MaxReconnectInterval {
+		c.reconnectInterval *= 2
+	}
+	c.Connect()
 }
 
 // Callbacks
@@ -353,8 +368,31 @@ func (c *MQTTClient) onConnectionLost(err error) {
 	// if cert is revoked disconnect from broker and save the error
 	if strings.Contains(err.Error(), "revoked certificate") {
 		logrus.Warn("Disconnecting transport", err.Error())
-		c.lastSeenError = helpers.RevokedCertError{Msg: err.Error()}
+		c.lastSeenError = &helpers.DriverError{
+			Err:       helpers.RevokedCertError{Msg: err.Error()},
+			TimeStamp: time.Now(),
+		}
 		c.Disconnect()
+
+		// EOF error if client is already connected
+		// https://github.com/eclipse/paho.mqtt.golang/issues/63
+	} else if strings.Contains(err.Error(), "EOF") {
+		// reset interval if we didn't get any error in the las 5 min
+		if c.lastSeenError != nil {
+			if time.Now().Add(-5 * time.Minute).After(c.lastSeenError.TimeStamp) {
+				c.reconnectInterval = ResetInterval
+			}
+		}
+
+		logrus.Warn("Disconnecting transport: ", err.Error())
+		c.lastSeenError = &helpers.DriverError{
+			Err:       err,
+			TimeStamp: time.Now(),
+		}
+		// disconnecting since mqtt client does not get an error reconnecting
+		// but loses the connection immediately do to an existing client with the same id
+		c.Disconnect()
+		go c.Reconnect()
 	}
 
 	c.connected = false

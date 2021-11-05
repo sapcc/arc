@@ -122,6 +122,9 @@ func (c *FakeClient) DoneSignal() {
 	c.Done <- true
 }
 
-func (c *FakeClient) ErrorInformation() error {
+func (c *FakeClient) ErrorInformation() *helpers.DriverError {
 	return nil
+}
+
+func (c *FakeClient) Reconnect() {
 }

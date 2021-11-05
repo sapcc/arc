@@ -16,6 +16,7 @@ import (
 	arc_config "github.com/sapcc/arc/config"
 	"github.com/sapcc/arc/server"
 	"github.com/sapcc/arc/transport"
+	"github.com/sapcc/arc/transport/helpers"
 	"github.com/sapcc/arc/updater"
 	"github.com/sapcc/arc/version"
 )
@@ -90,7 +91,7 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 		log.Infof("running cert updater with URI %s, interval %v minutes and threshold %v hours", renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"))
 		cancelCertHandler := make(chan struct{})
 		runner.Add(func() error {
-			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"), cfg, cancelCertHandler)
+			return runCertUpdater(renewCertURI, c.Int("cert-update-interval"), c.Int("cert-update-threshold"), cfg, cancelCertHandler, tp)
 		}, func(err error) {
 			log.Infof("cert actor was interrupted with: %v", err)
 			close(cancelCertHandler)
@@ -100,13 +101,21 @@ func CmdServer(c *cli.Context, cfg arc_config.Config, appName string) (int, erro
 	return 1, runner.Run()
 }
 
-func runCertUpdater(renewCertURI string, renewCertInterval int, renewCertThreshold int, cfg arc_config.Config, cancel <-chan struct{}) error {
+func runCertUpdater(renewCertURI string, renewCertInterval int, renewCertThreshold int, cfg arc_config.Config, cancel <-chan struct{}, tp transport.Transport) error {
 	updaterTickChan := time.NewTicker(time.Minute * time.Duration(renewCertInterval))
 	defer updaterTickChan.Stop()
 
 	for {
 		select {
 		case <-updaterTickChan.C:
+			// skip routine if transport connection has revoked cert error as last seen error
+			if tp.ErrorInformation() != nil {
+				if _, ok := tp.ErrorInformation().Err.(helpers.RevokedCertError); ok {
+					log.Warn("cert updater stopped, cert is revoked")
+					return nil
+				}
+			}
+
 			hoursLeft, err := pki.CheckAndRenewCert(&cfg, renewCertURI, int64(renewCertThreshold), false)
 			if err != nil {
 				log.Error(err)
