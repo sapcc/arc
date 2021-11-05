@@ -25,6 +25,7 @@ type MQTTClient struct {
 	connected     bool
 	isServer      bool
 	subscriptions map[string]subscription
+	lastSeenError error
 }
 
 type subscription struct {
@@ -103,6 +104,7 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 		connected:     false,
 		isServer:      isServer,
 		subscriptions: make(map[string]subscription),
+		lastSeenError: nil,
 	}
 
 	// set callbacks
@@ -317,6 +319,10 @@ func (c *MQTTClient) IdentityInformation() helpers.TransportIdentity {
 	}
 }
 
+func (c *MQTTClient) ErrorInformation() error {
+	return c.lastSeenError
+}
+
 // Callbacks
 
 func (c *MQTTClient) onConnect() {
@@ -343,6 +349,14 @@ func (c *MQTTClient) onConnect() {
 
 func (c *MQTTClient) onConnectionLost(err error) {
 	logrus.Warn("Lost connection to MQTT broker")
+
+	// if cert is revoked disconnect from broker and save the error
+	if strings.Contains(err.Error(), "revoked certificate") {
+		logrus.Warn("Disconnecting transport", err.Error())
+		c.lastSeenError = helpers.RevokedCertError{Msg: err.Error()}
+		c.Disconnect()
+	}
+
 	c.connected = false
 }
 

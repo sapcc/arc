@@ -13,3 +13,11 @@ type TransportIdentity struct {
 	Organization string
 	Transport    TransportType
 }
+
+type RevokedCertError struct {
+	Msg string
+}
+
+func (e RevokedCertError) Error() string {
+	return e.Msg
+}

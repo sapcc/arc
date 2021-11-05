@@ -22,6 +22,7 @@ type Transport interface {
 	SubscribeReplies() (messages <-chan *arc.Reply, cancel func())
 	SubscribeRegistrations() (messages <-chan *arc.Registration, cancel func())
 	IdentityInformation() helpers.TransportIdentity
+	ErrorInformation() error
 }
 
 func New(config arc_config.Config, server bool) (Transport, error) {
