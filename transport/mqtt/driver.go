@@ -27,7 +27,7 @@ type MQTTClient struct {
 	isServer         bool
 	subscriptions    map[string]subscription
 	lastSeenError    *helpers.DriverError
-	reconnectRetries int
+	reconnectRetries []time.Time
 }
 
 type subscription struct {
@@ -109,7 +109,7 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 		isServer:         isServer,
 		subscriptions:    make(map[string]subscription),
 		lastSeenError:    nil,
-		reconnectRetries: 0,
+		reconnectRetries: []time.Time{},
 	}
 
 	// set callbacks
@@ -376,12 +376,19 @@ func (c *MQTTClient) onConnectionLost(err error) {
 }
 
 func (c *MQTTClient) onReconnecting() {
-	// EOF error if client is already connected mitigation by maximazing the number of reconnects per minute
+	// EOF error if client is already connected mitigation by allowing of max of 5 reconnects per minute
 	// https://github.com/eclipse/paho.mqtt.golang/issues/63
-	if c.reconnectRetries <= MaxReconnectRetries {
-		c.reconnectRetries++
-	} else {
-		c.reconnectRetries = 0
+	c.reconnectRetries = append(c.reconnectRetries, time.Now())
+	numberOfReconnect := 0
+	for _, timestamp := range c.reconnectRetries {
+		if time.Now().Add(-1 * time.Minute).Before(timestamp) {
+			numberOfReconnect++
+		}
+	}
+	fmt.Println(numberOfReconnect)
+	if numberOfReconnect >= MaxReconnectRetries {
+		// the max of reconnections in las min is reached.
+		c.reconnectRetries = []time.Time{}
 		time.Sleep(1 * time.Minute)
 	}
 }
