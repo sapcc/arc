@@ -12,7 +12,6 @@ import (
 
 type Transport interface {
 	Connect() error
-	Reconnect()
 	Disconnect()
 	IsConnected() bool
 	Request(msg *arc.Request) error
@@ -23,6 +22,7 @@ type Transport interface {
 	SubscribeReplies() (messages <-chan *arc.Reply, cancel func())
 	SubscribeRegistrations() (messages <-chan *arc.Registration, cancel func())
 	IdentityInformation() helpers.TransportIdentity
+
 	ErrorInformation() *helpers.DriverError
 }
 

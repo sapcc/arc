@@ -1,4 +1,5 @@
 export GO15VENDOREXPERIMENT=1
+export GO111MODULE=off
 PKG_NAME:=github.com/sapcc/arc
 BUILD_DIR:=bin
 ARC_BINARY:=$(BUILD_DIR)/arc

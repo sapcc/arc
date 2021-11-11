@@ -12,21 +12,22 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+
 	"github.com/sapcc/arc/arc"
 	arc_config "github.com/sapcc/arc/config"
 	"github.com/sapcc/arc/transport/helpers"
 )
 
 type MQTTClient struct {
-	client            MQTT.Client
-	identity          string
-	project           string
-	organization      string
-	connected         bool
-	isServer          bool
-	subscriptions     map[string]subscription
-	lastSeenError     *helpers.DriverError
-	reconnectInterval time.Duration
+	client           MQTT.Client
+	identity         string
+	project          string
+	organization     string
+	connected        bool
+	isServer         bool
+	subscriptions    map[string]subscription
+	lastSeenError    *helpers.DriverError
+	reconnectRetries int
 }
 
 type subscription struct {
@@ -35,8 +36,7 @@ type subscription struct {
 	qos      byte
 }
 
-const MaxReconnectInterval = 1 * time.Minute
-const ResetInterval = 1 * time.Second
+const MaxReconnectRetries = 5 // per minute
 
 func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
@@ -102,22 +102,29 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 
 	// create own transport
 	transport := &MQTTClient{
-		identity:          config.Identity,
-		project:           config.Project,
-		organization:      config.Organization,
-		connected:         false,
-		isServer:          isServer,
-		subscriptions:     make(map[string]subscription),
-		lastSeenError:     nil,
-		reconnectInterval: ResetInterval,
+		identity:         config.Identity,
+		project:          config.Project,
+		organization:     config.Organization,
+		connected:        false,
+		isServer:         isServer,
+		subscriptions:    make(map[string]subscription),
+		lastSeenError:    nil,
+		reconnectRetries: 0,
 	}
 
 	// set callbacks
 	opts.OnConnect = func(_ MQTT.Client) {
 		transport.onConnect()
 	}
+
+	// type ConnectionLostHandler func(Client, error)
 	opts.OnConnectionLost = func(_ MQTT.Client, err error) {
 		transport.onConnectionLost(err)
+	}
+
+	// type ReconnectHandler func(Client, *ClientOptions)
+	opts.OnReconnecting = func(_ MQTT.Client, _ *MQTT.ClientOptions) {
+		transport.onReconnecting()
 	}
 
 	// create client
@@ -328,16 +335,6 @@ func (c *MQTTClient) ErrorInformation() *helpers.DriverError {
 	return c.lastSeenError
 }
 
-func (c *MQTTClient) Reconnect() {
-	logrus.Infof("Reconnecting in %s", c.reconnectInterval)
-	time.Sleep(c.reconnectInterval)
-	// increment delay by 2 until MaxReconnectInterval
-	if c.reconnectInterval < MaxReconnectInterval {
-		c.reconnectInterval *= 2
-	}
-	c.Connect()
-}
-
 // Callbacks
 
 func (c *MQTTClient) onConnect() {
@@ -374,28 +371,19 @@ func (c *MQTTClient) onConnectionLost(err error) {
 		}
 		c.Disconnect()
 
-		// EOF error if client is already connected
-		// https://github.com/eclipse/paho.mqtt.golang/issues/63
-	} else if strings.Contains(err.Error(), "EOF") {
-		// reset interval if we didn't get any error in the las 5 min
-		if c.lastSeenError != nil {
-			if time.Now().Add(-5 * time.Minute).After(c.lastSeenError.TimeStamp) {
-				c.reconnectInterval = ResetInterval
-			}
-		}
-
-		logrus.Warn("Disconnecting transport: ", err.Error())
-		c.lastSeenError = &helpers.DriverError{
-			Err:       err,
-			TimeStamp: time.Now(),
-		}
-		// disconnecting since mqtt client does not get an error reconnecting
-		// but loses the connection immediately do to an existing client with the same id
-		c.Disconnect()
-		go c.Reconnect()
 	}
-
 	c.connected = false
+}
+
+func (c *MQTTClient) onReconnecting() {
+	// EOF error if client is already connected mitigation by maximazing the number of reconnects per minute
+	// https://github.com/eclipse/paho.mqtt.golang/issues/63
+	if c.reconnectRetries <= MaxReconnectRetries {
+		c.reconnectRetries++
+	} else {
+		c.reconnectRetries = 0
+		time.Sleep(1 * time.Minute)
+	}
 }
 
 // private

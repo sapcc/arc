@@ -125,6 +125,3 @@ func (c *FakeClient) DoneSignal() {
 func (c *FakeClient) ErrorInformation() *helpers.DriverError {
 	return nil
 }
-
-func (c *FakeClient) Reconnect() {
-}
