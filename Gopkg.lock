@@ -464,6 +464,14 @@
   revision = "ebb4019f01c946537c3ea6b99f0eca5283552a8f"
 
 [[projects]]
+  branch = "master"
+  digest = "1:2d1ac98818624b5d4ca0b6c47fb7a3afd988c7d0ef7cfd13942176a450748b3b"
+  name = "golang.org/x/time"
+  packages = ["rate"]
+  pruneopts = "UT"
+  revision = "1f47c861a9ac5a6e7645609f91b895398ff31642"
+
+[[projects]]
   branch = "v2"
   digest = "1:e8c48aa61ea272e211858e52979ad4d114c60bfe6900d12431ac697482100b0a"
   name = "gopkg.in/robfig/cron.v2"
@@ -517,6 +525,7 @@
     "github.com/shirou/gopsutil/host",
     "github.com/shirou/gopsutil/mem",
     "golang.org/x/net/context",
+    "golang.org/x/time/rate",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"

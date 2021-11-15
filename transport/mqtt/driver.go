@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -16,18 +17,20 @@ import (
 	"github.com/sapcc/arc/arc"
 	arc_config "github.com/sapcc/arc/config"
 	"github.com/sapcc/arc/transport/helpers"
+	"golang.org/x/time/rate"
 )
 
 type MQTTClient struct {
-	client           MQTT.Client
-	identity         string
-	project          string
-	organization     string
-	connected        bool
-	isServer         bool
-	subscriptions    map[string]subscription
-	lastSeenError    *helpers.DriverError
-	reconnectRetries []time.Time
+	client        MQTT.Client
+	identity      string
+	project       string
+	organization  string
+	connected     bool
+	isServer      bool
+	subscriptions map[string]subscription
+	lastSeenError *helpers.DriverError
+	limiter       *rate.Limiter
+	limiterCtx    *limiterCtx
 }
 
 type subscription struct {
@@ -36,7 +39,10 @@ type subscription struct {
 	qos      byte
 }
 
-const MaxReconnectRetries = 5 // per minute
+type limiterCtx struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
 
 func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 	stdLogger := logrus.StandardLogger()
@@ -102,14 +108,15 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 
 	// create own transport
 	transport := &MQTTClient{
-		identity:         config.Identity,
-		project:          config.Project,
-		organization:     config.Organization,
-		connected:        false,
-		isServer:         isServer,
-		subscriptions:    make(map[string]subscription),
-		lastSeenError:    nil,
-		reconnectRetries: []time.Time{},
+		identity:      config.Identity,
+		project:       config.Project,
+		organization:  config.Organization,
+		connected:     false,
+		isServer:      isServer,
+		subscriptions: make(map[string]subscription),
+		lastSeenError: nil,
+		// allow 5 reconnects every 10 sec
+		limiter: rate.NewLimiter(rate.Every(10*time.Second), 5),
 	}
 
 	// set callbacks
@@ -139,6 +146,13 @@ func (c *MQTTClient) Connect() error {
 	if !token.WaitTimeout(10 * time.Second) {
 		return errors.New("timeout connecting to broker")
 	}
+
+	// create a ctx for the limiter
+	if token.Error() == nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		c.limiterCtx = &limiterCtx{ctx, cancel}
+	}
+
 	return token.Error()
 }
 
@@ -152,6 +166,10 @@ func (c *MQTTClient) Disconnect() {
 		} else {
 			logrus.Error("failed to create 'offline' registration message: ", err)
 		}
+	}
+	// cancel limiter ctx
+	if c.limiterCtx != nil {
+		c.limiterCtx.cancel()
 	}
 	c.client.Disconnect(1000)
 }
@@ -376,21 +394,14 @@ func (c *MQTTClient) onConnectionLost(err error) {
 }
 
 func (c *MQTTClient) onReconnecting() {
-	// EOF error if client is already connected mitigation by allowing of max of 5 reconnects per minute
-	// https://github.com/eclipse/paho.mqtt.golang/issues/63
-	c.reconnectRetries = append(c.reconnectRetries, time.Now())
-	numberOfReconnect := 0
-	for _, timestamp := range c.reconnectRetries {
-		if time.Now().Add(-1 * time.Minute).Before(timestamp) {
-			numberOfReconnect++
-		}
+
+	logrus.Info("start get limiter token", time.Now())
+	// Block until enough tokens are obtained or context is cancelled
+	if err := c.limiter.Wait(c.limiterCtx.ctx); err != nil {
+		logrus.Error("failed waiting for a limiter token: ", err)
+		return
 	}
-	fmt.Println(numberOfReconnect)
-	if numberOfReconnect >= MaxReconnectRetries {
-		// the max of reconnections in las min is reached.
-		c.reconnectRetries = []time.Time{}
-		time.Sleep(1 * time.Minute)
-	}
+	logrus.Info("success got limiter token", time.Now())
 }
 
 // private
