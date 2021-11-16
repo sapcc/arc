@@ -398,7 +398,11 @@ func (c *MQTTClient) onReconnecting() {
 	logrus.Info("start get limiter token", time.Now())
 	// Block until enough tokens are obtained or context is cancelled
 	if err := c.limiter.Wait(c.limiterCtx.ctx); err != nil {
-		logrus.Error("failed waiting for a limiter token: ", err)
+		if err != context.Canceled {
+			logrus.Error("failed waiting for a limiter token: ", err)
+		} else {
+			logrus.Info("Error rate limiter ctx cancelled")
+		}
 		return
 	}
 	logrus.Info("success got limiter token", time.Now())
