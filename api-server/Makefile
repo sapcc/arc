@@ -4,6 +4,7 @@ REPOSITORY  := <docker-repo-path>/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
 BUILD_IMAGE := sapcc/gobuild:1.10-alpine
+export GO111MODULE=off
 
 ifneq ($(BUILD_VERSION),)
 LDFLAGS += -X github.com/sapcc/arc/version.Version=$(BUILD_VERSION)
