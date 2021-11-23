@@ -47,6 +47,7 @@ func CheckAndRenewCert(cfg *arc_config.Config, renewURI string, renewThreshold i
 
 // RenewCert renew the cert
 func RenewCert(cfg *arc_config.Config, renewURI string, httpClientInsecureSkipVerify bool) error {
+	// #nosec: TLS InsecureSkipVerify set true when not testing
 	// client creation
 	client := &http.Client{
 		Transport: &http.Transport{
