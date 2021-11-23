@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 )
@@ -31,7 +32,11 @@ type Server struct {
 }
 
 // NewSever creates a server struct
-func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, tlsServerCRL, httpBindAdress, httpsBindAdress string, router *mux.Router) *Server {
+func NewSever(c *cli.Context, pkiEnabled bool, router *mux.Router) *Server {
+	httpBindAdress := c.GlobalString("bind-address")
+	httpsBindAdress := c.GlobalString("bind-address-tls")
+	tlsServerCert := c.GlobalString("tls-server-cert")
+	tlsServerKey := c.GlobalString("tls-server-key")
 	var tlsConfig *tls.Config
 
 	if tlsServerCert != "" && tlsServerKey != "" {
@@ -39,54 +44,61 @@ func NewSever(tlsServerCert, tlsServerKey, tlsServerCA, tlsServerCRL, httpBindAd
 		if err != nil {
 			log.Fatalf("Failed to load tls cert/key: %s", err)
 		}
-		pemCerts, err := ioutil.ReadFile(filepath.Clean(tlsServerCA))
-		if err != nil {
-			log.Fatalf("Failed to load CA certificate: %s", err)
-		}
+
 		certpool := x509.NewCertPool()
-		if !certpool.AppendCertsFromPEM(pemCerts) {
-			log.Fatalf("Given CA file does not contain a PEM encoded x509 certificate")
-		}
 		var verifyFunc func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
-		if tlsServerCRL != "" {
-			crlData, err := ioutil.ReadFile(filepath.Clean(tlsServerCRL))
+		// just if pki is enabled
+		if pkiEnabled {
+			pkiCACert := c.GlobalString("pki-ca-cert")
+			pkiCACrl := c.GlobalString("pki-ca-crl")
+			pemCerts, err := ioutil.ReadFile(filepath.Clean(pkiCACert))
 			if err != nil {
-				log.Fatalf("Failed to read given crl file %s: %s", tlsServerCRL, err)
+				log.Fatalf("Failed to load PKI CA certificate: %s", err)
 			}
-			crlList, err := x509.ParseCRL(crlData)
-			if err != nil {
-				log.Fatalf("Failed to parse crl list: %s", err)
+			if !certpool.AppendCertsFromPEM(pemCerts) {
+				log.Fatalf("Given PKI CA file does not contain a PEM encoded x509 certificate")
 			}
-			caCerts, err := loadCertsFromPEM(pemCerts)
-			if err != nil {
-				log.Fatalf("Failed to load CA certs", err)
-			}
-			crlVerified := false
-			for _, c := range caCerts {
-				if c.CheckCRLSignature(crlList) == nil {
-					crlVerified = true
+			// just if we have a list of revoked certs
+			if pkiCACrl != "" {
+				crlData, err := ioutil.ReadFile(filepath.Clean(pkiCACrl))
+				if err != nil {
+					log.Fatalf("Failed to read given crl file %s: %s", pkiCACrl, err)
 				}
-			}
-			if !crlVerified || crlList.HasExpired(time.Now()) {
-				log.Fatal("Crl list couldn't be verified by given CA")
-			}
-			revokedCerts := make(map[string]struct{}, len(crlList.TBSCertList.RevokedCertificates))
-			for _, r := range crlList.TBSCertList.RevokedCertificates {
-				revokedCerts[r.SerialNumber.String()] = struct{}{}
-			}
-			verifyFunc = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-				for _, c := range verifiedChains {
-					for _, b := range c {
-						if _, revoked := revokedCerts[b.SerialNumber.String()]; revoked {
-							return fmt.Errorf("Certificate %s is revoked", b.Subject.String())
-						}
+
+				crlList, err := x509.ParseCRL(crlData)
+				if err != nil {
+					log.Fatalf("Failed to parse crl list: %s", err)
+				}
+				caCerts, err := loadCertsFromPEM(pemCerts)
+				if err != nil {
+					log.Fatalf("Failed to load CA certs", err)
+				}
+				crlVerified := false
+				for _, c := range caCerts {
+					if c.CheckCRLSignature(crlList) == nil {
+						crlVerified = true
 					}
 				}
-				return nil
+				if !crlVerified || crlList.HasExpired(time.Now()) {
+					log.Fatal("Crl list couldn't be verified by given CA")
+				}
+				revokedCerts := make(map[string]struct{}, len(crlList.TBSCertList.RevokedCertificates))
+				for _, r := range crlList.TBSCertList.RevokedCertificates {
+					revokedCerts[r.SerialNumber.String()] = struct{}{}
+				}
+
+				verifyFunc = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+					for _, c := range verifiedChains {
+						for _, b := range c {
+							if _, revoked := revokedCerts[b.SerialNumber.String()]; revoked {
+								return fmt.Errorf("Certificate %s is revoked", b.Subject.String())
+							}
+						}
+					}
+					return nil
+				}
 			}
-
 		}
-
 		tlsConfig = &tls.Config{
 			Certificates:          []tls.Certificate{cer},
 			ClientAuth:            tls.VerifyClientCertIfGiven,
@@ -187,8 +199,8 @@ func (s *Server) run() error {
 			log.Infof("Listening on %q for incoming TLS connections...", s.httpsBindAdress)
 			return s.httpsServer.ServeTLS(httpsLn, "", "")
 		}, func(_ error) {
-			if err = httpLn.Close(); err != nil {
-				log.Errorf("error closing http listener: %s", err)
+			if err = httpsLn.Close(); err != nil {
+				log.Errorf("error closing tls listener: %s", err)
 			}
 		})
 	}

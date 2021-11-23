@@ -228,6 +228,7 @@ func runServer(c *cli.Context) {
 	FatalfOnError(err, "Error connecting to the DB: %s", err)
 	defer db.Close()
 
+	// setup pki signer
 	if c.GlobalString("pki-ca-cert") != "" {
 		err = pki.SetupSigner(c.GlobalString("pki-ca-cert"), c.GlobalString("pki-ca-key"), c.GlobalString("pki-config"))
 		FatalfOnError(err, "Failed to initialize PKI subsystem: %s", err)
@@ -286,7 +287,7 @@ func runServer(c *cli.Context) {
 	router := newRouter(env)
 
 	// run server
-	server := NewSever(c.GlobalString("tls-server-cert"), c.GlobalString("tls-server-key"), c.GlobalString("pki-ca-cert"), c.GlobalString("pki-ca-crl"), c.GlobalString("bind-address"), c.GlobalString("bind-address-tls"), router)
+	server := NewSever(c, pkiEnabled, router)
 	go server.run()
 
 	// catch gracefull shutdown and shutdown to close the connetions
@@ -299,11 +300,13 @@ func runServer(c *cli.Context) {
 		case s := <-shutdownChan:
 			log.Infof("Captured %v", s)
 			server.close()
+			return
 		case s := <-gracefulChan:
 			log.Infof("Captured %v", s)
 			if err = server.shutdown(); err != nil {
 				log.Errorf("error shsuting down server %s\n", err)
 			}
+			return
 		}
 	}
 }
