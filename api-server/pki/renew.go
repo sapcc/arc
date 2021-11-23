@@ -51,7 +51,8 @@ func RenewCert(cfg *arc_config.Config, renewURI string, httpClientInsecureSkipVe
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				Certificates: []tls.Certificate{*cfg.ClientCert},
+				Certificates:       []tls.Certificate{*cfg.ClientCert},
+				InsecureSkipVerify: httpClientInsecureSkipVerify,
 			},
 		},
 	}

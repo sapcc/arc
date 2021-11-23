@@ -107,7 +107,7 @@ func runCertUpdater(renewCertURI string, renewCertInterval int, renewCertThresho
 	for {
 		select {
 		case <-updaterTickChan.C:
-			hoursLeft, err := pki.CheckAndRenewCert(&cfg, renewCertURI, int64(renewCertThreshold), false)
+			hoursLeft, err := pki.CheckAndRenewCert(&cfg, renewCertURI, int64(renewCertThreshold), false) // httpClientInsecureSkipVerify false
 			if err != nil {
 				log.Error(err)
 			} else {

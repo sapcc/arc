@@ -52,4 +52,8 @@ clean:
 
 .PHONY: unit
 unit:
-	go test -v -timeout=4s ./...
+	go test -v -timeout=4s ./...	
+
+.PHONY: integration-test
+integration-test:
+	go test -v -p=1 -timeout=60s -tags=integration ./...
