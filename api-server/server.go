@@ -71,7 +71,7 @@ func NewSever(c *cli.Context, pkiEnabled bool, router *mux.Router) *Server {
 				}
 				caCerts, err := loadCertsFromPEM(pemCerts)
 				if err != nil {
-					log.Fatalf("Failed to load CA certs", err)
+					log.Fatalf("Failed to load CA certs %s", err)
 				}
 				crlVerified := false
 				for _, c := range caCerts {

@@ -49,3 +49,7 @@ image:
 .PHONY: clean
 clean:
 	rm -f bin/api-server
+
+.PHONY: unit
+unit:
+	go test -v -timeout=4s ./...
