@@ -91,7 +91,7 @@ func NewSever(c *cli.Context, pkiEnabled bool, router *mux.Router) *Server {
 					for _, c := range verifiedChains {
 						for _, b := range c {
 							if _, revoked := revokedCerts[b.SerialNumber.String()]; revoked {
-								return fmt.Errorf("Certificate %s is revoked", b.Subject.String())
+								return fmt.Errorf("certificate %s is revoked", b.Subject.String())
 							}
 						}
 					}
@@ -147,7 +147,7 @@ func loadCertsFromPEM(pemCerts []byte) ([]*x509.Certificate, error) {
 		certs = append(certs, cert)
 	}
 	if len(certs) < 1 {
-		return nil, errors.New("No certs found")
+		return nil, errors.New("no certs found")
 	}
 	return certs, nil
 
