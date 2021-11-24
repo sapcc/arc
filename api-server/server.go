@@ -87,6 +87,8 @@ func NewSever(c *cli.Context, pkiEnabled bool, router *mux.Router) *Server {
 					revokedCerts[r.SerialNumber.String()] = struct{}{}
 				}
 
+				log.Infof("Revoked cert list added with %v entries", len(crlList.TBSCertList.RevokedCertificates))
+
 				verifyFunc = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 					for _, c := range verifiedChains {
 						for _, b := range c {
