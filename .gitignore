@@ -2,6 +2,7 @@ bin/
 .gopath/
 .vagrant/
 .idea/
+.vscode/
 chef/cookbooks
 tmp/
 service/assets_linux/

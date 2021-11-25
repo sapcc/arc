@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -12,9 +13,11 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+
 	"github.com/sapcc/arc/arc"
 	arc_config "github.com/sapcc/arc/config"
 	"github.com/sapcc/arc/transport/helpers"
+	"golang.org/x/time/rate"
 )
 
 type MQTTClient struct {
@@ -25,12 +28,20 @@ type MQTTClient struct {
 	connected     bool
 	isServer      bool
 	subscriptions map[string]subscription
+	lastSeenError *helpers.DriverError
+	limiter       *rate.Limiter
+	limiterCtx    *limiterCtx
 }
 
 type subscription struct {
 	topic    string
 	callback MQTT.MessageHandler
 	qos      byte
+}
+
+type limiterCtx struct {
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
@@ -103,14 +114,24 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 		connected:     false,
 		isServer:      isServer,
 		subscriptions: make(map[string]subscription),
+		lastSeenError: nil,
+		// allow 1 reconnects every 10 sec
+		limiter: rate.NewLimiter(rate.Every(10*time.Second), 1),
 	}
 
 	// set callbacks
 	opts.OnConnect = func(_ MQTT.Client) {
 		transport.onConnect()
 	}
+
+	// type ConnectionLostHandler func(Client, error)
 	opts.OnConnectionLost = func(_ MQTT.Client, err error) {
 		transport.onConnectionLost(err)
+	}
+
+	// type ReconnectHandler func(Client, *ClientOptions)
+	opts.OnReconnecting = func(_ MQTT.Client, _ *MQTT.ClientOptions) {
+		transport.onReconnecting()
 	}
 
 	// create client
@@ -125,6 +146,13 @@ func (c *MQTTClient) Connect() error {
 	if !token.WaitTimeout(10 * time.Second) {
 		return errors.New("timeout connecting to broker")
 	}
+
+	// create a ctx for the limiter
+	if token.Error() == nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		c.limiterCtx = &limiterCtx{ctx, cancel}
+	}
+
 	return token.Error()
 }
 
@@ -138,6 +166,10 @@ func (c *MQTTClient) Disconnect() {
 		} else {
 			logrus.Error("failed to create 'offline' registration message: ", err)
 		}
+	}
+	// cancel limiter ctx
+	if c.limiterCtx != nil {
+		c.limiterCtx.cancel()
 	}
 	c.client.Disconnect(1000)
 }
@@ -317,6 +349,10 @@ func (c *MQTTClient) IdentityInformation() helpers.TransportIdentity {
 	}
 }
 
+func (c *MQTTClient) ErrorInformation() *helpers.DriverError {
+	return c.lastSeenError
+}
+
 // Callbacks
 
 func (c *MQTTClient) onConnect() {
@@ -343,7 +379,31 @@ func (c *MQTTClient) onConnect() {
 
 func (c *MQTTClient) onConnectionLost(err error) {
 	logrus.Warn("Lost connection to MQTT broker")
+
+	// if cert is revoked disconnect from broker and save the error
+	if strings.Contains(err.Error(), "revoked certificate") {
+		logrus.Warn("Disconnecting transport", err.Error())
+		c.lastSeenError = &helpers.DriverError{
+			Err:       helpers.RevokedCertError{Msg: err.Error()},
+			TimeStamp: time.Now(),
+		}
+		c.Disconnect()
+
+	}
 	c.connected = false
+}
+
+func (c *MQTTClient) onReconnecting() {
+	// Block until enough tokens are obtained or context is cancelled
+	if err := c.limiter.Wait(c.limiterCtx.ctx); err != nil {
+		if err != context.Canceled {
+			logrus.Error("failed waiting for a limiter token: ", err)
+		} else {
+			logrus.Info("Error rate limiter ctx cancelled")
+		}
+		return
+	}
+	logrus.Info("success got limiter token", time.Now())
 }
 
 // private

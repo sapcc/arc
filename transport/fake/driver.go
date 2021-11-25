@@ -121,3 +121,7 @@ func (c *FakeClient) IdentityInformation() helpers.TransportIdentity {
 func (c *FakeClient) DoneSignal() {
 	c.Done <- true
 }
+
+func (c *FakeClient) ErrorInformation() *helpers.DriverError {
+	return nil
+}

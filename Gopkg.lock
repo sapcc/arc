@@ -99,14 +99,15 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:249b987e8e7e97618b7f24aa81cda3fe66fbc64412f5da01f4fc0694b0b236a8"
+  digest = "1:e7beffc30bc577c697ee70ca45f514e605953c58f57eef69894f1c546858af5b"
   name = "github.com/eclipse/paho.mqtt.golang"
   packages = [
     ".",
     "packets",
   ]
   pruneopts = "UT"
-  revision = "c76e0160c5b829e2da3b73db11e9715423f8a0f5"
+  revision = "88d53342c440d7e9fb3b2927188e6bd8645dce8c"
+  version = "v1.3.5"
 
 [[projects]]
   digest = "1:440028f55cb322d8cb5b9d5ebec298a00b7d74690a658fe6b1c0c0b44341bfae"
@@ -176,6 +177,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "47e8f450ef38c857cdd922ec08862ca9d65a1c6d"
+
+[[projects]]
+  digest = "1:6d29f02f0f01c627c2be40fb7347669a9ff2aa215cb97747294c1d13ffa74bdd"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b65e62901fc1c0d968042419e74789f6af455eb9"
+  version = "v1.4.2"
 
 [[projects]]
   digest = "1:90fbdaf4e94d5716d2530722cb72c0d32cf553045bffa801f1941b6729e5ed67"
@@ -432,12 +441,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1ed1bc6f8442b291888ec51160f3a0a32f47e238c86ebb2f5d193b06ed43d31f"
+  digest = "1:63ca7cd5d85d3bc93618125da3694613f6388c9f120be50853a5cbe33c284341"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
-    "websocket",
+    "internal/socks",
+    "proxy",
   ]
   pruneopts = "UT"
   revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
@@ -452,6 +462,14 @@
   ]
   pruneopts = "UT"
   revision = "ebb4019f01c946537c3ea6b99f0eca5283552a8f"
+
+[[projects]]
+  branch = "master"
+  digest = "1:2d1ac98818624b5d4ca0b6c47fb7a3afd988c7d0ef7cfd13942176a450748b3b"
+  name = "golang.org/x/time"
+  packages = ["rate"]
+  pruneopts = "UT"
+  revision = "1f47c861a9ac5a6e7645609f91b895398ff31642"
 
 [[projects]]
   branch = "v2"
@@ -507,6 +525,7 @@
     "github.com/shirou/gopsutil/host",
     "github.com/shirou/gopsutil/mem",
     "golang.org/x/net/context",
+    "golang.org/x/time/rate",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
