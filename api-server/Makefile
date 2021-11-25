@@ -4,6 +4,7 @@ REPOSITORY  := <docker-repo-path>/arc-api
 TAG         ?= latest
 IMAGE       := $(REPOSITORY):$(TAG)
 BUILD_IMAGE := sapcc/gobuild:1.10-alpine
+export GO111MODULE=off
 
 ifneq ($(BUILD_VERSION),)
 LDFLAGS += -X github.com/sapcc/arc/version.Version=$(BUILD_VERSION)
@@ -48,3 +49,11 @@ image:
 .PHONY: clean
 clean:
 	rm -f bin/api-server
+
+.PHONY: unit
+unit:
+	go test -v -timeout=4s ./...	
+
+.PHONY: integration-test
+integration-test:
+	go test -v -p=1 -timeout=60s -tags=integration ./...
