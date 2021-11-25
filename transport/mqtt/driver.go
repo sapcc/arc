@@ -115,8 +115,8 @@ func New(config arc_config.Config, isServer bool) (*MQTTClient, error) {
 		isServer:      isServer,
 		subscriptions: make(map[string]subscription),
 		lastSeenError: nil,
-		// allow 5 reconnects every 10 sec
-		limiter: rate.NewLimiter(rate.Every(10*time.Second), 5),
+		// allow 1 reconnects every 10 sec
+		limiter: rate.NewLimiter(rate.Every(10*time.Second), 1),
 	}
 
 	// set callbacks
@@ -394,8 +394,6 @@ func (c *MQTTClient) onConnectionLost(err error) {
 }
 
 func (c *MQTTClient) onReconnecting() {
-
-	logrus.Info("start get limiter token", time.Now())
 	// Block until enough tokens are obtained or context is cancelled
 	if err := c.limiter.Wait(c.limiterCtx.ctx); err != nil {
 		if err != context.Canceled {
