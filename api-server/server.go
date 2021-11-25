@@ -92,10 +92,6 @@ func NewSever(c *cli.Context, pkiEnabled bool, router *mux.Router) *Server {
 				verifyFunc = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 					for _, c := range verifiedChains {
 						for _, b := range c {
-							fmt.Println("+++++")
-							fmt.Println(b.SerialNumber.String())
-							fmt.Println(revokedCerts)
-							fmt.Println("+++++")
 							if _, revoked := revokedCerts[b.SerialNumber.String()]; revoked {
 								return fmt.Errorf("certificate %s is revoked", b.Subject.String())
 							}
