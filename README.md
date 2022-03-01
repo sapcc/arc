@@ -1,9 +1,9 @@
- Arc automation agent
-======================
+# Arc automation agent
+
 The repository contains the agent running on VMs using the new Monsoon automation service.
 
-Development setup
------------------
+## Development setup
+
 To run a local mosquitto broker run the following docker container
 
     docker run -it --rm -p 1883:1883 --name mosquitto sapcc/mosquitto
@@ -25,4 +25,3 @@ For your convience you can define an alias for the mosquitto_pub command:
 Using this alias you can publish messages just be executing
 
     mosquitto_pub -t [TOPIC] -s < payload.json
-    
