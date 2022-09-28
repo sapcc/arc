@@ -4,7 +4,7 @@ The repository contains the agent running on VMs using the new Monsoon automatio
 
 ## Development setup
 
-To run a local mosquitto broker run the following docker container
+To run a local mosquitto broker run the following docker container:
 
     docker run -it --rm -p 1883:1883 --name mosquitto sapcc/mosquitto
 
