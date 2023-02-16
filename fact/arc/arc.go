@@ -22,11 +22,6 @@ func (h Source) Facts() (map[string]interface{}, error) {
 
 	facts["arc_version"] = version.String()
 
-	// set online true when updating the facts
-	// this should fix the problem when deploying the API and the broker at the same time and the agents
-	// send the "online" message before the API is ready to accept incoming broker messages.
-	facts["online"] = true
-
 	if h.config.Project != "" {
 		facts["project"] = h.config.Project
 	}
