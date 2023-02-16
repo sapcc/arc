@@ -1,8 +1,6 @@
 package arc
 
 import (
-	"time"
-
 	arc_config "github.com/sapcc/arc/config"
 	"github.com/sapcc/arc/version"
 )
@@ -23,13 +21,6 @@ func (h Source) Facts() (map[string]interface{}, error) {
 	facts := make(map[string]interface{})
 
 	facts["arc_version"] = version.String()
-
-	// set online true when updating the facts
-	// this should fix the problem when deploying the API and the broker at the same time and the agents
-	// send the "online" message before the API is ready to accept incoming broker messages.
-	facts["online"] = true
-	t := time.Now()
-	facts["last_transition_time"] = t.String()
 
 	if h.config.Project != "" {
 		facts["project"] = h.config.Project
