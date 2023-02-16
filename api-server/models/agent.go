@@ -222,6 +222,13 @@ func (agent *Agent) Update(db Db) error {
 		return errors.New("db connection is nil")
 	}
 
+	// set fact online to true when fact online not set explicit to avoid to overwrite the offLine message
+	if agent.Facts["online"] == nil {
+		// this should fix the problem when deploying the broker and the agents send the
+		// "online" message before the API is ready to accept incoming broker messages.
+		agent.Facts["online"] = true
+	}
+
 	// transform agents JSONB to JSON string
 	facts, err := json.Marshal(agent.Facts)
 	if err != nil {
