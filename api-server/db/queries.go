@@ -40,7 +40,6 @@ var DeleteJobsOldQuery = `
 		SELECT DISTINCT id
 		FROM jobs
 		WHERE (updated_at <= NOW() - INTERVAL '1 day' * $1)
-		AND status=4
 	)
 `
 

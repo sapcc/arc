@@ -35,7 +35,7 @@ func (c FailExpiredJobs) Run() {
 	log.Infof("FailExpiredJobs scheduler: %v timeout jobs.", affectedJobs)
 }
 
-// delete jobs which are older than 30 days
+// delete jobs which are older than 30 days and the respective logs (use of ON DELETE CASCADE in the logs table)
 type PruneJobs struct {
 	db *sql.DB
 }
