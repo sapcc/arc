@@ -1,4 +1,4 @@
-FROM ubuntu:15.04
+FROM ubuntu:22.04
 
 # This Dockerfile builds two statically linked verisons of runit
 # One version uses dietlibc (GPL v2) which produces smaller binaries
